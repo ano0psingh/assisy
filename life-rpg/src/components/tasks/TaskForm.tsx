@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import type { TaskCategory, Priority, Effort, Goal } from '../../types';
+import { useState, useEffect } from 'react';
+import type { Task, TaskCategory, Priority, Effort, Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { X, Sparkles, Target } from 'lucide-react';
+import { X, Sparkles, Target, Pencil } from 'lucide-react';
 
 interface TaskFormProps {
   onSubmit: (data: {
@@ -17,9 +17,10 @@ interface TaskFormProps {
   onCancel: () => void;
   isOpen: boolean;
   goals?: Goal[];
+  editingTask?: Task | null;
 }
 
-export function TaskForm({ onSubmit, onCancel, isOpen, goals = [] }: TaskFormProps) {
+export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask }: TaskFormProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [title, setTitle] = useState('');
@@ -30,6 +31,33 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [] }: TaskFormPro
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState<'daily' | 'weekly'>('daily');
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingTask) {
+      setTitle(editingTask.title);
+      setDescription(editingTask.description || '');
+      setCategory(editingTask.category);
+      setPriority(editingTask.priority);
+      setEffort(editingTask.effort);
+      setIsRecurring(editingTask.isRecurring);
+      setRecurrencePattern(editingTask.recurrencePattern || 'daily');
+      setSelectedGoalId(editingTask.goalId || '');
+    } else {
+      resetForm();
+    }
+  }, [editingTask]);
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setCategory('Personal');
+    setPriority('High');
+    setEffort('Low');
+    setIsRecurring(false);
+    setRecurrencePattern('daily');
+    setSelectedGoalId('');
+  };
 
   // Filter active goals for the selected category
   const availableGoals = goals.filter(g => g.status === 'Active' && g.category === category);
@@ -49,30 +77,34 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [] }: TaskFormPro
       goalId: selectedGoalId || undefined,
     });
 
-    setTitle('');
-    setDescription('');
-    setCategory('Personal');
-    setPriority('High');
-    setEffort('Low');
-    setIsRecurring(false);
-    setRecurrencePattern('daily');
-    setSelectedGoalId('');
+    resetForm();
   };
 
   // Reset goal selection when category changes
   const handleCategoryChange = (newCategory: TaskCategory) => {
     setCategory(newCategory);
-    setSelectedGoalId('');
+    // Only reset goal if it doesn't match the new category
+    const currentGoal = goals.find(g => g.id === selectedGoalId);
+    if (currentGoal && currentGoal.category !== newCategory) {
+      setSelectedGoalId('');
+    }
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onCancel();
   };
 
   if (!isOpen) return null;
+
+  const isEditing = !!editingTask;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
-        onClick={onCancel}
+        onClick={handleCancel}
       />
       
       {/* Modal */}
@@ -85,12 +117,18 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [] }: TaskFormPro
         <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-              <Sparkles className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+              {isEditing ? (
+                <Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+              ) : (
+                <Sparkles className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+              )}
             </div>
-            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Create New Task</h2>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {isEditing ? 'Edit Task' : 'Create New Task'}
+            </h2>
           </div>
           <button 
-            onClick={onCancel}
+            onClick={handleCancel}
             className={`p-2 rounded-lg transition-colors ${
               isDark 
                 ? 'text-gray-400 hover:text-white hover:bg-white/10' 
@@ -275,7 +313,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [] }: TaskFormPro
           <div className={`flex justify-end space-x-3 pt-4 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
             <button
               type="button"
-              onClick={onCancel}
+              onClick={handleCancel}
               className="btn-secondary px-5 py-2.5 rounded-xl"
             >
               Cancel
@@ -284,7 +322,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [] }: TaskFormPro
               type="submit"
               className="btn-primary px-5 py-2.5 rounded-xl"
             >
-              Create Task
+              {isEditing ? 'Save Changes' : 'Create Task'}
             </button>
           </div>
         </form>

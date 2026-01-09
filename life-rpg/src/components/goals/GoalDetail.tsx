@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Goal, Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { X, Target, Plus, Link2, Unlink, CheckSquare } from 'lucide-react';
+import { X, Target, Plus, Link2, Unlink, Check } from 'lucide-react';
 
 interface GoalDetailProps {
   goal: Goal;
@@ -12,6 +12,7 @@ interface GoalDetailProps {
   onLinkTask: (goalId: string, taskId: string) => void;
   onUnlinkTask: (goalId: string, taskId: string) => void;
   onUpdateGoal: (goalId: string, updates: Partial<Goal>) => void;
+  onToggleTaskComplete: (taskId: string) => void;
   isOpen: boolean;
 }
 
@@ -24,6 +25,7 @@ export function GoalDetail({
   onLinkTask, 
   onUnlinkTask,
   onUpdateGoal,
+  onToggleTaskComplete,
   isOpen 
 }: GoalDetailProps) {
   const { theme } = useTheme();
@@ -33,9 +35,9 @@ export function GoalDetail({
   const [editTitle, setEditTitle] = useState(goal.title);
   const [editDescription, setEditDescription] = useState(goal.description || '');
 
-  // Tasks that can be linked (not already linked to this goal)
+  // Tasks that can be linked (only FREE tasks - not linked to ANY goal)
   const availableTasks = allTasks.filter(
-    task => !goal.linkedTaskIds.includes(task.id) && task.status !== 'Completed'
+    task => !task.goalId && task.status !== 'Completed'
   );
 
   const completedLinkedTasks = linkedTasks.filter(t => t.status === 'Completed');
@@ -223,7 +225,7 @@ export function GoalDetail({
             {/* Linked Tasks List */}
             {linkedTasks.length === 0 ? (
               <div className={`text-center py-8 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                <CheckSquare className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                <Target className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
                 <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
                   No tasks linked yet. Link tasks to track progress!
                 </p>
@@ -240,15 +242,22 @@ export function GoalDetail({
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                        task.status === 'Completed'
-                          ? 'bg-emerald-500'
-                          : isDark ? 'border border-gray-600' : 'border border-slate-300'
-                      }`}>
+                      {/* Clickable checkbox */}
+                      <button
+                        onClick={() => onToggleTaskComplete(task.id)}
+                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                          task.status === 'Completed'
+                            ? 'bg-emerald-500 border-emerald-500'
+                            : isDark 
+                              ? 'border-gray-600 hover:border-violet-500 hover:bg-violet-500/20' 
+                              : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50'
+                        }`}
+                        title={task.status === 'Completed' ? 'Mark incomplete' : 'Mark complete'}
+                      >
                         {task.status === 'Completed' && (
-                          <CheckSquare size={12} className="text-white" />
+                          <Check size={14} className="text-white" strokeWidth={3} />
                         )}
-                      </div>
+                      </button>
                       <span className={`text-sm ${
                         task.status === 'Completed'
                           ? isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through'

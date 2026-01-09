@@ -1,17 +1,21 @@
 import type { Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Target, Trash2, CheckCircle, Archive, RotateCcw, ChevronRight } from 'lucide-react';
+import { Target, Trash2, CheckCircle, Archive, RotateCcw, ChevronRight, Pencil, GitBranch } from 'lucide-react';
 
 interface GoalCardProps {
   goal: Goal;
   progress: number;
   linkedTasksCount: number;
   completedTasksCount: number;
+  subGoalsCount?: number;
   onComplete: (goalId: string) => void;
   onArchive: (goalId: string) => void;
   onReactivate: (goalId: string) => void;
   onDelete: (goalId: string) => void;
   onClick: (goal: Goal) => void;
+  onEdit: (goal: Goal) => void;
+  onToggleExpand?: () => void;
+  isExpanded?: boolean;
 }
 
 export function GoalCard({ 
@@ -19,11 +23,15 @@ export function GoalCard({
   progress,
   linkedTasksCount, 
   completedTasksCount,
+  subGoalsCount = 0,
   onComplete, 
   onArchive, 
   onReactivate,
   onDelete,
-  onClick 
+  onClick,
+  onEdit,
+  onToggleExpand,
+  isExpanded,
 }: GoalCardProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -66,14 +74,30 @@ export function GoalCard({
           </div>
           
           <div className="flex-1 min-w-0">
-            {/* Title */}
-            <h3 className={`font-semibold text-lg ${
-              isCompleted || isArchived
-                ? isDark ? 'text-gray-500' : 'text-slate-400'
-                : isDark ? 'text-white' : 'text-slate-800'
-            }`}>
-              {goal.title}
-            </h3>
+            {/* Title with sub-goals badge */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <h3 className={`font-semibold text-lg ${
+                isCompleted || isArchived
+                  ? isDark ? 'text-gray-500' : 'text-slate-400'
+                  : isDark ? 'text-white' : 'text-slate-800'
+              }`}>
+                {goal.title}
+              </h3>
+              {subGoalsCount > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
+                  className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all ${
+                    isDark 
+                      ? 'bg-violet-500/25 text-violet-300 border border-violet-500/40 hover:bg-violet-500/35' 
+                      : 'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200'
+                  }`}
+                >
+                  <GitBranch size={14} />
+                  <span>{subGoalsCount} sub-goal{subGoalsCount !== 1 ? 's' : ''}</span>
+                  <ChevronRight size={12} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                </button>
+              )}
+            </div>
             
             {/* Description */}
             {goal.description && (
@@ -119,16 +143,27 @@ export function GoalCard({
         
         {/* Actions & Arrow */}
         <div className="flex items-center space-x-2">
-          {/* Action buttons - show on hover */}
-          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+          {/* Action buttons - always visible */}
+          <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => onEdit(goal)}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark 
+                  ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
+                  : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+              }`}
+              title="Edit"
+            >
+              <Pencil size={18} />
+            </button>
             {goal.status === 'Active' && (
               <>
                 <button
                   onClick={() => onComplete(goal.id)}
                   className={`p-2 rounded-lg transition-colors ${
                     isDark 
-                      ? 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/20' 
-                      : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50'
+                      ? 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/20' 
+                      : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'
                   }`}
                   title="Mark as complete"
                 >
@@ -138,8 +173,8 @@ export function GoalCard({
                   onClick={() => onArchive(goal.id)}
                   className={`p-2 rounded-lg transition-colors ${
                     isDark 
-                      ? 'text-gray-500 hover:text-amber-400 hover:bg-amber-500/20' 
-                      : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50'
+                      ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/20' 
+                      : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'
                   }`}
                   title="Archive"
                 >
@@ -152,8 +187,8 @@ export function GoalCard({
                 onClick={() => onReactivate(goal.id)}
                 className={`p-2 rounded-lg transition-colors ${
                   isDark 
-                    ? 'text-gray-500 hover:text-blue-400 hover:bg-blue-500/20' 
-                    : 'text-slate-400 hover:text-blue-500 hover:bg-blue-50'
+                    ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/20' 
+                    : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
                 }`}
                 title="Reactivate"
               >
@@ -164,8 +199,8 @@ export function GoalCard({
               onClick={() => onDelete(goal.id)}
               className={`p-2 rounded-lg transition-colors ${
                 isDark 
-                  ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20' 
-                  : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                  ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
+                  : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
               }`}
               title="Delete"
             >

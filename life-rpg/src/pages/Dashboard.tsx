@@ -6,13 +6,15 @@ import { CheckSquare, Plus, Zap, TrendingUp, Clock, Sparkles, Quote } from 'luci
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { getQuoteOfTheDay } from '../data/quotes';
+import type { Task } from '../types';
 
 export function Dashboard() {
-  const { tasks, getTodaysTasks, loading, createTask, completeTask, uncompleteTask, deleteTask, carryForwardTasks, getTotalXP } = useTaskContext();
-  const { goals, linkTaskToGoal } = useGoalContext();
+  const { tasks, getTodaysTasks, loading, createTask, updateTask, completeTask, uncompleteTask, deleteTask, carryForwardTasks, getTotalXP } = useTaskContext();
+  const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [hasCarriedForward, setHasCarriedForward] = useState(false);
 
   useEffect(() => {
@@ -58,11 +60,58 @@ export function Dashboard() {
       data.goalId
     );
     
-    // Also link the task to the goal in GoalContext
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
     }
     
+    setIsTaskFormOpen(false);
+  };
+
+  const handleUpdateTask = (data: {
+    title: string;
+    description: string;
+    category: 'Personal' | 'Financial' | 'Professional';
+    priority: 'High' | 'Low';
+    effort: 'High' | 'Low';
+    isRecurring: boolean;
+    recurrencePattern?: 'daily' | 'weekly';
+    goalId?: string;
+  }) => {
+    if (!editingTask) return;
+
+    const oldGoalId = editingTask.goalId;
+    const newGoalId = data.goalId;
+
+    if (oldGoalId && oldGoalId !== newGoalId) {
+      unlinkTaskFromGoal(oldGoalId, editingTask.id);
+    }
+
+    if (newGoalId && newGoalId !== oldGoalId) {
+      linkTaskToGoal(newGoalId, editingTask.id);
+    }
+
+    updateTask(editingTask.id, {
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      priority: data.priority,
+      effort: data.effort,
+      isRecurring: data.isRecurring,
+      recurrencePattern: data.recurrencePattern,
+      goalId: data.goalId,
+    });
+    
+    setEditingTask(null);
+    setIsTaskFormOpen(false);
+  };
+
+  const handleEdit = (task: Task) => {
+    setEditingTask(task);
+    setIsTaskFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setEditingTask(null);
     setIsTaskFormOpen(false);
   };
 
@@ -193,6 +242,7 @@ export function Dashboard() {
                     task={task}
                     onToggleComplete={handleToggleComplete}
                     onDelete={deleteTask}
+                    onEdit={handleEdit}
                   />
                 </div>
               ))}
@@ -203,9 +253,10 @@ export function Dashboard() {
 
       <TaskForm
         isOpen={isTaskFormOpen}
-        onSubmit={handleCreateTask}
-        onCancel={() => setIsTaskFormOpen(false)}
+        onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
+        onCancel={handleCloseForm}
         goals={goals}
+        editingTask={editingTask}
       />
     </div>
   );

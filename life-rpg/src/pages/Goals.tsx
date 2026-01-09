@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Target, Plus, Filter } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useGoalContext } from '../context/GoalContext';
@@ -24,36 +24,81 @@ export function Goals() {
     linkTaskToGoal,
     unlinkTaskFromGoal,
     calculateGoalProgress,
+    getSubGoals,
   } = useGoalContext();
-  const { tasks } = useTaskContext();
+  const { tasks, deleteTask, completeTask, uncompleteTask, updateTask } = useTaskContext();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
+  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
+
+  // Always get fresh goal data from goals array (fixes stale state issues)
+  const selectedGoal = selectedGoalId ? goals.find(g => g.id === selectedGoalId) || null : null;
 
   // Get completed task IDs for progress calculation
   const completedTaskIds = tasks
     .filter(t => t.status === 'Completed')
     .map(t => t.id);
 
-  const filteredGoals = goals
-    .filter(goal => {
-      if (statusFilter !== 'all' && goal.status !== statusFilter) return false;
-      if (categoryFilter !== 'all' && goal.category !== categoryFilter) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      // Active first, then by creation date
-      const statusOrder: Record<GoalStatus, number> = { Active: 0, Completed: 1, Archived: 2 };
-      if (statusOrder[a.status] !== statusOrder[b.status]) {
-        return statusOrder[a.status] - statusOrder[b.status];
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+  // Filter and sort goals - only show top-level goals in main list
+  const filteredGoals = useMemo(() => {
+    return goals
+      .filter(goal => {
+        // Only show top-level goals (no parent)
+        if (goal.parentGoalId) return false;
+        if (statusFilter !== 'all' && goal.status !== statusFilter) return false;
+        if (categoryFilter !== 'all' && goal.category !== categoryFilter) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        // Active first, then by creation date
+        const statusOrder: Record<GoalStatus, number> = { Active: 0, Completed: 1, Archived: 2 };
+        if (statusOrder[a.status] !== statusOrder[b.status]) {
+          return statusOrder[a.status] - statusOrder[b.status];
+        }
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+  }, [goals, statusFilter, categoryFilter]);
 
-  const handleCreateGoal = (data: { title: string; description: string; category: TaskCategory }) => {
-    createGoal(data.title, data.description, data.category);
+  const toggleGoalExpanded = (goalId: string) => {
+    setExpandedGoals(prev => {
+      const next = new Set(prev);
+      if (next.has(goalId)) {
+        next.delete(goalId);
+      } else {
+        next.add(goalId);
+      }
+      return next;
+    });
+  };
+
+  const handleCreateGoal = (data: { title: string; description: string; category: TaskCategory; parentGoalId?: string }) => {
+    createGoal(data.title, data.description, data.category, data.parentGoalId);
+    setIsFormOpen(false);
+  };
+
+  const handleUpdateGoal = (data: { title: string; description: string; category: TaskCategory; parentGoalId?: string }) => {
+    if (!editingGoal) return;
+    updateGoal(editingGoal.id, {
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      parentGoalId: data.parentGoalId,
+    });
+    setEditingGoal(null);
+    setIsFormOpen(false);
+  };
+
+  const handleEdit = (goal: Goal) => {
+    setEditingGoal(goal);
+    setIsFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setEditingGoal(null);
     setIsFormOpen(false);
   };
 
@@ -70,7 +115,92 @@ export function Goals() {
   // Calculate progress on-the-fly for display
   const getGoalProgress = (goal: Goal) => {
     if (goal.status === 'Completed') return 100;
-    return calculateGoalProgress(goal, completedTaskIds);
+    return calculateGoalProgress(goal, completedTaskIds, goals);
+  };
+
+  // Check if a goal has sub-goals
+  const hasSubGoals = (goalId: string) => {
+    return goals.some(g => g.parentGoalId === goalId);
+  };
+
+  // Delete goal and all linked tasks (including sub-goals' tasks)
+  const handleDeleteGoal = (goalId: string) => {
+    const goalToDelete = goals.find(g => g.id === goalId);
+    if (!goalToDelete) return;
+
+    // Collect all goal IDs to delete (this goal + sub-goals)
+    const goalIdsToDelete = new Set<string>([goalId]);
+    const subGoals = goals.filter(g => g.parentGoalId === goalId);
+    subGoals.forEach(sg => goalIdsToDelete.add(sg.id));
+
+    // Find ALL tasks that have goalId pointing to any of the goals being deleted
+    const tasksToDelete = tasks.filter(task => 
+      task.goalId && goalIdsToDelete.has(task.goalId)
+    );
+
+    // Delete all linked tasks
+    tasksToDelete.forEach(task => {
+      deleteTask(task.id);
+    });
+
+    // Delete the goal (this will also delete sub-goals via GoalContext)
+    deleteGoal(goalId);
+  };
+
+  // Complete goal and all linked tasks (including sub-goals' tasks)
+  const handleCompleteGoal = (goalId: string) => {
+    const goalToComplete = goals.find(g => g.id === goalId);
+    if (!goalToComplete) return;
+
+    // Collect all goal IDs (this goal + sub-goals)
+    const allGoalIds = new Set<string>([goalId]);
+    const collectSubGoals = (parentId: string) => {
+      goals.filter(g => g.parentGoalId === parentId).forEach(sg => {
+        allGoalIds.add(sg.id);
+        collectSubGoals(sg.id);
+      });
+    };
+    collectSubGoals(goalId);
+
+    // Complete all tasks linked to these goals
+    tasks.forEach(task => {
+      if (task.goalId && allGoalIds.has(task.goalId) && task.status !== 'Completed') {
+        completeTask(task.id);
+      }
+    });
+
+    // Complete all sub-goals first
+    allGoalIds.forEach(gId => {
+      if (gId !== goalId) {
+        completeGoal(gId);
+      }
+    });
+
+    // Complete the main goal
+    completeGoal(goalId);
+  };
+
+  // Link task to goal - also updates task's goalId
+  const handleLinkTask = (goalId: string, taskId: string) => {
+    // Check if task is already linked to another goal
+    const task = tasks.find(t => t.id === taskId);
+    if (task?.goalId) {
+      alert('This task is already linked to another goal. Unlink it first.');
+      return;
+    }
+    
+    // Update goal's linkedTaskIds
+    linkTaskToGoal(goalId, taskId);
+    // Update task's goalId
+    updateTask(taskId, { goalId });
+  };
+
+  // Unlink task from goal - also clears task's goalId
+  const handleUnlinkTask = (goalId: string, taskId: string) => {
+    // Update goal's linkedTaskIds
+    unlinkTaskFromGoal(goalId, taskId);
+    // Clear task's goalId
+    updateTask(taskId, { goalId: undefined });
   };
 
   const activeGoalsCount = goals.filter(g => g.status === 'Active').length;
@@ -213,33 +343,77 @@ export function Goals() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredGoals.map((goal, index) => (
-            <div 
-              key={goal.id}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <GoalCard
-                goal={goal}
-                progress={getGoalProgress(goal)}
-                linkedTasksCount={goal.linkedTaskIds.length}
-                completedTasksCount={getCompletedTasksCount(goal)}
-                onComplete={completeGoal}
-                onArchive={archiveGoal}
-                onReactivate={reactivateGoal}
-                onDelete={deleteGoal}
-                onClick={setSelectedGoal}
-              />
-            </div>
-          ))}
+          {filteredGoals.map((goal, index) => {
+            const subGoals = getSubGoals(goal.id);
+            const isExpanded = expandedGoals.has(goal.id);
+            const hasChildren = subGoals.length > 0;
+            
+            return (
+              <div 
+                key={goal.id}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {/* Parent Goal Card */}
+                <GoalCard
+                  goal={goal}
+                  progress={getGoalProgress(goal)}
+                  linkedTasksCount={hasChildren ? subGoals.length : goal.linkedTaskIds.length}
+                  completedTasksCount={hasChildren 
+                    ? subGoals.filter(sg => sg.status === 'Completed').length 
+                    : getCompletedTasksCount(goal)
+                  }
+                  subGoalsCount={subGoals.length}
+                  onComplete={handleCompleteGoal}
+                  onArchive={archiveGoal}
+                  onReactivate={reactivateGoal}
+                  onDelete={handleDeleteGoal}
+                  onClick={(goal) => setSelectedGoalId(goal.id)}
+                  onEdit={handleEdit}
+                  onToggleExpand={() => toggleGoalExpanded(goal.id)}
+                  isExpanded={isExpanded}
+                />
+                
+                {/* Sub-goals (expanded) */}
+                {hasChildren && isExpanded && (
+                  <div className={`ml-8 mt-2 space-y-2 pl-4 border-l-2 ${
+                    isDark ? 'border-violet-500/30' : 'border-violet-200'
+                  }`}>
+                    {subGoals.map((subGoal, subIndex) => (
+                      <div 
+                        key={subGoal.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${subIndex * 30}ms` }}
+                      >
+                        <GoalCard
+                          goal={subGoal}
+                          progress={getGoalProgress(subGoal)}
+                          linkedTasksCount={subGoal.linkedTaskIds.length}
+                          completedTasksCount={getCompletedTasksCount(subGoal)}
+                          onComplete={handleCompleteGoal}
+                          onArchive={archiveGoal}
+                          onReactivate={reactivateGoal}
+                          onDelete={handleDeleteGoal}
+                          onClick={(goal) => setSelectedGoalId(goal.id)}
+                          onEdit={handleEdit}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
       {/* Goal Form Modal */}
       <GoalForm
         isOpen={isFormOpen}
-        onSubmit={handleCreateGoal}
-        onCancel={() => setIsFormOpen(false)}
+        onSubmit={editingGoal ? handleUpdateGoal : handleCreateGoal}
+        onCancel={handleCloseForm}
+        editingGoal={editingGoal}
+        availableParentGoals={goals}
       />
 
       {/* Goal Detail Modal */}
@@ -250,10 +424,18 @@ export function Goals() {
           progress={getGoalProgress(selectedGoal)}
           allTasks={tasks}
           linkedTasks={getLinkedTasks(selectedGoal)}
-          onClose={() => setSelectedGoal(null)}
-          onLinkTask={linkTaskToGoal}
-          onUnlinkTask={unlinkTaskFromGoal}
+          onClose={() => setSelectedGoalId(null)}
+          onLinkTask={handleLinkTask}
+          onUnlinkTask={handleUnlinkTask}
           onUpdateGoal={updateGoal}
+          onToggleTaskComplete={(taskId) => {
+            const task = tasks.find(t => t.id === taskId);
+            if (task?.status === 'Completed') {
+              uncompleteTask(taskId);
+            } else {
+              completeTask(taskId);
+            }
+          }}
         />
       )}
     </div>
