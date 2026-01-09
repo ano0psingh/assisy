@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { X, Zap } from 'lucide-react';
-import type { TrackingType } from '../../types';
+import { X, Zap, Pencil } from 'lucide-react';
+import type { TrackingType, Habit } from '../../types';
+
+interface HabitWithLogs extends Habit {
+  logs: { date: string; value: number }[];
+}
 
 interface HabitFormProps {
   isOpen: boolean;
@@ -12,6 +16,7 @@ interface HabitFormProps {
     xpPerUnit: number;
   }) => void;
   onCancel: () => void;
+  editingHabit?: HabitWithLogs | null;
 }
 
 const CATEGORIES = [
@@ -28,7 +33,7 @@ const TRACKING_TYPES: { value: TrackingType; label: string; description: string 
   { value: 'boolean', label: 'Yes/No', description: 'Simple completion (e.g., took vitamins)' },
 ];
 
-export function HabitForm({ isOpen, onSubmit, onCancel }: HabitFormProps) {
+export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFormProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
@@ -36,6 +41,25 @@ export function HabitForm({ isOpen, onSubmit, onCancel }: HabitFormProps) {
   const [trackingType, setTrackingType] = useState<TrackingType>('duration');
   const [category, setCategory] = useState('Health');
   const [xpPerUnit, setXpPerUnit] = useState(1);
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingHabit) {
+      setName(editingHabit.name);
+      setTrackingType(editingHabit.trackingType);
+      setCategory(editingHabit.category);
+      setXpPerUnit(editingHabit.xpPerUnit);
+    } else {
+      resetForm();
+    }
+  }, [editingHabit]);
+
+  const resetForm = () => {
+    setName('');
+    setTrackingType('duration');
+    setCategory('Health');
+    setXpPerUnit(1);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,21 +72,24 @@ export function HabitForm({ isOpen, onSubmit, onCancel }: HabitFormProps) {
       xpPerUnit,
     });
     
-    // Reset form
-    setName('');
-    setTrackingType('duration');
-    setCategory('Health');
-    setXpPerUnit(1);
+    resetForm();
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onCancel();
   };
 
   if (!isOpen) return null;
+
+  const isEditing = !!editingHabit;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
-        onClick={onCancel}
+        onClick={handleCancel}
       />
       
       {/* Modal */}
@@ -73,11 +100,18 @@ export function HabitForm({ isOpen, onSubmit, onCancel }: HabitFormProps) {
       }`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-5 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-          <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            Create New Habit
-          </h2>
+          <div className="flex items-center space-x-3">
+            {isEditing && (
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
+                <Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+              </div>
+            )}
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {isEditing ? 'Edit Habit' : 'Create New Habit'}
+            </h2>
+          </div>
           <button 
-            onClick={onCancel}
+            onClick={handleCancel}
             className={`p-2 rounded-lg transition-colors ${
               isDark 
                 ? 'text-gray-400 hover:text-white hover:bg-white/10' 
@@ -190,7 +224,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel }: HabitFormProps) {
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={onCancel}
+              onClick={handleCancel}
               className="btn-secondary px-5 py-2.5 rounded-xl"
             >
               Cancel
@@ -199,7 +233,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel }: HabitFormProps) {
               type="submit"
               className="btn-primary px-5 py-2.5 rounded-xl"
             >
-              Create Habit
+              {isEditing ? 'Save Changes' : 'Create Habit'}
             </button>
           </div>
         </form>

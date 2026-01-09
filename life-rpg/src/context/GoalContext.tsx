@@ -9,7 +9,8 @@ interface GoalContextType {
   createGoal: (
     title: string,
     description?: string,
-    category?: TaskCategory
+    category?: TaskCategory,
+    parentGoalId?: string
   ) => Goal;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
   deleteGoal: (goalId: string) => void;
@@ -22,7 +23,9 @@ interface GoalContextType {
   getGoalsByCategory: (category: TaskCategory) => Goal[];
   getGoalsByStatus: (status: GoalStatus) => Goal[];
   getActiveGoals: () => Goal[];
-  calculateGoalProgress: (goal: Goal, completedTaskIds: string[]) => number;
+  getTopLevelGoals: () => Goal[];
+  getSubGoals: (parentGoalId: string) => Goal[];
+  calculateGoalProgress: (goal: Goal, completedTaskIds: string[], allGoals: Goal[]) => number;
 }
 
 const GoalContext = createContext<GoalContextType | null>(null);
@@ -43,14 +46,29 @@ export function GoalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const savedGoals = LocalStorage.getGoals();
-    setGoals(savedGoals);
+    
+    // Clean up orphaned sub-goals (where parentGoalId points to non-existent goal)
+    const validGoalIds = new Set(savedGoals.map(g => g.id));
+    const cleanedGoals = savedGoals.filter(goal => {
+      // Keep if no parent OR parent exists
+      if (!goal.parentGoalId) return true;
+      return validGoalIds.has(goal.parentGoalId);
+    });
+    
+    // If we cleaned up any orphans, save the cleaned list
+    if (cleanedGoals.length !== savedGoals.length) {
+      LocalStorage.saveGoals(cleanedGoals);
+    }
+    
+    setGoals(cleanedGoals);
     setLoading(false);
   }, []);
 
   const createGoal = useCallback((
     title: string,
     description: string = '',
-    category: TaskCategory = 'Personal'
+    category: TaskCategory = 'Personal',
+    parentGoalId?: string
   ): Goal => {
     const newGoal: Goal = {
       id: uuidv4(),
@@ -61,10 +79,26 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       linkedTaskIds: [],
       progress: 0,
       createdAt: new Date(),
+      parentGoalId,
+      subGoalIds: [],
     };
 
     setGoals(prev => {
-      const updated = [...prev, newGoal];
+      let updated = [...prev, newGoal];
+      
+      // If this is a sub-goal, add it to parent's subGoalIds
+      if (parentGoalId) {
+        updated = updated.map(goal => {
+          if (goal.id === parentGoalId) {
+            return {
+              ...goal,
+              subGoalIds: [...(goal.subGoalIds || []), newGoal.id],
+            };
+          }
+          return goal;
+        });
+      }
+      
       LocalStorage.saveGoals(updated);
       return updated;
     });
@@ -82,7 +116,37 @@ export function GoalProvider({ children }: { children: ReactNode }) {
 
   const deleteGoal = useCallback((goalId: string) => {
     setGoals(prev => {
-      const updated = prev.filter(goal => goal.id !== goalId);
+      const goalToDelete = prev.find(g => g.id === goalId);
+      
+      // Remove from parent's subGoalIds if it's a sub-goal
+      let updated = prev;
+      if (goalToDelete?.parentGoalId) {
+        updated = updated.map(goal => {
+          if (goal.id === goalToDelete.parentGoalId) {
+            return {
+              ...goal,
+              subGoalIds: (goal.subGoalIds || []).filter(id => id !== goalId),
+            };
+          }
+          return goal;
+        });
+      }
+      
+      // Find ALL sub-goals by parentGoalId field (more reliable than subGoalIds array)
+      const allSubGoalIds = new Set<string>();
+      const findAllDescendants = (parentId: string) => {
+        prev.forEach(g => {
+          if (g.parentGoalId === parentId && !allSubGoalIds.has(g.id)) {
+            allSubGoalIds.add(g.id);
+            findAllDescendants(g.id); // Recursively find nested sub-goals
+          }
+        });
+      };
+      findAllDescendants(goalId);
+      
+      // Delete this goal and all descendants
+      updated = updated.filter(goal => goal.id !== goalId && !allSubGoalIds.has(goal.id));
+      
       LocalStorage.saveGoals(updated);
       return updated;
     });
@@ -169,15 +233,39 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     return goals.filter(goal => goal.status === 'Active');
   }, [goals]);
 
+  const getTopLevelGoals = useCallback((): Goal[] => {
+    return goals.filter(goal => !goal.parentGoalId);
+  }, [goals]);
+
+  const getSubGoals = useCallback((parentGoalId: string): Goal[] => {
+    return goals.filter(goal => goal.parentGoalId === parentGoalId);
+  }, [goals]);
+
   // Pure function to calculate progress - doesn't trigger state updates
-  const calculateGoalProgress = useCallback((goal: Goal, completedTaskIds: string[]): number => {
-    if (goal.linkedTaskIds.length === 0) return 0;
+  // For parent goals: progress = ALL tasks (own + sub-goals) completed / total
+  const calculateGoalProgress = useCallback((goal: Goal, completedTaskIds: string[], allGoals: Goal[]): number => {
+    // Collect ALL linked task IDs (from this goal and all descendant sub-goals)
+    const allLinkedTaskIds: string[] = [...goal.linkedTaskIds];
     
-    const completedLinkedTasks = goal.linkedTaskIds.filter(taskId => 
+    // Recursively collect task IDs from all sub-goals
+    const collectSubGoalTasks = (parentId: string) => {
+      allGoals
+        .filter(g => g.parentGoalId === parentId)
+        .forEach(subGoal => {
+          allLinkedTaskIds.push(...subGoal.linkedTaskIds);
+          collectSubGoalTasks(subGoal.id); // Recurse for nested sub-goals
+        });
+    };
+    collectSubGoalTasks(goal.id);
+    
+    // Calculate progress based on ALL collected tasks
+    if (allLinkedTaskIds.length === 0) return 0;
+    
+    const completedLinkedTasks = allLinkedTaskIds.filter(taskId => 
       completedTaskIds.includes(taskId)
     );
     
-    return Math.round((completedLinkedTasks.length / goal.linkedTaskIds.length) * 100);
+    return Math.round((completedLinkedTasks.length / allLinkedTaskIds.length) * 100);
   }, []);
 
   return (
@@ -196,6 +284,8 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       getGoalsByCategory,
       getGoalsByStatus,
       getActiveGoals,
+      getTopLevelGoals,
+      getSubGoals,
       calculateGoalProgress,
     }}>
       {children}

@@ -1,24 +1,54 @@
-import { useState } from 'react';
-import type { TaskCategory } from '../../types';
+import { useState, useEffect } from 'react';
+import type { TaskCategory, Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { X, Target } from 'lucide-react';
+import { X, Target, Pencil, GitBranch } from 'lucide-react';
 
 interface GoalFormProps {
   onSubmit: (data: {
     title: string;
     description: string;
     category: TaskCategory;
+    parentGoalId?: string;
   }) => void;
   onCancel: () => void;
   isOpen: boolean;
+  editingGoal?: Goal | null;
+  availableParentGoals?: Goal[];
 }
 
-export function GoalForm({ onSubmit, onCancel, isOpen }: GoalFormProps) {
+export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParentGoals = [] }: GoalFormProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<TaskCategory>('Personal');
+  const [parentGoalId, setParentGoalId] = useState<string>('');
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingGoal) {
+      setTitle(editingGoal.title);
+      setDescription(editingGoal.description || '');
+      setCategory(editingGoal.category);
+      setParentGoalId(editingGoal.parentGoalId || '');
+    } else {
+      resetForm();
+    }
+  }, [editingGoal]);
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setCategory('Personal');
+    setParentGoalId('');
+  };
+
+  // Filter out the current goal from parent options (can't be its own parent)
+  const parentOptions = availableParentGoals.filter(g => 
+    g.id !== editingGoal?.id && 
+    !g.parentGoalId && // Only top-level goals can be parents (no nested sub-goals)
+    g.status === 'Active'
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,21 +58,27 @@ export function GoalForm({ onSubmit, onCancel, isOpen }: GoalFormProps) {
       title: title.trim(),
       description: description.trim(),
       category,
+      parentGoalId: parentGoalId || undefined,
     });
 
-    setTitle('');
-    setDescription('');
-    setCategory('Personal');
+    resetForm();
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onCancel();
   };
 
   if (!isOpen) return null;
+
+  const isEditing = !!editingGoal;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
-        onClick={onCancel}
+        onClick={handleCancel}
       />
       
       {/* Modal */}
@@ -55,12 +91,18 @@ export function GoalForm({ onSubmit, onCancel, isOpen }: GoalFormProps) {
         <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-              <Target className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+              {isEditing ? (
+                <Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+              ) : (
+                <Target className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+              )}
             </div>
-            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Create New Goal</h2>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {isEditing ? 'Edit Goal' : 'Create New Goal'}
+            </h2>
           </div>
           <button 
-            onClick={onCancel}
+            onClick={handleCancel}
             className={`p-2 rounded-lg transition-colors ${
               isDark 
                 ? 'text-gray-400 hover:text-white hover:bg-white/10' 
@@ -125,18 +167,49 @@ export function GoalForm({ onSubmit, onCancel, isOpen }: GoalFormProps) {
             </div>
           </div>
 
+          {/* Parent Goal (Sub-goal option) */}
+          {parentOptions.length > 0 && (
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                <div className="flex items-center space-x-2">
+                  <GitBranch size={14} />
+                  <span>Parent Goal (optional)</span>
+                </div>
+              </label>
+              <select
+                value={parentGoalId}
+                onChange={(e) => setParentGoalId(e.target.value)}
+                className="w-full px-4 py-3 input rounded-xl"
+              >
+                <option value="">No parent (top-level goal)</option>
+                {parentOptions.map((goal) => (
+                  <option key={goal.id} value={goal.id}>
+                    {goal.title}
+                  </option>
+                ))}
+              </select>
+              {parentGoalId && (
+                <p className={`mt-2 text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  This goal will be a sub-goal of the selected parent.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Info */}
-          <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-              💡 After creating a goal, you can link tasks to it to track your progress automatically.
-            </p>
-          </div>
+          {!isEditing && (
+            <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                💡 After creating a goal, you can link tasks to it to track your progress automatically.
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className={`flex justify-end space-x-3 pt-4 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
             <button
               type="button"
-              onClick={onCancel}
+              onClick={handleCancel}
               className="btn-secondary px-5 py-2.5 rounded-xl"
             >
               Cancel
@@ -145,7 +218,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen }: GoalFormProps) {
               type="submit"
               className="btn-primary px-5 py-2.5 rounded-xl"
             >
-              Create Goal
+              {isEditing ? 'Save Changes' : 'Create Goal'}
             </button>
           </div>
         </form>

@@ -7,7 +7,11 @@ import { HabitCard } from '../components/habits/HabitCard';
 import { HabitForm } from '../components/habits/HabitForm';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import { ContributionGraph } from '../components/habits/ContributionGraph';
-import type { TrackingType } from '../types';
+import type { TrackingType, Habit } from '../types';
+
+interface HabitWithLogs extends Habit {
+  logs: { date: string; value: number }[];
+}
 
 export function Habits() {
   const { theme } = useTheme();
@@ -15,6 +19,7 @@ export function Habits() {
   const { 
     habits, 
     createHabit, 
+    updateHabit,
     deleteHabit, 
     logHabit, 
     getTodaysLog,
@@ -28,6 +33,7 @@ export function Habits() {
   } = useDailyLogContext();
 
   const [isHabitFormOpen, setIsHabitFormOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<HabitWithLogs | null>(null);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [selectedHabitForGraph, setSelectedHabitForGraph] = useState<string | null>(null);
 
@@ -76,6 +82,33 @@ export function Habits() {
     xpPerUnit: number;
   }) => {
     createHabit(data.name, data.trackingType, data.category, data.xpPerUnit);
+    setIsHabitFormOpen(false);
+  };
+
+  const handleUpdateHabit = (data: {
+    name: string;
+    trackingType: TrackingType;
+    category: string;
+    xpPerUnit: number;
+  }) => {
+    if (!editingHabit) return;
+    updateHabit(editingHabit.id, {
+      name: data.name,
+      trackingType: data.trackingType,
+      category: data.category,
+      xpPerUnit: data.xpPerUnit,
+    });
+    setEditingHabit(null);
+    setIsHabitFormOpen(false);
+  };
+
+  const handleEdit = (habit: HabitWithLogs) => {
+    setEditingHabit(habit);
+    setIsHabitFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setEditingHabit(null);
     setIsHabitFormOpen(false);
   };
 
@@ -232,6 +265,7 @@ export function Habits() {
                   todaysValue={getTodaysLog(habit.id)}
                   onLog={logHabit}
                   onDelete={deleteHabit}
+                  onEdit={handleEdit}
                 />
               </div>
             ))}
@@ -290,8 +324,9 @@ export function Habits() {
       {/* Modals */}
       <HabitForm
         isOpen={isHabitFormOpen}
-        onSubmit={handleCreateHabit}
-        onCancel={() => setIsHabitFormOpen(false)}
+        onSubmit={editingHabit ? handleUpdateHabit : handleCreateHabit}
+        onCancel={handleCloseForm}
+        editingHabit={editingHabit}
       />
 
       <DailyCheckIn

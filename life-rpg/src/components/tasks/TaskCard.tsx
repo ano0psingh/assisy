@@ -1,15 +1,15 @@
 import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Check, Clock, Trash2, Flame, Zap } from 'lucide-react';
+import { Check, Clock, Trash2, Flame, Zap, Pencil } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
   onToggleComplete: (taskId: string) => void;
   onDelete: (taskId: string) => void;
-  onEdit?: (task: Task) => void;
+  onEdit: (task: Task) => void;
 }
 
-export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onToggleComplete, onDelete, onEdit }: TaskCardProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const isCompleted = task.status === 'Completed';
@@ -46,12 +46,15 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
           </button>
           
           <div className="flex-1 min-w-0">
-            {/* Title */}
-            <h3 className={`font-medium ${
-              isCompleted 
-                ? isDark ? 'line-through text-gray-500' : 'line-through text-slate-400'
-                : isDark ? 'text-white' : 'text-slate-800'
-            }`}>
+            {/* Title - clickable to edit */}
+            <h3 
+              onClick={() => onEdit(task)}
+              className={`font-medium cursor-pointer hover:opacity-80 ${
+                isCompleted 
+                  ? isDark ? 'line-through text-gray-500' : 'line-through text-slate-400'
+                  : isDark ? 'text-white' : 'text-slate-800'
+              }`}
+            >
               {task.title}
             </h3>
             
@@ -105,17 +108,29 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
           </div>
         </div>
         
-        {/* Actions */}
-        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions - always visible */}
+        <div className="flex items-center space-x-1 flex-shrink-0">
           <button
-            onClick={() => onDelete(task.id)}
+            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
             className={`p-2 rounded-lg transition-colors ${
               isDark 
-                ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20' 
-                : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
+                : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
             }`}
+            title="Edit task"
           >
-            <Trash2 size={16} />
+            <Pencil size={18} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+            className={`p-2 rounded-lg transition-colors ${
+              isDark 
+                ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
+                : 'text-slate-500 hover:text-red-500 hover:bg-red-50'
+            }`}
+            title="Delete task"
+          >
+            <Trash2 size={18} />
           </button>
         </div>
       </div>

@@ -34,6 +34,8 @@ export interface Goal {
   progress: number;
   createdAt: Date;
   completedAt?: Date;
+  parentGoalId?: string;
+  subGoalIds?: string[];
 }
 
 export interface DailyLog {

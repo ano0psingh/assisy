@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Habit, TrackingType } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Flame, Trash2, Plus, Minus, Check } from 'lucide-react';
+import { Flame, Trash2, Plus, Minus, Check, Pencil } from 'lucide-react';
 
 interface HabitLog {
   date: string;
@@ -17,9 +17,10 @@ interface HabitCardProps {
   todaysValue: number;
   onLog: (habitId: string, value: number) => void;
   onDelete: (habitId: string) => void;
+  onEdit: (habit: HabitWithLogs) => void;
 }
 
-export function HabitCard({ habit, todaysValue, onLog, onDelete }: HabitCardProps) {
+export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: HabitCardProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [inputValue, setInputValue] = useState(todaysValue.toString());
@@ -173,16 +174,29 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete }: HabitCardProp
             </div>
           )}
 
-          {/* Delete button */}
+          {/* Edit button - always visible */}
+          <button
+            onClick={() => onEdit(habit)}
+            className={`p-2 rounded-lg transition-all ${
+              isDark 
+                ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
+                : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+            }`}
+            title="Edit habit"
+          >
+            <Pencil size={18} />
+          </button>
+          {/* Delete button - always visible */}
           <button
             onClick={() => onDelete(habit.id)}
-            className={`p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${
+            className={`p-2 rounded-lg transition-all ${
               isDark 
-                ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20' 
-                : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
+                : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
             }`}
+            title="Delete habit"
           >
-            <Trash2 size={16} />
+            <Trash2 size={18} />
           </button>
         </div>
       </div>

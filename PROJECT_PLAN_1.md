@@ -280,7 +280,18 @@ Progression examples:
 
 ---
 
-### Phase 4: Gamification
+### Phase 4: Tasks & Goals Enhancements ✅ COMPLETE
+**Features:**
+- [x] Tasks page: Group/filter tasks by linked goals
+- [x] Tasks page: View for "Unlinked tasks" (tasks without goals)
+- [x] Sub-goals: Allow creating child goals under a parent goal
+- [x] Sub-goals: Nested progress calculation (parent progress = avg of sub-goals)
+- [x] Goal hierarchy view: Expandable tree structure
+- [ ] Task bulk actions: Link multiple tasks to a goal at once (backlog)
+
+---
+
+### Phase 5: Gamification
 **Features:**
 - [ ] XP calculation system
 - [ ] Level progression
@@ -289,17 +300,6 @@ Progression examples:
 - [ ] Achievement/badge system
 - [ ] Reward milestones (custom rewards)
 - [ ] XP/level display in header
-
----
-
-### Phase 5: Tasks & Goals Enhancements
-**Features:**
-- [ ] Tasks page: Group/filter tasks by linked goals
-- [ ] Tasks page: View for "Unlinked tasks" (tasks without goals)
-- [ ] Sub-goals: Allow creating child goals under a parent goal
-- [ ] Sub-goals: Nested progress calculation (parent progress = avg of sub-goals)
-- [ ] Goal hierarchy view: Expandable tree structure
-- [ ] Task bulk actions: Link multiple tasks to a goal at once
 
 ---
 
@@ -463,7 +463,7 @@ life-rpg/
 - No notifications for now (backlog)
 - No time tracking on tasks for now (backlog)
 
-**Next Step**: Phase 1 Complete! → Start Phase 2 (Goals & Linking)
+**Next Step**: Build Phase 5 (Gamification)
 
 ---
 
