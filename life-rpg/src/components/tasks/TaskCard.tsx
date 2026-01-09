@@ -1,5 +1,6 @@
 import type { Task } from '../../types';
-import { CheckSquare, Clock, Trash2, Edit } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { Check, Clock, Trash2, Flame, Zap } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -8,100 +9,113 @@ interface TaskCardProps {
   onEdit?: (task: Task) => void;
 }
 
-export function TaskCard({ task, onToggleComplete, onDelete, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const isCompleted = task.status === 'Completed';
   
-  const getCategoryColor = (category: string) => {
+  const getCategoryBadge = (category: string) => {
     switch (category) {
-      case 'Personal': return 'bg-blue-900 text-blue-300';
-      case 'Financial': return 'bg-green-900 text-green-300';
-      case 'Professional': return 'bg-gray-900 text-gray-300';
-      default: return 'bg-gray-900 text-gray-300';
+      case 'Personal': return 'badge-blue';
+      case 'Financial': return 'badge-green';
+      case 'Professional': return 'badge-gray';
+      default: return 'badge-gray';
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    return priority === 'High' ? 'text-red-400' : 'text-yellow-400';
-  };
-
-  const getEffortColor = (effort: string) => {
-    return effort === 'High' ? 'text-orange-400' : 'text-green-400';
-  };
-
   return (
-    <div className={`bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-gray-500 transition-colors ${
-      isCompleted ? 'opacity-75' : ''
+    <div className={`group rounded-xl p-4 transition-all duration-200 ${
+      isDark 
+        ? `bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 ${isCompleted ? 'opacity-60' : ''}`
+        : `bg-white border border-slate-200 hover:shadow-md hover:border-slate-300 ${isCompleted ? 'opacity-60 bg-slate-50' : ''}`
     }`}>
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-3 flex-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start space-x-4 flex-1 min-w-0">
+          {/* Checkbox */}
           <button
             onClick={() => onToggleComplete(task.id)}
-            className={`mt-1 p-1 rounded transition-colors ${
+            className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
               isCompleted 
-                ? 'text-green-400 hover:text-green-300' 
-                : 'text-gray-400 hover:text-purple-400'
+                ? 'bg-emerald-500 border-emerald-500 shadow-sm' 
+                : isDark
+                  ? 'border-gray-600 hover:border-violet-500 hover:bg-violet-500/20'
+                  : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50'
             }`}
           >
-            <CheckSquare size={18} className={isCompleted ? 'fill-current' : ''} />
+            {isCompleted && <Check size={14} className="text-white" strokeWidth={3} />}
           </button>
           
-          <div className="flex-1">
-            <h3 className={`font-medium ${isCompleted ? 'line-through text-gray-400' : ''}`}>
+          <div className="flex-1 min-w-0">
+            {/* Title */}
+            <h3 className={`font-medium ${
+              isCompleted 
+                ? isDark ? 'line-through text-gray-500' : 'line-through text-slate-400'
+                : isDark ? 'text-white' : 'text-slate-800'
+            }`}>
               {task.title}
             </h3>
             
+            {/* Description */}
             {task.description && (
-              <p className="text-sm text-gray-400 mt-1">{task.description}</p>
+              <p className={`text-sm mt-1 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{task.description}</p>
             )}
             
-            <div className="flex items-center space-x-2 mt-2">
-              <span className={`px-2 py-1 rounded text-xs ${getCategoryColor(task.category)}`}>
+            {/* Tags */}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              {/* Category */}
+              <span className={`badge ${getCategoryBadge(task.category)}`}>
                 {task.category}
               </span>
               
-              <span className={`text-xs ${getPriorityColor(task.priority)}`}>
-                {task.priority} Priority
+              {/* Priority */}
+              <span className={`badge ${task.priority === 'High' ? 'badge-red' : 'badge-yellow'}`}>
+                {task.priority === 'High' && <Flame size={12} className="mr-1" />}
+                {task.priority}
               </span>
               
-              <span className={`text-xs ${getEffortColor(task.effort)}`}>
+              {/* Effort */}
+              <span className={`badge ${task.effort === 'High' ? 'badge-orange' : 'badge-green'}`}>
                 {task.effort} Effort
               </span>
               
-              {task.category !== 'Professional' && (
-                <span className="text-xs text-yellow-400">
+              {/* XP Badge */}
+              {task.category !== 'Professional' && task.xpValue > 0 && (
+                <span className="badge badge-yellow">
+                  <Zap size={12} className="mr-1" />
                   {task.xpValue} XP
                 </span>
               )}
               
+              {/* Recurring Badge */}
               {task.isRecurring && (
-                <span className="text-xs text-purple-400 flex items-center">
+                <span className="badge badge-purple">
                   <Clock size={12} className="mr-1" />
                   {task.recurrencePattern}
                 </span>
               )}
             </div>
             
+            {/* Carried Forward Notice */}
             {task.status === 'Carried Forward' && (
-              <div className="text-xs text-orange-400 mt-1">Carried forward from previous day</div>
+              <div className="flex items-center space-x-1.5 mt-2 text-xs text-orange-500">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <span>Carried forward from previous day</span>
+              </div>
             )}
           </div>
         </div>
         
-        <div className="flex items-center space-x-2 ml-4">
-          {onEdit && (
-            <button
-              onClick={() => onEdit(task)}
-              className="text-gray-400 hover:text-blue-400 transition-colors p-1"
-            >
-              <Edit size={14} />
-            </button>
-          )}
-          
+        {/* Actions */}
+        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onDelete(task.id)}
-            className="text-gray-400 hover:text-red-400 transition-colors p-1"
+            className={`p-2 rounded-lg transition-colors ${
+              isDark 
+                ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20' 
+                : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+            }`}
           >
-            <Trash2 size={14} />
+            <Trash2 size={16} />
           </button>
         </div>
       </div>

@@ -15,8 +15,12 @@ interface TaskContextType {
     effort?: Effort,
     isRecurring?: boolean,
     recurrencePattern?: 'daily' | 'weekly',
-    specificDays?: number[]
+    specificDays?: number[],
+    goalId?: string
   ) => Task;
+  linkTaskToGoal: (taskId: string, goalId: string) => void;
+  unlinkTaskFromGoal: (taskId: string) => void;
+  getTasksByGoal: (goalId: string) => Task[];
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   completeTask: (taskId: string) => void;
@@ -30,6 +34,20 @@ interface TaskContextType {
 
 const TaskContext = createContext<TaskContextType | null>(null);
 
+// Helper function to update a task in the array
+const updateTaskInArray = (tasks: Task[], taskId: string, updates: Partial<Task>): Task[] => {
+  return tasks.map(task => {
+    if (task.id === taskId) {
+      const updatedTask = { ...task, ...updates };
+      if ('priority' in updates || 'effort' in updates || 'category' in updates) {
+        updatedTask.xpValue = getTaskXPValue(updatedTask);
+      }
+      return updatedTask;
+    }
+    return task;
+  });
+};
+
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,11 +58,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const saveTasks = useCallback((newTasks: Task[]) => {
-    setTasks(newTasks);
-    LocalStorage.saveTasks(newTasks);
-  }, []);
-
   const createTask = useCallback((
     title: string,
     description: string = '',
@@ -53,7 +66,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     effort: Effort = 'Low',
     isRecurring: boolean = false,
     recurrencePattern?: 'daily' | 'weekly',
-    specificDays?: number[]
+    specificDays?: number[],
+    goalId?: string
   ): Task => {
     const xpValue = getTaskXPValue({
       category,
@@ -72,6 +86,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       isRecurring,
       recurrencePattern,
       specificDays,
+      goalId,
       createdAt: new Date(),
       xpValue,
     };
@@ -87,20 +102,31 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const updateTask = useCallback((taskId: string, updates: Partial<Task>) => {
     setTasks(prev => {
-      const updated = prev.map(task => {
-        if (task.id === taskId) {
-          const updatedTask = { ...task, ...updates };
-          if ('priority' in updates || 'effort' in updates || 'category' in updates) {
-            updatedTask.xpValue = getTaskXPValue(updatedTask);
-          }
-          return updatedTask;
-        }
-        return task;
-      });
+      const updated = updateTaskInArray(prev, taskId, updates);
       LocalStorage.saveTasks(updated);
       return updated;
     });
   }, []);
+
+  const linkTaskToGoal = useCallback((taskId: string, goalId: string) => {
+    setTasks(prev => {
+      const updated = updateTaskInArray(prev, taskId, { goalId });
+      LocalStorage.saveTasks(updated);
+      return updated;
+    });
+  }, []);
+
+  const unlinkTaskFromGoal = useCallback((taskId: string) => {
+    setTasks(prev => {
+      const updated = updateTaskInArray(prev, taskId, { goalId: undefined });
+      LocalStorage.saveTasks(updated);
+      return updated;
+    });
+  }, []);
+
+  const getTasksByGoal = useCallback((goalId: string): Task[] => {
+    return tasks.filter(task => task.goalId === goalId);
+  }, [tasks]);
 
   const deleteTask = useCallback((taskId: string) => {
     setTasks(prev => {
@@ -111,18 +137,26 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeTask = useCallback((taskId: string) => {
-    updateTask(taskId, {
-      status: 'Completed',
-      completedAt: new Date(),
+    setTasks(prev => {
+      const updated = updateTaskInArray(prev, taskId, {
+        status: 'Completed',
+        completedAt: new Date(),
+      });
+      LocalStorage.saveTasks(updated);
+      return updated;
     });
-  }, [updateTask]);
+  }, []);
 
   const uncompleteTask = useCallback((taskId: string) => {
-    updateTask(taskId, {
-      status: 'Pending',
-      completedAt: undefined,
+    setTasks(prev => {
+      const updated = updateTaskInArray(prev, taskId, {
+        status: 'Pending',
+        completedAt: undefined,
+      });
+      LocalStorage.saveTasks(updated);
+      return updated;
     });
-  }, [updateTask]);
+  }, []);
 
   const getTodaysTasks = useCallback((): Task[] => {
     const today = new Date();
@@ -147,7 +181,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const taskDate = new Date(task.createdAt).toDateString();
         return taskDate === todayStr;
       })
-      // Sort by priority (High first), then by effort (High first for same priority)
       .sort((a, b) => {
         const priorityOrder = { High: 0, Low: 1 };
         const effortOrder = { High: 0, Low: 1 };
@@ -208,6 +241,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       getTasksByCategory,
       getTasksByStatus,
       getTotalXP,
+      linkTaskToGoal,
+      unlinkTaskFromGoal,
+      getTasksByGoal,
     }}>
       {children}
     </TaskContext.Provider>

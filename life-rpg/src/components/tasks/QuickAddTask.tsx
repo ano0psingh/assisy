@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { TaskCategory, Priority, Effort } from '../../types';
+import { useTheme } from '../../context/ThemeContext';
 import { Plus, X } from 'lucide-react';
 
 interface QuickAddTaskProps {
@@ -12,6 +13,8 @@ interface QuickAddTaskProps {
 }
 
 export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('Personal');
@@ -29,7 +32,6 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
       effort,
     });
 
-    // Reset form
     setTitle('');
     setCategory('Personal');
     setPriority('High');
@@ -46,9 +48,9 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+        className="btn-primary px-4 py-2 rounded-xl flex items-center space-x-2"
       >
-        <Plus size={16} />
+        <Plus size={18} />
         <span>Quick Add</span>
       </button>
     );
@@ -56,14 +58,22 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
 
   return (
     <div className="relative">
-      <div className="absolute top-full right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
-        <form onSubmit={handleSubmit} className="p-4 space-y-3">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium">Quick Add Task</h3>
+      <div className={`absolute top-full right-0 mt-3 w-80 rounded-2xl shadow-elevated z-50 overflow-hidden animate-slide-down ${
+        isDark 
+          ? 'bg-[#12121a] border border-white/10' 
+          : 'bg-white border border-slate-200'
+      }`}>
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Quick Add Task</h3>
             <button
               type="button"
               onClick={handleCancel}
-              className="text-gray-400 hover:text-white transition-colors"
+              className={`p-1.5 rounded-lg transition-colors ${
+                isDark 
+                  ? 'text-gray-400 hover:text-white hover:bg-white/10' 
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
             >
               <X size={16} />
             </button>
@@ -74,7 +84,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Task title..."
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+            className="w-full px-4 py-2.5 input rounded-xl text-sm"
             autoFocus
             required
           />
@@ -83,7 +93,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as TaskCategory)}
-              className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 input rounded-xl text-xs"
             >
               <option value="Personal">Personal</option>
               <option value="Financial">Financial</option>
@@ -93,7 +103,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as Priority)}
-              className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 input rounded-xl text-xs"
             >
               <option value="High">High Pri</option>
               <option value="Low">Low Pri</option>
@@ -102,26 +112,26 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
             <select
               value={effort}
               onChange={(e) => setEffort(e.target.value as Effort)}
-              className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 input rounded-xl text-xs"
             >
               <option value="High">High Effort</option>
               <option value="Low">Low Effort</option>
             </select>
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-2 pt-2">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-3 py-1 text-gray-400 hover:text-white transition-colors text-sm"
+              className={`px-4 py-2 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-slate-500 hover:text-slate-700'}`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors text-sm"
+              className="btn-primary px-4 py-2 rounded-xl text-sm"
             >
-              Add
+              Add Task
             </button>
           </div>
         </form>
