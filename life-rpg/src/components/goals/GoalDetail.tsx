@@ -5,6 +5,7 @@ import { X, Target, Plus, Link2, Unlink, CheckSquare } from 'lucide-react';
 
 interface GoalDetailProps {
   goal: Goal;
+  progress: number;
   allTasks: Task[];
   linkedTasks: Task[];
   onClose: () => void;
@@ -16,6 +17,7 @@ interface GoalDetailProps {
 
 export function GoalDetail({ 
   goal, 
+  progress,
   allTasks, 
   linkedTasks, 
   onClose, 
@@ -148,17 +150,17 @@ export function GoalDetail({
                 Progress
               </label>
               <span className={`text-sm font-semibold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
-                {goal.progress}%
+                {progress}%
               </span>
             </div>
             <div className={`h-3 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
               <div 
                 className={`h-full rounded-full transition-all duration-500 ${
-                  goal.progress === 100 
+                  progress === 100 
                     ? 'bg-gradient-to-r from-emerald-500 to-green-500' 
                     : 'bg-gradient-to-r from-violet-500 to-purple-500'
                 }`}
-                style={{ width: `${goal.progress}%` }}
+                style={{ width: `${progress}%` }}
               />
             </div>
             <p className={`text-sm mt-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>

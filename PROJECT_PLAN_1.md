@@ -61,7 +61,9 @@ LOW PRIORITY     |  Major Projects     |  Fill-ins
 - category: Personal | Financial | Professional
 - status: Active | Completed | Archived
 - linkedTaskIds[]
-- progress (calculated % of completed tasks)
+- parentGoalId (optional, for sub-goals)
+- subGoalIds[] (optional, list of child goal IDs)
+- progress (calculated % of completed tasks OR avg of sub-goal progress)
 - createdAt, completedAt
 
 ### 3. Daily Log / Check-in
@@ -267,14 +269,14 @@ Progression examples:
 
 ---
 
-### Phase 3: Daily Check-in & Habits
+### Phase 3: Daily Check-in & Habits ✅ COMPLETE
 **Features:**
-- [ ] Daily check-in form (structured, optional fields)
-- [ ] Habit definitions (name, tracking type, category)
-- [ ] Habit logging with duration
-- [ ] Streak calculation
-- [ ] Daily log history view
-- [ ] Habit contribution graph
+- [x] Daily check-in form (structured, optional fields)
+- [x] Habit definitions (name, tracking type, category)
+- [x] Habit logging with duration/count/boolean
+- [x] Streak calculation (consecutive days)
+- [x] Daily log history view
+- [x] Habit contribution graph (GitHub-style)
 
 ---
 
@@ -290,7 +292,18 @@ Progression examples:
 
 ---
 
-### Phase 5: MIC Tracker
+### Phase 5: Tasks & Goals Enhancements
+**Features:**
+- [ ] Tasks page: Group/filter tasks by linked goals
+- [ ] Tasks page: View for "Unlinked tasks" (tasks without goals)
+- [ ] Sub-goals: Allow creating child goals under a parent goal
+- [ ] Sub-goals: Nested progress calculation (parent progress = avg of sub-goals)
+- [ ] Goal hierarchy view: Expandable tree structure
+- [ ] Task bulk actions: Link multiple tasks to a goal at once
+
+---
+
+### Phase 6: MIC Tracker
 **Features:**
 - [ ] Work log entry CRUD
 - [ ] Proof links management
@@ -300,7 +313,7 @@ Progression examples:
 
 ---
 
-### Phase 6: Entertainment & Extras
+### Phase 7: Entertainment & Extras
 **Features:**
 - [ ] Watchlist CRUD
 - [ ] Type categorization (movie, anime, show, game)
@@ -310,7 +323,7 @@ Progression examples:
 
 ---
 
-### Phase 7: Backend Migration
+### Phase 8: Backend Migration
 **Features:**
 - [ ] User authentication
 - [ ] Database setup (PostgreSQL or similar)
