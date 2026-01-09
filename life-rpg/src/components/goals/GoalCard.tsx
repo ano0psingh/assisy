@@ -4,6 +4,7 @@ import { Target, Trash2, CheckCircle, Archive, RotateCcw, ChevronRight } from 'l
 
 interface GoalCardProps {
   goal: Goal;
+  progress: number;
   linkedTasksCount: number;
   completedTasksCount: number;
   onComplete: (goalId: string) => void;
@@ -15,6 +16,7 @@ interface GoalCardProps {
 
 export function GoalCard({ 
   goal, 
+  progress,
   linkedTasksCount, 
   completedTasksCount,
   onComplete, 
@@ -85,17 +87,17 @@ export function GoalCard({
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>Progress</span>
                 <span className={`font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
-                  {goal.progress}%
+                  {progress}%
                 </span>
               </div>
               <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
                 <div 
                   className={`h-full rounded-full transition-all duration-500 ${
-                    goal.progress === 100 
+                    progress === 100 
                       ? 'bg-gradient-to-r from-emerald-500 to-green-500' 
                       : 'bg-gradient-to-r from-violet-500 to-purple-500'
                   }`}
-                  style={{ width: `${goal.progress}%` }}
+                  style={{ width: `${progress}%` }}
                 />
               </div>
             </div>

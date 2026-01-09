@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Target, Plus, Filter } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useGoalContext } from '../context/GoalContext';
@@ -23,7 +23,7 @@ export function Goals() {
     reactivateGoal,
     linkTaskToGoal,
     unlinkTaskFromGoal,
-    updateGoalProgress
+    calculateGoalProgress,
   } = useGoalContext();
   const { tasks } = useTaskContext();
   
@@ -32,18 +32,10 @@ export function Goals() {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
 
-  // Update goal progress whenever tasks change
-  useEffect(() => {
-    const completedTaskIds = tasks
-      .filter(t => t.status === 'Completed')
-      .map(t => t.id);
-    
-    goals.forEach(goal => {
-      if (goal.linkedTaskIds.length > 0) {
-        updateGoalProgress(goal.id, completedTaskIds);
-      }
-    });
-  }, [tasks, goals, updateGoalProgress]);
+  // Get completed task IDs for progress calculation
+  const completedTaskIds = tasks
+    .filter(t => t.status === 'Completed')
+    .map(t => t.id);
 
   const filteredGoals = goals
     .filter(goal => {
@@ -73,6 +65,12 @@ export function Goals() {
     return tasks.filter(task => 
       goal.linkedTaskIds.includes(task.id) && task.status === 'Completed'
     ).length;
+  };
+
+  // Calculate progress on-the-fly for display
+  const getGoalProgress = (goal: Goal) => {
+    if (goal.status === 'Completed') return 100;
+    return calculateGoalProgress(goal, completedTaskIds);
   };
 
   const activeGoalsCount = goals.filter(g => g.status === 'Active').length;
@@ -223,6 +221,7 @@ export function Goals() {
             >
               <GoalCard
                 goal={goal}
+                progress={getGoalProgress(goal)}
                 linkedTasksCount={goal.linkedTaskIds.length}
                 completedTasksCount={getCompletedTasksCount(goal)}
                 onComplete={completeGoal}
@@ -248,6 +247,7 @@ export function Goals() {
         <GoalDetail
           isOpen={!!selectedGoal}
           goal={selectedGoal}
+          progress={getGoalProgress(selectedGoal)}
           allTasks={tasks}
           linkedTasks={getLinkedTasks(selectedGoal)}
           onClose={() => setSelectedGoal(null)}

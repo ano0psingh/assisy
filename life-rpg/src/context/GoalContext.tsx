@@ -22,11 +22,20 @@ interface GoalContextType {
   getGoalsByCategory: (category: TaskCategory) => Goal[];
   getGoalsByStatus: (status: GoalStatus) => Goal[];
   getActiveGoals: () => Goal[];
-  calculateGoalProgress: (goalId: string, completedTaskIds: string[]) => number;
-  updateGoalProgress: (goalId: string, completedTaskIds: string[]) => void;
+  calculateGoalProgress: (goal: Goal, completedTaskIds: string[]) => number;
 }
 
 const GoalContext = createContext<GoalContextType | null>(null);
+
+// Helper function to update a goal in the array
+const updateGoalInArray = (goals: Goal[], goalId: string, updates: Partial<Goal>): Goal[] => {
+  return goals.map(goal => {
+    if (goal.id === goalId) {
+      return { ...goal, ...updates };
+    }
+    return goal;
+  });
+};
 
 export function GoalProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -36,11 +45,6 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     const savedGoals = LocalStorage.getGoals();
     setGoals(savedGoals);
     setLoading(false);
-  }, []);
-
-  const saveGoals = useCallback((newGoals: Goal[]) => {
-    setGoals(newGoals);
-    LocalStorage.saveGoals(newGoals);
   }, []);
 
   const createGoal = useCallback((
@@ -70,12 +74,7 @@ export function GoalProvider({ children }: { children: ReactNode }) {
 
   const updateGoal = useCallback((goalId: string, updates: Partial<Goal>) => {
     setGoals(prev => {
-      const updated = prev.map(goal => {
-        if (goal.id === goalId) {
-          return { ...goal, ...updates };
-        }
-        return goal;
-      });
+      const updated = updateGoalInArray(prev, goalId, updates);
       LocalStorage.saveGoals(updated);
       return updated;
     });
@@ -90,25 +89,37 @@ export function GoalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeGoal = useCallback((goalId: string) => {
-    updateGoal(goalId, {
-      status: 'Completed',
-      completedAt: new Date(),
-      progress: 100,
+    setGoals(prev => {
+      const updated = updateGoalInArray(prev, goalId, {
+        status: 'Completed',
+        completedAt: new Date(),
+        progress: 100,
+      });
+      LocalStorage.saveGoals(updated);
+      return updated;
     });
-  }, [updateGoal]);
+  }, []);
 
   const archiveGoal = useCallback((goalId: string) => {
-    updateGoal(goalId, {
-      status: 'Archived',
+    setGoals(prev => {
+      const updated = updateGoalInArray(prev, goalId, {
+        status: 'Archived',
+      });
+      LocalStorage.saveGoals(updated);
+      return updated;
     });
-  }, [updateGoal]);
+  }, []);
 
   const reactivateGoal = useCallback((goalId: string) => {
-    updateGoal(goalId, {
-      status: 'Active',
-      completedAt: undefined,
+    setGoals(prev => {
+      const updated = updateGoalInArray(prev, goalId, {
+        status: 'Active',
+        completedAt: undefined,
+      });
+      LocalStorage.saveGoals(updated);
+      return updated;
     });
-  }, [updateGoal]);
+  }, []);
 
   const linkTaskToGoal = useCallback((goalId: string, taskId: string) => {
     setGoals(prev => {
@@ -158,21 +169,16 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     return goals.filter(goal => goal.status === 'Active');
   }, [goals]);
 
-  const calculateGoalProgress = useCallback((goalId: string, completedTaskIds: string[]): number => {
-    const goal = goals.find(g => g.id === goalId);
-    if (!goal || goal.linkedTaskIds.length === 0) return 0;
+  // Pure function to calculate progress - doesn't trigger state updates
+  const calculateGoalProgress = useCallback((goal: Goal, completedTaskIds: string[]): number => {
+    if (goal.linkedTaskIds.length === 0) return 0;
     
     const completedLinkedTasks = goal.linkedTaskIds.filter(taskId => 
       completedTaskIds.includes(taskId)
     );
     
     return Math.round((completedLinkedTasks.length / goal.linkedTaskIds.length) * 100);
-  }, [goals]);
-
-  const updateGoalProgress = useCallback((goalId: string, completedTaskIds: string[]) => {
-    const progress = calculateGoalProgress(goalId, completedTaskIds);
-    updateGoal(goalId, { progress });
-  }, [calculateGoalProgress, updateGoal]);
+  }, []);
 
   return (
     <GoalContext.Provider value={{
@@ -191,7 +197,6 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       getGoalsByStatus,
       getActiveGoals,
       calculateGoalProgress,
-      updateGoalProgress,
     }}>
       {children}
     </GoalContext.Provider>
