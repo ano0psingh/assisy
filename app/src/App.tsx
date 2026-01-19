@@ -6,12 +6,10 @@ import { Goals } from './pages/Goals';
 import { Habits } from './pages/Habits';
 import { Achievements } from './pages/Achievements';
 import { Stats } from './pages/Stats';
-import { QuoteOfTheDay } from './components/common/QuoteOfTheDay';
 
 function App() {
   return (
     <BrowserRouter>
-      <QuoteOfTheDay />
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />

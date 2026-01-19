@@ -4,15 +4,19 @@ import { useGoalContext } from '../context/GoalContext';
 import { useTheme } from '../context/ThemeContext';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
-import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2 } from 'lucide-react';
 import type { Task, TaskCategory, Goal } from '../types';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
-type ViewMode = 'list' | 'grouped';
+type ViewMode = 'list' | 'grouped' | 'matrix';
 
 export function Tasks() {
-  const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask } = useTaskContext();
+  const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, getTodaysTasks } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
+  
+  // Get tasks already in today to determine which show the "Add to Today" button
+  const todaysTasks = getTodaysTasks();
+  const todayTaskIds = new Set(todaysTasks.map(t => t.id));
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -21,6 +25,7 @@ export function Tasks() {
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set(['unlinked']));
+  const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
 
   const filteredTasks = tasks
     .filter(task => {
@@ -142,8 +147,9 @@ export function Tasks() {
     isRecurring: boolean;
     recurrencePattern?: 'daily' | 'weekly';
     goalId?: string;
+    dueDate?: Date;
   }) => {
-    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, undefined, data.goalId);
+    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, undefined, data.goalId, data.dueDate);
     
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
@@ -161,6 +167,7 @@ export function Tasks() {
     isRecurring: boolean;
     recurrencePattern?: 'daily' | 'weekly';
     goalId?: string;
+    dueDate?: Date;
   }) => {
     if (!editingTask) return;
 
@@ -187,6 +194,7 @@ export function Tasks() {
       isRecurring: data.isRecurring,
       recurrencePattern: data.recurrencePattern,
       goalId: data.goalId,
+      dueDate: data.dueDate,
     });
     
     setEditingTask(null);
@@ -304,6 +312,18 @@ export function Tasks() {
                 <FolderKanban size={14} />
                 <span>By Goal</span>
               </button>
+              <button
+                onClick={() => setViewMode('matrix')}
+                className={`px-3 py-1.5 flex items-center space-x-1.5 text-xs font-medium transition-all ${
+                  viewMode === 'matrix'
+                    ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                    : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                }`}
+                title="Priority/Effort Matrix"
+              >
+                <Grid2X2 size={14} />
+                <span>Matrix</span>
+              </button>
             </div>
           </div>
           <span className={`text-sm ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
@@ -323,18 +343,200 @@ export function Tasks() {
           </button>
         </div>
       ) : viewMode === 'list' ? (
-        /* List View */
-        <div className="space-y-3">
-          {filteredTasks.map((task, index) => (
-            <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 30}ms` }}>
-              <TaskCard 
-                task={task} 
-                onToggleComplete={handleToggleComplete} 
-                onDelete={deleteTask}
-                onEdit={handleEdit}
-              />
+        /* List View - Separate pending and completed */
+        (() => {
+          const pendingTasks = filteredTasks.filter(t => t.status !== 'Completed');
+          const completedTasks = filteredTasks.filter(t => t.status === 'Completed');
+          
+          return (
+            <div className="space-y-4">
+              {/* Pending Tasks */}
+              {pendingTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingTasks.map((task, index) => (
+                    <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 30}ms` }}>
+                      <TaskCard 
+                        task={task} 
+                        onToggleComplete={handleToggleComplete} 
+                        onDelete={deleteTask}
+                        onEdit={handleEdit}
+                        onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                        showTodayActions={!todayTaskIds.has(task.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : completedTasks.length > 0 ? (
+                <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-emerald-500" />
+                  <p className="font-medium">All caught up!</p>
+                  <p className="text-sm mt-1">No pending tasks</p>
+                </div>
+              ) : null}
+              
+              {/* Completed Tasks - Collapsible */}
+              {completedTasks.length > 0 && (
+                <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-emerald-500/20' : 'border-emerald-200'}`}>
+                  <button
+                    onClick={() => setIsCompletedExpanded(!isCompletedExpanded)}
+                    className={`w-full p-4 flex items-center justify-between transition-colors ${
+                      isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {isCompletedExpanded ? (
+                        <ChevronDown className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                      ) : (
+                        <ChevronRight className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                      )}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'
+                      }`}>
+                        <CheckCircle2 className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                      </div>
+                      <div className="text-left">
+                        <h3 className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                          Completed Tasks
+                        </h3>
+                        <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                          {completedTasks.length} task{completedTasks.length !== 1 ? 's' : ''} done
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+                      isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                    }`}>
+                      {isCompletedExpanded ? 'Hide' : 'Show'}
+                    </span>
+                  </button>
+                  
+                  {isCompletedExpanded && (
+                    <div className={`p-4 pt-0 space-y-2 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+                      <div className="pt-3 space-y-2">
+                        {completedTasks.map((task, index) => (
+                          <div 
+                            key={task.id} 
+                            className="animate-fade-in"
+                            style={{ animationDelay: `${index * 20}ms` }}
+                          >
+                            <TaskCard 
+                              task={task} 
+                              onToggleComplete={handleToggleComplete} 
+                              onDelete={deleteTask}
+                              onEdit={handleEdit}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          ))}
+          );
+        })()
+      ) : viewMode === 'matrix' ? (
+        /* 2x2 Priority/Effort Matrix View */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Quadrant 1: High Priority, High Effort - DO FIRST (Important & Hard) */}
+          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-red-500/30' : 'border-red-200'}`}>
+            <div className={`p-4 border-b ${isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-100'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
+                    <Flame className={`w-4 h-4 ${isDark ? 'text-red-400' : 'text-red-500'}`} />
+                  </div>
+                  <h3 className={`font-semibold ${isDark ? 'text-red-400' : 'text-red-700'}`}>Do First</h3>
+                </div>
+                <span className={`text-xs ${isDark ? 'text-red-400/70' : 'text-red-600'}`}>High Priority • High Effort</span>
+              </div>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-red-600/70'}`}>Critical tasks that need focus time</p>
+            </div>
+            <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
+              {filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').length === 0 ? (
+                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+              ) : (
+                filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quadrant 2: High Priority, Low Effort - QUICK WINS */}
+          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-emerald-500/30' : 'border-emerald-200'}`}>
+            <div className={`p-4 border-b ${isDark ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-100'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
+                    <Zap className={`w-4 h-4 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                  </div>
+                  <h3 className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Quick Wins</h3>
+                </div>
+                <span className={`text-xs ${isDark ? 'text-emerald-400/70' : 'text-emerald-600'}`}>High Priority • Low Effort</span>
+              </div>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-emerald-600/70'}`}>Do these first for momentum!</p>
+            </div>
+            <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
+              {filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').length === 0 ? (
+                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+              ) : (
+                filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quadrant 3: Low Priority, High Effort - SCHEDULE */}
+          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-amber-500/30' : 'border-amber-200'}`}>
+            <div className={`p-4 border-b ${isDark ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-100'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+                    <CalendarClock className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                  </div>
+                  <h3 className={`font-semibold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>Schedule</h3>
+                </div>
+                <span className={`text-xs ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>Low Priority • High Effort</span>
+              </div>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-amber-600/70'}`}>Plan dedicated time for these</p>
+            </div>
+            <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
+              {filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').length === 0 ? (
+                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+              ) : (
+                filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quadrant 4: Low Priority, Low Effort - FILL TIME */}
+          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-blue-500/30' : 'border-blue-200'}`}>
+            <div className={`p-4 border-b ${isDark ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-50 border-blue-100'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-blue-500/20' : 'bg-blue-100'}`}>
+                    <Coffee className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
+                  </div>
+                  <h3 className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>Fill Time</h3>
+                </div>
+                <span className={`text-xs ${isDark ? 'text-blue-400/70' : 'text-blue-600'}`}>Low Priority • Low Effort</span>
+              </div>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-blue-600/70'}`}>Do when you have spare moments</p>
+            </div>
+            <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
+              {filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').length === 0 ? (
+                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+              ) : (
+                filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                ))
+              )}
+            </div>
+          </div>
         </div>
       ) : (
         /* Grouped by Goal View */
@@ -453,6 +655,8 @@ export function Tasks() {
                               onToggleComplete={handleToggleComplete} 
                               onDelete={deleteTask}
                               onEdit={handleEdit}
+                              onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                              showTodayActions={!todayTaskIds.has(task.id)}
                             />
                           </div>
                         ))}
@@ -527,6 +731,8 @@ export function Tasks() {
                                     onToggleComplete={handleToggleComplete} 
                                     onDelete={deleteTask}
                                     onEdit={handleEdit}
+                                    onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                                    showTodayActions={!todayTaskIds.has(task.id)}
                                   />
                                 </div>
                               ))}

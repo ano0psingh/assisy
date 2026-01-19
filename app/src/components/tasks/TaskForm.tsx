@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Task, TaskCategory, Priority, Effort, Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { X, Sparkles, Target, Pencil } from 'lucide-react';
+import { X, Sparkles, Target, Pencil, Calendar } from 'lucide-react';
 
 interface TaskFormProps {
   onSubmit: (data: {
@@ -13,6 +13,7 @@ interface TaskFormProps {
     isRecurring: boolean;
     recurrencePattern?: 'daily' | 'weekly';
     goalId?: string;
+    dueDate?: Date;
   }) => void;
   onCancel: () => void;
   isOpen: boolean;
@@ -31,6 +32,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask }
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState<'daily' | 'weekly'>('daily');
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
+  const [dueDate, setDueDate] = useState<string>('');
 
   // Populate form when editing
   useEffect(() => {
@@ -43,6 +45,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask }
       setIsRecurring(editingTask.isRecurring);
       setRecurrencePattern(editingTask.recurrencePattern || 'daily');
       setSelectedGoalId(editingTask.goalId || '');
+      setDueDate(editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : '');
     } else {
       resetForm();
     }
@@ -57,6 +60,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask }
     setIsRecurring(false);
     setRecurrencePattern('daily');
     setSelectedGoalId('');
+    setDueDate('');
   };
 
   // Filter active goals for the selected category
@@ -75,6 +79,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask }
       isRecurring,
       recurrencePattern: isRecurring ? recurrencePattern : undefined,
       goalId: selectedGoalId || undefined,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
     });
 
     resetForm();
@@ -163,6 +168,23 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask }
               className="w-full px-4 py-3 input rounded-xl resize-none"
               rows={3}
               placeholder="Add some details (optional)"
+            />
+          </div>
+
+          {/* Due Date */}
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+              <span className="flex items-center space-x-2">
+                <Calendar size={14} />
+                <span>Due Date (optional)</span>
+              </span>
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full px-4 py-3 input rounded-xl"
             />
           </div>
 

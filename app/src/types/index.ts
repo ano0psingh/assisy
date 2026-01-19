@@ -20,6 +20,8 @@ export interface Task {
   completedAt?: Date;
   dueDate?: Date;
   xpValue: number;
+  isFocusedToday?: boolean; // Manually added to Today's Tasks
+  focusedDate?: string; // Date when task was focused (YYYY-MM-DD)
 }
 
 export type GoalStatus = 'Active' | 'Completed' | 'Archived';
