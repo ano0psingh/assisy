@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
-import { useProjectContext, PROJECT_COLORS, DEFAULT_TAGS } from '../context/ProjectContext';
+import { useProjectContext, PROJECT_COLORS } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
-  Plus, FolderKanban, ChevronRight, ChevronDown, MoreVertical, 
-  Pencil, Trash2, Archive, Play, Pause, CheckCircle2, Circle,
-  Clock, Calendar, Tag, X, ListTodo, Layers, ArrowRight,
-  CalendarPlus, Timer, ChevronLeft
+  Plus, FolderKanban, ChevronRight, 
+  Pencil, Trash2, Play, CheckCircle2, Circle,
+  X, ListTodo, Layers,
+  CalendarPlus, ChevronLeft
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
 
@@ -16,7 +16,6 @@ export function Projects() {
   const {
     projects,
     subProjects,
-    projectTasks,
     loading,
     createProject,
     updateProject,
@@ -33,24 +32,29 @@ export function Projects() {
     getTasksBySubProject,
     getSubTasks,
     updateTaskStatus,
-    updateSubProjectStatus,
     addTaskToToday,
     removeTaskFromToday,
-    getTaskProgress,
-    logTime,
-    addTagToTask,
-    removeTagFromTask,
   } = useProjectContext();
 
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   // View state
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [_viewMode, _setViewMode] = useState<ViewMode>('list'); // Reserved for future board view
   const [detailView, setDetailView] = useState<DetailView>('none');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [selectedSubProject, setSelectedSubProject] = useState<SubProject | null>(null);
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string | null>(null);
+
+  // Derive selected project/subproject from context to stay in sync
+  const selectedProject = useMemo(() => 
+    selectedProjectId ? projects.find(p => p.id === selectedProjectId) || null : null,
+    [selectedProjectId, projects]
+  );
+  
+  const selectedSubProject = useMemo(() => 
+    selectedSubProjectId ? subProjects.find(sp => sp.id === selectedSubProjectId) || null : null,
+    [selectedSubProjectId, subProjects]
+  );
 
   // Form states
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
@@ -58,11 +62,16 @@ export function Projects() {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingSubProject, setEditingSubProject] = useState<SubProject | null>(null);
+  
+  // Filter states
+  const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatus | 'All'>('All');
+  const [subProjectStatusFilter, setSubProjectStatusFilter] = useState<WorkItemStatus | 'All'>('All');
+  const [taskStatusFilter, setTaskStatusFilter] = useState<WorkItemStatus | 'All'>('All');
   const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
 
   // Form data
-  const [projectForm, setProjectForm] = useState({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '' });
-  const [subProjectForm, setSubProjectForm] = useState({ title: '', description: '', deadline: '' });
+  const [projectForm, setProjectForm] = useState({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' as ProjectStatus });
+  const [subProjectForm, setSubProjectForm] = useState({ title: '', description: '', deadline: '', status: 'Backlog' as WorkItemStatus });
   const [taskForm, setTaskForm] = useState({ 
     title: '', 
     description: '', 
@@ -72,53 +81,43 @@ export function Projects() {
     parentTaskId: '',
   });
 
-  // Filter active projects
-  const activeProjects = useMemo(() => 
-    projects.filter(p => p.status === 'Active').sort((a, b) => 
+  // Filter projects by status
+  const filteredProjects = useMemo(() => {
+    let filtered = projects;
+    if (projectStatusFilter !== 'All') {
+      filtered = projects.filter(p => p.status === projectStatusFilter);
+    }
+    return filtered.sort((a, b) => 
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    ), [projects]
-  );
-
-  const completedProjects = useMemo(() =>
-    projects.filter(p => p.status === 'Completed' || p.status === 'On Hold'), [projects]
-  );
-
-  // Toggle project expansion
-  const toggleProject = (projectId: string) => {
-    setExpandedProjects(prev => {
-      const next = new Set(prev);
-      if (next.has(projectId)) {
-        next.delete(projectId);
-      } else {
-        next.add(projectId);
-      }
-      return next;
-    });
-  };
+    );
+  }, [projects, projectStatusFilter]);
+  
 
   // Open project detail
   const openProjectDetail = (project: Project) => {
-    setSelectedProject(project);
-    setSelectedSubProject(null);
+    setSelectedProjectId(project.id);
+    setSelectedSubProjectId(null);
     setDetailView('project');
+    setSubProjectStatusFilter('All'); // Reset sub-project filter when opening a project
   };
 
   // Open sub-project detail
   const openSubProjectDetail = (subProject: SubProject) => {
-    setSelectedSubProject(subProject);
+    setSelectedSubProjectId(subProject.id);
     setDetailView('subproject');
+    setTaskStatusFilter('All'); // Reset filter when switching sub-projects
   };
 
   // Go back from sub-project to project
   const goBackToProject = () => {
-    setSelectedSubProject(null);
+    setSelectedSubProjectId(null);
     setDetailView('project');
   };
 
   // Close detail view
   const closeDetailView = () => {
-    setSelectedProject(null);
-    setSelectedSubProject(null);
+    setSelectedProjectId(null);
+    setSelectedSubProjectId(null);
     setDetailView('none');
   };
 
@@ -131,7 +130,7 @@ export function Projects() {
       projectForm.color,
       projectForm.deadline ? new Date(projectForm.deadline) : undefined
     );
-    setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '' });
+    setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
     setIsProjectFormOpen(false);
   };
 
@@ -142,9 +141,10 @@ export function Projects() {
       description: projectForm.description,
       color: projectForm.color,
       deadline: projectForm.deadline ? new Date(projectForm.deadline) : undefined,
+      status: projectForm.status,
     });
     setEditingProject(null);
-    setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '' });
+    setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
     setIsProjectFormOpen(false);
   };
 
@@ -155,6 +155,7 @@ export function Projects() {
       description: project.description || '',
       color: project.color,
       deadline: project.deadline ? new Date(project.deadline).toISOString().split('T')[0] : '',
+      status: project.status,
     });
     setIsProjectFormOpen(true);
   };
@@ -168,7 +169,7 @@ export function Projects() {
       subProjectForm.description,
       subProjectForm.deadline ? new Date(subProjectForm.deadline) : undefined
     );
-    setSubProjectForm({ title: '', description: '', deadline: '' });
+    setSubProjectForm({ title: '', description: '', deadline: '', status: 'Backlog' });
     setIsSubProjectFormOpen(false);
   };
 
@@ -178,9 +179,10 @@ export function Projects() {
       title: subProjectForm.title,
       description: subProjectForm.description,
       deadline: subProjectForm.deadline ? new Date(subProjectForm.deadline) : undefined,
+      status: subProjectForm.status,
     });
     setEditingSubProject(null);
-    setSubProjectForm({ title: '', description: '', deadline: '' });
+    setSubProjectForm({ title: '', description: '', deadline: '', status: 'Backlog' });
     setIsSubProjectFormOpen(false);
   };
 
@@ -190,6 +192,7 @@ export function Projects() {
       title: subProject.title,
       description: subProject.description || '',
       deadline: subProject.deadline ? new Date(subProject.deadline).toISOString().split('T')[0] : '',
+      status: subProject.status,
     });
     setIsSubProjectFormOpen(true);
   };
@@ -277,7 +280,6 @@ export function Projects() {
   // Render task item with sub-tasks
   const renderTask = (task: ProjectTask, depth = 0) => {
     const subTasks = getSubTasks(task.id);
-    const progress = getTaskProgress(task.id);
     const today = new Date().toISOString().split('T')[0];
     const isAddedToToday = task.isFocusedToday && task.focusedDate === today;
 
@@ -396,13 +398,13 @@ export function Projects() {
         <div>
           <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Projects</h1>
           <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-            {activeProjects.length} active project{activeProjects.length !== 1 ? 's' : ''}
+            {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
           </p>
         </div>
         <button
           onClick={() => {
             setEditingProject(null);
-            setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '' });
+            setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
             setIsProjectFormOpen(true);
           }}
           className="btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2"
@@ -415,23 +417,62 @@ export function Projects() {
       <div className="flex gap-6">
         {/* Main Content - Project List or Detail View */}
         <div className={`flex-1 ${detailView !== 'none' ? 'hidden lg:block lg:w-1/3' : ''}`}>
-          {/* Active Projects */}
-          {activeProjects.length === 0 ? (
+          {/* Project Status Filter */}
+          <div className="mb-4">
+            <div className={`flex items-center space-x-2`}>
+              <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Filter:</span>
+              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {(['All', 'Active', 'Completed', 'On Hold'] as const).map(status => (
+                  <button
+                    key={status}
+                    onClick={() => setProjectStatusFilter(status)}
+                    className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                      projectStatusFilter === status
+                        ? status === 'All' 
+                          ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                          : status === 'Active' 
+                            ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                            : status === 'Completed'
+                              ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                              : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Projects List */}
+          {filteredProjects.length === 0 ? (
             <div className="card rounded-2xl p-12 text-center">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
                 <FolderKanban className={`w-8 h-8 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
               </div>
-              <h3 className={`font-semibold text-lg mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>No projects yet</h3>
+              <h3 className={`font-semibold text-lg mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                {projects.length === 0 ? 'No projects yet' : `No ${projectStatusFilter.toLowerCase()} projects`}
+              </h3>
               <p className={`text-sm mb-4 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-                Create your first project to start organizing your work
+                {projects.length === 0 
+                  ? 'Create your first project to start organizing your work'
+                  : `Try selecting a different filter to see more projects`}
               </p>
+              {projectStatusFilter !== 'All' && (
+                <button
+                  onClick={() => setProjectStatusFilter('All')}
+                  className="text-violet-500 text-sm hover:underline"
+                >
+                  Show all projects
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
-              {activeProjects.map(project => {
+              {filteredProjects.map(project => {
                 const projectSubProjects = getSubProjectsByProject(project.id);
                 const progress = getProjectProgress(project.id);
-                const isExpanded = expandedProjects.has(project.id);
 
                 return (
                   <div key={project.id} className="card rounded-2xl overflow-hidden">
@@ -459,6 +500,17 @@ export function Projects() {
                         </div>
 
                         <div className="flex items-center space-x-3">
+                          {/* Status Badge */}
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            project.status === 'Active' 
+                              ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                              : project.status === 'Completed'
+                                ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                                : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                          }`}>
+                            {project.status}
+                          </span>
+                          
                           {/* Progress */}
                           <div className="flex items-center space-x-2">
                             <div className={`w-20 h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
@@ -482,45 +534,11 @@ export function Projects() {
             </div>
           )}
 
-          {/* Completed/On Hold Projects */}
-          {completedProjects.length > 0 && (
-            <div className="mt-6">
-              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                Completed / On Hold
-              </h3>
-              <div className="space-y-2 opacity-60">
-                {completedProjects.map(project => (
-                  <div
-                    key={project.id}
-                    className={`card rounded-xl p-3 cursor-pointer ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}
-                    onClick={() => openProjectDetail(project)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: `${project.color}20` }}
-                      >
-                        <FolderKanban size={16} style={{ color: project.color }} />
-                      </div>
-                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>{project.title}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        project.status === 'Completed' 
-                          ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                          : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
-                      }`}>
-                        {project.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Detail Panel */}
         {detailView !== 'none' && (
-          <div className={`flex-1 ${detailView !== 'none' ? 'lg:w-2/3' : ''}`}>
+          <div className="flex-1 lg:w-2/3">
             <div className="card rounded-2xl overflow-hidden h-full">
               {/* Detail Header */}
               <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
@@ -639,12 +657,34 @@ export function Projects() {
                 {/* Project Detail - Show Sub-Projects */}
                 {detailView === 'project' && selectedProject && (
                   <div className="space-y-3">
+                    {/* Sub-Project Filter */}
+                    <div className="flex items-center space-x-2 mb-4">
+                      <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Filter:</span>
+                      <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                        {(['All', 'Backlog', 'In Progress', 'Done'] as const).map(status => (
+                          <button
+                            key={status}
+                            onClick={() => setSubProjectStatusFilter(status)}
+                            className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                              subProjectStatusFilter === status
+                                ? status === 'All' 
+                                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                                  : getStatusColor(status as WorkItemStatus)
+                                : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
                     <div className="flex items-center justify-between mb-4">
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Sub-Projects</h3>
                       <button
                         onClick={() => {
                           setEditingSubProject(null);
-                          setSubProjectForm({ title: '', description: '', deadline: '' });
+                          setSubProjectForm({ title: '', description: '', deadline: '', status: 'Backlog' });
                           setIsSubProjectFormOpen(true);
                         }}
                         className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
@@ -656,13 +696,37 @@ export function Projects() {
                       </button>
                     </div>
 
-                    {getSubProjectsByProject(selectedProject.id).length === 0 ? (
-                      <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                        <Layers className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                        <p>No sub-projects yet</p>
-                      </div>
-                    ) : (
-                      getSubProjectsByProject(selectedProject.id).map(subProject => {
+                    {(() => {
+                      const allSubProjects = getSubProjectsByProject(selectedProject.id);
+                      const filteredSubProjects = subProjectStatusFilter === 'All'
+                        ? allSubProjects
+                        : allSubProjects.filter(sp => sp.status === subProjectStatusFilter);
+                      
+                      if (allSubProjects.length === 0) {
+                        return (
+                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                            <Layers className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                            <p>No sub-projects yet</p>
+                          </div>
+                        );
+                      }
+                      
+                      if (filteredSubProjects.length === 0) {
+                        return (
+                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                            <Layers className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                            <p>No {subProjectStatusFilter.toLowerCase()} sub-projects</p>
+                            <button 
+                              onClick={() => setSubProjectStatusFilter('All')}
+                              className="text-violet-500 text-sm mt-2 hover:underline"
+                            >
+                              Show all sub-projects
+                            </button>
+                          </div>
+                        );
+                      }
+                      
+                      return filteredSubProjects.map(subProject => {
                         const progress = getSubProjectProgress(subProject.id);
                         const tasks = getTasksBySubProject(subProject.id);
 
@@ -707,25 +771,27 @@ export function Projects() {
                             </div>
                           </div>
                         );
-                      })
-                    )}
+                      });
+                    })()}
                   </div>
                 )}
 
                 {/* Sub-Project Detail - Show Tasks */}
                 {detailView === 'subproject' && selectedSubProject && (
                   <div className="space-y-3">
-                    {/* Status Selector */}
+                    {/* Task Status Filter */}
                     <div className="flex items-center space-x-2 mb-4">
-                      <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status:</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Filter:</span>
                       <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-                        {(['Backlog', 'In Progress', 'Done'] as WorkItemStatus[]).map(status => (
+                        {(['All', 'Backlog', 'In Progress', 'Done'] as const).map(status => (
                           <button
                             key={status}
-                            onClick={() => updateSubProjectStatus(selectedSubProject.id, status)}
+                            onClick={() => setTaskStatusFilter(status)}
                             className={`px-3 py-1.5 text-xs font-medium transition-all ${
-                              selectedSubProject.status === status
-                                ? getStatusColor(status)
+                              taskStatusFilter === status
+                                ? status === 'All' 
+                                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                                  : getStatusColor(status as WorkItemStatus)
                                 : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
                             }`}
                           >
@@ -752,16 +818,42 @@ export function Projects() {
                       </button>
                     </div>
 
-                    {getTasksBySubProject(selectedSubProject.id).length === 0 ? (
-                      <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                        <ListTodo className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                        <p>No tasks yet</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        {getTasksBySubProject(selectedSubProject.id).map(task => renderTask(task))}
-                      </div>
-                    )}
+                    {(() => {
+                      const allTasks = getTasksBySubProject(selectedSubProject.id);
+                      const filteredTasks = taskStatusFilter === 'All' 
+                        ? allTasks 
+                        : allTasks.filter(t => t.status === taskStatusFilter);
+                      
+                      if (allTasks.length === 0) {
+                        return (
+                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                            <ListTodo className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                            <p>No tasks yet</p>
+                          </div>
+                        );
+                      }
+                      
+                      if (filteredTasks.length === 0) {
+                        return (
+                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                            <ListTodo className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                            <p>No {taskStatusFilter.toLowerCase()} tasks</p>
+                            <button 
+                              onClick={() => setTaskStatusFilter('All')}
+                              className="text-violet-500 text-sm mt-2 hover:underline"
+                            >
+                              Show all tasks
+                            </button>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="space-y-1">
+                          {filteredTasks.map(task => renderTask(task))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -831,6 +923,33 @@ export function Projects() {
                   }`}
                 />
               </div>
+
+              {/* Status - only show when editing */}
+              {editingProject && (
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
+                  <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                    {(['Active', 'Completed', 'On Hold'] as ProjectStatus[]).map(status => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setProjectForm(prev => ({ ...prev, status }))}
+                        className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${
+                          projectForm.status === status
+                            ? status === 'Active' 
+                              ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                              : status === 'Completed'
+                                ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                                : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                            : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
@@ -898,6 +1017,29 @@ export function Projects() {
                   }`}
                 />
               </div>
+
+              {/* Status - only show when editing */}
+              {editingSubProject && (
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
+                  <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                    {(['Backlog', 'In Progress', 'Done'] as WorkItemStatus[]).map(status => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setSubProjectForm(prev => ({ ...prev, status }))}
+                        className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${
+                          subProjectForm.status === status
+                            ? getStatusColor(status)
+                            : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-3 mt-6">
