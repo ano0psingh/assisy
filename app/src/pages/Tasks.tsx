@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
+import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
-import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2 } from 'lucide-react';
-import type { Task, TaskCategory, Goal } from '../types';
+import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X, Layers } from 'lucide-react';
+import type { Task, TaskCategory, Goal, Project, SubProject } from '../types';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
 type ViewMode = 'list' | 'grouped' | 'matrix';
@@ -13,6 +14,7 @@ type ViewMode = 'list' | 'grouped' | 'matrix';
 export function Tasks() {
   const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, getTodaysTasks } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
+  const { projects, subProjects, createProjectTask, getSubProjectsByProject } = useProjectContext();
   
   // Get tasks already in today to determine which show the "Add to Today" button
   const todaysTasks = getTodaysTasks();
@@ -26,6 +28,55 @@ export function Tasks() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set(['unlinked']));
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
+  
+  // Move to Project modal state
+  const [isMoveToProjectOpen, setIsMoveToProjectOpen] = useState(false);
+  const [taskToMove, setTaskToMove] = useState<Task | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>('');
+
+  // Get active projects for the move modal
+  const activeProjects = useMemo(() => 
+    projects.filter(p => p.status === 'Active'), 
+    [projects]
+  );
+
+  // Get sub-projects for selected project
+  const availableSubProjects = useMemo(() => 
+    selectedProjectId ? getSubProjectsByProject(selectedProjectId) : [],
+    [selectedProjectId, getSubProjectsByProject]
+  );
+
+  // Handle opening move to project modal
+  const handleOpenMoveToProject = (task: Task) => {
+    setTaskToMove(task);
+    setSelectedProjectId('');
+    setSelectedSubProjectId('');
+    setIsMoveToProjectOpen(true);
+  };
+
+  // Handle moving task to project
+  const handleMoveToProject = () => {
+    if (!taskToMove || !selectedProjectId || !selectedSubProjectId) return;
+    
+    // Create new project task
+    createProjectTask(
+      selectedSubProjectId,
+      taskToMove.title,
+      taskToMove.description,
+      taskToMove.priority === 'High' ? 'High' : 'Medium',
+      taskToMove.effort === 'High' ? 'High' : 'Medium',
+      undefined,
+      taskToMove.dueDate
+    );
+    
+    // Delete original task
+    deleteTask(taskToMove.id);
+    
+    // Close modal
+    setIsMoveToProjectOpen(false);
+    setTaskToMove(null);
+  };
 
   const filteredTasks = tasks
     .filter(task => {
@@ -361,6 +412,7 @@ export function Tasks() {
                         onDelete={deleteTask}
                         onEdit={handleEdit}
                         onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                        onMoveToProject={handleOpenMoveToProject}
                         showTodayActions={!todayTaskIds.has(task.id)}
                       />
                     </div>
@@ -457,7 +509,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -482,7 +534,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -507,7 +559,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -532,7 +584,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -656,6 +708,7 @@ export function Tasks() {
                               onDelete={deleteTask}
                               onEdit={handleEdit}
                               onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                              onMoveToProject={handleOpenMoveToProject}
                               showTodayActions={!todayTaskIds.has(task.id)}
                             />
                           </div>
@@ -732,6 +785,7 @@ export function Tasks() {
                                     onDelete={deleteTask}
                                     onEdit={handleEdit}
                                     onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                                    onMoveToProject={handleOpenMoveToProject}
                                     showTodayActions={!todayTaskIds.has(task.id)}
                                   />
                                 </div>
@@ -756,6 +810,120 @@ export function Tasks() {
         goals={goals}
         editingTask={editingTask}
       />
+
+      {/* Move to Project Modal */}
+      {isMoveToProjectOpen && taskToMove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className={`w-full max-w-md rounded-2xl p-6 ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                Move to Project
+              </h2>
+              <button
+                onClick={() => setIsMoveToProjectOpen(false)}
+                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Task being moved */}
+            <div className={`p-3 rounded-xl mb-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-200'}`}>
+              <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                {taskToMove.title}
+              </p>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                {taskToMove.category} • {taskToMove.priority} Priority
+              </p>
+            </div>
+
+            {activeProjects.length === 0 ? (
+              <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                <FolderKanban className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No active projects</p>
+                <p className="text-xs mt-1">Create a project first to move tasks</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Project Selection */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                    Select Project
+                  </label>
+                  <select
+                    value={selectedProjectId}
+                    onChange={(e) => {
+                      setSelectedProjectId(e.target.value);
+                      setSelectedSubProjectId('');
+                    }}
+                    className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
+                      isDark 
+                        ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
+                        : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                    }`}
+                  >
+                    <option value="">Choose a project...</option>
+                    {activeProjects.map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sub-Project Selection */}
+                {selectedProjectId && (
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                      Select Sub-Project
+                    </label>
+                    {availableSubProjects.length === 0 ? (
+                      <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                        No sub-projects in this project. Create one first.
+                      </p>
+                    ) : (
+                      <select
+                        value={selectedSubProjectId}
+                        onChange={(e) => setSelectedSubProjectId(e.target.value)}
+                        className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
+                          isDark 
+                            ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
+                            : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                        }`}
+                      >
+                        <option value="">Choose a sub-project...</option>
+                        {availableSubProjects.map(sp => (
+                          <option key={sp.id} value={sp.id}>
+                            {sp.title}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setIsMoveToProjectOpen(false)}
+                className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMoveToProject}
+                disabled={!selectedProjectId || !selectedSubProjectId}
+                className={`btn-primary px-4 py-2 rounded-xl ${
+                  (!selectedProjectId || !selectedSubProjectId) ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                Move Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

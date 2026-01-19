@@ -1,10 +1,12 @@
-# Life RPG - Personal Productivity System
+# Assisy - Personal Productivity System
 
 ## Project Overview
 
-A personal productivity website designed as an RPG-style life management system where Kage tracks tasks, goals, habits, and levels up across different skill trees.
+A personal productivity website designed as an RPG-style life management system where Kage tracks tasks, goals, habits, projects, and levels up across different skill trees.
 
 **Primary Use Case**: Daily task tracking - first thing opened at work login to plan the day, checked at logout to review and prepare for next day.
+
+**Note**: Project was renamed from "Life RPG" to "Assisy" on January 19, 2026.
 
 ---
 
@@ -92,7 +94,46 @@ LOW PRIORITY     |  Major Projects     |  Fill-ins
 - lastCompletedDate
 - xpPerUnit (e.g., 1 XP per minute of meditation)
 
-### 5. Skill Trees
+### 5. Projects (Professional Work Management)
+**Project Properties:**
+- id (uuid)
+- title (string)
+- description (string, optional - for ideas/notes)
+- status: Active | Completed | On Hold
+- color (hex color for visual identification)
+- tags[] (array of strings)
+- subProjectIds[] (links to sub-projects)
+- createdAt, updatedAt
+- deadline (optional)
+
+**Sub-Project Properties:**
+- id (uuid)
+- projectId (parent project)
+- title (string)
+- description (string, optional)
+- status: Backlog | In Progress | Done
+- tags[]
+- taskIds[] (links to project tasks)
+- createdAt, updatedAt
+- deadline (optional)
+
+**Project Task Properties:**
+- id (uuid)
+- title (string)
+- description (string, optional)
+- status: Backlog | In Progress | Done
+- projectId, subProjectId
+- parentTaskId (optional, for sub-tasks)
+- subTaskIds[] (array of child task IDs)
+- tags[] (e.g., bug, feature, urgent)
+- priority: High | Medium | Low
+- effort: High | Medium | Low
+- timeSpent (minutes, optional)
+- isFocusedToday (boolean for daily integration)
+- createdAt, updatedAt, completedAt
+- deadline (optional)
+
+### 6. Skill Trees
 **Categories:**
 - 🏃 Health & Fitness (exercise, water, etc.)
 - 📚 Learning & Growth (reading, courses, etc.)
@@ -287,19 +328,57 @@ Progression examples:
 - [x] Sub-goals: Allow creating child goals under a parent goal
 - [x] Sub-goals: Nested progress calculation (parent progress = avg of sub-goals)
 - [x] Goal hierarchy view: Expandable tree structure
+- [x] Editable tasks, goals, and habits (edit buttons on all cards)
+- [x] Due dates on tasks
+- [x] Completed tasks collapsible section (in Tasks page)
+- [x] Task linking from goal detail modal (one task → one goal rule)
 - [ ] Task bulk actions: Link multiple tasks to a goal at once (backlog)
+
+---
+
+### Phase 4.5: Daily Workflow Enhancements ✅ COMPLETE
+**Features:**
+- [x] "Plan Your Day" modal - shows on first visit each day
+- [x] "Add to Today" button on tasks
+- [x] "Remove from Today" for manually added tasks
+- [x] Work-focused daily view (Professional tasks first, expanded)
+- [x] Collapsible category sections (Personal/Financial collapsed by default)
+- [x] Weekly Work Review widget on Dashboard
+  - Shows completed tasks this week
+  - Shows backlog/pending tasks
+  - Carried forward count
+- [x] Quote of the Day as dashboard card (removed popup)
+
+---
+
+### Phase 4.6: Projects (Professional Work Management) ✅ COMPLETE
+**Features:**
+- [x] Project CRUD with colors and descriptions
+- [x] Sub-Project CRUD with status (Backlog → In Progress → Done)
+- [x] Project Task CRUD with:
+  - Status (Backlog → In Progress → Done)
+  - Priority (High/Medium/Low)
+  - Effort (High/Medium/Low)
+  - Tags (bug, feature, urgent, etc.)
+  - Optional time tracking
+  - Due dates
+- [x] Sub-Tasks (unlimited nesting, task → sub-task hierarchy)
+- [x] Project navigation page with progress bars
+- [x] "Add to Today" for project tasks (integrate with Dashboard)
+- [x] "Move to Project" - move regular tasks into a project/sub-project
+- [x] Project tasks in Daily Dashboard with full actions (edit, delete, status change)
 
 ---
 
 ### Phase 5: Gamification
 **Features:**
-- [ ] XP calculation system
-- [ ] Level progression
+- [x] XP calculation system (implemented in Phase 1)
+- [x] Level progression (100 XP per level)
+- [x] XP/level display in header
+- [x] Title unlocks (Initiate → Legendary Achiever)
 - [ ] Skill trees with visual representation
-- [ ] Title unlocks
 - [ ] Achievement/badge system
 - [ ] Reward milestones (custom rewards)
-- [ ] XP/level display in header
 
 ---
 
@@ -446,25 +525,39 @@ life-rpg/
 ## Session Log
 
 **Date**: January 9, 2026
+- Initial project planning
+- Core concept and entities defined
+- Started Phase 1 (Core Daily Driver)
 
-**Discussed:**
-- Core concept and entities
-- Gamification system (XP, skill trees, achievements, titles)
-- Phased development approach
-- Tech stack decisions
-- UI/UX preferences (dark, gaming-inspired, minimalist)
-- Task matrix hybrid approach
+**Date**: January 10-18, 2026
+- Completed Phases 1, 2, 3, 4
+- Built core task, goal, habit tracking
+- Added sub-goals with hierarchical progress
+- Implemented daily check-in and habit tracking
 
-**Decisions Made:**
-- Start with Phase 1 (Core Daily Driver)
-- Desktop-first, mobile later
-- Local storage first, backend later
-- Dark theme with gaming aesthetic
-- No notifications for now (backlog)
-- No time tracking on tasks for now (backlog)
+**Date**: January 19, 2026
+- **Renamed project from "Life RPG" to "Assisy"**
+- Built Phase 4.5: Daily Workflow Enhancements
+  - Plan Your Day modal
+  - Work-focused daily view
+  - Weekly Work Review widget
+- Built Phase 4.6: Projects (Professional Work Management)
+  - Full project → sub-project → task hierarchy
+  - Sub-tasks with unlimited nesting
+  - Tags, time tracking, status management
+  - Integration with Daily Dashboard
+  - Move tasks to projects feature
 
-**Next Step**: Build Phase 5 (Gamification)
+**Current State:**
+- Phases 1-4.6 Complete
+- App folder renamed from `life-rpg` to `app`
+- Running on localhost:3000
+
+**Next Steps:**
+- Phase 5: Skill Trees & Achievement badges
+- Phase 6: MIC Tracker
+- Phase 7: Backend Migration
 
 ---
 
-*This document will be updated as we progress through phases.*
+*Last updated: January 19, 2026*

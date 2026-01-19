@@ -1,7 +1,9 @@
-# Life RPG - Backlog & Future Ideas
+# Assisy - Backlog & Future Ideas
 
 ## How to Use This File
 Add ideas here as they come up. When starting a new phase, pull relevant items into the main plan.
+
+**Note**: Project renamed from "Life RPG" to "Assisy" on January 19, 2026.
 
 ---
 
@@ -114,13 +116,57 @@ Add ideas here as they come up. When starting a new phase, pull relevant items i
 - [x] Stats page with category breakdowns
 - [x] Placeholder pages for Goals, Habits, Achievements
 
+### Phase 2 (January 10-12, 2026)
+- [x] Goal CRUD (create, read, update, delete)
+- [x] Link tasks to goals
+- [x] Goal progress calculation
+- [x] Goals dashboard with filters and progress bars
+- [x] Goal detail modal with task management
+- [x] Complete/Archive/Reactivate goals
+
+### Phase 3 (January 13-15, 2026)
+- [x] Daily check-in form
+- [x] Habit definitions (name, tracking type, category)
+- [x] Habit logging with duration/count/boolean
+- [x] Streak calculation
+- [x] Daily log history view
+- [x] Habit contribution graph (GitHub-style)
+
+### Phase 4 (January 16-18, 2026)
+- [x] Tasks page: Group/filter by goals
+- [x] Sub-goals: Parent-child hierarchy
+- [x] Sub-goals: Nested progress calculation
+- [x] Goal hierarchy view with expandable tree
+- [x] Editable tasks, goals, habits (edit buttons)
+- [x] Due dates on tasks
+- [x] Completed tasks collapsible section
+
+### Phase 4.5: Daily Workflow (January 19, 2026)
+- [x] "Plan Your Day" modal on first daily visit
+- [x] "Add to Today" / "Remove from Today" buttons
+- [x] Work-focused daily view (Professional first)
+- [x] Collapsible category sections
+- [x] Weekly Work Review widget
+- [x] Quote of the Day as card (removed popup)
+
+### Phase 4.6: Projects (January 19, 2026)
+- [x] Project CRUD with colors
+- [x] Sub-Project CRUD with 3 statuses (Backlog/In Progress/Done)
+- [x] Project Tasks with tags, priority, effort
+- [x] Sub-Tasks (unlimited nesting)
+- [x] "Add to Today" for project tasks
+- [x] "Move to Project" for regular tasks
+- [x] Project tasks in Dashboard with full actions
+- [x] Projects navigation page
+
 ---
 
 ## Notes
 - Keep gamification fun, not stressful
 - The app should reduce friction, not add it
 - If a feature feels like a chore to use, reconsider it
+- Project renamed to "Assisy" - folder is now `/assisy/app/`
 
 ---
 
-*Last updated: January 9, 2026 - Phase 1 Complete!*
+*Last updated: January 19, 2026 - Phases 1-4.6 Complete!*

@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
+import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
-import { CheckSquare, Plus, Zap, TrendingUp, Clock, Sparkles, Quote, Flame, Gamepad2, Coffee, ListPlus, Briefcase, User, DollarSign, ChevronDown, ChevronRight, Calendar, RotateCcw, CheckCircle2, ListTodo } from 'lucide-react';
+import { CheckSquare, Plus, Zap, TrendingUp, Clock, Sparkles, Quote, Flame, Gamepad2, Coffee, ListPlus, Briefcase, User, DollarSign, ChevronDown, ChevronRight, Calendar, RotateCcw, CheckCircle2, ListTodo, FolderKanban, Circle, Play, Pencil, Trash2, CalendarMinus, ExternalLink } from 'lucide-react';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { getQuoteOfTheDay } from '../data/quotes';
-import type { Task, TaskCategory } from '../types';
+import type { Task, TaskCategory, ProjectTask, WorkItemStatus } from '../types';
 
 // XP Animation Component
 function XPAnimation({ xp, onComplete }: { xp: number; onComplete: () => void }) {
@@ -47,6 +48,15 @@ export function Dashboard() {
   } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
   const { habits } = useHabitContext();
+  const { 
+    getTodaysProjectTasks, 
+    updateTaskStatus, 
+    updateProjectTask,
+    deleteProjectTask,
+    removeTaskFromToday: removeProjectTaskFromToday,
+    getProject,
+    getSubProject,
+  } = useProjectContext();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -58,6 +68,27 @@ export function Dashboard() {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<TaskCategory>>(
     new Set(['Personal', 'Financial'])
   );
+  const [isProjectTasksCollapsed, setIsProjectTasksCollapsed] = useState(false);
+  const [editingProjectTask, setEditingProjectTask] = useState<ProjectTask | null>(null);
+  const [projectTaskForm, setProjectTaskForm] = useState({ title: '', description: '' });
+
+  // Get today's project tasks
+  const todaysProjectTasks = getTodaysProjectTasks();
+
+  // Handle editing project task
+  const handleEditProjectTask = (task: ProjectTask) => {
+    setEditingProjectTask(task);
+    setProjectTaskForm({ title: task.title, description: task.description || '' });
+  };
+
+  const handleSaveProjectTask = () => {
+    if (!editingProjectTask || !projectTaskForm.title.trim()) return;
+    updateProjectTask(editingProjectTask.id, {
+      title: projectTaskForm.title,
+      description: projectTaskForm.description,
+    });
+    setEditingProjectTask(null);
+  };
 
   // Get top habit streaks for the widget
   const topStreaks = habits
@@ -420,6 +451,195 @@ export function Dashboard() {
           ) : (
             <div className="space-y-4">
               {/* Professional/Work Tasks - Always first and expanded */}
+              {/* Project Tasks Section */}
+              {todaysProjectTasks.length > 0 && (
+                <div>
+                  {/* Project Tasks Header */}
+                  <button
+                    onClick={() => setIsProjectTasksCollapsed(!isProjectTasksCollapsed)}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors mb-2 ${
+                      isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {isProjectTasksCollapsed ? (
+                        <ChevronRight className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+                      ) : (
+                        <ChevronDown className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+                      )}
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
+                        <FolderKanban className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+                      </div>
+                      <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        Projects
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                        {todaysProjectTasks.length}
+                      </span>
+                    </div>
+                    <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                      {todaysProjectTasks.filter(t => t.status === 'Done').length}/{todaysProjectTasks.length} done
+                    </span>
+                  </button>
+                  
+                  {/* Project Tasks List */}
+                  {!isProjectTasksCollapsed && (
+                    <div className="space-y-2 ml-7">
+                      {todaysProjectTasks.map((task, index) => {
+                        const project = getProject(task.projectId);
+                        const subProject = getSubProject(task.subProjectId);
+                        
+                        return (
+                          <div 
+                            key={task.id} 
+                            className="animate-fade-in"
+                            style={{ animationDelay: `${index * 30}ms` }}
+                          >
+                            <div className={`group p-4 rounded-xl transition-all ${
+                              isDark 
+                                ? 'bg-white/5 hover:bg-white/10 border border-white/10' 
+                                : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'
+                            } ${task.status === 'Done' ? 'opacity-60' : ''}`}>
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start space-x-3 flex-1 min-w-0">
+                                  {/* Status Toggle */}
+                                  <button
+                                    onClick={() => {
+                                      const statusOrder: WorkItemStatus[] = ['Backlog', 'In Progress', 'Done'];
+                                      const currentIndex = statusOrder.indexOf(task.status);
+                                      const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+                                      updateTaskStatus(task.id, nextStatus);
+                                    }}
+                                    className={`mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                                      task.status === 'Done' 
+                                        ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-500'
+                                        : task.status === 'In Progress'
+                                        ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-500'
+                                        : isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-slate-200 text-slate-500'
+                                    }`}
+                                    title={`Status: ${task.status} (click to change)`}
+                                  >
+                                    {task.status === 'Done' ? (
+                                      <CheckCircle2 size={14} />
+                                    ) : task.status === 'In Progress' ? (
+                                      <Play size={10} fill="currentColor" />
+                                    ) : (
+                                      <Circle size={14} />
+                                    )}
+                                  </button>
+                                  
+                                  <div className="flex-1 min-w-0">
+                                    {/* Title - clickable to edit */}
+                                    <h3 
+                                      onClick={() => handleEditProjectTask(task)}
+                                      className={`font-medium cursor-pointer hover:opacity-80 ${
+                                        task.status === 'Done' 
+                                          ? isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through'
+                                          : isDark ? 'text-white' : 'text-slate-800'
+                                      }`}
+                                    >
+                                      {task.title}
+                                    </h3>
+                                    
+                                    {/* Description */}
+                                    {task.description && (
+                                      <p className={`text-sm mt-1 line-clamp-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                                        {task.description}
+                                      </p>
+                                    )}
+                                    
+                                    {/* Tags and Info */}
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                      {/* Project path */}
+                                      <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                                        {project?.title} → {subProject?.title}
+                                      </span>
+                                      
+                                      {/* Status badge */}
+                                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                        task.status === 'Done' 
+                                          ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                                          : task.status === 'In Progress'
+                                          ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                                          : isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-slate-100 text-slate-500'
+                                      }`}>
+                                        {task.status}
+                                      </span>
+                                      
+                                      {/* Priority badge */}
+                                      {task.priority === 'High' && (
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
+                                          <Flame size={10} className="inline mr-1" />
+                                          High
+                                        </span>
+                                      )}
+                                      
+                                      {/* Tags */}
+                                      {task.tags?.slice(0, 2).map(tag => (
+                                        <span key={tag} className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-white/10 text-gray-400' : 'bg-slate-100 text-slate-500'}`}>
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Action Buttons */}
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {/* Remove from Today */}
+                                  <button
+                                    onClick={() => removeProjectTaskFromToday(task.id)}
+                                    className={`p-2 rounded-lg transition-colors ${
+                                      isDark 
+                                        ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-500/20' 
+                                        : 'text-slate-500 hover:text-orange-600 hover:bg-orange-50'
+                                    }`}
+                                    title="Remove from Today"
+                                  >
+                                    <CalendarMinus size={18} />
+                                  </button>
+                                  
+                                  {/* Edit */}
+                                  <button
+                                    onClick={() => handleEditProjectTask(task)}
+                                    className={`p-2 rounded-lg transition-colors ${
+                                      isDark 
+                                        ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
+                                        : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+                                    }`}
+                                    title="Edit task"
+                                  >
+                                    <Pencil size={18} />
+                                  </button>
+                                  
+                                  {/* Delete */}
+                                  <button
+                                    onClick={() => {
+                                      if (confirm('Delete this task?')) {
+                                        deleteProjectTask(task.id);
+                                      }
+                                    }}
+                                    className={`p-2 rounded-lg transition-colors ${
+                                      isDark 
+                                        ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
+                                        : 'text-slate-500 hover:text-red-500 hover:bg-red-50'
+                                    }`}
+                                    title="Delete task"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Regular Task Categories */}
               {(() => {
                 const workTasks = todaysTasks.filter(t => t.category === 'Professional');
                 const personalTasks = todaysTasks.filter(t => t.category === 'Personal');
@@ -661,6 +881,102 @@ export function Dashboard() {
         onAddToToday={addToToday}
         onRemoveFromToday={removeFromToday}
       />
+
+      {/* Edit Project Task Modal */}
+      {editingProjectTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className={`w-full max-w-md rounded-2xl p-6 ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
+            <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              Edit Task
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={projectTaskForm.title}
+                  onChange={(e) => setProjectTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
+                    isDark 
+                      ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                  }`}
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                  Description / Notes
+                </label>
+                <textarea
+                  value={projectTaskForm.description}
+                  onChange={(e) => setProjectTaskForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors resize-none ${
+                    isDark 
+                      ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                  }`}
+                  placeholder="Add notes..."
+                />
+              </div>
+
+              {/* Status Selector */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                  Status
+                </label>
+                <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                  {(['Backlog', 'In Progress', 'Done'] as const).map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => updateTaskStatus(editingProjectTask.id, status)}
+                      className={`flex-1 px-3 py-2 text-xs font-medium transition-all ${
+                        editingProjectTask.status === status
+                          ? status === 'Done'
+                            ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                            : status === 'In Progress'
+                            ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                            : isDark ? 'bg-gray-500/20 text-gray-300' : 'bg-slate-100 text-slate-700'
+                          : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Project Info (read-only) */}
+              <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Project</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                  {getProject(editingProjectTask.projectId)?.title} → {getSubProject(editingProjectTask.subProjectId)?.title}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setEditingProjectTask(null)}
+                className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProjectTask}
+                className="btn-primary px-4 py-2 rounded-xl"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

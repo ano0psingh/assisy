@@ -68,3 +68,55 @@ export interface Habit {
   lastCompletedDate?: Date;
   xpPerUnit: number;
 }
+
+// ============ Project Management Types ============
+
+export type ProjectStatus = 'Active' | 'Completed' | 'On Hold';
+export type WorkItemStatus = 'Backlog' | 'In Progress' | 'Done';
+
+export interface Project {
+  id: string;
+  title: string;
+  description?: string; // For ideas/notes
+  status: ProjectStatus;
+  color: string; // Visual identifier (hex color)
+  tags: string[];
+  subProjectIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  deadline?: Date;
+}
+
+export interface SubProject {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  status: WorkItemStatus;
+  tags: string[];
+  taskIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  deadline?: Date;
+}
+
+export interface ProjectTask {
+  id: string;
+  title: string;
+  description?: string;
+  status: WorkItemStatus;
+  projectId: string;
+  subProjectId: string;
+  parentTaskId?: string; // For sub-tasks
+  subTaskIds: string[];
+  tags: string[];
+  priority: 'High' | 'Medium' | 'Low';
+  effort: 'High' | 'Medium' | 'Low';
+  timeSpent?: number; // In minutes, optional
+  isFocusedToday?: boolean; // For daily dashboard integration
+  focusedDate?: string; // Date when focused (YYYY-MM-DD)
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
+  deadline?: Date;
+}

@@ -1,6 +1,6 @@
 import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Check, Clock, Trash2, Flame, Zap, Pencil, RotateCcw, CalendarDays, CalendarPlus, CalendarMinus } from 'lucide-react';
+import { Check, Clock, Trash2, Flame, Zap, Pencil, RotateCcw, CalendarDays, CalendarPlus, CalendarMinus, FolderInput } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -9,6 +9,7 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onAddToToday?: (taskId: string) => void;
   onRemoveFromToday?: (taskId: string) => void;
+  onMoveToProject?: (task: Task) => void; // Move task to a project
   showTodayActions?: boolean; // Whether to show add/remove from today buttons
   isInTodayView?: boolean; // Whether this card is shown in Today's Tasks section
 }
@@ -59,6 +60,7 @@ export function TaskCard({
   onEdit, 
   onAddToToday,
   onRemoveFromToday,
+  onMoveToProject,
   showTodayActions = false,
   isInTodayView = false,
 }: TaskCardProps) {
@@ -240,6 +242,21 @@ export function TaskCard({
               title="Remove from Today's Tasks"
             >
               <CalendarMinus size={18} />
+            </button>
+          )}
+          
+          {/* Move to Project button */}
+          {onMoveToProject && !isCompleted && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onMoveToProject(task); }}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark 
+                  ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
+                  : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+              }`}
+              title="Move to Project"
+            >
+              <FolderInput size={18} />
             </button>
           )}
           
