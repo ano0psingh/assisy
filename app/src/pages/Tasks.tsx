@@ -3,6 +3,7 @@ import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
+import { useGamification } from '../context/GamificationContext';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X, Layers } from 'lucide-react';
@@ -15,6 +16,7 @@ export function Tasks() {
   const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, getTodaysTasks } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
   const { projects, subProjects, createProjectTask, getSubProjectsByProject } = useProjectContext();
+  const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements } = useGamification();
   
   // Get tasks already in today to determine which show the "Add to Today" button
   const todaysTasks = getTodaysTasks();
@@ -268,6 +270,12 @@ export function Tasks() {
       uncompleteTask(taskId);
     } else {
       completeTask(taskId);
+      // Record in gamification system
+      if (task) {
+        recordTaskCompletion(task.category, task.xpValue);
+        updateStreak();
+        setTimeout(() => checkAndUnlockAchievements(), 100);
+      }
     }
   };
 

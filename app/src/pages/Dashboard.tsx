@@ -4,7 +4,8 @@ import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
-import { CheckSquare, Plus, Zap, TrendingUp, Clock, Sparkles, Quote, Flame, Gamepad2, Coffee, ListPlus, Briefcase, User, DollarSign, ChevronDown, ChevronRight, Calendar, RotateCcw, CheckCircle2, ListTodo, FolderKanban, Circle, Play, Pencil, Trash2, CalendarMinus, ExternalLink } from 'lucide-react';
+import { useGamification } from '../context/GamificationContext';
+import { CheckSquare, Plus, Zap, TrendingUp, Clock, Sparkles, Quote, Flame, Gamepad2, Coffee, ListPlus, Briefcase, User, DollarSign, ChevronDown, ChevronRight, Calendar, RotateCcw, CheckCircle2, ListTodo, FolderKanban, Circle, Play, Pencil, Trash2, CalendarMinus, Trophy, Crown } from 'lucide-react';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
@@ -58,6 +59,17 @@ export function Dashboard() {
     getSubProject,
   } = useProjectContext();
   const { theme } = useTheme();
+  const { 
+    recordTaskCompletion, 
+    updateStreak, 
+    checkAndUnlockAchievements,
+    recentUnlocks,
+    clearRecentUnlocks,
+    getTotalLevel,
+    getTitle,
+    userStats,
+    getUnlockedAchievements,
+  } = useGamification();
   const isDark = theme === 'dark';
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -121,7 +133,17 @@ export function Dashboard() {
       setXpAnimation({ show: true, xp: task.xpValue });
     }
     completeTask(taskId);
-  }, [tasks, completeTask, uncompleteTask]);
+    
+    // Record in gamification system
+    if (task) {
+      recordTaskCompletion(task.category, task.xpValue);
+      updateStreak();
+      // Check for new achievements after a small delay
+      setTimeout(() => {
+        checkAndUnlockAchievements();
+      }, 100);
+    }
+  }, [tasks, completeTask, uncompleteTask, recordTaskCompletion, updateStreak, checkAndUnlockAchievements]);
 
   // Get week boundaries for weekly review
   const getWeekBounds = useCallback(() => {
@@ -322,42 +344,52 @@ export function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Level & Title */}
+        <div className={`card card-hover rounded-2xl p-5 ${isDark ? 'bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20' : 'bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
+              <Crown className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            </div>
+          </div>
+          <div className={`stat-number text-2xl ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>Level {getTotalLevel()}</div>
+          <p className={`text-sm mt-1 ${isDark ? 'text-violet-400/70' : 'text-violet-600/70'}`}>{getTitle()}</p>
+        </div>
+
         {/* Today's Tasks */}
-        <div className="card card-hover rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
+        <div className="card card-hover rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-2">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-blue-500/20' : 'bg-blue-50'}`}>
               <CheckSquare className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
             </div>
             {carriedForwardCount > 0 && (
-              <span className="badge badge-orange">{carriedForwardCount} carried</span>
+              <span className="badge badge-orange text-xs">{carriedForwardCount}</span>
             )}
           </div>
-          <div className={`stat-number text-3xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{todaysTasks.length}</div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks for today</p>
+          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{todaysTasks.length}</div>
+          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks today</p>
         </div>
 
-        {/* Total XP */}
-        <div className={`card card-hover rounded-2xl p-6 ${isDark ? 'bg-amber-500/10 border-amber-500/20' : 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'}`}>
-          <div className="flex items-center justify-between mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
-              <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+        {/* Current Streak */}
+        <div className="card card-hover rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-orange-500/20' : 'bg-orange-50'}`}>
+              <Flame className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
             </div>
-            <span className="badge badge-yellow">+{todaysTasks.reduce((sum, t) => sum + t.xpValue, 0)} potential</span>
           </div>
-          <div className={`stat-number text-3xl ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-amber-400/60' : 'text-amber-600/70'}`}>Experience points</p>
+          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{userStats.currentStreak}</div>
+          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Day streak</p>
         </div>
 
-        {/* Completed */}
-        <div className="card card-hover rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}>
-              <TrendingUp className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+        {/* Achievements */}
+        <div className="card card-hover rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-50'}`}>
+              <Trophy className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
             </div>
           </div>
-          <div className={`stat-number text-3xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{completedTasks.length}</div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks completed</p>
+          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{getUnlockedAchievements().length}</div>
+          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Achievements</p>
         </div>
       </div>
 
@@ -870,6 +902,47 @@ export function Dashboard() {
           xp={xpAnimation.xp} 
           onComplete={() => setXpAnimation({ show: false, xp: 0 })} 
         />
+      )}
+
+      {/* Achievement Unlock Notification */}
+      {recentUnlocks.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 space-y-2 animate-slide-up">
+          {recentUnlocks.map((achievement) => (
+            <div 
+              key={achievement.id}
+              className={`flex items-center space-x-3 p-4 rounded-2xl shadow-elevated max-w-sm ${
+                isDark 
+                  ? 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30' 
+                  : 'bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200'
+              }`}
+            >
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                isDark ? 'bg-amber-500/20' : 'bg-amber-100'
+              }`}>
+                {achievement.icon}
+              </div>
+              <div className="flex-1">
+                <p className={`text-xs font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                  🎉 Achievement Unlocked!
+                </p>
+                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  {achievement.name}
+                </h4>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                  +{achievement.xpReward} XP
+                </p>
+              </div>
+              <button
+                onClick={clearRecentUnlocks}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'
+                }`}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Plan Your Day Modal */}

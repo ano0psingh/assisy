@@ -22,7 +22,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Footer */}
       <footer className={`border-t py-4 px-6 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
         <div className={`max-w-6xl mx-auto flex items-center justify-between text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-          <span>Life RPG • Phase 1</span>
+          <span>Assisy</span>
           <span>Built for productivity 🚀</span>
         </div>
       </footer>

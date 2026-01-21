@@ -3,6 +3,7 @@ import { Target, Plus, Filter } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useTaskContext } from '../context/TaskContext';
+import { useGamification } from '../context/GamificationContext';
 import { GoalCard } from '../components/goals/GoalCard';
 import { GoalForm } from '../components/goals/GoalForm';
 import { GoalDetail } from '../components/goals/GoalDetail';
@@ -27,6 +28,7 @@ export function Goals() {
     getSubGoals,
   } = useGoalContext();
   const { tasks, deleteTask, completeTask, uncompleteTask, updateTask } = useTaskContext();
+  const { recordGoalCompletion, checkAndUnlockAchievements } = useGamification();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -178,6 +180,10 @@ export function Goals() {
 
     // Complete the main goal
     completeGoal(goalId);
+    
+    // Record goal completion in gamification
+    recordGoalCompletion();
+    setTimeout(() => checkAndUnlockAchievements(), 100);
   };
 
   // Link task to goal - also updates task's goalId

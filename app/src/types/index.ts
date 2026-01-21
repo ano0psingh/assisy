@@ -120,3 +120,51 @@ export interface ProjectTask {
   completedAt?: Date;
   deadline?: Date;
 }
+
+// ============ Gamification Types ============
+
+export type SkillCategory = 'health' | 'learning' | 'financial' | 'productivity' | 'mindfulness';
+
+export interface SkillTree {
+  id: SkillCategory;
+  name: string;
+  icon: string; // emoji
+  description: string;
+  currentXP: number;
+  level: number;
+  color: string; // hex color for theming
+}
+
+export type AchievementType = 'milestone' | 'streak' | 'mastery' | 'special';
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  type: AchievementType;
+  icon: string; // emoji or icon name
+  requirement: {
+    type: 'tasks_completed' | 'streak_days' | 'habit_streak' | 'level_reached' | 'xp_earned' | 'goals_completed' | 'custom';
+    value: number;
+    category?: SkillCategory | TaskCategory;
+    habitId?: string;
+  };
+  xpReward: number;
+  unlockedAt?: Date;
+  isUnlocked: boolean;
+}
+
+export interface UserStats {
+  totalTasksCompleted: number;
+  totalXPEarned: number;
+  currentStreak: number; // consecutive days with task completion
+  longestStreak: number;
+  tasksCompletedByCategory: {
+    Personal: number;
+    Financial: number;
+    Professional: number;
+  };
+  goalsCompleted: number;
+  habitsTracked: number;
+  lastActiveDate?: string; // YYYY-MM-DD
+}

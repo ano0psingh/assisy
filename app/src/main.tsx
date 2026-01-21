@@ -8,21 +8,24 @@ import { GoalProvider } from './context/GoalContext.tsx'
 import { HabitProvider } from './context/HabitContext.tsx'
 import { DailyLogProvider } from './context/DailyLogContext.tsx'
 import { ProjectProvider } from './context/ProjectContext.tsx'
+import { GamificationProvider } from './context/GamificationContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <GoalProvider>
-        <TaskProvider>
-          <HabitProvider>
-            <DailyLogProvider>
-              <ProjectProvider>
-                <App />
-              </ProjectProvider>
-            </DailyLogProvider>
-          </HabitProvider>
-        </TaskProvider>
-      </GoalProvider>
+      <GamificationProvider>
+        <GoalProvider>
+          <TaskProvider>
+            <HabitProvider>
+              <DailyLogProvider>
+                <ProjectProvider>
+                  <App />
+                </ProjectProvider>
+              </DailyLogProvider>
+            </HabitProvider>
+          </TaskProvider>
+        </GoalProvider>
+      </GamificationProvider>
     </ThemeProvider>
   </StrictMode>,
 )
