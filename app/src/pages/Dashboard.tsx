@@ -5,12 +5,12 @@ import { useHabitContext } from '../context/HabitContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
-import { CheckSquare, Plus, Zap, TrendingUp, Clock, Sparkles, Quote, Flame, Gamepad2, Coffee, ListPlus, Briefcase, User, DollarSign, ChevronDown, ChevronRight, Calendar, RotateCcw, CheckCircle2, ListTodo, FolderKanban, Circle, Play, Pencil, Trash2, CalendarMinus, Trophy, Crown } from 'lucide-react';
+import { CheckSquare, Plus, Zap, Clock, Sparkles, Quote, Flame, Gamepad2, Coffee, ListPlus, Briefcase, User, DollarSign, ChevronDown, ChevronRight, Calendar, RotateCcw, CheckCircle2, ListTodo, FolderKanban, Circle, Play, Pencil, Trash2, CalendarMinus, Trophy, Crown } from 'lucide-react';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { getQuoteOfTheDay } from '../data/quotes';
-import type { Task, TaskCategory, ProjectTask, WorkItemStatus } from '../types';
+import type { Task, TaskCategory, ProjectTask, WorkItemStatus, RecurrencePattern } from '../types';
 
 // XP Animation Component
 function XPAnimation({ xp, onComplete }: { xp: number; onComplete: () => void }) {
@@ -40,7 +40,6 @@ export function Dashboard() {
     uncompleteTask, 
     deleteTask, 
     carryForwardTasks, 
-    getTotalXP,
     addToToday,
     removeFromToday,
     getSuggestedTasks,
@@ -70,10 +69,8 @@ export function Dashboard() {
     userStats,
     getUnlockedAchievements,
     recordDailyLogin,
-    recordTaskAddedToToday,
     recordTaskCreated,
     hasClaimedDailyLogin,
-    getStreakMultiplier,
   } = useGamification();
   const isDark = theme === 'dark';
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -233,8 +230,6 @@ export function Dashboard() {
   }
 
   const todaysTasks = getTodaysTasks();
-  const completedTasks = tasks.filter(t => t.status === 'Completed');
-  const totalXP = getTotalXP();
   const carriedForwardCount = todaysTasks.filter(t => t.status === 'Carried Forward').length;
   const quote = getQuoteOfTheDay();
 
@@ -245,7 +240,7 @@ export function Dashboard() {
     priority: 'High' | 'Low';
     effort: 'High' | 'Low';
     isRecurring: boolean;
-    recurrencePattern?: 'daily' | 'weekly';
+    recurrencePattern?: RecurrencePattern;
     goalId?: string;
     dueDate?: Date;
   }) => {
@@ -280,7 +275,7 @@ export function Dashboard() {
     priority: 'High' | 'Low';
     effort: 'High' | 'Low';
     isRecurring: boolean;
-    recurrencePattern?: 'daily' | 'weekly';
+    recurrencePattern?: RecurrencePattern;
     goalId?: string;
     dueDate?: Date;
   }) => {

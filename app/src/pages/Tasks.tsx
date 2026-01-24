@@ -6,8 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
-import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X, Layers } from 'lucide-react';
-import type { Task, TaskCategory, Goal, Project, SubProject } from '../types';
+import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X } from 'lucide-react';
+import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
 type ViewMode = 'list' | 'grouped' | 'matrix';
@@ -15,7 +15,7 @@ type ViewMode = 'list' | 'grouped' | 'matrix';
 export function Tasks() {
   const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, getTodaysTasks } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
-  const { projects, subProjects, createProjectTask, getSubProjectsByProject } = useProjectContext();
+  const { projects, createProjectTask, getSubProjectsByProject } = useProjectContext();
   const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements, recordTaskCreated } = useGamification();
   
   // Get tasks already in today to determine which show the "Add to Today" button
@@ -198,7 +198,7 @@ export function Tasks() {
     priority: 'High' | 'Low';
     effort: 'High' | 'Low';
     isRecurring: boolean;
-    recurrencePattern?: 'daily' | 'weekly';
+    recurrencePattern?: RecurrencePattern;
     goalId?: string;
     dueDate?: Date;
   }) => {
@@ -222,7 +222,7 @@ export function Tasks() {
     priority: 'High' | 'Low';
     effort: 'High' | 'Low';
     isRecurring: boolean;
-    recurrencePattern?: 'daily' | 'weekly';
+    recurrencePattern?: RecurrencePattern;
     goalId?: string;
     dueDate?: Date;
   }) => {
@@ -729,7 +729,7 @@ export function Tasks() {
                     )}
                     
                     {/* Sub-goal Tasks */}
-                    {group.subGoalGroups.map((subGroup, subIndex) => {
+                    {group.subGoalGroups.map((subGroup) => {
                       const subGoalId = subGroup.goal.id;
                       const isSubExpanded = expandedGoals.has(subGoalId);
                       const subCompleted = subGroup.tasks.filter(t => t.status === 'Completed').length;

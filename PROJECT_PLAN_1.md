@@ -149,22 +149,27 @@ LOW PRIORITY     |  Major Projects     |  Fill-ins
 - linkedHabits[]
 - linkedTaskCategories[]
 
-### 6. Achievements / Badges
+### 7. Achievements / Badges
 **Types:**
 - Milestone badges (first task, 100 tasks, etc.)
 - Streak badges (7-day, 30-day, 100-day streaks)
+- Login streak badges (daily engagement rewards)
+- Planning badges (day planner, master planner)
+- Productivity badges (productive day, perfect day)
+- Time-based badges (early bird, night owl)
 - Category mastery badges
 - Special achievements (custom unlocks)
 
 **Examples:**
 - "First Blood" - Complete your first task
 - "On Fire" - 7-day task streak
+- "Weekly Warrior" - 7-day login streak
 - "Centurion" - Complete 100 tasks
-- "Bookworm" - 30-day reading streak
-- "Zen Master" - 30-day meditation streak
-- "Deep Focus" - 2hr uninterrupted work session
+- "Day Planner" - Plan your day once
+- "Early Bird" - Complete a task before 9 AM
+- "Perfect Day" - Complete all Today's tasks
 
-### 7. Titles (Unlockable Names)
+### 8. Titles (Unlockable Names)
 Progression examples:
 - Level 1-5: Task Initiate
 - Level 6-10: Task Apprentice
@@ -173,7 +178,7 @@ Progression examples:
 - Level 31-50: Grand Taskmaster
 - Level 51+: Legendary Achiever
 
-### 8. MIC Tracker (Professional)
+### 9. MIC Tracker (Professional)
 **Work Log Entry:**
 - id
 - title/projectName
@@ -186,17 +191,6 @@ Progression examples:
 - date
 - status: In Progress | Completed
 
-### 9. Entertainment Watchlist
-**Item Properties:**
-- id
-- title
-- type: Movie | Anime | Show | VideoGame
-- status: Want to Watch | Watching | Completed | Dropped
-- timeSpent (hours)
-- rating (optional)
-- notes (optional)
-- startedAt, completedAt
-
 ---
 
 ## UI/UX Design
@@ -204,21 +198,21 @@ Progression examples:
 ### Color Scheme
 - **Theme**: Dark mode
 - **Aesthetic**: Gaming-inspired minimalist
-- **Accent colors**: To be determined (thinking neon accents on dark background)
+- **Accent colors**: Violet primary with neon accents on dark background
 
 ### Layout Structure
 ```
 +----------------------------------------------------------+
 |  Logo/Title          [Quick Add Task]        User/XP Bar |
 +----------------------------------------------------------+
-|  Sidebar    |           Main Content Area                |
-|  - Dashboard|                                            |
-|  - Tasks    |   (Changes based on selected view)         |
-|  - Goals    |                                            |
-|  - Habits   |                                            |
-|  - MIC      |                                            |
-|  - Watch    |                                            |
-|  - Stats    |                                            |
+|  Nav Bar   |           Main Content Area                 |
+|  Dashboard |                                             |
+|  Tasks     |   (Changes based on selected view)          |
+|  Goals     |                                             |
+|  Habits    |                                             |
+|  Projects  |                                             |
+|  Stats     |                                             |
+|  Achieve.  |                                             |
 +----------------------------------------------------------+
 ```
 
@@ -229,7 +223,8 @@ Progression examples:
 - Quick add always visible at top
 - Daily check-in prompt
 - XP/Level/Streak summary widget
-- Upcoming deadlines
+- Plan Your Day modal on first visit
+- Weekly Work Review widget
 
 **2. Tasks View**
 - Default: List view sorted by priority, tagged with effort
@@ -247,33 +242,33 @@ Progression examples:
 - Streak counters
 - Weekly/monthly habit grid (GitHub-style contribution graph)
 
-**5. Skill Trees View**
-- Visual tree/graph representation
+**5. Stats/Skill Trees View**
+- Visual skill tree representation with circular progress
 - Each skill tree shows level, XP progress
-- Click to expand and see contributing habits/tasks
+- Engagement statistics (days active, productive days, etc.)
+- Early Bird / Night Owl tracking
 
-**6. MIC Tracker View**
+**6. Achievements View**
+- Grid of all achievements with progress
+- Filter by unlocked/locked, type
+- Achievement details with XP rewards
+
+**7. Projects View**
+- Project → Sub-project → Task hierarchy
+- Kanban-style status (Backlog → In Progress → Done)
+- Add to Today integration
+
+**8. MIC Tracker View** (Phase 7)
 - List of work log entries
 - Filter by project, date
 - AI summary generation button
 - Export/format for calibration doc
 
-**7. Watchlist View**
-- Grid or list of entertainment items
-- Filter by type, status
-- Time tracking summary
-
-**8. Stats/Profile View**
-- Overall level and title
-- Achievement showcase
-- All-time stats
-- Weekly summaries history
-
 ---
 
 ## Development Phases
 
-### Phase 1: Core Daily Driver ⬅️ START HERE
+### Phase 1: Core Daily Driver ✅ COMPLETE
 **Goal**: Get a working daily task tracker ASAP
 
 **Features:**
@@ -370,45 +365,66 @@ Progression examples:
 
 ---
 
-### Phase 5: Gamification
+### Phase 5: Gamification ✅ COMPLETE
 **Features:**
-- [x] XP calculation system (implemented in Phase 1)
+- [x] XP calculation system
 - [x] Level progression (100 XP per level)
 - [x] XP/level display in header
 - [x] Title unlocks (Initiate → Legendary Achiever)
-- [ ] Skill trees with visual representation
-- [ ] Achievement/badge system
-- [ ] Reward milestones (custom rewards)
+- [x] Skill trees with visual representation (circular progress nodes)
+- [x] Achievement/badge system (40+ achievements)
+- [x] Daily login bonus (+10 XP)
+- [x] Streak multiplier system (up to 2x at 30+ days)
+- [x] XP rewards for planning day (+15 XP)
+- [x] XP rewards for adding tasks to Today (+5 XP)
+- [x] XP rewards for creating tasks (+2 XP)
+- [x] Engagement stats tracking (productive days, perfect days, early bird, night owl)
+- [x] Achievement unlock notifications
 
 ---
 
-### Phase 6: MIC Tracker
+### Phase 6: Backend Migration & Hosting ⬅️ NEXT
+**Goal**: Deploy app online with persistent storage and authentication
+
+**Architecture:**
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Frontend      │────▶│    Backend      │────▶│   Database      │
+│   (React)       │     │  (Python/Fast)  │     │  (PostgreSQL)   │
+│                 │     │                 │     │                 │
+│   Vercel        │     │  Railway        │     │  Neon           │
+│   FREE          │     │  ~$5/mo         │     │  FREE           │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
+
+**Features:**
+- [ ] Deploy frontend to Vercel (free hosting)
+- [ ] Set up PostgreSQL database (Neon free tier)
+- [ ] Build Python + FastAPI backend
+  - User authentication (JWT)
+  - REST API for all entities
+  - Data validation with Pydantic
+- [ ] Migrate localStorage → Database
+- [ ] Multi-device sync
+- [ ] CORS configuration
+
+**Estimated Cost**: $0-5/month
+
+---
+
+### Phase 7: MIC Tracker & AI Features
+**Goal**: Professional impact documentation with AI insights
+
 **Features:**
 - [ ] Work log entry CRUD
-- [ ] Proof links management
+- [ ] Proof links management (GitHub, Notion, PRD links)
 - [ ] Filter and search
-- [ ] AI summary generation (Claude API)
+- [ ] Claude API integration
+- [ ] AI-generated weekly/monthly summaries
+- [ ] AI productivity insights
 - [ ] Export formatting for calibration doc
 
----
-
-### Phase 7: Entertainment & Extras
-**Features:**
-- [ ] Watchlist CRUD
-- [ ] Type categorization (movie, anime, show, game)
-- [ ] Status tracking
-- [ ] Time spent logging
-- [ ] Weekly AI summaries (Claude API)
-
----
-
-### Phase 8: Backend Migration
-**Features:**
-- [ ] User authentication
-- [ ] Database setup (PostgreSQL or similar)
-- [ ] API layer
-- [ ] Data migration from local storage
-- [ ] Multi-device sync
+**Estimated Additional Cost**: $3-10/month (Claude API)
 
 ---
 
@@ -416,81 +432,97 @@ Progression examples:
 - Mobile responsive design
 - Pomodoro timer integration (optional tracking)
 - Notifications/reminders system
-- Stock portfolio tracker (separate idea)
 - Calendar integration
 - Weekly/monthly goal setting
 - Social features (accountability partner)
 - Data export/import
 - Themes customization
 - Keyboard shortcuts throughout
+- Entertainment Watchlist (separate project)
 
 ---
 
 ## Tech Stack
 
-**Frontend:**
+### Frontend (Current)
 - React 18+
 - TypeScript
 - Vite (build tool)
 - Tailwind CSS
 - Lucide React (icons)
-- Framer Motion (animations, optional)
 
-**Storage (Phase 1-6):**
-- Local Storage with structured JSON
+### Backend (Phase 6)
+- Python 3.11+
+- FastAPI
+- SQLAlchemy / asyncpg
+- Pydantic (validation)
+- JWT (authentication)
 
-**Backend (Phase 7):**
-- TBD (Node.js + Express or similar)
-- PostgreSQL
-- JWT Auth
+### Database (Phase 6)
+- PostgreSQL (Neon)
+- pgvector (for AI embeddings, optional)
 
-**AI Integration:**
-- Claude API for summaries
+### AI Integration (Phase 7)
+- Claude API (Anthropic)
+- LangChain (optional, for complex chains)
+
+### Hosting
+| Component | Service | Cost |
+|-----------|---------|------|
+| Frontend | Vercel | FREE |
+| Backend | Railway | ~$5/mo |
+| Database | Neon PostgreSQL | FREE (512MB) |
+| Domain | Cloudflare | ~$12/year |
 
 ---
 
-## File Structure (Planned)
+## File Structure
+
+### Current (Frontend Only)
 ```
-life-rpg/
-├── src/
-│   ├── components/
-│   │   ├── common/        # Button, Input, Card, Modal, etc.
-│   │   ├── layout/        # Sidebar, Header, Layout
-│   │   ├── tasks/         # TaskCard, TaskList, TaskForm, TaskMatrix
-│   │   ├── goals/         # GoalCard, GoalList, GoalForm
-│   │   ├── habits/        # HabitTracker, HabitCard, StreakDisplay
-│   │   ├── gamification/  # XPBar, SkillTree, AchievementBadge
-│   │   ├── mic/           # WorkLogEntry, MICSummary
-│   │   └── watchlist/     # WatchlistItem, WatchlistGrid
-│   ├── pages/
-│   │   ├── Dashboard.tsx
-│   │   ├── Tasks.tsx
-│   │   ├── Goals.tsx
-│   │   ├── Habits.tsx
-│   │   ├── SkillTrees.tsx
-│   │   ├── MICTracker.tsx
-│   │   ├── Watchlist.tsx
-│   │   └── Stats.tsx
-│   ├── hooks/
-│   │   ├── useLocalStorage.ts
-│   │   ├── useTasks.ts
-│   │   ├── useGoals.ts
-│   │   └── useXP.ts
-│   ├── utils/
-│   │   ├── xpCalculator.ts
-│   │   ├── streakCalculator.ts
-│   │   └── dateUtils.ts
-│   ├── types/
-│   │   └── index.ts       # All TypeScript interfaces
-│   ├── store/
-│   │   └── localStorage.ts
-│   ├── App.tsx
-│   └── main.tsx
-├── public/
-├── package.json
-├── tailwind.config.js
-├── tsconfig.json
-└── vite.config.ts
+assisy/
+├── app/                    # React frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   ├── layout/
+│   │   │   ├── tasks/
+│   │   │   ├── goals/
+│   │   │   ├── habits/
+│   │   │   └── gamification/
+│   │   ├── pages/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   ├── utils/
+│   │   ├── types/
+│   │   └── store/
+│   ├── package.json
+│   └── vite.config.ts
+├── PROJECT_PLAN_1.md
+└── FEATURE_DOCUMENTATION.md
+```
+
+### Future (With Backend)
+```
+assisy/
+├── app/                    # React frontend
+│   └── ...
+├── backend/                # Python backend (Phase 6)
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── routes/
+│   │   │   └── deps.py
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   └── core/
+│   │       ├── config.py
+│   │       ├── security.py
+│   │       └── database.py
+│   ├── requirements.txt
+│   └── main.py
+├── PROJECT_PLAN_1.md
+└── FEATURE_DOCUMENTATION.md
 ```
 
 ---
@@ -501,6 +533,7 @@ life-rpg/
 - GitHub contribution graph
 - Gaming HUDs (health/XP bars)
 - Notion's clean minimalism
+- Duolingo streak system
 
 ---
 
@@ -519,6 +552,8 @@ life-rpg/
 5. **Categories kept flat**: Personal, Financial, Professional - with option to add subcategories later
 
 6. **Quote of the Day**: Shows motivational quote on first visit each day to set positive mindset for productivity
+
+7. **Entertainment Watchlist**: Moved to separate project (not part of Assisy)
 
 ---
 
@@ -548,16 +583,44 @@ life-rpg/
   - Integration with Daily Dashboard
   - Move tasks to projects feature
 
+**Date**: January 24, 2026
+- **Completed Phase 5: Gamification**
+  - Enhanced Skill Trees with circular progress visualization
+  - 40+ Achievements/Badges system
+  - Daily login bonus system (+10 XP)
+  - Streak multipliers (1.1x → 2x based on streak length)
+  - XP rewards for: planning day, creating tasks, adding to Today
+  - Engagement stats: productive days, perfect days, early bird, night owl
+  - Achievement unlock notifications
+- **Updated project roadmap:**
+  - Removed Entertainment & Extras (separate project)
+  - Phase 6: Backend Migration & Hosting (Python + FastAPI)
+  - Phase 7: MIC Tracker & AI Features (moved from Phase 6)
+- Decided tech stack for backend: Python + FastAPI + PostgreSQL
+- Hosting plan: Vercel (frontend) + Railway (backend) + Neon (database)
+
 **Current State:**
-- Phases 1-4.6 Complete
-- App folder renamed from `life-rpg` to `app`
-- Running on localhost:3000
+- Phases 1-5 Complete ✅
+- Frontend fully functional with local storage
+- Ready for Phase 6: Backend Migration & Hosting
 
 **Next Steps:**
-- Phase 5: Skill Trees & Achievement badges
-- Phase 6: MIC Tracker
-- Phase 7: Backend Migration
+1. Deploy frontend to Vercel (can do immediately)
+2. Build Python/FastAPI backend with authentication
+3. Set up PostgreSQL database on Neon
+4. Migrate from localStorage to database API
 
 ---
 
-*Last updated: January 19, 2026*
+## Cost Summary
+
+| Phase | Monthly Cost |
+|-------|--------------|
+| Current (Phases 1-5) | $0 (local only) |
+| Phase 6 (Backend) | $0-5 |
+| Phase 7 (AI Features) | +$3-10 |
+| **Total** | **$3-15/month** |
+
+---
+
+*Last updated: January 24, 2026*

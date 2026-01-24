@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { SkillTree, SkillCategory, Achievement, UserStats, TaskCategory, DailyReward } from '../types';
 
 // XP required for each level (cumulative)

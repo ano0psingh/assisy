@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { X, Sun, Zap, Trophy, AlertCircle, Lightbulb, Target } from 'lucide-react';
+import { X, Zap, Trophy, AlertCircle, Lightbulb, Target } from 'lucide-react';
 import type { DailyLog } from '../../types';
 
 interface DailyCheckInProps {

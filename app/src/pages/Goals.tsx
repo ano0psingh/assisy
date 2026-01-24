@@ -120,11 +120,6 @@ export function Goals() {
     return calculateGoalProgress(goal, completedTaskIds, goals);
   };
 
-  // Check if a goal has sub-goals
-  const hasSubGoals = (goalId: string) => {
-    return goals.some(g => g.parentGoalId === goalId);
-  };
-
   // Delete goal and all linked tasks (including sub-goals' tasks)
   const handleDeleteGoal = (goalId: string) => {
     const goalToDelete = goals.find(g => g.id === goalId);

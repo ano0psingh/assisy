@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Task, TaskCategory, Priority, Effort } from '../types';
+import type { Task, TaskCategory, Priority, Effort, RecurrencePattern } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { getTaskXPValue } from '../utils/xpCalculator';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,7 +14,7 @@ interface TaskContextType {
     priority?: Priority,
     effort?: Effort,
     isRecurring?: boolean,
-    recurrencePattern?: 'daily' | 'weekly',
+    recurrencePattern?: RecurrencePattern,
     specificDays?: number[],
     goalId?: string,
     dueDate?: Date
@@ -71,7 +71,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     priority: Priority = 'High',
     effort: Effort = 'Low',
     isRecurring: boolean = false,
-    recurrencePattern?: 'daily' | 'weekly',
+    recurrencePattern?: RecurrencePattern,
     specificDays?: number[],
     goalId?: string,
     dueDate?: Date
@@ -297,7 +297,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   // Get tasks suggested for "Plan Your Day" - pending tasks not already in today
   const getSuggestedTasks = useCallback((): Task[] => {
-    const todayStr = getTodayStr();
     const todayTasks = getTodaysTasks();
     const todayTaskIds = new Set(todayTasks.map(t => t.id));
     

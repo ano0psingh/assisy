@@ -17,7 +17,6 @@ function SkillNode({ skill, isDark, index }: { skill: SkillTree; isDark: boolean
   
   // Get next milestone
   const nextMilestone = LEVEL_MILESTONES.find(m => m > skill.level) || skill.level + 10;
-  const milestoneProgress = Math.min(100, (skill.level / nextMilestone) * 100);
 
   return (
     <div 

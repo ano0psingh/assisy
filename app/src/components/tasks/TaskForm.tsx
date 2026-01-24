@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Task, TaskCategory, Priority, Effort, Goal } from '../../types';
+import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { X, Sparkles, Target, Pencil, Calendar } from 'lucide-react';
 
@@ -11,7 +11,7 @@ interface TaskFormProps {
     priority: Priority;
     effort: Effort;
     isRecurring: boolean;
-    recurrencePattern?: 'daily' | 'weekly';
+    recurrencePattern?: RecurrencePattern;
     goalId?: string;
     dueDate?: Date;
   }) => void;
@@ -30,7 +30,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask }
   const [priority, setPriority] = useState<Priority>('High');
   const [effort, setEffort] = useState<Effort>('Low');
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recurrencePattern, setRecurrencePattern] = useState<'daily' | 'weekly'>('daily');
+  const [recurrencePattern, setRecurrencePattern] = useState<RecurrencePattern>('daily');
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
 

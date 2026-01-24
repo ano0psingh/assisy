@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { Task, TaskCategory, Priority, Effort } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { getTaskXPValue } from '../utils/xpCalculator';
