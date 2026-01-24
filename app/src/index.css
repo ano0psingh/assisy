@@ -320,6 +320,22 @@
     100% { transform: translateX(100%); }
   }
 
+  /* Spin Animation for Skill Tree */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Pulse glow */
+  .animate-pulse-glow {
+    animation: pulseGlow 2s infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
   /* Text colors using CSS variables */
   .text-primary { color: var(--text-primary); }
   .text-secondary { color: var(--text-secondary); }

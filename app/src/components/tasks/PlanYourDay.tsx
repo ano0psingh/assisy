@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { X, Sunrise, CheckSquare, Plus, Zap, CalendarDays, Target, Flame } from 'lucide-react';
+import { useGamification } from '../../context/GamificationContext';
+import { X, Sunrise, CheckSquare, Plus, Zap, CalendarDays, Target, Flame, Sparkles } from 'lucide-react';
 
 interface PlanYourDayProps {
   isOpen: boolean;
@@ -21,10 +22,19 @@ export function PlanYourDay({
   onRemoveFromToday,
 }: PlanYourDayProps) {
   const { theme } = useTheme();
+  const { 
+    recordDayPlanned, 
+    recordTaskAddedToToday, 
+    checkAndUnlockAchievements,
+    getStreakMultiplier,
+  } = useGamification();
   const isDark = theme === 'dark';
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [earnedXP, setEarnedXP] = useState<number | null>(null);
 
   if (!isOpen) return null;
+
+  const multiplier = getStreakMultiplier();
 
   const handleToggleTask = (taskId: string) => {
     const newSelected = new Set(selectedTasks);
@@ -37,10 +47,24 @@ export function PlanYourDay({
   };
 
   const handleConfirm = () => {
+    let totalXP = 0;
+    
+    // Record planning XP
+    totalXP += recordDayPlanned();
+    
+    // Add each task and record XP
     selectedTasks.forEach(taskId => {
       onAddToToday(taskId);
+      totalXP += recordTaskAddedToToday();
     });
-    onClose();
+    
+    setEarnedXP(totalXP);
+    
+    // Check achievements after a delay
+    setTimeout(() => {
+      checkAndUnlockAchievements();
+      onClose();
+    }, 1500);
   };
 
   const handleSkip = () => {
@@ -111,12 +135,31 @@ export function PlanYourDay({
           </div>
           
           {/* XP Preview */}
-          <div className={`mt-4 flex items-center space-x-2 px-4 py-2 rounded-xl ${
+          <div className={`mt-4 flex items-center justify-between px-4 py-2 rounded-xl ${
             isDark ? 'bg-amber-500/10' : 'bg-amber-50'
           }`}>
-            <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-            <span className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-              {totalPotentialXP} XP potential for today
+            <div className="flex items-center space-x-2">
+              <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+              <span className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                {totalPotentialXP} XP potential for today
+              </span>
+            </div>
+            {multiplier > 1 && (
+              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
+              }`}>
+                🔥 {multiplier}x Streak Bonus
+              </span>
+            )}
+          </div>
+
+          {/* Planning Bonus Info */}
+          <div className={`mt-3 flex items-center space-x-2 px-4 py-2 rounded-xl ${
+            isDark ? 'bg-violet-500/10' : 'bg-violet-50'
+          }`}>
+            <Sparkles className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            <span className={`text-xs ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+              +{Math.round(15 * multiplier)} XP for planning • +{Math.round(5 * multiplier)} XP per task added
             </span>
           </div>
         </div>
@@ -209,32 +252,49 @@ export function PlanYourDay({
 
         {/* Footer */}
         <div className={`p-6 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-          <div className="flex items-center justify-between">
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-              {selectedTasks.size > 0 
-                ? `${selectedTasks.size} task${selectedTasks.size > 1 ? 's' : ''} selected`
-                : 'Select tasks to add to today'
-              }
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={handleSkip}
-                className="btn-secondary px-5 py-2.5 rounded-xl"
-              >
-                Skip for now
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={selectedTasks.size === 0 && manuallyAddedTasks.length === 0}
-                className={`btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2 ${
-                  selectedTasks.size === 0 && manuallyAddedTasks.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                <span>Let's Go!</span>
-                <span>🚀</span>
-              </button>
+          {earnedXP !== null ? (
+            // Success state
+            <div className="text-center py-4 animate-fade-in">
+              <div className={`inline-flex items-center space-x-3 px-6 py-3 rounded-2xl ${
+                isDark ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20' : 'bg-gradient-to-r from-amber-50 to-orange-50'
+              }`}>
+                <span className="text-3xl">✨</span>
+                <div>
+                  <p className={`text-lg font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                    +{earnedXP} XP Earned!
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                    Day planned successfully
+                  </p>
+                </div>
+                <Zap className={`w-8 h-8 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                {selectedTasks.size > 0 
+                  ? `${selectedTasks.size} task${selectedTasks.size > 1 ? 's' : ''} selected`
+                  : 'Select tasks to add to today'
+                }
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleSkip}
+                  className="btn-secondary px-5 py-2.5 rounded-xl"
+                >
+                  Skip for now
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  className="btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2"
+                >
+                  <span>Let's Go!</span>
+                  <span>🚀</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

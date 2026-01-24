@@ -144,7 +144,9 @@ export interface Achievement {
   type: AchievementType;
   icon: string; // emoji or icon name
   requirement: {
-    type: 'tasks_completed' | 'streak_days' | 'habit_streak' | 'level_reached' | 'xp_earned' | 'goals_completed' | 'custom';
+    type: 'tasks_completed' | 'streak_days' | 'habit_streak' | 'level_reached' | 'xp_earned' | 'goals_completed' | 
+          'login_streak' | 'days_active' | 'days_planned' | 'tasks_created' | 'tasks_added_today' | 
+          'productive_days' | 'perfect_days' | 'early_bird' | 'night_owl' | 'custom';
     value: number;
     category?: SkillCategory | TaskCategory;
     habitId?: string;
@@ -167,4 +169,31 @@ export interface UserStats {
   goalsCompleted: number;
   habitsTracked: number;
   lastActiveDate?: string; // YYYY-MM-DD
+  
+  // Daily Engagement Stats
+  totalDaysActive: number;
+  totalTasksCreated: number;
+  totalDaysPlanned: number; // Days where Plan Your Day was used
+  tasksAddedToToday: number; // Total tasks added to Today's list
+  dailyLoginStreak: number; // Consecutive days opened the app
+  longestLoginStreak: number;
+  lastLoginDate?: string; // YYYY-MM-DD
+  todayTasksCompleted: number; // Tasks completed today
+  lastTaskCompletedDate?: string; // YYYY-MM-DD for daily reset
+  
+  // Productivity Stats
+  productiveDays: number; // Days with 5+ tasks completed
+  perfectDays: number; // Days with 100% today's tasks completed
+  earlyBirdCount: number; // Tasks completed before 9 AM
+  nightOwlCount: number; // Tasks completed after 9 PM
+}
+
+// Daily Reward Configuration
+export interface DailyReward {
+  id: string;
+  name: string;
+  description: string;
+  xpReward: number;
+  icon: string;
+  type: 'login' | 'planning' | 'task_add' | 'task_complete' | 'streak_bonus';
 }

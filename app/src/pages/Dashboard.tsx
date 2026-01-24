@@ -69,6 +69,11 @@ export function Dashboard() {
     getTitle,
     userStats,
     getUnlockedAchievements,
+    recordDailyLogin,
+    recordTaskAddedToToday,
+    recordTaskCreated,
+    hasClaimedDailyLogin,
+    getStreakMultiplier,
   } = useGamification();
   const isDark = theme === 'dark';
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -76,6 +81,7 @@ export function Dashboard() {
   const [hasCarriedForward, setHasCarriedForward] = useState(false);
   const [xpAnimation, setXpAnimation] = useState<{ show: boolean; xp: number }>({ show: false, xp: 0 });
   const [isPlanYourDayOpen, setIsPlanYourDayOpen] = useState(false);
+  const [dailyBonusResult, setDailyBonusResult] = useState<{ show: boolean; xp: number; streak: number; multiplier: number } | null>(null);
   // Collapsed state for task categories - Professional expanded by default
   const [collapsedCategories, setCollapsedCategories] = useState<Set<TaskCategory>>(
     new Set(['Personal', 'Financial'])
@@ -194,12 +200,28 @@ export function Dashboard() {
       carryForwardTasks();
       setHasCarriedForward(true);
       
+      // Claim daily login bonus
+      if (!hasClaimedDailyLogin()) {
+        const result = recordDailyLogin();
+        if (result.isNewDay && result.xpEarned > 0) {
+          setDailyBonusResult({
+            show: true,
+            xp: result.xpEarned,
+            streak: userStats.dailyLoginStreak + 1,
+            multiplier: result.streakMultiplier,
+          });
+          // Check achievements after login
+          setTimeout(() => checkAndUnlockAchievements(), 200);
+        }
+      }
+      
       // Show Plan Your Day modal if not seen today
       if (!hasSeenPlanYourDay()) {
-        setIsPlanYourDayOpen(true);
+        // Delay slightly so daily bonus shows first
+        setTimeout(() => setIsPlanYourDayOpen(true), 500);
       }
     }
-  }, [loading, hasCarriedForward, carryForwardTasks, hasSeenPlanYourDay]);
+  }, [loading, hasCarriedForward, carryForwardTasks, hasSeenPlanYourDay, hasClaimedDailyLogin, recordDailyLogin, userStats.dailyLoginStreak, checkAndUnlockAchievements]);
   
   // Early return AFTER all hooks
   if (loading) {
@@ -243,6 +265,10 @@ export function Dashboard() {
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
     }
+    
+    // Record task creation for gamification
+    recordTaskCreated();
+    setTimeout(() => checkAndUnlockAchievements(), 100);
     
     setIsTaskFormOpen(false);
   };
@@ -902,6 +928,53 @@ export function Dashboard() {
           xp={xpAnimation.xp} 
           onComplete={() => setXpAnimation({ show: false, xp: 0 })} 
         />
+      )}
+
+      {/* Daily Login Bonus Notification */}
+      {dailyBonusResult?.show && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
+          <div 
+            className={`flex items-center space-x-4 p-5 rounded-2xl shadow-elevated max-w-md ${
+              isDark 
+                ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30' 
+                : 'bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200'
+            }`}
+          >
+            <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl ${
+              isDark ? 'bg-violet-500/20' : 'bg-violet-100'
+            }`}>
+              🌅
+            </div>
+            <div className="flex-1">
+              <p className={`text-xs font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+                Welcome Back! Daily Bonus
+              </p>
+              <h4 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                +{dailyBonusResult.xp} XP
+              </h4>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                  🔥 {dailyBonusResult.streak} day streak
+                </span>
+                {dailyBonusResult.multiplier > 1 && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
+                  }`}>
+                    {dailyBonusResult.multiplier}x bonus
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setDailyBonusResult(null)}
+              className={`p-1.5 rounded-lg transition-colors ${
+                isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'
+              }`}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Achievement Unlock Notification */}

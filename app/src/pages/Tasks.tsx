@@ -16,7 +16,7 @@ export function Tasks() {
   const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, getTodaysTasks } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
   const { projects, subProjects, createProjectTask, getSubProjectsByProject } = useProjectContext();
-  const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements } = useGamification();
+  const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements, recordTaskCreated } = useGamification();
   
   // Get tasks already in today to determine which show the "Add to Today" button
   const todaysTasks = getTodaysTasks();
@@ -207,6 +207,10 @@ export function Tasks() {
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
     }
+    
+    // Record task creation for gamification
+    recordTaskCreated();
+    setTimeout(() => checkAndUnlockAchievements(), 100);
     
     setIsTaskFormOpen(false);
   };
