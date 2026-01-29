@@ -934,16 +934,24 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     });
   }, [userStats.lastActiveDate, getTodayStr]);
 
-  // Get total level
+  // Get total level (includes skill tree XP + achievement XP)
   const getTotalLevel = useCallback(() => {
-    const totalXP = skillTrees.reduce((sum, skill) => sum + skill.currentXP, 0);
-    return calculateLevel(totalXP);
-  }, [skillTrees]);
+    const skillTreeXP = skillTrees.reduce((sum, skill) => sum + skill.currentXP, 0);
+    const achievementXP = achievements
+      .filter(a => a.isUnlocked)
+      .reduce((sum, a) => sum + a.xpReward, 0);
+    return calculateLevel(skillTreeXP + achievementXP);
+  }, [skillTrees, achievements]);
 
-  // Get total XP
+  // Get total XP (skill trees + achievement rewards)
   const getTotalXP = useCallback(() => {
-    return skillTrees.reduce((sum, skill) => sum + skill.currentXP, 0);
-  }, [skillTrees]);
+    const skillTreeXP = skillTrees.reduce((sum, skill) => sum + skill.currentXP, 0);
+    // Include XP from unlocked achievements
+    const achievementXP = achievements
+      .filter(a => a.isUnlocked)
+      .reduce((sum, a) => sum + a.xpReward, 0);
+    return skillTreeXP + achievementXP;
+  }, [skillTrees, achievements]);
 
   // Get user title based on level
   const getTitle = useCallback(() => {
@@ -1027,39 +1035,118 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     return Math.min(100, Math.floor((current / target) * 100));
   }, [userStats, getTotalLevel]);
 
-  // Check and unlock achievements
+  // Helper to calculate progress for a single achievement using current stats
+  const calculateAchievementProgress = useCallback((achievement: Achievement, stats: UserStats, level: number): number => {
+    const req = achievement.requirement;
+    let current = 0;
+    const target = req.value;
+
+    switch (req.type) {
+      case 'tasks_completed':
+        current = stats.totalTasksCompleted;
+        break;
+      case 'streak_days':
+        current = stats.longestStreak;
+        break;
+      case 'goals_completed':
+        current = stats.goalsCompleted;
+        break;
+      case 'level_reached':
+        current = level;
+        break;
+      case 'xp_earned':
+        current = stats.totalXPEarned;
+        break;
+      case 'login_streak':
+        current = stats.longestLoginStreak;
+        break;
+      case 'days_active':
+        current = stats.totalDaysActive;
+        break;
+      case 'days_planned':
+        current = stats.totalDaysPlanned;
+        break;
+      case 'tasks_created':
+        current = stats.totalTasksCreated;
+        break;
+      case 'tasks_added_today':
+        current = stats.tasksAddedToToday;
+        break;
+      case 'productive_days':
+        current = stats.productiveDays;
+        break;
+      case 'perfect_days':
+        current = stats.perfectDays;
+        break;
+      case 'early_bird':
+        current = stats.earlyBirdCount;
+        break;
+      case 'night_owl':
+        current = stats.nightOwlCount;
+        break;
+      default:
+        return 0;
+    }
+
+    return Math.min(100, Math.floor((current / target) * 100));
+  }, []);
+
+  // Check and unlock achievements - uses current state directly
   const checkAndUnlockAchievements = useCallback((): Achievement[] => {
     const newUnlocks: Achievement[] = [];
+    const currentLevel = getTotalLevel();
+    
+    // Use functional update to get fresh achievements state
+    setAchievements(prev => {
+      const updated = prev.map(achievement => {
+        if (achievement.isUnlocked) return achievement;
 
-    setAchievements(prev => prev.map(achievement => {
-      if (achievement.isUnlocked) return achievement;
-
-      const progress = getAchievementProgress(achievement);
-      if (progress >= 100) {
-        newUnlocks.push({
-          ...achievement,
-          isUnlocked: true,
-          unlockedAt: new Date(),
-        });
-        return {
-          ...achievement,
-          isUnlocked: true,
-          unlockedAt: new Date(),
-        };
-      }
-      return achievement;
-    }));
-
-    if (newUnlocks.length > 0) {
-      setRecentUnlocks(prev => [...prev, ...newUnlocks]);
-      // Add achievement XP rewards
-      newUnlocks.forEach(achievement => {
-        addXPToSkill('productivity', achievement.xpReward);
+        // Calculate progress using current userStats directly
+        const progress = calculateAchievementProgress(achievement, userStats, currentLevel);
+        if (progress >= 100) {
+          const unlocked = {
+            ...achievement,
+            isUnlocked: true,
+            unlockedAt: new Date(),
+          };
+          newUnlocks.push(unlocked);
+          return unlocked;
+        }
+        return achievement;
       });
+      return updated;
+    });
+
+    // Schedule XP addition after state update
+    if (newUnlocks.length > 0) {
+      setTimeout(() => {
+        setRecentUnlocks(prev => [...prev, ...newUnlocks]);
+        // Add achievement XP rewards to skill tree
+        newUnlocks.forEach(achievement => {
+          addXPToSkill('productivity', achievement.xpReward);
+        });
+        // Also update totalXPEarned in userStats
+        setUserStats(prev => ({
+          ...prev,
+          totalXPEarned: prev.totalXPEarned + newUnlocks.reduce((sum, a) => sum + a.xpReward, 0),
+        }));
+      }, 0);
     }
 
     return newUnlocks;
-  }, [getAchievementProgress, addXPToSkill]);
+  }, [userStats, getTotalLevel, calculateAchievementProgress, addXPToSkill]);
+
+  // Auto-check achievements whenever userStats changes
+  useEffect(() => {
+    // Small delay to batch multiple stat updates
+    const timeoutId = setTimeout(() => {
+      checkAndUnlockAchievements();
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [userStats.totalTasksCompleted, userStats.goalsCompleted, userStats.totalDaysActive, 
+      userStats.totalDaysPlanned, userStats.totalTasksCreated, userStats.tasksAddedToToday,
+      userStats.productiveDays, userStats.perfectDays, userStats.earlyBirdCount, 
+      userStats.nightOwlCount, userStats.longestStreak, userStats.longestLoginStreak]);
 
   // Clear recent unlocks
   const clearRecentUnlocks = useCallback(() => {

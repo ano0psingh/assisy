@@ -3,35 +3,22 @@ import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, 
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useGamification } from '../../context/GamificationContext';
 import type { TaskCategory, Priority, Effort } from '../../types';
-
-// Calculate level from XP (100 XP per level)
-function calculateLevel(xp: number): number {
-  return Math.floor(xp / 100) + 1;
-}
 
 // Get XP progress to next level (0-100)
 function getXPProgress(xp: number): number {
   return xp % 100;
 }
 
-// Get title based on level
-function getTitle(level: number): string {
-  if (level <= 5) return 'Task Initiate';
-  if (level <= 10) return 'Task Apprentice';
-  if (level <= 20) return 'Task Warrior';
-  if (level <= 30) return 'Taskmaster';
-  if (level <= 50) return 'Grand Taskmaster';
-  return 'Legendary Achiever';
-}
-
 export function Header() {
-  const { createTask, getTotalXP } = useTaskContext();
+  const { createTask } = useTaskContext();
   const { theme, toggleTheme } = useTheme();
+  const { getTotalXP, getTotalLevel, getTitle } = useGamification();
   const totalXP = getTotalXP();
-  const level = calculateLevel(totalXP);
+  const level = getTotalLevel();
   const xpProgress = getXPProgress(totalXP);
-  const title = getTitle(level);
+  const title = getTitle();
   const isDark = theme === 'dark';
 
   const handleQuickAdd = (data: {

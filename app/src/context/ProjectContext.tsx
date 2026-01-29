@@ -442,10 +442,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // ============ Today Integration ============
 
   const addTaskToToday = useCallback((taskId: string) => {
-    const today = new Date().toISOString().split('T')[0];
     setProjectTasks(prev => prev.map(t =>
       t.id === taskId
-        ? { ...t, isFocusedToday: true, focusedDate: today, updatedAt: new Date() }
+        ? { ...t, isFocusedToday: true, updatedAt: new Date() }
         : t
     ));
   }, []);
@@ -459,8 +458,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getTodaysProjectTasks = useCallback(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return projectTasks.filter(t => t.isFocusedToday && t.focusedDate === today && t.status !== 'Done');
+    // Show all tasks marked as focused today, regardless of the original date
+    // This ensures tasks added on previous days still appear if user wants them today
+    return projectTasks.filter(t => t.isFocusedToday && t.status !== 'Done');
   }, [projectTasks]);
 
   // ============ Progress Calculation ============

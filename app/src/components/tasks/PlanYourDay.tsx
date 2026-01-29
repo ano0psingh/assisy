@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { Task } from '../../types';
+import type { Task, ProjectTask } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useGamification } from '../../context/GamificationContext';
-import { X, Sunrise, CheckSquare, Plus, Zap, CalendarDays, Target, Flame, Sparkles } from 'lucide-react';
+import { X, Sunrise, CheckSquare, Plus, Zap, CalendarDays, Target, Flame, Sparkles, FolderKanban } from 'lucide-react';
 
 interface PlanYourDayProps {
   isOpen: boolean;
@@ -11,6 +11,9 @@ interface PlanYourDayProps {
   suggestedTasks: Task[];
   onAddToToday: (taskId: string) => void;
   onRemoveFromToday: (taskId: string) => void;
+  // Project tasks integration
+  todaysProjectTasks?: ProjectTask[];
+  onRemoveProjectTaskFromToday?: (taskId: string) => void;
 }
 
 export function PlanYourDay({
@@ -20,6 +23,8 @@ export function PlanYourDay({
   suggestedTasks,
   onAddToToday,
   onRemoveFromToday,
+  todaysProjectTasks = [],
+  onRemoveProjectTaskFromToday,
 }: PlanYourDayProps) {
   const { theme } = useTheme();
   const { 
@@ -207,6 +212,29 @@ export function PlanYourDay({
             </div>
           )}
 
+          {/* Project Tasks */}
+          {todaysProjectTasks.length > 0 && (
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 flex items-center space-x-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                <FolderKanban size={16} />
+                <span>Project Tasks</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                  {todaysProjectTasks.length}
+                </span>
+              </h3>
+              <div className="space-y-2">
+                {todaysProjectTasks.map(task => (
+                  <ProjectTaskRow 
+                    key={task.id} 
+                    task={task} 
+                    isDark={isDark}
+                    onRemove={onRemoveProjectTaskFromToday ? () => onRemoveProjectTaskFromToday(task.id) : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Suggested Tasks */}
           {suggestedTasks.length > 0 && (
             <div>
@@ -233,7 +261,7 @@ export function PlanYourDay({
           )}
 
           {/* Empty State */}
-          {autoTasks.length === 0 && manuallyAddedTasks.length === 0 && suggestedTasks.length === 0 && (
+          {autoTasks.length === 0 && manuallyAddedTasks.length === 0 && todaysProjectTasks.length === 0 && suggestedTasks.length === 0 && (
             <div className="text-center py-8">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
                 isDark ? 'bg-violet-500/20' : 'bg-violet-50'
@@ -397,6 +425,70 @@ function TaskRow({
            task.isRecurring ? task.recurrencePattern : 
            task.status === 'Carried Forward' ? 'Carried' : 'Due today'}
         </span>
+      )}
+    </div>
+  );
+}
+
+// Helper component for project task rows
+function ProjectTaskRow({ 
+  task, 
+  isDark,
+  onRemove,
+}: { 
+  task: ProjectTask; 
+  isDark: boolean; 
+  onRemove?: () => void;
+}) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Done': return isDark ? 'text-emerald-400' : 'text-emerald-500';
+      case 'In Progress': return isDark ? 'text-blue-400' : 'text-blue-500';
+      default: return isDark ? 'text-gray-400' : 'text-gray-500';
+    }
+  };
+
+  return (
+    <div 
+      className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+        isDark ? 'bg-violet-500/10 border border-violet-500/20' : 'bg-violet-50 border border-violet-200'
+      }`}
+    >
+      <div className="flex items-center space-x-3 flex-1 min-w-0">
+        <FolderKanban size={16} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-2">
+            <span className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {task.title}
+            </span>
+            {task.priority === 'High' && (
+              <Flame size={14} className="text-red-500 flex-shrink-0" />
+            )}
+          </div>
+          <div className="flex items-center space-x-2 mt-1">
+            <span className={`text-xs ${getStatusColor(task.status)}`}>{task.status}</span>
+            {task.tags.length > 0 && (
+              <span className={`text-xs ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+                {task.tags[0]}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {onRemove && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          className={`p-1.5 rounded-lg transition-colors ${
+            isDark 
+              ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
+              : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+          }`}
+          title="Remove from today"
+        >
+          <X size={16} />
+        </button>
       )}
     </div>
   );

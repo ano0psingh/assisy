@@ -477,7 +477,7 @@ export function Dashboard() {
         </div>
         
         <div className="p-6">
-          {todaysTasks.length === 0 ? (
+          {todaysTasks.length === 0 && todaysProjectTasks.length === 0 ? (
             <div className="text-center py-12">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}>
                 <Sparkles className={`w-8 h-8 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
@@ -1021,6 +1021,8 @@ export function Dashboard() {
         suggestedTasks={getSuggestedTasks()}
         onAddToToday={addToToday}
         onRemoveFromToday={removeFromToday}
+        todaysProjectTasks={todaysProjectTasks}
+        onRemoveProjectTaskFromToday={removeProjectTaskFromToday}
       />
 
       {/* Edit Project Task Modal */}
