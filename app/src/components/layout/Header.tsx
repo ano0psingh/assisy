@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Shield, Medal, Crown, Gem } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,12 +14,38 @@ function getXPProgress(xp: number): number {
 export function Header() {
   const { createTask } = useTaskContext();
   const { theme, toggleTheme } = useTheme();
-  const { getTotalXP, getTotalLevel, getTitle } = useGamification();
+  const { getTotalXP, getTotalLevel, getTitle, getUnlockedAchievements } = useGamification();
   const totalXP = getTotalXP();
   const level = getTotalLevel();
   const xpProgress = getXPProgress(totalXP);
   const title = getTitle();
   const isDark = theme === 'dark';
+
+  // Prestige cosmetic: derived from highest-tier unlocked achievement reward
+  const prestigeTier = (() => {
+    const unlocked = getUnlockedAchievements();
+    const best = unlocked.reduce((max, a) => Math.max(max, a.xpReward), 0);
+    if (best >= 1000) return 'legendary';
+    if (best >= 500) return 'platinum';
+    if (best >= 250) return 'gold';
+    if (best >= 100) return 'silver';
+    return 'bronze';
+  })();
+
+  const prestige = (() => {
+    switch (prestigeTier) {
+      case 'legendary':
+        return { label: 'Legendary', Icon: Crown, ring: 'from-amber-400 to-orange-500' };
+      case 'platinum':
+        return { label: 'Platinum', Icon: Gem, ring: 'from-cyan-400 to-blue-500' };
+      case 'gold':
+        return { label: 'Gold', Icon: Trophy, ring: 'from-amber-400 to-yellow-400' };
+      case 'silver':
+        return { label: 'Silver', Icon: Medal, ring: 'from-slate-200 to-slate-400' };
+      default:
+        return { label: 'Bronze', Icon: Shield, ring: 'from-orange-400 to-amber-700' };
+    }
+  })();
 
   const handleQuickAdd = (data: {
     title: string;
@@ -111,11 +137,21 @@ export function Header() {
               ? 'bg-white/5 border border-white/10' 
               : 'bg-slate-50 border border-slate-200'
           }`}>
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-              K
+            <div className={`p-[2px] rounded-lg bg-gradient-to-br ${prestige.ring}`}>
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                K
+              </div>
             </div>
             <div className="flex flex-col">
-              <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>Kage</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>Kage</span>
+                <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${
+                  isDark ? 'bg-white/5 text-gray-300 border border-white/10' : 'bg-white text-slate-600 border border-slate-200'
+                }`}>
+                  <prestige.Icon size={12} />
+                  {prestige.label}
+                </span>
+              </div>
               <span className="text-violet-500 text-xs">{title}</span>
             </div>
           </div>

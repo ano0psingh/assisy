@@ -345,4 +345,90 @@
   .bg-primary { background-color: var(--bg-primary); }
   .bg-secondary { background-color: var(--bg-secondary); }
   .bg-tertiary { background-color: var(--bg-tertiary); }
+
+  /* ===== Achievements: AAA-style ambient + rarity frames ===== */
+  .achievements-ambient {
+    position: relative;
+  }
+  .achievements-ambient::before {
+    content: '';
+    position: absolute;
+    inset: -24px;
+    pointer-events: none;
+    background:
+      radial-gradient(600px 220px at 10% 0%, rgba(139, 92, 246, 0.18), transparent 60%),
+      radial-gradient(500px 200px at 90% 10%, rgba(34, 197, 94, 0.10), transparent 60%),
+      radial-gradient(700px 240px at 50% 100%, rgba(245, 158, 11, 0.10), transparent 70%);
+    filter: blur(8px);
+    opacity: 0.65;
+    animation: ambient-pan 18s ease-in-out infinite;
+    z-index: 0;
+  }
+  .achievements-ambient > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes ambient-pan {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(0, -6px, 0) scale(1.02); }
+  }
+
+  .rarity-card {
+    position: relative;
+    will-change: transform;
+  }
+
+  .rarity-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    pointer-events: none;
+    opacity: 0.9;
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.18),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.35);
+  }
+
+  .rarity-card::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: 0.70rem;
+    pointer-events: none;
+    opacity: 0.16;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 2px, transparent 4px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.10) 0px, rgba(0,0,0,0.10) 1px, transparent 2px, transparent 5px);
+    mix-blend-mode: overlay;
+  }
+
+  .rarity-locked::before,
+  .rarity-locked::after {
+    opacity: 0.08;
+  }
+
+  .rarity-bronze::before {
+    background: linear-gradient(135deg, rgba(234,88,12,0.65), rgba(120,53,15,0.35));
+  }
+  .rarity-silver::before {
+    background: linear-gradient(135deg, rgba(148,163,184,0.70), rgba(71,85,105,0.35));
+  }
+  .rarity-gold::before {
+    background: linear-gradient(135deg, rgba(245,158,11,0.75), rgba(234,179,8,0.30));
+  }
+  .rarity-platinum::before {
+    background: linear-gradient(135deg, rgba(34,211,238,0.55), rgba(59,130,246,0.30));
+  }
+  .rarity-legendary::before {
+    background: linear-gradient(135deg, rgba(251,191,36,0.65), rgba(249,115,22,0.35));
+    background-size: 200% 200%;
+    animation: legendary-spark 3.5s ease-in-out infinite;
+  }
+
+  @keyframes legendary-spark {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
 }

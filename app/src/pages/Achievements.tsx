@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Trophy, Lock, Star, Flame, Zap, Target, Award, Crown, Medal, CheckCircle2, TrendingUp, Sparkles, Calendar, Clock, Sunrise, Moon, Brain, Gift, X, ChevronRight, Gem, Shield, Swords, BookOpen, Heart, Rocket } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
-import type { Achievement, AchievementType } from '../types';
+import type { Achievement, AchievementType, UserStats } from '../types';
 
 // Achievement tier based on XP reward
 const getTier = (xpReward: number): 'bronze' | 'silver' | 'gold' | 'platinum' | 'legendary' => {
@@ -13,6 +13,174 @@ const getTier = (xpReward: number): 'bronze' | 'silver' | 'gold' | 'platinum' | 
   return 'bronze';
 };
 
+type AchievementTier = ReturnType<typeof getTier>;
+type AchievementSetId = 'discipline' | 'momentum' | 'planning' | 'creation' | 'mastery' | 'timing';
+
+const ACHIEVEMENT_SETS: Record<AchievementSetId, { label: string; description: string; icon: typeof Star; ids: string[] }> = {
+  discipline: {
+    label: 'Discipline',
+    description: 'Streaks, consistency, and long-term commitment.',
+    icon: Shield,
+    ids: [
+      'on-fire',
+      'unstoppable',
+      'month-warrior',
+      'iron-discipline',
+      'discipline-legend',
+      'weekly-warrior',
+      'fortnight-fighter',
+      'monthly-master',
+      'legendary-dedication',
+      'regular',
+      'committed',
+      'dedicated',
+      'veteran',
+    ],
+  },
+  momentum: {
+    label: 'Momentum',
+    description: 'High-output days and sustained execution.',
+    icon: TrendingUp,
+    ids: [
+      'productive-day',
+      'productivity-streak',
+      'productivity-machine',
+      'productive-month',
+      'productive-legend',
+      'perfect-day',
+      'perfectionist',
+      'perfect-week',
+      'flawless-execution',
+      'perfect-month',
+    ],
+  },
+  planning: {
+    label: 'Planning',
+    description: 'Intentional work: plan first, win more.',
+    icon: Calendar,
+    ids: ['day-planner', 'organized-mind', 'planner-consistency', 'master-planner', 'planner-architect'],
+  },
+  creation: {
+    label: 'Creation',
+    description: 'Build systems, not just days.',
+    icon: BookOpen,
+    ids: ['creator', 'task-architect', 'prolific-planner', 'focus-mode', 'daily-driver', 'focus-champion'],
+  },
+  mastery: {
+    label: 'Mastery',
+    description: 'Levels and growth milestones.',
+    icon: Crown,
+    ids: ['level-5', 'level-10', 'level-25', 'level-50', 'xp-1000', 'xp-5000', 'xp-10000'],
+  },
+  timing: {
+    label: 'Timing',
+    description: 'Own your schedule. Win the edges.',
+    icon: Sunrise,
+    ids: ['early-bird', 'sunrise-champion', 'night-owl', 'midnight-warrior'],
+  },
+};
+
+const ACHIEVEMENT_LORE: Partial<Record<string, string>> = {
+  'first-blood': 'A single strike. A new path.',
+  'getting-started': 'Momentum begins with showing up.',
+  'task-warrior': 'Steel your focus. Finish what you start.',
+  'centurion': 'Repetition is power.',
+  'task-master': 'Mastery is earned in silence.',
+
+  'weekly-warrior': 'Seven days. No excuses.',
+  'month-warrior': 'You don’t rely on motivation.',
+  'iron-discipline': 'Routine forged into armor.',
+  'discipline-legend': 'You are the system.',
+  'legendary-dedication': 'A hundred dawns. Unbroken.',
+
+  'day-planner': 'Clarity is a weapon.',
+  'master-planner': 'Your days move on rails.',
+  'planner-architect': 'Your future has blueprints.',
+
+  'productive-day': 'Output with purpose.',
+  'productivity-machine': 'Efficiency is your baseline.',
+  'productive-legend': 'Relentless. Repeatable.',
+  'perfect-month': 'Flawless at scale.',
+
+  'early-bird': 'Win before the world wakes.',
+  'night-owl': 'Quiet hours. Sharp focus.',
+};
+
+function getAchievementSetId(achievementId: string): AchievementSetId | null {
+  for (const [setId, set] of Object.entries(ACHIEVEMENT_SETS) as Array<[AchievementSetId, (typeof ACHIEVEMENT_SETS)[AchievementSetId]]>) {
+    if (set.ids.includes(achievementId)) return setId;
+  }
+  return null;
+}
+
+type QuestObjective = {
+  label: string;
+  current: number;
+  target: number;
+  percent: number; // 0-100
+};
+
+function getQuestObjective(
+  achievement: Achievement,
+  userStats: UserStats,
+  getTotalLevel: () => number,
+  getTotalXP: () => number
+): QuestObjective {
+  const req = achievement.requirement;
+  const target = req.value || 1;
+  let current = 0;
+
+  switch (req.type) {
+    case 'tasks_completed':
+      current = userStats.totalTasksCompleted;
+      break;
+    case 'streak_days':
+      current = userStats.longestStreak;
+      break;
+    case 'goals_completed':
+      current = userStats.goalsCompleted;
+      break;
+    case 'level_reached':
+      current = getTotalLevel();
+      break;
+    case 'xp_earned':
+      current = getTotalXP();
+      break;
+    case 'login_streak':
+      current = userStats.longestLoginStreak;
+      break;
+    case 'days_active':
+      current = userStats.totalDaysActive;
+      break;
+    case 'days_planned':
+      current = userStats.totalDaysPlanned;
+      break;
+    case 'tasks_created':
+      current = userStats.totalTasksCreated;
+      break;
+    case 'tasks_added_today':
+      current = userStats.tasksAddedToToday;
+      break;
+    case 'productive_days':
+      current = userStats.productiveDays;
+      break;
+    case 'perfect_days':
+      current = userStats.perfectDays;
+      break;
+    case 'early_bird':
+      current = userStats.earlyBirdCount;
+      break;
+    case 'night_owl':
+      current = userStats.nightOwlCount;
+      break;
+    default:
+      current = 0;
+  }
+
+  const percent = Math.min(100, Math.floor((current / target) * 100));
+  const label = achievement.description;
+  return { label, current, target, percent };
+}
 // Tier colors and styles
 const getTierStyles = (tier: string, isDark: boolean) => {
   switch (tier) {
@@ -80,9 +248,13 @@ const getAchievementIcon = (achievement: Achievement) => {
     'on-fire': Flame,
     'unstoppable': Zap,
     'month-warrior': Medal,
+    'iron-discipline': Shield,
+    'discipline-legend': Crown,
     'day-planner': Calendar,
     'organized-mind': Brain,
     'master-planner': Target,
+    'planner-consistency': Calendar,
+    'planner-architect': Award,
     'creator': BookOpen,
     'task-architect': Award,
     'prolific-planner': Sparkles,
@@ -92,9 +264,13 @@ const getAchievementIcon = (achievement: Achievement) => {
     'productive-day': Star,
     'productivity-streak': TrendingUp,
     'productivity-machine': Zap,
+    'productive-month': TrendingUp,
+    'productive-legend': Zap,
     'perfect-day': Gem,
     'perfectionist': Sparkles,
     'flawless-execution': Crown,
+    'perfect-week': Star,
+    'perfect-month': Trophy,
     'early-bird': Sunrise,
     'sunrise-champion': Sunrise,
     'night-owl': Moon,
@@ -158,118 +334,87 @@ function AchievementCard({
   onClick: () => void;
 }) {
   const Icon = getAchievementIcon(achievement);
-  const tier = getTier(achievement.xpReward);
+  const tier = getTier(achievement.xpReward) as AchievementTier;
   const tierStyles = getTierStyles(tier, isDark);
   const isUnlocked = achievement.isUnlocked;
 
   return (
     <div 
       onClick={onClick}
-      className={`relative rounded-2xl border-2 transition-all duration-300 overflow-hidden cursor-pointer group ${
-        isUnlocked 
-          ? `bg-gradient-to-br ${tierStyles.bg} ${tierStyles.border} ${tierStyles.glow} ${tierStyles.ring}` 
-          : isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'
-      } ${isUnlocked ? 'hover:scale-[1.02] hover:-translate-y-1' : 'opacity-60 hover:opacity-80'}`}
+      className={`rarity-card rarity-${tier} ${isUnlocked ? 'rarity-unlocked' : 'rarity-locked'} relative w-4/5 mx-auto rounded-xl overflow-hidden cursor-pointer transition-all duration-300 aspect-square ${
+        isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
+      } ${isUnlocked ? '' : 'opacity-80'} hover:-translate-y-1 hover:shadow-[0_24px_80px_-55px_rgba(0,0,0,0.85)]`}
     >
-      {/* Animated shine effect for unlocked */}
+      {/* Rarity glow + rim light */}
       {isUnlocked && (
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        <>
+          <div className={`absolute -inset-12 opacity-60 blur-3xl bg-gradient-to-br ${tierStyles.bg}`} />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(255,255,255,0.22),transparent_55%)] opacity-70" />
+        </>
       )}
       
-      <div className="p-5 relative">
-        {/* Top row: Icon + Tier Badge */}
-        <div className="flex items-start justify-between mb-4">
-          <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center ${
-            isUnlocked
-              ? isDark ? 'bg-white/10 backdrop-blur-sm' : 'bg-white/80'
-              : isDark ? 'bg-white/5' : 'bg-slate-100'
+      <div className="relative z-10 h-full p-2 flex flex-col">
+        {/* Top meta row */}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
+            isUnlocked ? tierStyles.badge : (isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600')
           }`}>
-            {isUnlocked ? (
-              <>
-                <Icon size={32} className={tierStyles.icon} />
-                {/* Tier indicator dot */}
-                <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${tierStyles.badge} flex items-center justify-center`}>
-                  {tier === 'legendary' && <Gem size={10} />}
-                  {tier === 'platinum' && <Star size={10} />}
-                </div>
-              </>
-            ) : (
-              <Lock size={28} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
-            )}
-          </div>
-          
-          {/* Status / Progress Badge */}
-          {isUnlocked ? (
-            <div className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${tierStyles.badge}`}>
-              <CheckCircle2 size={14} />
-              <span className="uppercase tracking-wide">{tier}</span>
-            </div>
-          ) : (
-            <div className={`relative px-3 py-1.5 rounded-full text-xs font-bold ${
-              isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600'
-            }`}>
-              <span>{progress}%</span>
-            </div>
-          )}
-        </div>
-        
-        {/* Achievement Name */}
-        <h3 className={`font-bold text-lg mb-1 flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          <span className="text-xl">{achievement.icon}</span>
-          {achievement.name}
-        </h3>
-        
-        {/* Description */}
-        <p className={`text-sm mb-4 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-          {achievement.description}
-        </p>
-        
-        {/* Progress bar for locked achievements */}
-        {!isUnlocked && (
-          <div className="mb-4">
-            <div className={`h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
-              <div 
-                className={`h-full rounded-full transition-all duration-700 ${
-                  progress >= 80 ? 'bg-gradient-to-r from-emerald-500 to-green-400' :
-                  progress >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' :
-                  progress >= 25 ? 'bg-gradient-to-r from-violet-500 to-purple-400' :
-                  'bg-gradient-to-r from-slate-500 to-slate-400'
-                }`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className={`text-xs mt-1.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-              {progress >= 80 ? '🔥 Almost there!' : progress >= 50 ? '💪 Halfway!' : progress >= 25 ? '🚀 Good progress' : 'Keep going!'}
-            </p>
-          </div>
-        )}
-        
-        {/* Bottom row: Type + XP */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/10">
-          <span className={`text-xs px-2.5 py-1 rounded-full capitalize font-medium ${
+            {tier}
+          </span>
+          <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
             isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
           }`}>
             {achievement.type}
           </span>
-          <div className={`flex items-center space-x-1.5 font-bold ${
-            tier === 'legendary' || tier === 'platinum' ? tierStyles.icon : isDark ? 'text-amber-400' : 'text-amber-500'
+        </div>
+
+        {/* Center badge */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className={`relative w-[80px] h-[80px] rounded-[1.35rem] flex items-center justify-center border ${
+            isDark ? 'bg-white/[0.04] border-white/10' : 'bg-slate-50 border-slate-200'
           }`}>
-            <Zap size={16} className="animate-pulse" />
-            <span>+{achievement.xpReward} XP</span>
+            {isUnlocked && <div className={`absolute inset-0 rounded-[1.35rem] opacity-50 bg-gradient-to-br ${tierStyles.bg}`} />}
+            {isUnlocked ? (
+              <Icon size={46} className={`${tierStyles.icon} relative drop-shadow`} />
+            ) : (
+              <Lock size={38} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
+            )}
+            <div className="absolute inset-0 rounded-[1.35rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.14)]" />
           </div>
         </div>
-        
-        {/* Unlock date */}
-        {isUnlocked && achievement.unlockedAt && (
-          <p className={`text-xs mt-3 flex items-center gap-1.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-            <Clock size={12} />
-            Unlocked {new Date(achievement.unlockedAt).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric',
-              year: 'numeric'
-            })}
-          </p>
-        )}
+
+        {/* Bottom info */}
+        <div>
+          <h3 className={`font-bold text-sm leading-tight line-clamp-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            {achievement.name}
+          </h3>
+
+          <div className="mt-1 flex items-center justify-between">
+            {isUnlocked ? (
+              <div className={`flex items-center gap-1.5 text-[11px] font-bold ${tierStyles.icon}`}>
+                <Zap size={11} className="opacity-90" />
+                +{achievement.xpReward}
+              </div>
+            ) : (
+              <div className={`text-[11px] font-bold ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+                {progress}%
+              </div>
+            )}
+            <div className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{isUnlocked ? 'Earned' : 'Locked'}</div>
+          </div>
+
+          {!isUnlocked && (
+            <div className="mt-1.5">
+              <div className={`h-1 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                <div
+                  className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all duration-700"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -279,11 +424,15 @@ function AchievementCard({
 function AchievementModal({ 
   achievement, 
   progress, 
+  lore,
+  objective,
   isDark, 
   onClose 
 }: { 
   achievement: Achievement; 
   progress: number; 
+  lore: string;
+  objective: QuestObjective;
   isDark: boolean; 
   onClose: () => void;
 }) {
@@ -328,10 +477,12 @@ function AchievementModal({
 
           {/* Badge */}
           <div className="text-center">
-            <span className="text-4xl mb-2 block">{achievement.icon}</span>
             <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
               {achievement.name}
             </h2>
+            <p className={`text-sm italic ${isDark ? 'text-white/60' : 'text-slate-600'}`}>
+              {lore}
+            </p>
             {isUnlocked && (
               <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold ${tierStyles.badge}`}>
                 <CheckCircle2 size={16} />
@@ -346,10 +497,13 @@ function AchievementModal({
           {/* Description */}
           <div>
             <h3 className={`text-sm font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-              How to Unlock
+              Quest
             </h3>
             <p className={`text-lg ${isDark ? 'text-white' : 'text-slate-800'}`}>
               {achievement.description}
+            </p>
+            <p className={`mt-2 text-sm ${isDark ? 'text-white/70' : 'text-slate-600'}`}>
+              Objective: <span className="font-semibold">{objective.current}</span>/<span className="font-semibold">{objective.target}</span>
             </p>
           </div>
 
@@ -427,20 +581,30 @@ export function Achievements() {
     getTotalXP,
   } = useGamification();
   
-  const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [typeFilter, setTypeFilter] = useState<AchievementType | 'all'>('all');
+  const [setFilter, setSetFilter] = useState<AchievementSetId | 'all'>('all');
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
 
   const unlockedAchievements = getUnlockedAchievements();
   const lockedAchievements = getLockedAchievements();
+
+  const setIdByAchievementId = useMemo(() => {
+    const map = new Map<string, AchievementSetId>();
+    (Object.keys(ACHIEVEMENT_SETS) as AchievementSetId[]).forEach((sid) => {
+      ACHIEVEMENT_SETS[sid].ids.forEach((id) => map.set(id, sid));
+    });
+    return map;
+  }, []);
   
   // Filter achievements
   const filteredAchievements = achievements.filter(a => {
-    const statusMatch = filter === 'all' || 
-      (filter === 'unlocked' && a.isUnlocked) || 
-      (filter === 'locked' && !a.isUnlocked);
+    const statusMatch = statusFilter === 'all' || 
+      (statusFilter === 'unlocked' && a.isUnlocked) || 
+      (statusFilter === 'locked' && !a.isUnlocked);
     const typeMatch = typeFilter === 'all' || a.type === typeFilter;
-    return statusMatch && typeMatch;
+    const setMatch = setFilter === 'all' || setIdByAchievementId.get(a.id) === setFilter;
+    return statusMatch && typeMatch && setMatch;
   });
 
   // Sort: unlocked first, then by XP reward (highest first), then by progress
@@ -481,8 +645,20 @@ export function Achievements() {
     .sort((a, b) => b.progress - a.progress)
     .slice(0, 3);
 
+  const setStats = useMemo(() => {
+    const unlocked = new Set(unlockedAchievements.map((a) => a.id));
+    return (Object.keys(ACHIEVEMENT_SETS) as AchievementSetId[]).map((setId) => {
+      const ids = ACHIEVEMENT_SETS[setId].ids;
+      const total = ids.length;
+      const done = ids.filter((id) => unlocked.has(id)).length;
+      const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+      return { setId, total, done, percent, ...ACHIEVEMENT_SETS[setId] };
+    });
+  }, [unlockedAchievements]);
+
   return (
-    <div className="space-y-8">
+  <>
+    <div className="space-y-8 achievements-ambient">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -637,6 +813,9 @@ export function Achievements() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {closestToUnlock.map(({ achievement, progress }) => (
+              (() => {
+                const Icon = getAchievementIcon(achievement);
+                return (
               <div 
                 key={achievement.id}
                 onClick={() => setSelectedAchievement(achievement)}
@@ -645,7 +824,11 @@ export function Achievements() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{achievement.icon}</span>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isDark ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-200'
+                  }`}>
+                    <Icon size={18} className={isDark ? 'text-emerald-300' : 'text-emerald-600'} />
+                  </div>
                   <div className="flex-1">
                     <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
                       {achievement.name}
@@ -665,10 +848,80 @@ export function Achievements() {
                   <ChevronRight className={isDark ? 'text-gray-600' : 'text-slate-400'} />
                 </div>
               </div>
+                );
+              })()
             ))}
           </div>
         </div>
       )}
+
+      {/* Collections */}
+      <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
+        <div className="flex items-end justify-between gap-6 mb-3">
+          <div>
+            <h2 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>
+              Collections
+            </h2>
+            <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              Complete sets for prestige.
+            </p>
+          </div>
+          <button
+            onClick={() => setSetFilter('all')}
+            className={`text-xs font-semibold px-3 py-1 rounded-full transition-colors ${
+              setFilter === 'all'
+                ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
+                : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+            }`}
+          >
+            All Sets
+          </button>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {setStats.map((set) => {
+            const SetIcon = set.icon;
+            const isActive = setFilter === set.setId;
+            return (
+              <button
+                key={set.setId}
+                onClick={() => setSetFilter(isActive ? 'all' : set.setId)}
+                className={`min-w-[220px] text-left p-3 rounded-xl transition-all ${
+                  isActive
+                    ? isDark
+                      ? 'bg-violet-500/20 border border-violet-500/30'
+                      : 'bg-violet-50 border border-violet-200'
+                    : isDark
+                      ? 'bg-white/5 border border-white/10 hover:bg-white/10'
+                      : 'bg-slate-50 border border-slate-200 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'
+                    }`}>
+                      <SetIcon size={18} className={isDark ? 'text-gray-200' : 'text-slate-700'} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{set.label}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{set.done}/{set.total}</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs font-bold ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{set.percent}%</span>
+                </div>
+                <div className={`mt-2 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                  <div
+                    className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all duration-700"
+                    style={{ width: `${set.percent}%` }}
+                  />
+                </div>
+                <p className={`mt-2 text-xs line-clamp-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>{set.description}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Filters */}
       <div className={`p-4 rounded-2xl flex flex-wrap items-center gap-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
@@ -679,9 +932,9 @@ export function Achievements() {
             {(['all', 'unlocked', 'locked'] as const).map((status) => (
               <button
                 key={status}
-                onClick={() => setFilter(status)}
+                onClick={() => setStatusFilter(status)}
                 className={`px-4 py-2 text-sm font-medium capitalize transition-all ${
-                  filter === status
+                  statusFilter === status
                     ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                     : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
                 }`}
@@ -714,7 +967,7 @@ export function Achievements() {
       </div>
 
       {/* Achievements Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {sortedAchievements.map((achievement) => (
           <AchievementCard
             key={achievement.id}
@@ -741,15 +994,19 @@ export function Achievements() {
         </div>
       )}
 
-      {/* Achievement Detail Modal */}
-      {selectedAchievement && (
-        <AchievementModal
-          achievement={selectedAchievement}
-          progress={getAchievementProgress(selectedAchievement)}
-          isDark={isDark}
-          onClose={() => setSelectedAchievement(null)}
-        />
-      )}
     </div>
+
+    {/* Achievement Detail Modal - Outside achievements-ambient to fix fixed positioning */}
+    {selectedAchievement && (
+      <AchievementModal
+        achievement={selectedAchievement}
+        progress={getAchievementProgress(selectedAchievement)}
+        objective={getQuestObjective(selectedAchievement, userStats, getTotalLevel, getTotalXP)}
+        lore={ACHIEVEMENT_LORE[selectedAchievement.id] || 'A quiet victory, forged by repetition.'}
+        isDark={isDark}
+        onClose={() => setSelectedAchievement(null)}
+      />
+    )}
+  </>
   );
 }
