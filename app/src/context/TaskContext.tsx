@@ -1,8 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Task, TaskCategory, Priority, Effort, RecurrencePattern } from '../types';
 import { LocalStorage } from '../store/localStorage';
+import { saveTasks as saveTasksToStore } from '../store/unifiedStore';
 import { getTaskXPValue } from '../utils/xpCalculator';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './AuthContext';
+import { useDataVersion } from './DataVersionContext';
 
 interface TaskContextType {
   tasks: Task[];
@@ -55,6 +58,9 @@ const updateTaskInArray = (tasks: Task[], taskId: string, updates: Partial<Task>
 };
 
 export function TaskProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { dataVersion } = useDataVersion();
+  const userId = user?.id ?? null;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,7 +68,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const savedTasks = LocalStorage.getTasks();
     setTasks(savedTasks);
     setLoading(false);
-  }, []);
+  }, [dataVersion]);
 
   const createTask = useCallback((
     title: string,
@@ -101,36 +107,36 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     setTasks(prev => {
       const updated = [...prev, newTask];
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
     
     return newTask;
-  }, []);
+  }, [userId]);
 
   const updateTask = useCallback((taskId: string, updates: Partial<Task>) => {
     setTasks(prev => {
       const updated = updateTaskInArray(prev, taskId, updates);
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const linkTaskToGoal = useCallback((taskId: string, goalId: string) => {
     setTasks(prev => {
       const updated = updateTaskInArray(prev, taskId, { goalId });
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const unlinkTaskFromGoal = useCallback((taskId: string) => {
     setTasks(prev => {
       const updated = updateTaskInArray(prev, taskId, { goalId: undefined });
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const getTasksByGoal = useCallback((goalId: string): Task[] => {
     return tasks.filter(task => task.goalId === goalId);
@@ -139,10 +145,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const deleteTask = useCallback((taskId: string) => {
     setTasks(prev => {
       const updated = prev.filter(task => task.id !== taskId);
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const completeTask = useCallback((taskId: string) => {
     setTasks(prev => {
@@ -150,10 +156,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         status: 'Completed',
         completedAt: new Date(),
       });
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const uncompleteTask = useCallback((taskId: string) => {
     setTasks(prev => {
@@ -161,10 +167,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         status: 'Pending',
         completedAt: undefined,
       });
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const getTodayStr = useCallback((): string => {
     return new Date().toISOString().split('T')[0];
@@ -253,10 +259,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
         return task;
       });
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const getTasksByCategory = useCallback((category: TaskCategory): Task[] => {
     return tasks.filter(task => task.category === category);
@@ -279,10 +285,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         isFocusedToday: true,
         focusedDate: todayStr,
       });
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, [getTodayStr]);
+  }, [getTodayStr, userId]);
 
   const removeFromToday = useCallback((taskId: string) => {
     setTasks(prev => {
@@ -290,10 +296,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         isFocusedToday: false,
         focusedDate: undefined,
       });
-      LocalStorage.saveTasks(updated);
+      saveTasksToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   // Get tasks suggested for "Plan Your Day" - pending tasks not already in today
   const getSuggestedTasks = useCallback((): Task[] => {

@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { DailyLog } from '../types';
 import { LocalStorage } from '../store/localStorage';
+import { saveDailyLogs as saveDailyLogsToStore } from '../store/unifiedStore';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './AuthContext';
+import { useDataVersion } from './DataVersionContext';
 
 interface DailyLogContextType {
   dailyLogs: DailyLog[];
@@ -22,6 +25,9 @@ const getDateString = (date: Date): string => {
 };
 
 export function DailyLogProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { dataVersion } = useDataVersion();
+  const userId = user?.id ?? null;
   const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +35,7 @@ export function DailyLogProvider({ children }: { children: ReactNode }) {
     const savedLogs = LocalStorage.getDailyLogs();
     setDailyLogs(savedLogs);
     setLoading(false);
-  }, []);
+  }, [dataVersion]);
 
   const createOrUpdateLog = useCallback((date: Date, data: Partial<Omit<DailyLog, 'id' | 'date'>>): DailyLog => {
     const dateStr = getDateString(date);
@@ -51,7 +57,7 @@ export function DailyLogProvider({ children }: { children: ReactNode }) {
           },
         };
         resultLog = updated[existingIndex];
-        LocalStorage.saveDailyLogs(updated);
+        saveDailyLogsToStore(updated, userId);
         return updated;
       } else {
         // Create new log
@@ -63,13 +69,13 @@ export function DailyLogProvider({ children }: { children: ReactNode }) {
         };
         resultLog = newLog;
         const updated = [...prev, newLog];
-        LocalStorage.saveDailyLogs(updated);
+        saveDailyLogsToStore(updated, userId);
         return updated;
       }
     });
     
     return resultLog!;
-  }, []);
+  }, [userId]);
 
   const getLogByDate = useCallback((date: Date): DailyLog | undefined => {
     const dateStr = getDateString(date);
@@ -92,10 +98,10 @@ export function DailyLogProvider({ children }: { children: ReactNode }) {
   const deleteLog = useCallback((logId: string) => {
     setDailyLogs(prev => {
       const updated = prev.filter(log => log.id !== logId);
-      LocalStorage.saveDailyLogs(updated);
+      saveDailyLogsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const hasCheckedInToday = useCallback((): boolean => {
     const todayLog = getTodaysLog();

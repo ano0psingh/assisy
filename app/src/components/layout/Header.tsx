@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useGamification } from '../../context/GamificationContext';
 import { DataExportImport } from '../common/DataPortability';
 import { ExpandableModal } from '../common/ExpandableModal';
+import { LoginModal } from '../auth/LoginModal';
+import { useAuth } from '../../context/AuthContext';
 import type { TaskCategory, Priority, Effort } from '../../types';
 
 interface HeaderProps {
@@ -22,6 +24,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
   const xpProgress = totalXP % 100;
   const isDark = theme === 'dark';
   const [dataModalOpen, setDataModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const { user, signOut, isConfigured } = useAuth();
 
   const { addToToday: addTaskToToday } = useTaskContext();
 
@@ -141,6 +145,35 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               <Download size={16} />
             </button>
 
+            {/* Auth */}
+            {isConfigured && (
+              user ? (
+                <div className={`flex items-center gap-2 px-2 py-1 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+                  <span className={`text-xs max-w-[120px] truncate ${isDark ? 'text-gray-400' : 'text-slate-500'}`} title={user.email}>
+                    {user.email}
+                  </span>
+                  <button
+                    onClick={() => signOut()}
+                    className={`p-1.5 rounded ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-200 text-slate-500'}`}
+                    title="Sign out"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setLoginModalOpen(true)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                    isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                  }`}
+                  title="Sign in to sync"
+                >
+                  <LogIn size={14} />
+                  Sign in
+                </button>
+              )
+            )}
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -168,6 +201,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </div>
         )}
       </ExpandableModal>
+
+      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </>
   );
 }

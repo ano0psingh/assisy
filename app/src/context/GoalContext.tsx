@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Goal, GoalStatus, TaskCategory } from '../types';
 import { LocalStorage } from '../store/localStorage';
+import { saveGoals as saveGoalsToStore } from '../store/unifiedStore';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './AuthContext';
+import { useDataVersion } from './DataVersionContext';
 
 interface GoalContextType {
   goals: Goal[];
@@ -41,6 +44,9 @@ const updateGoalInArray = (goals: Goal[], goalId: string, updates: Partial<Goal>
 };
 
 export function GoalProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { dataVersion } = useDataVersion();
+  const userId = user?.id ?? null;
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,12 +63,12 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     
     // If we cleaned up any orphans, save the cleaned list
     if (cleanedGoals.length !== savedGoals.length) {
-      LocalStorage.saveGoals(cleanedGoals);
+      saveGoalsToStore(cleanedGoals, userId);
     }
     
     setGoals(cleanedGoals);
     setLoading(false);
-  }, []);
+  }, [dataVersion, userId]);
 
   const createGoal = useCallback((
     title: string,
@@ -99,20 +105,20 @@ export function GoalProvider({ children }: { children: ReactNode }) {
         });
       }
       
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
     
     return newGoal;
-  }, []);
+  }, [userId]);
 
   const updateGoal = useCallback((goalId: string, updates: Partial<Goal>) => {
     setGoals(prev => {
       const updated = updateGoalInArray(prev, goalId, updates);
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const deleteGoal = useCallback((goalId: string) => {
     setGoals(prev => {
@@ -147,10 +153,10 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       // Delete this goal and all descendants
       updated = updated.filter(goal => goal.id !== goalId && !allSubGoalIds.has(goal.id));
       
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const completeGoal = useCallback((goalId: string) => {
     setGoals(prev => {
@@ -159,20 +165,20 @@ export function GoalProvider({ children }: { children: ReactNode }) {
         completedAt: new Date(),
         progress: 100,
       });
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const archiveGoal = useCallback((goalId: string) => {
     setGoals(prev => {
       const updated = updateGoalInArray(prev, goalId, {
         status: 'Archived',
       });
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const reactivateGoal = useCallback((goalId: string) => {
     setGoals(prev => {
@@ -180,10 +186,10 @@ export function GoalProvider({ children }: { children: ReactNode }) {
         status: 'Active',
         completedAt: undefined,
       });
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const linkTaskToGoal = useCallback((goalId: string, taskId: string) => {
     setGoals(prev => {
@@ -196,10 +202,10 @@ export function GoalProvider({ children }: { children: ReactNode }) {
         }
         return goal;
       });
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const unlinkTaskFromGoal = useCallback((goalId: string, taskId: string) => {
     setGoals(prev => {
@@ -212,10 +218,10 @@ export function GoalProvider({ children }: { children: ReactNode }) {
         }
         return goal;
       });
-      LocalStorage.saveGoals(updated);
+      saveGoalsToStore(updated, userId);
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const getGoalById = useCallback((goalId: string): Goal | undefined => {
     return goals.find(goal => goal.id === goalId);

@@ -1,5 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { SkillTree, SkillCategory, Achievement, UserStats, TaskCategory, DailyReward } from '../types';
+import { saveGamification } from '../store/unifiedStore';
+import { useAuth } from './AuthContext';
+import { useDataVersion } from './DataVersionContext';
 
 // XP required for each level (cumulative)
 const XP_PER_LEVEL = 100;
@@ -717,51 +720,44 @@ const STORAGE_KEY_SKILLS = 'assisy_skill_trees';
 const STORAGE_KEY_ACHIEVEMENTS = 'assisy_achievements';
 const STORAGE_KEY_STATS = 'assisy_user_stats';
 
+function loadSkillTrees(): SkillTree[] {
+  const stored = localStorage.getItem(STORAGE_KEY_SKILLS);
+  return stored ? JSON.parse(stored) : DEFAULT_SKILL_TREES;
+}
+function loadAchievements(): Achievement[] {
+  const stored = localStorage.getItem(STORAGE_KEY_ACHIEVEMENTS);
+  if (stored) {
+    const parsed = JSON.parse(stored);
+    const existingIds = new Set(parsed.map((a: Achievement) => a.id));
+    const newAchievements = DEFAULT_ACHIEVEMENTS.filter(a => !existingIds.has(a.id));
+    return [...parsed, ...newAchievements];
+  }
+  return DEFAULT_ACHIEVEMENTS;
+}
+function loadUserStats(): UserStats {
+  const stored = localStorage.getItem(STORAGE_KEY_STATS);
+  return stored ? { ...DEFAULT_USER_STATS, ...JSON.parse(stored) } : DEFAULT_USER_STATS;
+}
+
 export function GamificationProvider({ children }: { children: ReactNode }) {
-  const [skillTrees, setSkillTrees] = useState<SkillTree[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_SKILLS);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return DEFAULT_SKILL_TREES;
-  });
+  const { user } = useAuth();
+  const { dataVersion } = useDataVersion();
+  const userId = user?.id ?? null;
 
-  const [achievements, setAchievements] = useState<Achievement[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_ACHIEVEMENTS);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Merge with defaults to add any new achievements
-      const existingIds = new Set(parsed.map((a: Achievement) => a.id));
-      const newAchievements = DEFAULT_ACHIEVEMENTS.filter(a => !existingIds.has(a.id));
-      return [...parsed, ...newAchievements];
-    }
-    return DEFAULT_ACHIEVEMENTS;
-  });
-
-  const [userStats, setUserStats] = useState<UserStats>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_STATS);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Merge with defaults to add new stats fields
-      return { ...DEFAULT_USER_STATS, ...parsed };
-    }
-    return DEFAULT_USER_STATS;
-  });
-
+  const [skillTrees, setSkillTrees] = useState<SkillTree[]>(loadSkillTrees);
+  const [achievements, setAchievements] = useState<Achievement[]>(loadAchievements);
+  const [userStats, setUserStats] = useState<UserStats>(loadUserStats);
   const [recentUnlocks, setRecentUnlocks] = useState<Achievement[]>([]);
 
-  // Persist to localStorage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_SKILLS, JSON.stringify(skillTrees));
-  }, [skillTrees]);
+    setSkillTrees(loadSkillTrees());
+    setAchievements(loadAchievements());
+    setUserStats(loadUserStats());
+  }, [dataVersion]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_ACHIEVEMENTS, JSON.stringify(achievements));
-  }, [achievements]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(userStats));
-  }, [userStats]);
+    saveGamification(skillTrees, achievements, userStats, userId);
+  }, [skillTrees, achievements, userStats, userId]);
 
   // Get today's date string
   const getTodayStr = useCallback(() => new Date().toISOString().split('T')[0], []);

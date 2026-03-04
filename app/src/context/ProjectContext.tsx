@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
+import { saveProjects, saveSubProjects, saveProjectTasks } from '../store/unifiedStore';
+import { useAuth } from './AuthContext';
+import { useDataVersion } from './DataVersionContext';
 
 // Storage keys
 const PROJECTS_KEY = 'assisy_projects';
@@ -86,6 +89,9 @@ interface ProjectContextType {
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { dataVersion } = useDataVersion();
+  const userId = user?.id ?? null;
   const [projects, setProjects] = useState<Project[]>([]);
   const [subProjects, setSubProjects] = useState<SubProject[]>([]);
   const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
@@ -130,26 +136,20 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dataVersion]);
 
-  // Save to localStorage
+  // Save to store (local or cloud)
   useEffect(() => {
-    if (!loading) {
-      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
-    }
-  }, [projects, loading]);
+    if (!loading) saveProjects(projects, userId);
+  }, [projects, loading, userId]);
 
   useEffect(() => {
-    if (!loading) {
-      localStorage.setItem(SUBPROJECTS_KEY, JSON.stringify(subProjects));
-    }
-  }, [subProjects, loading]);
+    if (!loading) saveSubProjects(subProjects, userId);
+  }, [subProjects, loading, userId]);
 
   useEffect(() => {
-    if (!loading) {
-      localStorage.setItem(PROJECT_TASKS_KEY, JSON.stringify(projectTasks));
-    }
-  }, [projectTasks, loading]);
+    if (!loading) saveProjectTasks(projectTasks, userId);
+  }, [projectTasks, loading, userId]);
 
   // ============ Project CRUD ============
 

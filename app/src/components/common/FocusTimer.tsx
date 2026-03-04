@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useGamification } from '../../context/GamificationContext';
+import { useAuth } from '../../context/AuthContext';
+import { saveSettings } from '../../store/unifiedStore';
 import { Play, Pause, RotateCcw, X, Zap, Timer, SkipForward, Coffee, Brain, Settings2 } from 'lucide-react';
 
 type Phase = 'work' | 'shortBreak' | 'longBreak';
@@ -72,6 +74,7 @@ interface FocusTimerProps {
 export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { user } = useAuth();
   const { recordTaskCompletion, checkAndUnlockAchievements } = useGamification();
 
   const [settings, setSettings] = useState<PomodoroSettings>(loadSettings);
@@ -100,15 +103,17 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
     ? { ring: 'stroke-emerald-500', text: isDark ? 'text-emerald-400' : 'text-emerald-500', bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50' }
     : { ring: 'stroke-blue-500', text: isDark ? 'text-blue-400' : 'text-blue-500', bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50' };
 
-  const saveSettings = (s: PomodoroSettings) => {
+  const persistSettings = (s: PomodoroSettings) => {
     setSettings(s);
     localStorage.setItem(STORAGE_KEY + '_settings', JSON.stringify(s));
+    saveSettings({ assisy_pomodoro_settings: s }, user?.id ?? null);
   };
 
   const saveTodayStats = useCallback((stats: typeof todayStats) => {
     setTodayStats(stats);
     localStorage.setItem(STORAGE_KEY + '_today', JSON.stringify(stats));
-  }, []);
+    saveSettings({ assisy_pomodoro_today: stats }, user?.id ?? null);
+  }, [user?.id]);
 
   const startPhase = useCallback((p: Phase) => {
     setPhase(p);
@@ -249,21 +254,21 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
           <div className="p-5 space-y-4">
             <div>
               <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Focus Duration (min)</label>
-              <input type="number" min={1} max={90} value={settings.workMinutes} onChange={e => saveSettings({ ...settings, workMinutes: Math.max(1, +e.target.value) })} className={inputCls} />
+              <input type="number" min={1} max={90} value={settings.workMinutes} onChange={e => persistSettings({ ...settings, workMinutes: Math.max(1, +e.target.value) })} className={inputCls} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Short Break (min)</label>
-                <input type="number" min={1} max={30} value={settings.shortBreakMinutes} onChange={e => saveSettings({ ...settings, shortBreakMinutes: Math.max(1, +e.target.value) })} className={inputCls} />
+                <input type="number" min={1} max={30} value={settings.shortBreakMinutes} onChange={e => persistSettings({ ...settings, shortBreakMinutes: Math.max(1, +e.target.value) })} className={inputCls} />
               </div>
               <div>
                 <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Long Break (min)</label>
-                <input type="number" min={1} max={60} value={settings.longBreakMinutes} onChange={e => saveSettings({ ...settings, longBreakMinutes: Math.max(1, +e.target.value) })} className={inputCls} />
+                <input type="number" min={1} max={60} value={settings.longBreakMinutes} onChange={e => persistSettings({ ...settings, longBreakMinutes: Math.max(1, +e.target.value) })} className={inputCls} />
               </div>
             </div>
             <div>
               <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Long break after every N sessions</label>
-              <input type="number" min={2} max={8} value={settings.longBreakInterval} onChange={e => saveSettings({ ...settings, longBreakInterval: Math.max(2, +e.target.value) })} className={inputCls} />
+              <input type="number" min={2} max={8} value={settings.longBreakInterval} onChange={e => persistSettings({ ...settings, longBreakInterval: Math.max(2, +e.target.value) })} className={inputCls} />
             </div>
             <div className="space-y-2">
               {([
@@ -272,7 +277,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
               ]).map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-3 cursor-pointer">
                   <div className="relative">
-                    <input type="checkbox" checked={settings[key]} onChange={e => saveSettings({ ...settings, [key]: e.target.checked })} className="sr-only" />
+                    <input type="checkbox" checked={settings[key]} onChange={e => persistSettings({ ...settings, [key]: e.target.checked })} className="sr-only" />
                     <div className={`w-9 h-5 rounded-full transition-all ${settings[key] ? 'bg-violet-500' : isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                       <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-sm transform transition-transform ${settings[key] ? 'translate-x-[18px]' : 'translate-x-[3px]'} mt-[3px]`} />
                     </div>

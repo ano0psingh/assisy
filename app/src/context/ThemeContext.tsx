@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useAuth } from './AuthContext';
+import { saveSettings } from '../store/unifiedStore';
 
 type Theme = 'light' | 'dark';
 
@@ -13,26 +15,22 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 const THEME_KEY = 'life-rpg-theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Check localStorage first
     const saved = localStorage.getItem(THEME_KEY);
-    if (saved === 'light' || saved === 'dark') {
-      return saved;
-    }
-    // Default to dark (the gaming aesthetic)
+    if (saved === 'light' || saved === 'dark') return saved;
     return 'dark';
   });
 
   useEffect(() => {
     localStorage.setItem(THEME_KEY, theme);
-    
-    // Update document class for theme
+    saveSettings({ theme }, user?.id ?? null);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [theme]);
+  }, [theme, user?.id]);
 
   const toggleTheme = () => {
     setThemeState(prev => prev === 'light' ? 'dark' : 'light');

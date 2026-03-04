@@ -2,6 +2,8 @@ import { useMemo, useState, useEffect } from 'react';
 import { Trophy, Lock, Star, Flame, Zap, Target, Award, Crown, Medal, CheckCircle2, TrendingUp, Sparkles, Calendar, Clock, Sunrise, Moon, Brain, Gift, X, Gem, Shield, Swords, BookOpen, Heart, Rocket, User, Scroll, MapPin, Compass, ChevronDown } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
+import { useAuth } from '../context/AuthContext';
+import { saveSettings } from '../store/unifiedStore';
 import type { Achievement, AchievementType, UserStats } from '../types';
 
 // ============ TITLES SYSTEM ============
@@ -1428,15 +1430,16 @@ export function Achievements() {
     return true;
   });
   
+  const { user } = useAuth();
   // Toggle sound
   const toggleSound = () => {
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
     localStorage.setItem(SOUND_ENABLED_KEY, String(newValue));
+    saveSettings({ achievement_sounds_enabled: String(newValue) }, user?.id ?? null);
     if (newValue) playSound('click');
   };
-  
-  // Equipped title state (persisted to localStorage)
+  // Equipped title state (persisted to localStorage / cloud)
   const [equippedTitle, setEquippedTitle] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('equippedTitle') || 'newcomer';
@@ -1444,10 +1447,11 @@ export function Achievements() {
     return 'newcomer';
   });
 
-  // Save equipped title to localStorage
+  // Save equipped title to localStorage / cloud
   useEffect(() => {
     localStorage.setItem('equippedTitle', equippedTitle);
-  }, [equippedTitle]);
+    saveSettings({ equippedTitle }, user?.id ?? null);
+  }, [equippedTitle, user?.id]);
   
   // Track recently unlocked achievements (within last 24 hours)
   const recentlyUnlocked = useMemo(() => {

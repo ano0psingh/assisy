@@ -21,7 +21,7 @@ A productivity and task management app built with React, TypeScript, and Vite.
    ```bash
    npm run dev
    ```
-   Opens at [http://localhost:5173](http://localhost:5173)
+   Opens at [http://localhost:3000](http://localhost:3000)
 
 3. **Build for production**
    ```bash
@@ -51,10 +51,10 @@ A productivity and task management app built with React, TypeScript, and Vite.
 
 ```bash
 cd app
-npx vercel deploy --yes
+npx vercel deploy --prod --yes
 ```
 
-For each update, run the deploy command again from your local machine. Vercel will build and deploy the latest code.
+For each update, run the deploy command again from your local machine. Use `--prod` to deploy to production; omit it for preview deployments.
 
 ---
 

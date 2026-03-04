@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Habit, TrackingType } from '../types';
 import { LocalStorage } from '../store/localStorage';
+import { saveHabits as saveHabitsToStore, saveHabitLogs as saveHabitLogsToStore } from '../store/unifiedStore';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './AuthContext';
+import { useDataVersion } from './DataVersionContext';
 
 interface HabitLog {
   date: string; // YYYY-MM-DD format
@@ -77,6 +80,9 @@ const calculateStreak = (logs: HabitLog[]): number => {
 };
 
 export function HabitProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { dataVersion } = useDataVersion();
+  const userId = user?.id ?? null;
   const [habits, setHabits] = useState<HabitWithLogs[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -94,13 +100,13 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     
     setHabits(habitsWithLogs);
     setLoading(false);
-  }, []);
+  }, [dataVersion]);
 
   // Save habits (without logs)
   const saveHabits = useCallback((habitsToSave: HabitWithLogs[]) => {
     const habitsWithoutLogs: Habit[] = habitsToSave.map(({ logs, ...habit }) => habit);
-    LocalStorage.saveHabits(habitsWithoutLogs);
-  }, []);
+    saveHabitsToStore(habitsWithoutLogs, userId);
+  }, [userId]);
 
   // Save logs separately
   const saveLogs = useCallback((habitsWithLogs: HabitWithLogs[]) => {
@@ -108,8 +114,8 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     habitsWithLogs.forEach(habit => {
       logsMap[habit.id] = habit.logs;
     });
-    localStorage.setItem(HABIT_LOGS_KEY, JSON.stringify(logsMap));
-  }, []);
+    saveHabitLogsToStore(logsMap, userId);
+  }, [userId]);
 
   const createHabit = useCallback((
     name: string,

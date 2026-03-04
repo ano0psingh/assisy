@@ -2,6 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { AuthProvider } from './context/AuthContext.tsx'
+import { DataVersionProvider } from './context/DataVersionContext.tsx'
 import { TaskProvider } from './context/TaskContext.tsx'
 import { ThemeProvider } from './context/ThemeContext.tsx'
 import { GoalProvider } from './context/GoalContext.tsx'
@@ -10,25 +12,33 @@ import { DailyLogProvider } from './context/DailyLogContext.tsx'
 import { ProjectProvider } from './context/ProjectContext.tsx'
 import { GamificationProvider } from './context/GamificationContext.tsx'
 import { UndoProvider } from './components/common/UndoToast.tsx'
+import { CloudSyncEffect } from './components/auth/CloudSyncEffect.tsx'
+import { MigrationModalTrigger } from './components/auth/MigrationModalTrigger.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <GamificationProvider>
-        <GoalProvider>
-          <TaskProvider>
-            <HabitProvider>
-              <DailyLogProvider>
-                <ProjectProvider>
-                  <UndoProvider>
-                    <App />
-                  </UndoProvider>
-                </ProjectProvider>
-              </DailyLogProvider>
-            </HabitProvider>
-          </TaskProvider>
-        </GoalProvider>
-      </GamificationProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <DataVersionProvider>
+          <CloudSyncEffect />
+          <MigrationModalTrigger />
+          <GamificationProvider>
+            <GoalProvider>
+              <TaskProvider>
+                <HabitProvider>
+                  <DailyLogProvider>
+                    <ProjectProvider>
+                      <UndoProvider>
+                        <App />
+                      </UndoProvider>
+                    </ProjectProvider>
+                  </DailyLogProvider>
+                </HabitProvider>
+              </TaskProvider>
+            </GoalProvider>
+          </GamificationProvider>
+        </DataVersionProvider>
+      </ThemeProvider>
+    </AuthProvider>
   </StrictMode>,
 )
