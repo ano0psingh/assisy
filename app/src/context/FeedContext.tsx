@@ -6,6 +6,16 @@ import {
   type FeedSubscription, type FeedArticle,
 } from '../store/feedStore';
 import { fetchRSSFeed, extractTextFromHTML, fetchArticleContent, estimateReadingTime } from '../lib/rssParser';
+
+async function getArticleText(rssContent: string, sourceUrl: string): Promise<string> {
+  let text = extractTextFromHTML(rssContent);
+  if (text.length < 200 && sourceUrl) {
+    try {
+      text = await fetchArticleContent(sourceUrl);
+    } catch { /* fall back to RSS content */ }
+  }
+  return text;
+}
 import { summarizeArticle, isGeminiConfigured, delay } from '../lib/gemini';
 
 export type FeedFilter = 'all' | 'unread' | 'bookmarked' | 'high_value';
@@ -96,7 +106,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         setSyncProgress({ current: i + 1, total: newArticles.length, currentTitle: art.title ?? undefined });
         try {
           const item = meta.items.find(it => it.link === art.source_url);
-          const text = extractTextFromHTML(item?.content ?? '');
+          const text = await getArticleText(item?.content ?? '', art.source_url);
           if (text.length < 50) continue;
           const result = await summarizeArticle(text, art.title ?? '', meta.title);
           await upsertArticle(userId, {
@@ -109,7 +119,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
             content_type: result.content_type,
           });
           if (i < newArticles.length - 1) await delay(4000);
-        } catch { /* skip failed summaries */ }
+        } catch (e) { console.error('Summary failed for', art.title, e); }
       }
       setSyncProgress(null);
     }
@@ -156,7 +166,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         const art = unsummarized[i] as FeedArticle & { _text?: string };
         setSyncProgress({ current: i + 1, total: unsummarized.length, currentTitle: art.title ?? undefined });
         try {
-          const text = art._text ?? '';
+          const text = await getArticleText(art._text ?? '', art.source_url);
           if (text.length < 50) continue;
           const sub = subscriptions.find(s => s.id === art.subscription_id);
           const result = await summarizeArticle(text, art.title ?? '', sub?.title ?? '');
@@ -170,7 +180,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
             content_type: result.content_type,
           });
           if (i < unsummarized.length - 1) await delay(4000);
-        } catch { /* skip */ }
+        } catch (e) { console.error('Summary failed for', art.title, e); }
       }
       setSyncProgress(null);
     }
