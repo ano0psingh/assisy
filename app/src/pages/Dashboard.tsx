@@ -263,6 +263,15 @@ export function Dashboard() {
       }
     }
   }, [loading, hasCarriedForward, carryForwardTasks, hasSeenPlanYourDay, hasClaimedDailyLogin, recordDailyLogin, userStats.dailyLoginStreak, checkAndUnlockAchievements]);
+
+  const handleDeleteWithUndo = useCallback((taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    deleteTask(taskId);
+    pushUndo(`"${task.title}" deleted`, () => {
+      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate);
+    });
+  }, [tasks, deleteTask, createTask, pushUndo]);
   
   // Early return AFTER all hooks
   if (loading) {
@@ -374,15 +383,6 @@ export function Dashboard() {
   const handleOpenPlanYourDay = () => {
     setIsPlanYourDayOpen(true);
   };
-
-  const handleDeleteWithUndo = useCallback((taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    deleteTask(taskId);
-    pushUndo(`"${task.title}" deleted`, () => {
-      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate);
-    });
-  }, [tasks, deleteTask, createTask, pushUndo]);
 
   // All today's tasks as a flat list sorted by priority
   const allTodayPending = todaysTasks.filter(t => t.status !== 'Completed');
