@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/feed.html", "destination": "/feed.html" },
+    { "source": "/feed", "destination": "/feed.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

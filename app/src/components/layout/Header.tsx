@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -59,6 +59,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
     { icon: BarChart3, label: 'Stats', to: '/stats' },
   ];
 
+  const feedNavCls = isDark
+    ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50';
+
   return (
     <>
       <header className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
@@ -93,6 +97,15 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 <span className="hidden lg:inline">{item.label}</span>
               </NavLink>
             ))}
+            <a
+              href="/feed.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${feedNavCls}`}
+            >
+              <Newspaper size={15} />
+              <span className="hidden lg:inline">Feed</span>
+            </a>
           </nav>
 
           {/* Right actions */}
