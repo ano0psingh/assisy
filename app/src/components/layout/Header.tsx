@@ -25,6 +25,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
   const isDark = theme === 'dark';
   const [dataModalOpen, setDataModalOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, signOut, isConfigured } = useAuth();
 
   const { addToToday: addTaskToToday } = useTaskContext();
@@ -148,17 +149,47 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             {/* Auth */}
             {isConfigured && (
               user ? (
-                <div className={`flex items-center gap-2 px-2 py-1 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
-                  <span className={`text-xs max-w-[120px] truncate ${isDark ? 'text-gray-400' : 'text-slate-500'}`} title={user.email}>
-                    {user.email}
-                  </span>
+                <div className="relative">
                   <button
-                    onClick={() => signOut()}
-                    className={`p-1.5 rounded ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-200 text-slate-500'}`}
-                    title="Sign out"
+                    onClick={() => setUserMenuOpen(p => !p)}
+                    className="rounded-full focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-transparent"
+                    title={user.email ?? 'Account'}
                   >
-                    <LogOut size={14} />
+                    {user.user_metadata?.avatar_url ? (
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt=""
+                        className="w-8 h-8 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                        {(user.email?.[0] ?? '?').toUpperCase()}
+                      </div>
+                    )}
                   </button>
+                  {userMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                      <div className={`absolute right-0 mt-2 w-52 rounded-xl z-50 shadow-xl border ${isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-slate-200'}`}>
+                        <div className={`px-3.5 py-3 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+                          <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{user.user_metadata?.full_name || user.email}</p>
+                          {user.user_metadata?.full_name && (
+                            <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
+                          )}
+                        </div>
+                        <div className="p-1.5">
+                          <button
+                            onClick={() => { signOut(); setUserMenuOpen(false); }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'}`}
+                          >
+                            <LogOut size={14} />
+                            Sign out
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <button
