@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -8,6 +8,7 @@ import { useGamification } from '../../context/GamificationContext';
 import { DataExportImport } from '../common/DataPortability';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { LoginModal } from '../auth/LoginModal';
+import { AccountSettings } from '../auth/AccountSettings';
 import { useAuth } from '../../context/AuthContext';
 import type { TaskCategory, Priority, Effort } from '../../types';
 
@@ -26,6 +27,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
   const [dataModalOpen, setDataModalOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
   const { user, signOut, isConfigured } = useAuth();
 
   const { addToToday: addTaskToToday } = useTaskContext();
@@ -178,7 +180,14 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                             <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
                           )}
                         </div>
-                        <div className="p-1.5">
+                        <div className="p-1.5 space-y-0.5">
+                          <button
+                            onClick={() => { setAccountModalOpen(true); setUserMenuOpen(false); }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'}`}
+                          >
+                            <Settings size={14} />
+                            Account Settings
+                          </button>
                           <button
                             onClick={() => { signOut(); setUserMenuOpen(false); }}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'}`}
@@ -234,6 +243,16 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
       </ExpandableModal>
 
       <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+
+      {/* Account Settings Modal */}
+      {accountModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`} onClick={() => setAccountModalOpen(false)} />
+          <div className={`relative rounded-2xl shadow-elevated w-full max-w-sm overflow-hidden animate-slide-up ${isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white'}`}>
+            <AccountSettings onClose={() => setAccountModalOpen(false)} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -10,6 +10,9 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
   isConfigured: boolean;
 }
 
@@ -63,6 +66,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (supabase) await supabase.auth.signOut();
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/`,
+    });
+    return { error: error ?? null };
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error ?? null };
+  }, []);
+
+  const deleteAccount = useCallback(async () => {
+    if (!supabase || !user) return { error: new Error('Not signed in') };
+    const { error } = await supabase.from('user_data').delete().eq('user_id', user.id);
+    if (error) return { error };
+    await supabase.auth.signOut();
+    return { error: null };
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     session,
@@ -71,6 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUpWithEmail,
     signInWithGoogle,
     signOut,
+    resetPassword,
+    updatePassword,
+    deleteAccount,
     isConfigured: isSupabaseConfigured(),
   };
 
