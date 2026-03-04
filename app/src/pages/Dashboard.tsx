@@ -5,12 +5,15 @@ import { useHabitContext } from '../context/HabitContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
-import { CheckSquare, Plus, Zap, Clock, Sparkles, Quote, Flame, Gamepad2, Coffee, ListPlus, Briefcase, User, DollarSign, ChevronDown, ChevronRight, Calendar, RotateCcw, CheckCircle2, ListTodo, FolderKanban, Circle, Play, Pencil, Trash2, CalendarMinus, Trophy, Crown } from 'lucide-react';
+import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, RotateCcw, CheckCircle2, ListTodo, Circle, Play, Pencil, Trophy, Crown, AlertTriangle } from 'lucide-react';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
+import { NotesEditor } from '../components/common/NotesEditor';
+import { ExpandableModal } from '../components/common/ExpandableModal';
+import { useUndo } from '../components/common/UndoToast';
 import { getQuoteOfTheDay } from '../data/quotes';
-import type { Task, TaskCategory, ProjectTask, WorkItemStatus, RecurrencePattern } from '../types';
+import type { Task, ProjectTask, WorkItemStatus, RecurrencePattern } from '../types';
 
 // XP Animation Component
 function XPAnimation({ xp, onComplete }: { xp: number; onComplete: () => void }) {
@@ -24,6 +27,67 @@ function XPAnimation({ xp, onComplete }: { xp: number; onComplete: () => void })
       <div className="animate-xp-float text-3xl font-bold text-amber-400 drop-shadow-lg flex items-center gap-2">
         <Zap className="w-8 h-8" />
         +{xp} XP
+      </div>
+    </div>
+  );
+}
+
+function BacklogPicker({ tasks, onAdd, isDark }: { tasks: Task[]; onAdd: (id: string) => void; isDark: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const [search, setSearch] = useState('');
+
+  if (tasks.length === 0) return null;
+
+  const filtered = search.trim()
+    ? tasks.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+    : tasks;
+  const visible = expanded ? filtered : filtered.slice(0, 4);
+
+  return (
+    <div className={`mt-3 pt-3 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+      <div className="flex items-center justify-between mb-2">
+        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+          Add from backlog ({tasks.length})
+        </p>
+        {tasks.length > 4 && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className={`text-xs ${isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-600'}`}
+          >
+            {expanded ? 'Show less' : 'Show all'}
+          </button>
+        )}
+      </div>
+      {expanded && tasks.length > 6 && (
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search backlog..."
+          className={`w-full px-3 py-1.5 mb-2 rounded-lg text-xs outline-none ${
+            isDark ? 'bg-white/5 border border-white/10 text-white placeholder-gray-600' : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400'
+          }`}
+        />
+      )}
+      <div className={`space-y-1 ${expanded ? 'max-h-60 overflow-y-auto' : ''}`}>
+        {visible.map(task => (
+          <button
+            key={task.id}
+            onClick={() => onAdd(task.id)}
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+              isDark
+                ? 'text-gray-400 hover:bg-violet-500/10 hover:text-violet-400'
+                : 'text-slate-500 hover:bg-violet-50 hover:text-violet-600'
+            }`}
+          >
+            <Plus size={12} className="flex-shrink-0" />
+            <span className="truncate flex-1">{task.title}</span>
+            <span className={`text-[10px] flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{task.category}</span>
+          </button>
+        ))}
+        {expanded && filtered.length === 0 && search && (
+          <p className={`text-xs py-2 text-center ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks match "{search}"</p>
+        )}
       </div>
     </div>
   );
@@ -52,12 +116,12 @@ export function Dashboard() {
     getTodaysProjectTasks, 
     updateTaskStatus, 
     updateProjectTask,
-    deleteProjectTask,
     removeTaskFromToday: removeProjectTaskFromToday,
     getProject,
     getSubProject,
   } = useProjectContext();
   const { theme } = useTheme();
+  const { pushUndo } = useUndo();
   const { 
     recordTaskCompletion, 
     updateStreak, 
@@ -79,11 +143,6 @@ export function Dashboard() {
   const [xpAnimation, setXpAnimation] = useState<{ show: boolean; xp: number }>({ show: false, xp: 0 });
   const [isPlanYourDayOpen, setIsPlanYourDayOpen] = useState(false);
   const [dailyBonusResult, setDailyBonusResult] = useState<{ show: boolean; xp: number; streak: number; multiplier: number } | null>(null);
-  // Collapsed state for task categories - Professional expanded by default
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<TaskCategory>>(
-    new Set(['Personal', 'Financial'])
-  );
-  const [isProjectTasksCollapsed, setIsProjectTasksCollapsed] = useState(false);
   const [editingProjectTask, setEditingProjectTask] = useState<ProjectTask | null>(null);
   const [projectTaskForm, setProjectTaskForm] = useState({ title: '', description: '' });
 
@@ -110,19 +169,6 @@ export function Dashboard() {
     .filter(h => h.streakCount > 0)
     .sort((a, b) => b.streakCount - a.streakCount)
     .slice(0, 3);
-
-  // Toggle category collapse
-  const toggleCategoryCollapse = useCallback((category: TaskCategory) => {
-    setCollapsedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(category)) {
-        next.delete(category);
-      } else {
-        next.add(category);
-      }
-      return next;
-    });
-  }, []);
 
   // All hooks must be called before any early returns
   const handleToggleComplete = useCallback((taskId: string) => {
@@ -163,23 +209,21 @@ export function Dashboard() {
     return { monday, sunday };
   }, []);
 
-  // Weekly professional tasks review
+  // Weekly review — all tasks, not just Professional
   const weeklyProfessionalReview = useMemo(() => {
     const { monday, sunday } = getWeekBounds();
     
-    const professionalTasks = tasks.filter(t => t.category === 'Professional');
-    
-    const completedThisWeek = professionalTasks.filter(t => {
+    const completedThisWeek = tasks.filter(t => {
       if (t.status !== 'Completed' || !t.completedAt) return false;
       const completedDate = new Date(t.completedAt);
       return completedDate >= monday && completedDate <= sunday;
     });
     
-    const backlog = professionalTasks.filter(t => 
+    const backlog = tasks.filter(t => 
       t.status === 'Pending' || t.status === 'Carried Forward'
     );
     
-    const carriedForward = professionalTasks.filter(t => 
+    const carriedForward = tasks.filter(t => 
       t.status === 'Carried Forward'
     );
     
@@ -243,6 +287,7 @@ export function Dashboard() {
     recurrencePattern?: RecurrencePattern;
     goalId?: string;
     dueDate?: Date;
+    addToToday?: boolean;
   }) => {
     const newTask = createTask(
       data.title,
@@ -260,8 +305,11 @@ export function Dashboard() {
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
     }
+
+    if (data.addToToday) {
+      addToToday(newTask.id);
+    }
     
-    // Record task creation for gamification
     recordTaskCreated();
     setTimeout(() => checkAndUnlockAchievements(), 100);
     
@@ -327,584 +375,304 @@ export function Dashboard() {
     setIsPlanYourDayOpen(true);
   };
 
+  const handleDeleteWithUndo = useCallback((taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    deleteTask(taskId);
+    pushUndo(`"${task.title}" deleted`, () => {
+      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate);
+    });
+  }, [tasks, deleteTask, createTask, pushUndo]);
+
+  // All today's tasks as a flat list sorted by priority
+  const allTodayPending = todaysTasks.filter(t => t.status !== 'Completed');
+  const allTodayCompleted = todaysTasks.filter(t => t.status === 'Completed');
+
+  const greetingEmoji = (() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '🌅';
+    if (hour < 17) return '☀️';
+    return '🌙';
+  })();
+
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Welcome back, Kage! 👋</h1>
-          <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
+    <div className="space-y-5">
+      {/* ── HERO BANNER: greeting + quote + actions ──── */}
+      <div className={`relative overflow-hidden rounded-2xl ${
+        isDark
+          ? 'bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-indigo-500/10 border border-violet-500/15'
+          : 'bg-gradient-to-br from-violet-50 via-purple-50/50 to-indigo-50 border border-violet-100'
+      }`}>
+        {/* Decorative blurs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className={`absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl ${isDark ? 'bg-violet-500/10' : 'bg-violet-200/40'}`} />
+          <div className={`absolute -bottom-12 -left-12 w-36 h-36 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-200/30'}`} />
         </div>
-        <button 
-          onClick={() => setIsTaskFormOpen(true)}
-          className="btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2"
-        >
-          <Plus size={18} />
-          <span>New Task</span>
-        </button>
-      </div>
 
-      {/* Quote of the Day Card */}
-      <div className={`card rounded-2xl p-5 relative overflow-hidden ${isDark ? 'bg-gradient-to-r from-violet-500/10 to-pink-500/10 border-violet-500/20' : 'bg-gradient-to-r from-violet-50 to-pink-50 border-violet-200'}`}>
-        <div className="flex items-start space-x-4">
-          <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-            <Quote className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium mb-1 ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>Quote of the Day</p>
-            <p className={`text-base leading-relaxed ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>"{quote.text}"</p>
-            <p className={`text-sm mt-2 ${isDark ? 'text-violet-400/70' : 'text-violet-500'}`}>— {quote.author}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Level & Title */}
-        <div className={`card card-hover rounded-2xl p-5 ${isDark ? 'bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20' : 'bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200'}`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-              <Crown className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+        <div className="relative px-6 py-5">
+          {/* Top: greeting + actions */}
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, Kage {greetingEmoji}
+              </h1>
+              <p className={`mt-0.5 text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                {todaysTasks.length > 0 && (
+                  <span className={isDark ? 'text-violet-400' : 'text-violet-600'}> · {allTodayCompleted.length}/{todaysTasks.length} done</span>
+                )}
+              </p>
             </div>
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>Level {getTotalLevel()}</div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-violet-400/70' : 'text-violet-600/70'}`}>{getTitle()}</p>
-        </div>
-
-        {/* Today's Tasks */}
-        <div className="card card-hover rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-blue-500/20' : 'bg-blue-50'}`}>
-              <CheckSquare className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
-            </div>
-            {carriedForwardCount > 0 && (
-              <span className="badge badge-orange text-xs">{carriedForwardCount}</span>
-            )}
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{todaysTasks.length}</div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks today</p>
-        </div>
-
-        {/* Current Streak */}
-        <div className="card card-hover rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-orange-500/20' : 'bg-orange-50'}`}>
-              <Flame className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-            </div>
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{userStats.currentStreak}</div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Day streak</p>
-        </div>
-
-        {/* Achievements */}
-        <div className="card card-hover rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-50'}`}>
-              <Trophy className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-            </div>
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>{getUnlockedAchievements().length}</div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Achievements</p>
-        </div>
-      </div>
-
-      {/* Habit Streaks Widget */}
-      {topStreaks.length > 0 && (
-        <div className={`card rounded-2xl p-5 ${isDark ? 'bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/20' : 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200'}`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-orange-500/20' : 'bg-orange-100'}`}>
-                <Flame className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-              </div>
-              <div>
-                <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Active Streaks</h3>
-                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Keep the momentum going!</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {topStreaks.map((habit) => (
-              <div 
-                key={habit.id}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-xl ${
-                  isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleOpenPlanYourDay}
+                className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm transition-colors ${
+                  isDark
+                    ? 'bg-white/10 text-gray-300 hover:bg-white/15'
+                    : 'bg-white/70 text-slate-600 hover:bg-white'
                 }`}
               >
-                <Flame className={`w-4 h-4 ${
-                  habit.streakCount >= 7 ? 'text-orange-500' : 
-                  habit.streakCount >= 3 ? 'text-amber-500' : 'text-yellow-500'
-                }`} />
-                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{habit.name}</span>
-                <span className={`text-sm font-bold ${
-                  habit.streakCount >= 7 ? 'text-orange-500' : 
-                  habit.streakCount >= 3 ? 'text-amber-500' : 'text-yellow-500'
-                }`}>{habit.streakCount}d</span>
-              </div>
-            ))}
+                <ListPlus size={16} />
+                <span>Plan Day</span>
+              </button>
+              <button
+                onClick={() => setIsTaskFormOpen(true)}
+                className="btn-primary px-4 py-2 rounded-xl flex items-center space-x-1.5 text-sm"
+              >
+                <Plus size={16} />
+                <span>New Task</span>
+              </button>
+            </div>
           </div>
+
+          {/* Quote of the day */}
+          <div className={`flex items-start gap-3 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 ${
+              isDark ? 'bg-violet-500/20' : 'bg-violet-100'
+            }`}>
+              <Quote className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            </div>
+            <div>
+              <p className={`text-sm leading-relaxed italic ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+                "{quote.text}"
+              </p>
+              <p className={`text-xs mt-1 ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>— {quote.author}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── STATS ROW: colorful, compact ────────────── */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-violet-500/10 border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            <span className={`text-xs ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>Level</span>
+          </div>
+          <div className={`text-xl font-bold ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{getTotalLevel()}</div>
+          <p className={`text-[10px] mt-0.5 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>{getTitle()}</p>
+        </div>
+        <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-blue-500/10 border border-blue-500/15' : 'bg-blue-50 border border-blue-100'}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <CheckSquare className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
+            <span className={`text-xs ${isDark ? 'text-blue-400/70' : 'text-blue-500/80'}`}>Tasks</span>
+          </div>
+          <div className={`text-xl font-bold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{todaysTasks.length}</div>
+          <p className={`text-[10px] mt-0.5 ${isDark ? 'text-blue-400/50' : 'text-blue-500/60'}`}>{carriedForwardCount ? `${carriedForwardCount} carried` : 'today'}</p>
+        </div>
+        <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-orange-500/10 border border-orange-500/15' : 'bg-orange-50 border border-orange-100'}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Flame className={`w-4 h-4 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
+            <span className={`text-xs ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>Streak</span>
+          </div>
+          <div className={`text-xl font-bold ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>{userStats.currentStreak}</div>
+          <p className={`text-[10px] mt-0.5 ${isDark ? 'text-orange-400/50' : 'text-orange-500/60'}`}>days</p>
+        </div>
+        <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-amber-500/10 border border-amber-500/15' : 'bg-amber-50 border border-amber-100'}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Trophy className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+            <span className={`text-xs ${isDark ? 'text-amber-400/70' : 'text-amber-500/80'}`}>Badges</span>
+          </div>
+          <div className={`text-xl font-bold ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{getUnlockedAchievements().length}</div>
+          <p className={`text-[10px] mt-0.5 ${isDark ? 'text-amber-400/50' : 'text-amber-500/60'}`}>unlocked</p>
+        </div>
+      </div>
+
+      {/* ── HABIT STREAKS (compact inline, only if present) ── */}
+      {topStreaks.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <Flame className={`w-3.5 h-3.5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
+          {topStreaks.map((habit) => (
+            <span
+              key={habit.id}
+              className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg ${
+                isDark ? 'bg-orange-500/10 text-orange-400 border border-orange-500/15' : 'bg-orange-50 text-orange-600 border border-orange-100'
+              }`}
+            >
+              {habit.name} <strong>{habit.streakCount}d</strong>
+            </span>
+          ))}
         </div>
       )}
 
-      {/* Today's Tasks Section - Work Focused */}
-      <div className="card rounded-2xl overflow-hidden">
-        <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-          <div className="flex items-center space-x-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-              <Clock className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-            </div>
-            <div>
-              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Today's Tasks</h2>
-              <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{todaysTasks.length} tasks remaining</p>
+      {/* ── OVERDUE WARNING ───────────────────────────── */}
+      {(() => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const overdueTasks = tasks.filter(t => {
+          if (t.status === 'Completed' || !t.dueDate) return false;
+          const due = new Date(t.dueDate);
+          due.setHours(0, 0, 0, 0);
+          return due < now;
+        });
+        if (overdueTasks.length === 0) return null;
+        return (
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
+            isDark ? 'bg-red-500/10 border border-red-500/20' : 'bg-red-50 border border-red-200'
+          }`}>
+            <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-red-400' : 'text-red-500'}`} />
+            <div className="flex-1">
+              <span className={`text-sm font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}
+              </span>
+              <span className={`text-xs ml-2 ${isDark ? 'text-red-400/60' : 'text-red-500/60'}`}>
+                {overdueTasks.slice(0, 3).map(t => t.title).join(', ')}{overdueTasks.length > 3 ? ` +${overdueTasks.length - 3} more` : ''}
+              </span>
             </div>
           </div>
+        );
+      })()}
+
+      {/* ── TODAY'S TASKS — the hero section ───────────────── */}
+      {todaysTasks.length === 0 && todaysProjectTasks.length === 0 ? (
+        <div className={`card rounded-2xl p-10 text-center`}>
+          <Sparkles className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+          <h3 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>All clear!</h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>No tasks for today.</p>
           <button
-            onClick={handleOpenPlanYourDay}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors ${
-              isDark 
-                ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' 
-                : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
-            }`}
+            onClick={() => setIsTaskFormOpen(true)}
+            className="btn-primary px-4 py-2 rounded-xl text-sm inline-flex items-center gap-2"
           >
-            <ListPlus size={18} />
-            <span className="text-sm font-medium">Plan Day</span>
+            <Plus size={16} /> Add Task
           </button>
         </div>
-        
-        <div className="p-6">
-          {todaysTasks.length === 0 && todaysProjectTasks.length === 0 ? (
-            <div className="text-center py-12">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}>
-                <Sparkles className={`w-8 h-8 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-              </div>
-              <h3 className={`font-semibold text-lg mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>All clear!</h3>
-              <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                No tasks for today. Add a new task or take a well-deserved break!
-              </p>
-              <div className="flex items-center justify-center gap-3">
-                <button 
-                  onClick={() => setIsTaskFormOpen(true)}
-                  className="btn-primary px-4 py-2 rounded-xl text-sm flex items-center gap-2"
-                >
-                  <Plus size={16} />
-                  Add Task
-                </button>
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'}`}>
-                  <Gamepad2 size={16} />
-                  <span className="text-sm">or relax</span>
-                  <Coffee size={16} />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Professional/Work Tasks - Always first and expanded */}
-              {/* Project Tasks Section */}
-              {todaysProjectTasks.length > 0 && (
-                <div>
-                  {/* Project Tasks Header */}
+      ) : (
+        <div className="space-y-2">
+          {/* Project tasks — compact inline */}
+          {todaysProjectTasks.filter(t => t.status !== 'Done').map((task) => {
+            const project = getProject(task.projectId);
+            const subProject = getSubProject(task.subProjectId);
+            return (
+              <div
+                key={task.id}
+                className={`group rounded-xl px-4 py-3 transition-all ${
+                  isDark
+                    ? 'bg-white/[0.03] border border-white/10 hover:bg-white/[0.06]'
+                    : 'bg-white border border-slate-200 hover:shadow-md'
+                }`}
+              >
+                <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setIsProjectTasksCollapsed(!isProjectTasksCollapsed)}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors mb-2 ${
-                      isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                    onClick={() => {
+                      const statusOrder: WorkItemStatus[] = ['Backlog', 'In Progress', 'Done'];
+                      const currentIndex = statusOrder.indexOf(task.status);
+                      updateTaskStatus(task.id, statusOrder[(currentIndex + 1) % statusOrder.length]);
+                    }}
+                    className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
+                      task.status === 'In Progress'
+                        ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-500'
+                        : isDark ? 'bg-gray-500/20 text-gray-500' : 'bg-slate-200 text-slate-400'
                     }`}
+                    title={task.status}
                   >
-                    <div className="flex items-center space-x-3">
-                      {isProjectTasksCollapsed ? (
-                        <ChevronRight className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
-                      ) : (
-                        <ChevronDown className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
-                      )}
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-                        <FolderKanban className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-                      </div>
-                      <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                        Projects
-                      </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
-                        {todaysProjectTasks.length}
-                      </span>
-                    </div>
-                    <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                      {todaysProjectTasks.filter(t => t.status === 'Done').length}/{todaysProjectTasks.length} done
-                    </span>
+                    {task.status === 'In Progress' ? <Play size={8} fill="currentColor" /> : <Circle size={12} />}
                   </button>
-                  
-                  {/* Project Tasks List */}
-                  {!isProjectTasksCollapsed && (
-                    <div className="space-y-2 ml-7">
-                      {todaysProjectTasks.map((task, index) => {
-                        const project = getProject(task.projectId);
-                        const subProject = getSubProject(task.subProjectId);
-                        
-                        return (
-                          <div 
-                            key={task.id} 
-                            className="animate-fade-in"
-                            style={{ animationDelay: `${index * 30}ms` }}
-                          >
-                            <div className={`group p-4 rounded-xl transition-all ${
-                              isDark 
-                                ? 'bg-white/5 hover:bg-white/10 border border-white/10' 
-                                : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'
-                            } ${task.status === 'Done' ? 'opacity-60' : ''}`}>
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-start space-x-3 flex-1 min-w-0">
-                                  {/* Status Toggle */}
-                                  <button
-                                    onClick={() => {
-                                      const statusOrder: WorkItemStatus[] = ['Backlog', 'In Progress', 'Done'];
-                                      const currentIndex = statusOrder.indexOf(task.status);
-                                      const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
-                                      updateTaskStatus(task.id, nextStatus);
-                                    }}
-                                    className={`mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
-                                      task.status === 'Done' 
-                                        ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-500'
-                                        : task.status === 'In Progress'
-                                        ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-500'
-                                        : isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-slate-200 text-slate-500'
-                                    }`}
-                                    title={`Status: ${task.status} (click to change)`}
-                                  >
-                                    {task.status === 'Done' ? (
-                                      <CheckCircle2 size={14} />
-                                    ) : task.status === 'In Progress' ? (
-                                      <Play size={10} fill="currentColor" />
-                                    ) : (
-                                      <Circle size={14} />
-                                    )}
-                                  </button>
-                                  
-                                  <div className="flex-1 min-w-0">
-                                    {/* Title - clickable to edit */}
-                                    <h3 
-                                      onClick={() => handleEditProjectTask(task)}
-                                      className={`font-medium cursor-pointer hover:opacity-80 ${
-                                        task.status === 'Done' 
-                                          ? isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through'
-                                          : isDark ? 'text-white' : 'text-slate-800'
-                                      }`}
-                                    >
-                                      {task.title}
-                                    </h3>
-                                    
-                                    {/* Description */}
-                                    {task.description && (
-                                      <p className={`text-sm mt-1 line-clamp-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-                                        {task.description}
-                                      </p>
-                                    )}
-                                    
-                                    {/* Tags and Info */}
-                                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                                      {/* Project path */}
-                                      <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
-                                        {project?.title} → {subProject?.title}
-                                      </span>
-                                      
-                                      {/* Status badge */}
-                                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                        task.status === 'Done' 
-                                          ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                                          : task.status === 'In Progress'
-                                          ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
-                                          : isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-slate-100 text-slate-500'
-                                      }`}>
-                                        {task.status}
-                                      </span>
-                                      
-                                      {/* Priority badge */}
-                                      {task.priority === 'High' && (
-                                        <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
-                                          <Flame size={10} className="inline mr-1" />
-                                          High
-                                        </span>
-                                      )}
-                                      
-                                      {/* Tags */}
-                                      {task.tags?.slice(0, 2).map(tag => (
-                                        <span key={tag} className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-white/10 text-gray-400' : 'bg-slate-100 text-slate-500'}`}>
-                                          {tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                {/* Action Buttons */}
-                                <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {/* Remove from Today */}
-                                  <button
-                                    onClick={() => removeProjectTaskFromToday(task.id)}
-                                    className={`p-2 rounded-lg transition-colors ${
-                                      isDark 
-                                        ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-500/20' 
-                                        : 'text-slate-500 hover:text-orange-600 hover:bg-orange-50'
-                                    }`}
-                                    title="Remove from Today"
-                                  >
-                                    <CalendarMinus size={18} />
-                                  </button>
-                                  
-                                  {/* Edit */}
-                                  <button
-                                    onClick={() => handleEditProjectTask(task)}
-                                    className={`p-2 rounded-lg transition-colors ${
-                                      isDark 
-                                        ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
-                                        : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
-                                    }`}
-                                    title="Edit task"
-                                  >
-                                    <Pencil size={18} />
-                                  </button>
-                                  
-                                  {/* Delete */}
-                                  <button
-                                    onClick={() => {
-                                      if (confirm('Delete this task?')) {
-                                        deleteProjectTask(task.id);
-                                      }
-                                    }}
-                                    className={`p-2 rounded-lg transition-colors ${
-                                      isDark 
-                                        ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
-                                        : 'text-slate-500 hover:text-red-500 hover:bg-red-50'
-                                    }`}
-                                    title="Delete task"
-                                  >
-                                    <Trash2 size={18} />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <h3
+                    onClick={() => handleEditProjectTask(task)}
+                    className={`flex-1 font-medium truncate cursor-pointer hover:opacity-80 ${isDark ? 'text-white' : 'text-slate-800'}`}
+                  >
+                    {task.title}
+                  </h3>
+                  <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
+                    {project?.title}{subProject ? ` → ${subProject.title}` : ''}
+                  </span>
+                  {task.priority === 'High' && <Flame size={14} className="flex-shrink-0 text-red-500" />}
                 </div>
-              )}
+              </div>
+            );
+          })}
 
-              {/* Regular Task Categories */}
-              {(() => {
-                const workTasks = todaysTasks.filter(t => t.category === 'Professional');
-                const personalTasks = todaysTasks.filter(t => t.category === 'Personal');
-                const financialTasks = todaysTasks.filter(t => t.category === 'Financial');
-                
-                const categoryConfig: { category: TaskCategory; tasks: Task[]; icon: typeof Briefcase; label: string; color: string }[] = [
-                  { category: 'Professional', tasks: workTasks, icon: Briefcase, label: 'Work', color: 'gray' },
-                  { category: 'Personal', tasks: personalTasks, icon: User, label: 'Personal', color: 'blue' },
-                  { category: 'Financial', tasks: financialTasks, icon: DollarSign, label: 'Financial', color: 'green' },
-                ];
-                
-                return categoryConfig.map(({ category, tasks: categoryTasks, icon: Icon, label, color }) => {
-                  if (categoryTasks.length === 0) return null;
-                  const isCollapsed = collapsedCategories.has(category);
-                  
-                  return (
-                    <div key={category}>
-                      {/* Category Header */}
-                      <button
-                        onClick={() => toggleCategoryCollapse(category)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors mb-2 ${
-                          isDark 
-                            ? 'hover:bg-white/5' 
-                            : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          {isCollapsed ? (
-                            <ChevronRight className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
-                          ) : (
-                            <ChevronDown className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
-                          )}
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            color === 'gray' ? isDark ? 'bg-slate-500/20' : 'bg-slate-100' :
-                            color === 'blue' ? isDark ? 'bg-blue-500/20' : 'bg-blue-50' :
-                            isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'
-                          }`}>
-                            <Icon className={`w-4 h-4 ${
-                              color === 'gray' ? isDark ? 'text-slate-400' : 'text-slate-500' :
-                              color === 'blue' ? isDark ? 'text-blue-400' : 'text-blue-500' :
-                              isDark ? 'text-emerald-400' : 'text-emerald-500'
-                            }`} />
-                          </div>
-                          <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                            {label}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            isDark ? 'bg-white/10 text-gray-400' : 'bg-slate-100 text-slate-500'
-                          }`}>
-                            {categoryTasks.length}
-                          </span>
-                        </div>
-                        <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                          {categoryTasks.filter(t => t.status === 'Completed').length}/{categoryTasks.length} done
-                        </span>
-                      </button>
-                      
-                      {/* Category Tasks */}
-                      {!isCollapsed && (
-                        <div className="space-y-2 ml-7">
-                          {categoryTasks.map((task, index) => (
-                            <div 
-                              key={task.id} 
-                              className="animate-fade-in"
-                              style={{ animationDelay: `${index * 30}ms` }}
-                            >
-                              <TaskCard
-                                task={task}
-                                onToggleComplete={handleToggleComplete}
-                                onDelete={deleteTask}
-                                onEdit={handleEdit}
-                                onRemoveFromToday={removeFromToday}
-                                isInTodayView={true}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                });
-              })()}
-            </div>
+          {/* Regular tasks — flat list, no category grouping */}
+          {allTodayPending.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onToggleComplete={handleToggleComplete}
+              onDelete={handleDeleteWithUndo}
+              onEdit={handleEdit}
+              onRemoveFromToday={removeFromToday}
+              isInTodayView={true}
+            />
+          ))}
+
+          {/* Quick add from backlog — expandable */}
+          <BacklogPicker
+            tasks={getSuggestedTasks()}
+            onAdd={addToToday}
+            isDark={isDark}
+          />
+
+          {/* Completed tasks — subtle, at bottom */}
+          {(allTodayCompleted.length > 0 || todaysProjectTasks.filter(t => t.status === 'Done').length > 0) && (
+            <p className={`text-xs pt-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+              {allTodayCompleted.length + todaysProjectTasks.filter(t => t.status === 'Done').length} completed today
+            </p>
           )}
         </div>
+      )}
+
+      {/* ── COMPACT STATS ROW ────────────────────────────── */}
+      <div className={`grid grid-cols-4 gap-3`}>
+        {[
+          { label: 'Level', value: `${getTotalLevel()}`, sub: getTitle(), color: 'violet' },
+          { label: 'Tasks', value: `${todaysTasks.length}`, sub: `${carriedForwardCount ? `${carriedForwardCount} carried` : 'today'}`, color: 'blue' },
+          { label: 'Streak', value: `${userStats.currentStreak}`, sub: 'days', color: 'orange' },
+          { label: 'Achievements', value: `${getUnlockedAchievements().length}`, sub: 'unlocked', color: 'amber' },
+        ].map(({ label, value, sub }) => (
+          <div key={label} className={`card rounded-xl px-4 py-3`}>
+            <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{value}</div>
+            <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Weekly Professional Review */}
-      <div className="card rounded-2xl overflow-hidden">
-        <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-          <div className="flex items-center space-x-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-slate-500/20' : 'bg-slate-100'}`}>
-              <Calendar className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-            </div>
-            <div>
-              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Weekly Work Review</h2>
-              <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-                {weeklyProfessionalReview.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {weeklyProfessionalReview.weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </p>
-            </div>
+
+      {/* ── WEEKLY REVIEW (compact summary) ──────────── */}
+      <div className={`rounded-xl px-4 py-3 flex items-center justify-between ${
+        isDark ? 'bg-slate-500/5 border border-white/5' : 'bg-slate-50 border border-slate-100'
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-500/15' : 'bg-slate-200/70'}`}>
+            <Calendar className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
+          </div>
+          <div>
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>This Week</span>
+            <span className={`text-xs ml-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+              {weeklyProfessionalReview.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weeklyProfessionalReview.weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
           </div>
         </div>
-        
-        {/* Summary Cards */}
-        <div className="p-6">
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            {/* Completed */}
-            <div className={`p-4 rounded-xl text-center ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-100'}`}>
-              <CheckCircle2 className={`w-6 h-6 mx-auto mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-              <div className={`text-2xl font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                {weeklyProfessionalReview.completed.length}
-              </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-emerald-400/70' : 'text-emerald-600/70'}`}>Done</p>
-            </div>
-            
-            {/* Backlog */}
-            <div className={`p-4 rounded-xl text-center ${isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-100'}`}>
-              <ListTodo className={`w-6 h-6 mx-auto mb-2 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
-              <div className={`text-2xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                {weeklyProfessionalReview.backlog.length}
-              </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-blue-400/70' : 'text-blue-600/70'}`}>Backlog</p>
-            </div>
-            
-            {/* Carried Forward */}
-            <div className={`p-4 rounded-xl text-center ${isDark ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-orange-50 border border-orange-100'}`}>
-              <RotateCcw className={`w-6 h-6 mx-auto mb-2 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-              <div className={`text-2xl font-bold ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
-                {weeklyProfessionalReview.carriedForward.length}
-              </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-orange-400/70' : 'text-orange-600/70'}`}>Carried</p>
-            </div>
-          </div>
-          
-          {/* Completed This Week */}
-          {weeklyProfessionalReview.completed.length > 0 && (
-            <div className="mb-4">
-              <h3 className={`text-sm font-semibold mb-3 flex items-center space-x-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                <CheckCircle2 size={14} className="text-emerald-500" />
-                <span>Completed This Week</span>
-              </h3>
-              <div className="space-y-2">
-                {weeklyProfessionalReview.completed.slice(0, 5).map(task => (
-                  <div 
-                    key={task.id}
-                    className={`flex items-center space-x-3 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
-                  >
-                    <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                    <span className={`text-sm line-through ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                      {task.title}
-                    </span>
-                    {task.completedAt && (
-                      <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
-                        {new Date(task.completedAt).toLocaleDateString('en-US', { weekday: 'short' })}
-                      </span>
-                    )}
-                  </div>
-                ))}
-                {weeklyProfessionalReview.completed.length > 5 && (
-                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                    +{weeklyProfessionalReview.completed.length - 5} more
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {/* Backlog/In Progress */}
-          {weeklyProfessionalReview.backlog.length > 0 && (
-            <div>
-              <h3 className={`text-sm font-semibold mb-3 flex items-center space-x-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                <ListTodo size={14} className="text-blue-500" />
-                <span>Backlog / In Progress</span>
-              </h3>
-              <div className="space-y-2">
-                {weeklyProfessionalReview.backlog.slice(0, 5).map(task => (
-                  <div 
-                    key={task.id}
-                    className={`flex items-center space-x-3 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
-                  >
-                    <div className={`w-4 h-4 rounded border-2 flex-shrink-0 ${
-                      task.status === 'Carried Forward' 
-                        ? 'border-orange-500' 
-                        : isDark ? 'border-gray-600' : 'border-slate-300'
-                    }`} />
-                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                      {task.title}
-                    </span>
-                    {task.status === 'Carried Forward' && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
-                        carried
-                      </span>
-                    )}
-                  </div>
-                ))}
-                {weeklyProfessionalReview.backlog.length > 5 && (
-                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                    +{weeklyProfessionalReview.backlog.length - 5} more
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {/* Empty State */}
-          {weeklyProfessionalReview.completed.length === 0 && weeklyProfessionalReview.backlog.length === 0 && (
-            <div className="text-center py-6">
-              <Briefcase className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-slate-300'}`} />
-              <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                No professional tasks this week
-              </p>
-            </div>
+        <div className="flex items-center gap-3 text-xs font-medium">
+          <span className={`flex items-center gap-1 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+            <CheckCircle2 size={12} /> {weeklyProfessionalReview.completed.length}
+          </span>
+          <span className={`flex items-center gap-1 ${isDark ? 'text-blue-400' : 'text-blue-500'}`}>
+            <ListTodo size={12} /> {weeklyProfessionalReview.backlog.length}
+          </span>
+          {weeklyProfessionalReview.carriedForward.length > 0 && (
+            <span className={`flex items-center gap-1 ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>
+              <RotateCcw size={12} /> {weeklyProfessionalReview.carriedForward.length}
+            </span>
           )}
         </div>
       </div>
@@ -915,6 +683,7 @@ export function Dashboard() {
         onCancel={handleCloseForm}
         goals={goals}
         editingTask={editingTask}
+        defaultAddToToday={true}
       />
 
       {/* XP Animation */}
@@ -1026,100 +795,81 @@ export function Dashboard() {
       />
 
       {/* Edit Project Task Modal */}
-      {editingProjectTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`w-full max-w-md rounded-2xl p-6 ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
-            <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              Edit Task
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-                  Title
-                </label>
-                <input
-                  type="text"
-                  value={projectTaskForm.title}
-                  onChange={(e) => setProjectTaskForm(prev => ({ ...prev, title: e.target.value }))}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                    isDark 
-                      ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
-                      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-                  Description / Notes
-                </label>
-                <textarea
-                  value={projectTaskForm.description}
-                  onChange={(e) => setProjectTaskForm(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors resize-none ${
-                    isDark 
-                      ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
-                      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  placeholder="Add notes..."
-                />
-              </div>
-
-              {/* Status Selector */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-                  Status
-                </label>
-                <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-                  {(['Backlog', 'In Progress', 'Done'] as const).map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => updateTaskStatus(editingProjectTask.id, status)}
-                      className={`flex-1 px-3 py-2 text-xs font-medium transition-all ${
-                        editingProjectTask.status === status
-                          ? status === 'Done'
-                            ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                            : status === 'In Progress'
-                            ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
-                            : isDark ? 'bg-gray-500/20 text-gray-300' : 'bg-slate-100 text-slate-700'
-                          : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Project Info (read-only) */}
-              <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Project</p>
-                <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                  {getProject(editingProjectTask.projectId)?.title} → {getSubProject(editingProjectTask.subProjectId)?.title}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setEditingProjectTask(null)}
-                className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveProjectTask}
-                className="btn-primary px-4 py-2 rounded-xl"
-              >
-                Save
-              </button>
-            </div>
+      <ExpandableModal
+        isOpen={!!editingProjectTask}
+        onClose={() => setEditingProjectTask(null)}
+        title="Edit Task"
+        icon={<Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        footer={
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setEditingProjectTask(null)}
+              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              Cancel
+            </button>
+            <button onClick={handleSaveProjectTask} className="btn-primary px-4 py-2 rounded-xl">Save</button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {(isFS) => {
+          if (!editingProjectTask) return null;
+          const inputCls = `w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+            isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+          }`;
+          const titleInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <input type="text" value={projectTaskForm.title} onChange={(e) => setProjectTaskForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} autoFocus />
+            </div>
+          );
+          const notesInput = (
+            <div className={isFS ? 'flex-1' : ''}>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
+              <NotesEditor value={projectTaskForm.description} onChange={(val) => setProjectTaskForm(prev => ({ ...prev, description: val }))} placeholder={'Add notes, checklists, or details...\n\nTip: Type "- " for bullets, "[] " for checklists'} minRows={isFS ? 12 : 4} maxRows={isFS ? 26 : 12} />
+            </div>
+          );
+          const statusSelector = (
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
+              <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {(['Backlog', 'In Progress', 'Done'] as const).map((status) => (
+                  <button key={status} onClick={() => updateTaskStatus(editingProjectTask.id, status)} className={`flex-1 px-3 py-2 text-xs font-medium transition-all ${editingProjectTask.status === status ? status === 'Done' ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600' : status === 'In Progress' ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600' : isDark ? 'bg-gray-500/20 text-gray-300' : 'bg-slate-100 text-slate-700' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>{status}</button>
+                ))}
+              </div>
+            </div>
+          );
+          const projectInfo = (
+            <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Project</p>
+              <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                {getProject(editingProjectTask.projectId)?.title} → {getSubProject(editingProjectTask.subProjectId)?.title}
+              </p>
+            </div>
+          );
+
+          return isFS ? (
+            <div className="flex h-full">
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {titleInput}
+                {notesInput}
+              </div>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Details</h3>
+                {statusSelector}
+                {projectInfo}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 space-y-4">
+              {titleInput}
+              {notesInput}
+              {statusSelector}
+              {projectInfo}
+            </div>
+          );
+        }}
+      </ExpandableModal>
     </div>
   );
 }

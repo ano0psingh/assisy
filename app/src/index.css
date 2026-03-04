@@ -431,4 +431,96 @@
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
   }
+
+  /* ===== Achievement Unlock Animations ===== */
+  @keyframes confetti {
+    0% {
+      transform: translateY(-10vh) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .animate-confetti {
+    animation: confetti 2s ease-out forwards;
+  }
+
+  @keyframes unlock-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.3), 0 0 40px rgba(251, 191, 36, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.5), 0 0 60px rgba(251, 191, 36, 0.3);
+    }
+  }
+
+  .animate-unlock-glow {
+    animation: unlock-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes new-badge-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
+  }
+
+  .animate-new-badge {
+    animation: new-badge-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Notes Editor */
+  .notes-editor-textarea {
+    outline: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.2) transparent;
+  }
+  .notes-editor-textarea::-webkit-scrollbar {
+    width: 4px;
+  }
+  .notes-editor-textarea::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .notes-editor-textarea::-webkit-scrollbar-thumb {
+    background-color: rgba(139, 92, 246, 0.2);
+    border-radius: 4px;
+  }
+  .notes-editor-textarea::placeholder {
+    white-space: pre-line;
+  }
 }

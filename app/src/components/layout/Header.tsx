@@ -1,59 +1,45 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Shield, Medal, Crown, Gem } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useGamification } from '../../context/GamificationContext';
+import { DataExportImport } from '../common/DataPortability';
+import { ExpandableModal } from '../common/ExpandableModal';
 import type { TaskCategory, Priority, Effort } from '../../types';
 
-// Get XP progress to next level (0-100)
-function getXPProgress(xp: number): number {
-  return xp % 100;
+interface HeaderProps {
+  onOpenFocusTimer?: () => void;
 }
 
-export function Header() {
+export function Header({ onOpenFocusTimer }: HeaderProps) {
   const { createTask } = useTaskContext();
   const { theme, toggleTheme } = useTheme();
-  const { getTotalXP, getTotalLevel, getTitle, getUnlockedAchievements } = useGamification();
+  const { getTotalXP, getTotalLevel } = useGamification();
   const totalXP = getTotalXP();
   const level = getTotalLevel();
-  const xpProgress = getXPProgress(totalXP);
-  const title = getTitle();
+  const xpProgress = totalXP % 100;
   const isDark = theme === 'dark';
+  const [dataModalOpen, setDataModalOpen] = useState(false);
 
-  // Prestige cosmetic: derived from highest-tier unlocked achievement reward
-  const prestigeTier = (() => {
-    const unlocked = getUnlockedAchievements();
-    const best = unlocked.reduce((max, a) => Math.max(max, a.xpReward), 0);
-    if (best >= 1000) return 'legendary';
-    if (best >= 500) return 'platinum';
-    if (best >= 250) return 'gold';
-    if (best >= 100) return 'silver';
-    return 'bronze';
-  })();
-
-  const prestige = (() => {
-    switch (prestigeTier) {
-      case 'legendary':
-        return { label: 'Legendary', Icon: Crown, ring: 'from-amber-400 to-orange-500' };
-      case 'platinum':
-        return { label: 'Platinum', Icon: Gem, ring: 'from-cyan-400 to-blue-500' };
-      case 'gold':
-        return { label: 'Gold', Icon: Trophy, ring: 'from-amber-400 to-yellow-400' };
-      case 'silver':
-        return { label: 'Silver', Icon: Medal, ring: 'from-slate-200 to-slate-400' };
-      default:
-        return { label: 'Bronze', Icon: Shield, ring: 'from-orange-400 to-amber-700' };
-    }
-  })();
+  const { addToToday: addTaskToToday } = useTaskContext();
 
   const handleQuickAdd = (data: {
     title: string;
     category: TaskCategory;
     priority: Priority;
     effort: Effort;
+    addToToday?: boolean;
   }) => {
-    createTask(data.title, '', data.category, data.priority, data.effort);
+    const newTask = createTask(data.title, '', data.category, data.priority, data.effort);
+    if (data.addToToday) {
+      addTaskToToday(newTask.id);
+    }
+  };
+
+  const triggerSearch = () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
   };
 
   const navItems = [
@@ -67,125 +53,121 @@ export function Header() {
   ];
 
   return (
-    <header className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
-      isDark 
-        ? 'bg-[#0a0a0f]/80 backdrop-blur-xl border-white/10' 
-        : 'bg-white/80 backdrop-blur-xl border-slate-200'
-    }`}>
-      {/* Top bar */}
-      <div className="px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
-            isDark 
-              ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30' 
-              : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
-          }`}>
-            <Sparkles className="text-white w-5 h-5" />
+    <>
+      <header className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
+        isDark
+          ? 'bg-[#0a0a0f]/80 backdrop-blur-xl border-white/10'
+          : 'bg-white/80 backdrop-blur-xl border-slate-200'
+      }`}>
+        <div className="px-6 py-0 flex items-center justify-between h-14">
+          {/* Logo */}
+          <div className="flex items-center space-x-2.5 flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600">
+              <Sparkles className="text-white w-4 h-4" />
+            </div>
+            <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</span>
           </div>
-          <div>
-            <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</h1>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Your personal productivity assistant</p>
-          </div>
-        </div>
 
-        {/* Right side */}
-        <div className="flex items-center space-x-3">
-          <QuickAddTask onSubmit={handleQuickAdd} />
-          
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className={`theme-toggle ${isDark ? 'theme-toggle-dark' : 'theme-toggle-light'}`}
-            aria-label="Toggle theme"
-          >
-            <div className="theme-toggle-knob">
-              {isDark ? (
-                <Moon size={14} className="text-violet-400" />
-              ) : (
-                <Sun size={14} className="text-amber-500" />
-              )}
-            </div>
-          </button>
-          
-          {/* XP & Level */}
-          <div className={`flex items-center space-x-3 rounded-xl px-4 py-2 ${
-            isDark 
-              ? 'bg-amber-500/10 border border-amber-500/20' 
-              : 'bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200'
-          }`}>
-            <div className="flex items-center space-x-2">
-              <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-              <span className={`stat-number ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</span>
-              <span className={`text-sm ${isDark ? 'text-amber-400/60' : 'text-amber-600/60'}`}>XP</span>
-            </div>
-            <div className={`w-px h-6 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
-            <div className="flex flex-col">
-              <span className="text-violet-500 font-semibold text-sm">Lv {level}</span>
-              <div className={`w-16 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`}>
-                <div 
-                  className="h-full bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full transition-all duration-500"
-                  style={{ width: `${xpProgress}%` }}
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* User */}
-          <div className={`flex items-center space-x-3 rounded-xl px-4 py-2 ${
-            isDark 
-              ? 'bg-white/5 border border-white/10' 
-              : 'bg-slate-50 border border-slate-200'
-          }`}>
-            <div className={`p-[2px] rounded-lg bg-gradient-to-br ${prestige.ring}`}>
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                K
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>Kage</span>
-                <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${
-                  isDark ? 'bg-white/5 text-gray-300 border border-white/10' : 'bg-white text-slate-600 border border-slate-200'
-                }`}>
-                  <prestige.Icon size={12} />
-                  {prestige.label}
-                </span>
-              </div>
-              <span className="text-violet-500 text-xs">{title}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          {/* Navigation */}
+          <nav className="flex items-center space-x-0.5 mx-4">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    isActive
+                      ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                      : isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  }`
+                }
+              >
+                <item.icon size={15} />
+                <span className="hidden lg:inline">{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
 
-      {/* Navigation */}
-      <nav className={`px-6 flex items-center space-x-1 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `flex items-center space-x-2 px-4 py-3 text-sm transition-colors relative ${
-                isActive
-                  ? 'text-violet-500 font-medium'
-                  : isDark 
-                    ? 'text-gray-400 hover:text-gray-200' 
-                    : 'text-slate-500 hover:text-slate-700'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon size={18} />
-                <span>{item.label}</span>
-                {isActive && (
-                  <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full" />
-                )}
-              </>
+          {/* Right actions */}
+          <div className="flex items-center space-x-1.5 flex-shrink-0">
+            {/* Search trigger */}
+            <button
+              onClick={triggerSearch}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
+              title="Search (⌘K)"
+            >
+              <Search size={14} />
+              <kbd className={`text-[9px] px-1 py-0.5 rounded hidden sm:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
+            </button>
+
+            {/* Focus timer */}
+            {onOpenFocusTimer && (
+              <button
+                onClick={onOpenFocusTimer}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+                }`}
+                title="Focus Timer"
+              >
+                <Timer size={16} />
+              </button>
             )}
-          </NavLink>
-        ))}
-      </nav>
-    </header>
+
+            <QuickAddTask onSubmit={handleQuickAdd} />
+
+            {/* XP/Level pill */}
+            <div className={`flex items-center space-x-2 rounded-lg px-2.5 py-1.5 text-xs ${
+              isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+            }`}>
+              <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+              <span className={`font-semibold tabular-nums ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</span>
+              <div className={`w-px h-3.5 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
+              <span className="text-violet-500 font-semibold">Lv {level}</span>
+              <div className={`w-10 h-1 rounded-full overflow-hidden ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`}>
+                <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
+              </div>
+            </div>
+
+            {/* Data export/import */}
+            <button
+              onClick={() => setDataModalOpen(true)}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
+              title="Backup & Restore"
+            >
+              <Download size={16} />
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
+              aria-label="Toggle theme"
+            >
+              {isDark ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Data Export/Import Modal */}
+      <ExpandableModal
+        isOpen={dataModalOpen}
+        onClose={() => setDataModalOpen(false)}
+        title="Backup & Restore"
+        icon={<Download className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+      >
+        {() => (
+          <div className="p-6">
+            <DataExportImport onClose={() => setDataModalOpen(false)} />
+          </div>
+        )}
+      </ExpandableModal>
+    </>
   );
 }

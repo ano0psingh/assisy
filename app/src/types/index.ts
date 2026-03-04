@@ -146,8 +146,9 @@ export interface Achievement {
   requirement: {
     type: 'tasks_completed' | 'streak_days' | 'habit_streak' | 'level_reached' | 'xp_earned' | 'goals_completed' | 
           'login_streak' | 'days_active' | 'days_planned' | 'tasks_created' | 'tasks_added_today' | 
-          'productive_days' | 'perfect_days' | 'early_bird' | 'night_owl' | 'custom';
+          'productive_days' | 'perfect_days' | 'early_bird' | 'night_owl' | 'tasks_in_day' | 'early_tasks' | 'late_tasks' | 'custom';
     value: number;
+    current?: number;
     category?: SkillCategory | TaskCategory;
     habitId?: string;
   };

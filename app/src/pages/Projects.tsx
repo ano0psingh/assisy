@@ -8,6 +8,8 @@ import {
   CalendarPlus, ChevronLeft
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
+import { NotesEditor } from '../components/common/NotesEditor';
+import { ExpandableModal } from '../components/common/ExpandableModal';
 
 type ViewMode = 'list' | 'board';
 type DetailView = 'none' | 'project' | 'subproject';
@@ -863,300 +865,302 @@ export function Projects() {
       </div>
 
       {/* Project Form Modal */}
-      {isProjectFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`w-full max-w-md rounded-2xl p-6 ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
-            <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {editingProject ? 'Edit Project' : 'New Project'}
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
-                <input
-                  type="text"
-                  value={projectForm.title}
-                  onChange={e => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  placeholder="Project name"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Description / Ideas</label>
-                <textarea
-                  value={projectForm.description}
-                  onChange={e => setProjectForm(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors resize-none ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  placeholder="Notes, ideas, context..."
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Color</label>
-                <div className="flex flex-wrap gap-2">
-                  {PROJECT_COLORS.map(color => (
-                    <button
-                      key={color}
-                      onClick={() => setProjectForm(prev => ({ ...prev, color }))}
-                      className={`w-8 h-8 rounded-lg transition-all ${projectForm.color === color ? 'ring-2 ring-offset-2 ring-violet-500' : ''}`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
-                <input
-                  type="date"
-                  value={projectForm.deadline}
-                  onChange={e => setProjectForm(prev => ({ ...prev, deadline: e.target.value }))}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                />
-              </div>
-
-              {/* Status - only show when editing */}
-              {editingProject && (
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
-                  <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-                    {(['Active', 'Completed', 'On Hold'] as ProjectStatus[]).map(status => (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => setProjectForm(prev => ({ ...prev, status }))}
-                        className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${
-                          projectForm.status === status
-                            ? status === 'Active' 
-                              ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
-                              : status === 'Completed'
-                                ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                                : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
-                            : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => { setIsProjectFormOpen(false); setEditingProject(null); }}
-                className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={editingProject ? handleUpdateProject : handleCreateProject}
-                className="btn-primary px-4 py-2 rounded-xl"
-              >
-                {editingProject ? 'Save' : 'Create'}
-              </button>
-            </div>
+      <ExpandableModal
+        isOpen={isProjectFormOpen}
+        onClose={() => { setIsProjectFormOpen(false); setEditingProject(null); }}
+        title={editingProject ? 'Edit Project' : 'New Project'}
+        icon={<FolderKanban className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        footer={
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => { setIsProjectFormOpen(false); setEditingProject(null); }}
+              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={editingProject ? handleUpdateProject : handleCreateProject}
+              className="btn-primary px-4 py-2 rounded-xl"
+            >
+              {editingProject ? 'Save' : 'Create'}
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {(isFS) => {
+          const titleInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <input
+                type="text"
+                value={projectForm.title}
+                onChange={e => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
+                className={`w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+                  isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                }`}
+                placeholder="Project name"
+                autoFocus
+              />
+            </div>
+          );
+          const notesInput = (
+            <div className={isFS ? 'flex-1' : ''}>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes & Ideas</label>
+              <NotesEditor
+                value={projectForm.description}
+                onChange={val => setProjectForm(prev => ({ ...prev, description: val }))}
+                placeholder={'Notes, ideas, context...\n\nTip: Type "- " for bullets, "[] " for checklists'}
+                minRows={isFS ? 12 : 4}
+                maxRows={isFS ? 26 : 10}
+              />
+            </div>
+          );
+          const colorInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Color</label>
+              <div className="flex flex-wrap gap-2">
+                {PROJECT_COLORS.map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setProjectForm(prev => ({ ...prev, color }))}
+                    className={`w-8 h-8 rounded-lg transition-all ${projectForm.color === color ? 'ring-2 ring-offset-2 ring-violet-500' : ''}`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+          const deadlineInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
+              <input
+                type="date"
+                value={projectForm.deadline}
+                onChange={e => setProjectForm(prev => ({ ...prev, deadline: e.target.value }))}
+                className={`w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+                  isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                }`}
+              />
+            </div>
+          );
+          const statusInput = editingProject ? (
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
+              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {(['Active', 'Completed', 'On Hold'] as ProjectStatus[]).map(status => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setProjectForm(prev => ({ ...prev, status }))}
+                    className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${
+                      projectForm.status === status
+                        ? status === 'Active'
+                          ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                          : status === 'Completed'
+                            ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                            : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null;
+
+          return isFS ? (
+            <div className="flex h-full">
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {titleInput}
+                {notesInput}
+              </div>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Project details</h3>
+                {colorInput}
+                {deadlineInput}
+                {statusInput}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 space-y-4">
+              {titleInput}
+              {notesInput}
+              {colorInput}
+              {deadlineInput}
+              {statusInput}
+            </div>
+          );
+        }}
+      </ExpandableModal>
 
       {/* Sub-Project Form Modal */}
-      {isSubProjectFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`w-full max-w-md rounded-2xl p-6 ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
-            <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {editingSubProject ? 'Edit Sub-Project' : 'New Sub-Project'}
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
-                <input
-                  type="text"
-                  value={subProjectForm.title}
-                  onChange={e => setSubProjectForm(prev => ({ ...prev, title: e.target.value }))}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  placeholder="Sub-project name"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Description</label>
-                <textarea
-                  value={subProjectForm.description}
-                  onChange={e => setSubProjectForm(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors resize-none ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  placeholder="Description..."
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
-                <input
-                  type="date"
-                  value={subProjectForm.deadline}
-                  onChange={e => setSubProjectForm(prev => ({ ...prev, deadline: e.target.value }))}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                />
-              </div>
-
-              {/* Status - only show when editing */}
-              {editingSubProject && (
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
-                  <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-                    {(['Backlog', 'In Progress', 'Done'] as WorkItemStatus[]).map(status => (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => setSubProjectForm(prev => ({ ...prev, status }))}
-                        className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${
-                          subProjectForm.status === status
-                            ? getStatusColor(status)
-                            : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => { setIsSubProjectFormOpen(false); setEditingSubProject(null); }}
-                className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={editingSubProject ? handleUpdateSubProject : handleCreateSubProject}
-                className="btn-primary px-4 py-2 rounded-xl"
-              >
-                {editingSubProject ? 'Save' : 'Create'}
-              </button>
-            </div>
+      <ExpandableModal
+        isOpen={isSubProjectFormOpen}
+        onClose={() => { setIsSubProjectFormOpen(false); setEditingSubProject(null); }}
+        title={editingSubProject ? 'Edit Sub-Project' : 'New Sub-Project'}
+        icon={<Layers className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        footer={
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => { setIsSubProjectFormOpen(false); setEditingSubProject(null); }}
+              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={editingSubProject ? handleUpdateSubProject : handleCreateSubProject}
+              className="btn-primary px-4 py-2 rounded-xl"
+            >
+              {editingSubProject ? 'Save' : 'Create'}
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {(isFS) => {
+          const inputCls = `w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+            isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+          }`;
+          const titleInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <input type="text" value={subProjectForm.title} onChange={e => setSubProjectForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} placeholder="Sub-project name" autoFocus />
+            </div>
+          );
+          const notesInput = (
+            <div className={isFS ? 'flex-1' : ''}>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
+              <NotesEditor value={subProjectForm.description} onChange={val => setSubProjectForm(prev => ({ ...prev, description: val }))} placeholder={'Add notes or a description...\n\nTip: Type "- " for bullets, "[] " for checklists'} minRows={isFS ? 10 : 3} maxRows={isFS ? 24 : 8} />
+            </div>
+          );
+          const deadlineInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
+              <input type="date" value={subProjectForm.deadline} onChange={e => setSubProjectForm(prev => ({ ...prev, deadline: e.target.value }))} className={inputCls} />
+            </div>
+          );
+          const statusInput = editingSubProject ? (
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
+              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {(['Backlog', 'In Progress', 'Done'] as WorkItemStatus[]).map(status => (
+                  <button key={status} type="button" onClick={() => setSubProjectForm(prev => ({ ...prev, status }))} className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${subProjectForm.status === status ? getStatusColor(status) : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>{status}</button>
+                ))}
+              </div>
+            </div>
+          ) : null;
+
+          return isFS ? (
+            <div className="flex h-full">
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {titleInput}
+                {notesInput}
+              </div>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Details</h3>
+                {deadlineInput}
+                {statusInput}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 space-y-4">
+              {titleInput}
+              {notesInput}
+              {deadlineInput}
+              {statusInput}
+            </div>
+          );
+        }}
+      </ExpandableModal>
 
       {/* Task Form Modal */}
-      {isTaskFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`w-full max-w-md rounded-2xl p-6 ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
-            <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {editingTask ? 'Edit Task' : taskForm.parentTaskId ? 'New Sub-Task' : 'New Task'}
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
-                <input
-                  type="text"
-                  value={taskForm.title}
-                  onChange={e => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  placeholder="Task title"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Description</label>
-                <textarea
-                  value={taskForm.description}
-                  onChange={e => setTaskForm(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors resize-none ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                  placeholder="Notes..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Priority</label>
-                  <select
-                    value={taskForm.priority}
-                    onChange={e => setTaskForm(prev => ({ ...prev, priority: e.target.value as any }))}
-                    className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                      isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                    }`}
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Effort</label>
-                  <select
-                    value={taskForm.effort}
-                    onChange={e => setTaskForm(prev => ({ ...prev, effort: e.target.value as any }))}
-                    className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                      isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                    }`}
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
-                <input
-                  type="date"
-                  value={taskForm.deadline}
-                  onChange={e => setTaskForm(prev => ({ ...prev, deadline: e.target.value }))}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => { setIsTaskFormOpen(false); setEditingTask(null); }}
-                className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={editingTask ? handleUpdateTask : handleCreateTask}
-                className="btn-primary px-4 py-2 rounded-xl"
-              >
-                {editingTask ? 'Save' : 'Create'}
-              </button>
-            </div>
+      <ExpandableModal
+        isOpen={isTaskFormOpen}
+        onClose={() => { setIsTaskFormOpen(false); setEditingTask(null); }}
+        title={editingTask ? 'Edit Task' : taskForm.parentTaskId ? 'New Sub-Task' : 'New Task'}
+        icon={<ListTodo className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        footer={
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => { setIsTaskFormOpen(false); setEditingTask(null); }}
+              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={editingTask ? handleUpdateTask : handleCreateTask}
+              className="btn-primary px-4 py-2 rounded-xl"
+            >
+              {editingTask ? 'Save' : 'Create'}
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {(isFS) => {
+          const inputCls = `w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+            isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+          }`;
+          const titleInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <input type="text" value={taskForm.title} onChange={e => setTaskForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} placeholder="Task title" autoFocus />
+            </div>
+          );
+          const notesInput = (
+            <div className={isFS ? 'flex-1' : ''}>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
+              <NotesEditor value={taskForm.description} onChange={val => setTaskForm(prev => ({ ...prev, description: val }))} placeholder={'Add notes or details...\n\nTip: Type "- " for bullets, "[] " for checklists'} minRows={isFS ? 10 : 3} maxRows={isFS ? 24 : 8} />
+            </div>
+          );
+          const priorityEffort = (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Priority</label>
+                <select value={taskForm.priority} onChange={e => setTaskForm(prev => ({ ...prev, priority: e.target.value as any }))} className={inputCls}>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Effort</label>
+                <select value={taskForm.effort} onChange={e => setTaskForm(prev => ({ ...prev, effort: e.target.value as any }))} className={inputCls}>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+            </div>
+          );
+          const deadlineInput = (
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
+              <input type="date" value={taskForm.deadline} onChange={e => setTaskForm(prev => ({ ...prev, deadline: e.target.value }))} className={inputCls} />
+            </div>
+          );
+
+          return isFS ? (
+            <div className="flex h-full">
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {titleInput}
+                {notesInput}
+              </div>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Task details</h3>
+                {priorityEffort}
+                {deadlineInput}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 space-y-4">
+              {titleInput}
+              {notesInput}
+              {priorityEffort}
+              {deadlineInput}
+            </div>
+          );
+        }}
+      </ExpandableModal>
     </div>
   );
 }

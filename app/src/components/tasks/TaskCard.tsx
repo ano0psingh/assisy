@@ -1,6 +1,7 @@
+import { useState, useRef, useEffect } from 'react';
 import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Check, Clock, Trash2, Flame, Zap, Pencil, RotateCcw, CalendarDays, CalendarPlus, CalendarMinus, FolderInput } from 'lucide-react';
+import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -9,12 +10,11 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onAddToToday?: (taskId: string) => void;
   onRemoveFromToday?: (taskId: string) => void;
-  onMoveToProject?: (task: Task) => void; // Move task to a project
-  showTodayActions?: boolean; // Whether to show add/remove from today buttons
-  isInTodayView?: boolean; // Whether this card is shown in Today's Tasks section
+  onMoveToProject?: (task: Task) => void;
+  showTodayActions?: boolean;
+  isInTodayView?: boolean;
 }
 
-// Helper to check if task is from a previous day
 function isFromPreviousDay(createdAt: Date): boolean {
   const today = new Date();
   const taskDate = new Date(createdAt);
@@ -23,7 +23,6 @@ function isFromPreviousDay(createdAt: Date): boolean {
   return taskDate < today;
 }
 
-// Helper to get days ago text
 function getDaysAgoText(createdAt: Date): string {
   const today = new Date();
   const taskDate = new Date(createdAt);
@@ -32,20 +31,17 @@ function getDaysAgoText(createdAt: Date): string {
   const diffTime = today.getTime() - taskDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   if (diffDays === 1) return 'yesterday';
-  if (diffDays <= 7) return `${diffDays} days ago`;
+  if (diffDays <= 7) return `${diffDays}d ago`;
   return `${Math.floor(diffDays / 7)}w ago`;
 }
 
-// Helper to format due date
 function formatDueDate(dueDate: Date): { text: string; isOverdue: boolean; isToday: boolean } {
   const today = new Date();
   const due = new Date(dueDate);
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);
-  
   const diffTime = due.getTime() - today.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
   if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, isOverdue: true, isToday: false };
   if (diffDays === 0) return { text: 'Today', isOverdue: false, isToday: true };
   if (diffDays === 1) return { text: 'Tomorrow', isOverdue: false, isToday: false };
@@ -53,11 +49,11 @@ function formatDueDate(dueDate: Date): { text: string; isOverdue: boolean; isTod
   return { text: due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), isOverdue: false, isToday: false };
 }
 
-export function TaskCard({ 
-  task, 
-  onToggleComplete, 
-  onDelete, 
-  onEdit, 
+export function TaskCard({
+  task,
+  onToggleComplete,
+  onDelete,
+  onEdit,
   onAddToToday,
   onRemoveFromToday,
   onMoveToProject,
@@ -66,15 +62,16 @@ export function TaskCard({
 }: TaskCardProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const isCompleted = task.status === 'Completed';
   const isCarriedForward = task.status === 'Carried Forward' || (!task.isRecurring && isFromPreviousDay(task.createdAt) && !isCompleted);
   const daysAgoText = isCarriedForward && !task.isRecurring ? getDaysAgoText(task.createdAt) : '';
-  
-  // Check if task is manually focused for today
+
   const todayStr = new Date().toISOString().split('T')[0];
   const isFocusedToday = task.isFocusedToday && task.focusedDate === todayStr;
-  
-  // Check if task is auto-included (due today, overdue, recurring)
+
   const isDueToday = task.dueDate && (() => {
     const due = new Date(task.dueDate as Date);
     const today = new Date();
@@ -82,7 +79,7 @@ export function TaskCard({
     today.setHours(0, 0, 0, 0);
     return due.getTime() === today.getTime();
   })();
-  
+
   const isOverdue = task.dueDate && (() => {
     const due = new Date(task.dueDate as Date);
     const today = new Date();
@@ -90,198 +87,171 @@ export function TaskCard({
     today.setHours(0, 0, 0, 0);
     return due < today;
   })();
-  
-  // Can remove from today only if manually added (not auto-included)
+
   const canRemoveFromToday = isFocusedToday && !isDueToday && !isOverdue && !task.isRecurring && task.status !== 'Carried Forward';
-  
-  const getCategoryBadge = (category: string) => {
-    switch (category) {
-      case 'Personal': return 'badge-blue';
-      case 'Financial': return 'badge-green';
-      case 'Professional': return 'badge-gray';
-      default: return 'badge-gray';
-    }
-  };
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
+
+  const hasSecondaryActions = (showTodayActions && !isInTodayView && onAddToToday && !isCompleted)
+    || (isInTodayView && canRemoveFromToday && onRemoveFromToday)
+    || (onMoveToProject && !isCompleted);
 
   return (
-    <div className={`group rounded-xl p-4 transition-all duration-200 ${
-      isDark 
+    <div className={`group rounded-xl px-4 py-3 transition-all duration-200 ${
+      isDark
         ? `bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 ${isCompleted ? 'opacity-60' : ''}`
         : `bg-white border border-slate-200 hover:shadow-md hover:border-slate-300 ${isCompleted ? 'opacity-60 bg-slate-50' : ''}`
     }`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start space-x-4 flex-1 min-w-0">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
           {/* Checkbox */}
           <button
             onClick={() => onToggleComplete(task.id)}
-            className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-              isCompleted 
-                ? 'bg-emerald-500 border-emerald-500 shadow-sm' 
+            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+              isCompleted
+                ? 'bg-emerald-500 border-emerald-500'
                 : isDark
                   ? 'border-gray-600 hover:border-violet-500 hover:bg-violet-500/20'
                   : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50'
             }`}
           >
-            {isCompleted && <Check size={14} className="text-white" strokeWidth={3} />}
+            {isCompleted && <Check size={12} className="text-white" strokeWidth={3} />}
           </button>
-          
-          <div className="flex-1 min-w-0">
-            {/* Title - clickable to edit */}
-            <h3 
+
+          {/* Title + inline indicators */}
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            <h3
               onClick={() => onEdit(task)}
-              className={`font-medium cursor-pointer hover:opacity-80 ${
-                isCompleted 
+              className={`font-medium cursor-pointer hover:opacity-80 truncate ${
+                isCompleted
                   ? isDark ? 'line-through text-gray-500' : 'line-through text-slate-400'
                   : isDark ? 'text-white' : 'text-slate-800'
               }`}
             >
               {task.title}
             </h3>
-            
-            {/* Description */}
-            {task.description && (
-              <p className={`text-sm mt-1 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{task.description}</p>
+
+            {/* Only show high-signal inline indicators */}
+            {task.priority === 'High' && !isCompleted && (
+              <Flame size={14} className="flex-shrink-0 text-red-500" />
             )}
-            
-            {/* Tags */}
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              {/* Category */}
-              <span className={`badge ${getCategoryBadge(task.category)}`}>
-                {task.category}
+            {isCarriedForward && !isCompleted && (
+              <span className={`flex-shrink-0 text-xs ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>
+                <RotateCcw size={13} className="inline -mt-0.5" /> {daysAgoText}
               </span>
-              
-              {/* Priority */}
-              <span className={`badge ${task.priority === 'High' ? 'badge-red' : 'badge-yellow'}`}>
-                {task.priority === 'High' && <Flame size={12} className="mr-1" />}
-                {task.priority}
-              </span>
-              
-              {/* Effort */}
-              <span className={`badge ${task.effort === 'High' ? 'badge-orange' : 'badge-green'}`}>
-                {task.effort} Effort
-              </span>
-              
-              {/* XP Badge */}
-              {task.category !== 'Professional' && task.xpValue > 0 && (
-                <span className="badge badge-yellow">
-                  <Zap size={12} className="mr-1" />
-                  {task.xpValue} XP
+            )}
+            {task.isRecurring && !isCompleted && (
+              <Clock size={13} className={`flex-shrink-0 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            )}
+            {task.dueDate && !isCompleted && (() => {
+              const { text, isOverdue: overdue } = formatDueDate(task.dueDate);
+              return (
+                <span className={`flex-shrink-0 text-xs whitespace-nowrap ${
+                  overdue
+                    ? 'text-red-500 font-medium'
+                    : isDark ? 'text-gray-500' : 'text-slate-400'
+                }`}>
+                  <CalendarDays size={12} className="inline -mt-0.5 mr-0.5" />{text}
                 </span>
-              )}
-              
-              {/* Recurring Badge */}
-              {task.isRecurring && (
-                <span className="badge badge-purple">
-                  <Clock size={12} className="mr-1" />
-                  {task.recurrencePattern}
-                </span>
-              )}
-              
-              {/* Carried Forward Badge - inline with other badges */}
-              {isCarriedForward && !isCompleted && (
-                <span className={`badge ${isDark ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-orange-100 text-orange-600 border-orange-200'} border`}>
-                  <RotateCcw size={12} className="mr-1" />
-                  {daysAgoText}
-                </span>
-              )}
-              
-              {/* Focused Today Badge - shows when manually added */}
-              {isFocusedToday && isInTodayView && (
-                <span className={`badge ${isDark ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 'bg-violet-100 text-violet-600 border-violet-200'} border`}>
-                  <CalendarPlus size={12} className="mr-1" />
-                  Added
-                </span>
-              )}
-              
-              {/* Due Date Badge */}
-              {task.dueDate && !isCompleted && (() => {
-                const { text, isOverdue, isToday } = formatDueDate(task.dueDate);
-                return (
-                  <span className={`badge border ${
-                    isOverdue 
-                      ? isDark ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-red-100 text-red-600 border-red-200'
-                      : isToday
-                      ? isDark ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 'bg-violet-100 text-violet-600 border-violet-200'
-                      : isDark ? 'bg-slate-500/20 text-slate-400 border-slate-500/30' : 'bg-slate-100 text-slate-600 border-slate-200'
-                  }`}>
-                    <CalendarDays size={12} className="mr-1" />
-                    {text}
-                  </span>
-                );
-              })()}
-            </div>
+              );
+            })()}
           </div>
         </div>
-        
-        {/* Actions - always visible */}
-        <div className="flex items-center space-x-1 flex-shrink-0">
-          {/* Add to Today button - shown on Tasks page when not in today */}
+
+        {/* Actions — edit always visible, rest in menu */}
+        <div className="flex items-center space-x-0.5 flex-shrink-0">
+          {/* Add to Today — visible, not buried */}
           {showTodayActions && !isInTodayView && onAddToToday && !isCompleted && (
             <button
               onClick={(e) => { e.stopPropagation(); onAddToToday(task.id); }}
-              className={`p-2 rounded-lg transition-colors ${
-                isDark 
-                  ? 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/20' 
-                  : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'
+              className={`p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 ${
+                isDark
+                  ? 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/20'
+                  : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
-              title="Add to Today's Tasks"
+              title="Add to Today"
             >
-              <CalendarPlus size={18} />
+              <CalendarPlus size={15} />
             </button>
           )}
-          
-          {/* Remove from Today button - shown on Dashboard when manually added */}
-          {isInTodayView && canRemoveFromToday && onRemoveFromToday && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); }}
-              className={`p-2 rounded-lg transition-colors ${
-                isDark 
-                  ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-500/20' 
-                  : 'text-slate-500 hover:text-orange-600 hover:bg-orange-50'
-              }`}
-              title="Remove from Today's Tasks"
-            >
-              <CalendarMinus size={18} />
-            </button>
-          )}
-          
-          {/* Move to Project button */}
-          {onMoveToProject && !isCompleted && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onMoveToProject(task); }}
-              className={`p-2 rounded-lg transition-colors ${
-                isDark 
-                  ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
-                  : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
-              }`}
-              title="Move to Project"
-            >
-              <FolderInput size={18} />
-            </button>
-          )}
-          
+
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark 
-                ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
-                : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+            className={`p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 ${
+              isDark
+                ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/20'
+                : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
             }`}
-            title="Edit task"
+            title="Edit"
           >
-            <Pencil size={18} />
+            <Pencil size={15} />
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark 
-                ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
-                : 'text-slate-500 hover:text-red-500 hover:bg-red-50'
-            }`}
-            title="Delete task"
-          >
-            <Trash2 size={18} />
-          </button>
+
+          {/* More menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+              className={`p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 ${
+                menuOpen ? 'opacity-100' : ''
+              } ${
+                isDark
+                  ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
+              title="More actions"
+            >
+              <MoreHorizontal size={15} />
+            </button>
+
+            {menuOpen && (
+              <div className={`absolute right-0 top-full mt-1 w-44 rounded-xl shadow-lg border z-30 py-1 animate-fade-in ${
+                isDark ? 'bg-[#1a1a2e] border-white/10' : 'bg-white border-slate-200'
+              }`}>
+                {/* Remove from Today */}
+                {isInTodayView && canRemoveFromToday && onRemoveFromToday && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); setMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                      isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <CalendarMinus size={14} /> Remove from Today
+                  </button>
+                )}
+                {/* Move to Project */}
+                {onMoveToProject && !isCompleted && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onMoveToProject(task); setMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                      isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <FolderInput size={14} /> Move to Project
+                  </button>
+                )}
+                {/* Divider before destructive action */}
+                {hasSecondaryActions && (
+                  <div className={`my-1 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+                )}
+                {/* Delete */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); if (confirm('Delete this task?')) { onDelete(task.id); } setMenuOpen(false); }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                    isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
+                  }`}
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

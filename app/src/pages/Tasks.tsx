@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
+import { useUndo } from '../components/common/UndoToast';
 import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 
@@ -23,6 +24,7 @@ export function Tasks() {
   const todayTaskIds = new Set(todaysTasks.map(t => t.id));
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { pushUndo } = useUndo();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
@@ -30,6 +32,7 @@ export function Tasks() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set(['unlinked']));
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   
   // Move to Project modal state
   const [isMoveToProjectOpen, setIsMoveToProjectOpen] = useState(false);
@@ -268,6 +271,15 @@ export function Tasks() {
     setIsTaskFormOpen(false);
   };
 
+  const handleDeleteWithUndo = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    deleteTask(taskId);
+    pushUndo(`"${task.title}" deleted`, () => {
+      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, undefined, task.goalId, task.dueDate);
+    });
+  };
+
   const handleToggleComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (task?.status === 'Completed') {
@@ -296,22 +308,75 @@ export function Tasks() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="card rounded-2xl p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className={`flex items-center space-x-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-            <ListFilter size={18} />
-            <span className="text-sm font-medium">Filters</span>
+      {/* Filter bar */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors ${
+              filtersOpen || statusFilter !== 'all' || categoryFilter !== 'all'
+                ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+            }`}
+          >
+            <ListFilter size={15} />
+            <span>Filters</span>
+            {(statusFilter !== 'all' || categoryFilter !== 'all') && (
+              <span className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center ${
+                isDark ? 'bg-violet-500 text-white' : 'bg-violet-500 text-white'
+              }`}>
+                {(statusFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0)}
+              </span>
+            )}
+          </button>
+          {(statusFilter !== 'all' || categoryFilter !== 'all') && (
+            <button
+              onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }}
+              className={`text-xs px-2 py-1 rounded-lg transition-colors ${
+                isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            {([
+              { mode: 'list' as const, icon: LayoutList, label: 'List' },
+              { mode: 'grouped' as const, icon: FolderKanban, label: 'By Goal' },
+              { mode: 'matrix' as const, icon: Grid2X2, label: 'Matrix' },
+            ]).map(({ mode, icon: Icon, label }) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`px-2.5 py-1.5 flex items-center gap-1 text-xs font-medium transition-all ${
+                  viewMode === mode
+                    ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                    : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                }`}
+              >
+                <Icon size={13} />
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
           </div>
-          <div className={`h-6 w-px ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
-          <div className="flex items-center space-x-2">
-            <label className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status:</label>
-            <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+            {filteredTasks.length}
+          </span>
+        </div>
+      </div>
+      {filtersOpen && (
+        <div className={`card rounded-xl p-3 flex flex-wrap items-center gap-3 animate-fade-in`}>
+          <div className="flex items-center gap-2">
+            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status</label>
+            <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               {(['all', 'pending', 'completed'] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-1.5 text-xs font-medium capitalize transition-all ${
+                  className={`px-2.5 py-1 text-xs font-medium capitalize transition-all ${
                     statusFilter === status
                       ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                       : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -322,22 +387,16 @@ export function Tasks() {
               ))}
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <label className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Category:</label>
-            <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className="flex items-center gap-2">
+            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Category</label>
+            <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               {(['all', 'Personal', 'Financial', 'Professional'] as const).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                  className={`px-2.5 py-1 text-xs font-medium transition-all ${
                     categoryFilter === cat
-                      ? cat === 'Personal' 
-                        ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
-                        : cat === 'Financial'
-                        ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                        : cat === 'Professional'
-                        ? isDark ? 'bg-gray-500/20 text-gray-300' : 'bg-slate-200 text-slate-600'
-                        : isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                      ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                       : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
                   }`}
                 >
@@ -346,54 +405,8 @@ export function Tasks() {
               ))}
             </div>
           </div>
-          <div className={`h-6 w-px ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
-          {/* View Mode Toggle */}
-          <div className="flex items-center space-x-2">
-            <label className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>View:</label>
-            <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 flex items-center space-x-1.5 text-xs font-medium transition-all ${
-                  viewMode === 'list'
-                    ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                    : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                }`}
-                title="List view"
-              >
-                <LayoutList size={14} />
-                <span>List</span>
-              </button>
-              <button
-                onClick={() => setViewMode('grouped')}
-                className={`px-3 py-1.5 flex items-center space-x-1.5 text-xs font-medium transition-all ${
-                  viewMode === 'grouped'
-                    ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                    : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                }`}
-                title="Group by goals"
-              >
-                <FolderKanban size={14} />
-                <span>By Goal</span>
-              </button>
-              <button
-                onClick={() => setViewMode('matrix')}
-                className={`px-3 py-1.5 flex items-center space-x-1.5 text-xs font-medium transition-all ${
-                  viewMode === 'matrix'
-                    ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                    : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                }`}
-                title="Priority/Effort Matrix"
-              >
-                <Grid2X2 size={14} />
-                <span>Matrix</span>
-              </button>
-            </div>
-          </div>
-          <span className={`text-sm ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
-            {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
-          </span>
         </div>
-      </div>
+      )}
 
       {filteredTasks.length === 0 ? (
         <div className="card rounded-2xl p-12 text-center">
@@ -421,7 +434,7 @@ export function Tasks() {
                       <TaskCard 
                         task={task} 
                         onToggleComplete={handleToggleComplete} 
-                        onDelete={deleteTask}
+                        onDelete={handleDeleteWithUndo}
                         onEdit={handleEdit}
                         onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
                         onMoveToProject={handleOpenMoveToProject}
@@ -486,7 +499,7 @@ export function Tasks() {
                             <TaskCard 
                               task={task} 
                               onToggleComplete={handleToggleComplete} 
-                              onDelete={deleteTask}
+                              onDelete={handleDeleteWithUndo}
                               onEdit={handleEdit}
                             />
                           </div>
@@ -521,7 +534,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -546,7 +559,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -571,7 +584,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -596,7 +609,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={deleteTask} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
                 ))
               )}
             </div>
@@ -717,7 +730,7 @@ export function Tasks() {
                             <TaskCard 
                               task={task} 
                               onToggleComplete={handleToggleComplete} 
-                              onDelete={deleteTask}
+                              onDelete={handleDeleteWithUndo}
                               onEdit={handleEdit}
                               onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
                               onMoveToProject={handleOpenMoveToProject}
@@ -794,7 +807,7 @@ export function Tasks() {
                                   <TaskCard 
                                     task={task} 
                                     onToggleComplete={handleToggleComplete} 
-                                    onDelete={deleteTask}
+                                    onDelete={handleDeleteWithUndo}
                                     onEdit={handleEdit}
                                     onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
                                     onMoveToProject={handleOpenMoveToProject}

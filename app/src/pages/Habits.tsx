@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Flame, Plus, Calendar, Zap, TrendingUp, BookOpen } from 'lucide-react';
+import { Flame, Plus, BookOpen } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useDailyLogContext } from '../context/DailyLogContext';
@@ -23,7 +23,6 @@ export function Habits() {
     deleteHabit, 
     logHabit, 
     getTodaysLog,
-    getTotalXPFromHabits,
   } = useHabitContext();
   const { 
     getTodaysLog: getTodaysDailyLog, 
@@ -40,19 +39,12 @@ export function Habits() {
   const todaysDailyLog = getTodaysDailyLog();
   const checkedInToday = hasCheckedInToday();
   const recentLogs = getRecentLogs(7);
-  const totalHabitXP = getTotalXPFromHabits();
-
-  // Calculate stats
   const stats = useMemo(() => {
     const todayCompletedCount = habits.filter(h => getTodaysLog(h.id) > 0).length;
-    const totalStreak = habits.reduce((sum, h) => sum + h.streakCount, 0);
-    const longestStreak = Math.max(...habits.map(h => h.streakCount), 0);
     
     return {
       todayCompletedCount,
       totalHabits: habits.length,
-      totalStreak,
-      longestStreak,
     };
   }, [habits, getTodaysLog]);
 
@@ -151,83 +143,6 @@ export function Habits() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card card-hover rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-              <Calendar className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-            </div>
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            {stats.todayCompletedCount}/{stats.totalHabits}
-          </div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Today's Progress</p>
-        </div>
-
-        <div className="card card-hover rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-orange-500/20' : 'bg-orange-50'}`}>
-              <Flame className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-            </div>
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            {stats.longestStreak}
-          </div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Longest Streak</p>
-        </div>
-
-        <div className="card card-hover rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-50'}`}>
-              <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-            </div>
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            {totalHabitXP}
-          </div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Habit XP Earned</p>
-        </div>
-
-        <div className="card card-hover rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}>
-              <TrendingUp className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-            </div>
-          </div>
-          <div className={`stat-number text-2xl ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            {recentLogs.length}
-          </div>
-          <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Check-ins (7 days)</p>
-        </div>
-      </div>
-
-      {/* Contribution Graph */}
-      {habits.length > 0 && (
-        <div className="card rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              Activity
-            </h2>
-            <select
-              value={selectedHabitForGraph || ''}
-              onChange={(e) => setSelectedHabitForGraph(e.target.value || null)}
-              className="px-3 py-1.5 text-sm input rounded-lg"
-            >
-              <option value="">All Habits</option>
-              {habits.map(h => (
-                <option key={h.id} value={h.id}>{h.name}</option>
-              ))}
-            </select>
-          </div>
-          <ContributionGraph 
-            logs={allHabitLogs} 
-            weeks={12}
-            maxValue={selectedHabitForGraph ? undefined : habits.length}
-          />
-        </div>
-      )}
-
       {/* Today's Habits */}
       <div>
         <h2 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
@@ -272,6 +187,32 @@ export function Habits() {
           </div>
         )}
       </div>
+
+      {/* Contribution Graph */}
+      {habits.length > 0 && (
+        <div className="card rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              Activity
+            </h2>
+            <select
+              value={selectedHabitForGraph || ''}
+              onChange={(e) => setSelectedHabitForGraph(e.target.value || null)}
+              className="px-3 py-1.5 text-sm input rounded-lg"
+            >
+              <option value="">All Habits</option>
+              {habits.map(h => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+              ))}
+            </select>
+          </div>
+          <ContributionGraph 
+            logs={allHabitLogs} 
+            weeks={12}
+            maxValue={selectedHabitForGraph ? undefined : habits.length}
+          />
+        </div>
+      )}
 
       {/* Recent Check-ins Summary */}
       {recentLogs.length > 0 && (

@@ -9,6 +9,7 @@ import { HabitProvider } from './context/HabitContext.tsx'
 import { DailyLogProvider } from './context/DailyLogContext.tsx'
 import { ProjectProvider } from './context/ProjectContext.tsx'
 import { GamificationProvider } from './context/GamificationContext.tsx'
+import { UndoProvider } from './components/common/UndoToast.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -19,7 +20,9 @@ createRoot(document.getElementById('root')!).render(
             <HabitProvider>
               <DailyLogProvider>
                 <ProjectProvider>
-                  <App />
+                  <UndoProvider>
+                    <App />
+                  </UndoProvider>
                 </ProjectProvider>
               </DailyLogProvider>
             </HabitProvider>
