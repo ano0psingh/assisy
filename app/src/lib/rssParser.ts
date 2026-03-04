@@ -1,5 +1,3 @@
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-
 export interface RSSItem {
   title: string;
   link: string;
@@ -14,10 +12,29 @@ export interface RSSFeedMeta {
   items: RSSItem[];
 }
 
+async function proxyFetch(url: string): Promise<string> {
+  const proxies = [
+    (u: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  ];
+
+  for (const makeUrl of proxies) {
+    try {
+      const res = await fetch(makeUrl(url));
+      if (!res.ok) continue;
+      const contentType = res.headers.get('content-type') ?? '';
+      if (contentType.includes('application/json')) {
+        const json = await res.json();
+        return json.contents ?? '';
+      }
+      return await res.text();
+    } catch { /* try next proxy */ }
+  }
+  throw new Error('All CORS proxies failed');
+}
+
 export async function fetchRSSFeed(feedUrl: string): Promise<RSSFeedMeta> {
-  const res = await fetch(CORS_PROXY + encodeURIComponent(feedUrl));
-  if (!res.ok) throw new Error(`Failed to fetch feed: ${res.status}`);
-  const xml = await res.text();
+  const xml = await proxyFetch(feedUrl);
   return parseRSSXml(xml, feedUrl);
 }
 
@@ -90,9 +107,7 @@ export function extractTextFromHTML(html: string): string {
 }
 
 export async function fetchArticleContent(url: string): Promise<string> {
-  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
-  if (!res.ok) throw new Error(`Failed to fetch article: ${res.status}`);
-  const html = await res.text();
+  const html = await proxyFetch(url);
   return extractTextFromHTML(html);
 }
 
