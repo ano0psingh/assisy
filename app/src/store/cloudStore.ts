@@ -166,6 +166,19 @@ export async function migrateLocalToCloud(userId: string, clearLocal = false): P
   return { error: error ?? null };
 }
 
+export async function resetCloudData(userId: string): Promise<{ error: Error | null }> {
+  const empty: UserDataPayload = {
+    tasks: [], goals: [], habits: [], habit_logs: {},
+    daily_logs: [], projects: [], sub_projects: [],
+    project_tasks: [], gamification: {}, settings: {},
+  };
+  return saveUserData(userId, empty);
+}
+
+export async function downloadCloudData(userId: string): Promise<UserDataPayload | null> {
+  return loadUserData(userId);
+}
+
 export function applyCloudToLocal(payload: UserDataPayload): void {
   payloadToLocalStorage(payload);
 }
