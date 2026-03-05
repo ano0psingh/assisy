@@ -12,80 +12,41 @@ export interface RSSFeedMeta {
   items: RSSItem[];
 }
 
-interface Rss2JsonItem {
-  title: string;
-  link: string;
-  author: string;
-  pubDate: string;
-  content: string;
-  description: string;
-}
-
-interface Rss2JsonResponse {
-  status: string;
-  feed: { title: string; link: string };
-  items: Rss2JsonItem[];
-}
-
-async function fetchViaRss2Json(feedUrl: string): Promise<RSSFeedMeta | null> {
-  try {
-    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
-    const res = await fetch(apiUrl);
-    if (!res.ok) return null;
-    const data: Rss2JsonResponse = await res.json();
-    if (data.status !== 'ok') return null;
-    return {
-      title: data.feed.title ?? feedUrl,
-      siteUrl: data.feed.link ?? '',
-      items: data.items.map(item => ({
-        title: item.title ?? '(no title)',
-        link: item.link ?? '',
-        author: item.author ?? '',
-        pubDate: item.pubDate ?? '',
-        content: item.content || item.description || '',
-      })),
-    };
-  } catch { return null; }
-}
-
 async function proxyFetch(url: string): Promise<string> {
-  const proxies: Array<(u: string) => string> = [];
-
-  // Use our own Vercel serverless proxy first (same domain, no CORS)
-  if (window.location.hostname !== 'localhost') {
-    proxies.push((u: string) => `/api/proxy?url=${encodeURIComponent(u)}`);
-  }
-
-  // Free proxies as fallback (for local dev or if own proxy fails)
-  proxies.push(
+  const proxies: Array<(u: string) => string> = [
+    (u: string) => `/api/proxy?url=${encodeURIComponent(u)}`,
     (u: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
     (u: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  );
+  ];
 
   for (const makeUrl of proxies) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch(makeUrl(url), { signal: controller.signal });
+      const proxyUrl = makeUrl(url);
+      console.log(`Trying proxy: ${proxyUrl.slice(0, 80)}...`);
+      const res = await fetch(proxyUrl, { signal: controller.signal });
       clearTimeout(timeout);
-      if (!res.ok) continue;
+      if (!res.ok) {
+        console.log(`Proxy returned ${res.status}, trying next...`);
+        continue;
+      }
       const contentType = res.headers.get('content-type') ?? '';
       if (contentType.includes('application/json')) {
         const json = await res.json();
-        return json.contents ?? '';
+        if (json.contents) return json.contents;
+        return JSON.stringify(json);
       }
       return await res.text();
-    } catch {
+    } catch (e) {
       clearTimeout(timeout);
+      console.log(`Proxy failed: ${e instanceof Error ? e.message : 'unknown'}, trying next...`);
     }
   }
   throw new Error('All proxies failed. Try again in a moment.');
 }
 
 export async function fetchRSSFeed(feedUrl: string): Promise<RSSFeedMeta> {
-  const jsonResult = await fetchViaRss2Json(feedUrl);
-  if (jsonResult && jsonResult.items.length > 0) return jsonResult;
-
   const xml = await proxyFetch(feedUrl);
   return parseRSSXml(xml, feedUrl);
 }
