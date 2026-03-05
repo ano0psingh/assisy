@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import {
   getSubscriptions, addSubscription as addSub, removeSubscription as removeSub,
   updateSubFetchedAt, getArticles, upsertArticle, toggleArticleField, deleteArticle,
+  bulkUpdateField, bulkDelete as bulkDeleteStore, deleteOldRead,
   type FeedSubscription, type FeedArticle,
 } from '../store/feedStore';
 import { fetchRSSFeed, extractTextFromHTML, fetchArticleContent, estimateReadingTime } from '../lib/rssParser';
@@ -37,6 +38,8 @@ interface FeedContextType {
   refreshing: boolean;
   syncProgress: SyncProgress | null;
   geminiReady: boolean;
+  unreadCount: number;
+  lastRefreshedAt: string | null;
   addFeed: (feedUrl: string) => Promise<void>;
   removeFeed: (id: string) => Promise<void>;
   refreshFeeds: () => Promise<void>;
@@ -44,6 +47,11 @@ interface FeedContextType {
   toggleRead: (id: string, value: boolean) => Promise<void>;
   toggleBookmark: (id: string, value: boolean) => Promise<void>;
   removeArticle: (id: string) => Promise<void>;
+  markAllRead: () => Promise<void>;
+  bulkMarkRead: (ids: string[], value: boolean) => Promise<void>;
+  bulkBookmark: (ids: string[], value: boolean) => Promise<void>;
+  bulkDelete: (ids: string[]) => Promise<void>;
+  clearOldRead: (days: number) => Promise<number>;
   setFilter: (f: FeedFilter) => void;
   setSort: (s: FeedSort) => void;
   setTagFilter: (tag: string | null) => void;
@@ -64,6 +72,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const [filter, setFilter] = useState<FeedFilter>('all');
   const [sort, setSort] = useState<FeedSort>('newest');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(
+    () => localStorage.getItem('assisy_feed_last_refreshed'),
+  );
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -185,6 +196,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       setSyncProgress(null);
     }
 
+    const now = new Date().toISOString();
+    setLastRefreshedAt(now);
+    localStorage.setItem('assisy_feed_last_refreshed', now);
     await reload();
     setRefreshing(false);
   }, [refreshing, subscriptions, articles, userId, reload]);
@@ -238,6 +252,39 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     setArticles(prev => prev.filter(a => a.id !== id));
   }, [userId]);
 
+  const markAllRead = useCallback(async () => {
+    const unreadIds = articles.filter(a => !a.read).map(a => a.id);
+    if (unreadIds.length === 0) return;
+    await bulkUpdateField(userId, unreadIds, 'read', true);
+    setArticles(prev => prev.map(a => ({ ...a, read: true })));
+  }, [userId, articles]);
+
+  const bulkMarkRead = useCallback(async (ids: string[], value: boolean) => {
+    await bulkUpdateField(userId, ids, 'read', value);
+    const idSet = new Set(ids);
+    setArticles(prev => prev.map(a => idSet.has(a.id) ? { ...a, read: value } : a));
+  }, [userId]);
+
+  const bulkBookmark = useCallback(async (ids: string[], value: boolean) => {
+    await bulkUpdateField(userId, ids, 'bookmarked', value);
+    const idSet = new Set(ids);
+    setArticles(prev => prev.map(a => idSet.has(a.id) ? { ...a, bookmarked: value } : a));
+  }, [userId]);
+
+  const bulkDelete = useCallback(async (ids: string[]) => {
+    await bulkDeleteStore(userId, ids);
+    const idSet = new Set(ids);
+    setArticles(prev => prev.filter(a => !idSet.has(a.id)));
+  }, [userId]);
+
+  const clearOldRead = useCallback(async (days: number) => {
+    const removed = await deleteOldRead(userId, days);
+    if (removed > 0) await reload();
+    return removed;
+  }, [userId, reload]);
+
+  const unreadCount = articles.filter(a => !a.read).length;
+
   const filteredArticles = articles
     .filter(a => {
       if (filter === 'unread') return !a.read;
@@ -257,8 +304,10 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       subscriptions, articles, filter, sort, tagFilter,
       loading, refreshing, syncProgress,
       geminiReady: isGeminiConfigured(),
+      unreadCount, lastRefreshedAt,
       addFeed, removeFeed, refreshFeeds, saveURL,
       toggleRead, toggleBookmark, removeArticle,
+      markAllRead, bulkMarkRead, bulkBookmark, bulkDelete, clearOldRead,
       setFilter, setSort, setTagFilter,
       filteredArticles,
     }}>

@@ -184,3 +184,48 @@ export async function deleteArticle(userId: string | null, id: string): Promise<
   const arts = localGet<FeedArticle[]>(ART_KEY, []).filter(a => a.id !== id);
   localStorage.setItem(ART_KEY, JSON.stringify(arts));
 }
+
+export async function bulkUpdateField(
+  userId: string | null,
+  ids: string[],
+  field: 'read' | 'bookmarked',
+  value: boolean,
+): Promise<void> {
+  if (userId && supabase) {
+    await supabase.from('feed_articles').update({ [field]: value }).in('id', ids);
+    return;
+  }
+  const arts = localGet<FeedArticle[]>(ART_KEY, []);
+  const idSet = new Set(ids);
+  arts.forEach(a => { if (idSet.has(a.id)) a[field] = value; });
+  localStorage.setItem(ART_KEY, JSON.stringify(arts));
+}
+
+export async function bulkDelete(userId: string | null, ids: string[]): Promise<void> {
+  if (userId && supabase) {
+    await supabase.from('feed_articles').delete().in('id', ids);
+    return;
+  }
+  const idSet = new Set(ids);
+  const arts = localGet<FeedArticle[]>(ART_KEY, []).filter(a => !idSet.has(a.id));
+  localStorage.setItem(ART_KEY, JSON.stringify(arts));
+}
+
+export async function deleteOldRead(userId: string | null, olderThanDays: number): Promise<number> {
+  const cutoff = new Date(Date.now() - olderThanDays * 86400000).toISOString();
+  if (userId && supabase) {
+    const { data } = await supabase
+      .from('feed_articles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('read', true)
+      .lt('created_at', cutoff)
+      .select('id');
+    return data?.length ?? 0;
+  }
+  const arts = localGet<FeedArticle[]>(ART_KEY, []);
+  const kept = arts.filter(a => !(a.read && a.created_at < cutoff));
+  const removed = arts.length - kept.length;
+  localStorage.setItem(ART_KEY, JSON.stringify(kept));
+  return removed;
+}
