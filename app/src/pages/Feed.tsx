@@ -132,6 +132,7 @@ export function Feed() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [expandedTakeaways, setExpandedTakeaways] = useState<Set<string>>(new Set());
   const [sortOpen, setSortOpen] = useState(false);
+  const [showAllTags, setShowAllTags] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [clearingOld, setClearingOld] = useState(false);
 
@@ -510,32 +511,44 @@ export function Feed() {
 
           {/* Tag filter pills */}
           {allTags.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-              {tagFilter && (
-                <button
-                  onClick={() => setTagFilter(null)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                    isDark ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-red-50 text-red-500 hover:bg-red-100'
-                  }`}
-                >
-                  <X size={10} /> Clear
-                </button>
-              )}
-              {allTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-                  className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                    tagFilter === tag
-                      ? 'bg-violet-600 text-white'
-                      : isDark
-                        ? 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-400'
-                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
+            <div className="mt-3">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {tagFilter && (
+                  <button
+                    onClick={() => setTagFilter(null)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                      isDark ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-red-50 text-red-500 hover:bg-red-100'
+                    }`}
+                  >
+                    <X size={10} /> Clear
+                  </button>
+                )}
+                {(showAllTags ? allTags : allTags.slice(0, 8)).map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
+                    className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                      tagFilter === tag
+                        ? 'bg-violet-600 text-white'
+                        : isDark
+                          ? 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-400'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+                {allTags.length > 8 && (
+                  <button
+                    onClick={() => setShowAllTags(p => !p)}
+                    className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                      isDark ? 'bg-white/5 text-violet-400 hover:bg-white/10' : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
+                    }`}
+                  >
+                    {showAllTags ? 'Show less' : `+${allTags.length - 8} more`}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
