@@ -34,6 +34,7 @@ interface FeedContextType {
   filter: FeedFilter;
   sort: FeedSort;
   tagFilter: string | null;
+  subFilter: string | null;
   loading: boolean;
   refreshing: boolean;
   syncProgress: SyncProgress | null;
@@ -55,6 +56,7 @@ interface FeedContextType {
   setFilter: (f: FeedFilter) => void;
   setSort: (s: FeedSort) => void;
   setTagFilter: (tag: string | null) => void;
+  setSubFilter: (subId: string | null) => void;
   filteredArticles: FeedArticle[];
 }
 
@@ -72,6 +74,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const [filter, setFilter] = useState<FeedFilter>('all');
   const [sort, setSort] = useState<FeedSort>('newest');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [subFilter, setSubFilter] = useState<string | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(
     () => localStorage.getItem('assisy_feed_last_refreshed'),
   );
@@ -293,6 +296,11 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       return true;
     })
     .filter(a => !tagFilter || (a.tags ?? []).includes(tagFilter))
+    .filter(a => {
+      if (!subFilter) return true;
+      if (subFilter === 'saved') return !a.subscription_id || a.source_type === 'url';
+      return a.subscription_id === subFilter;
+    })
     .sort((a, b) => {
       if (sort === 'relevance') return (b.relevance_score ?? 0) - (a.relevance_score ?? 0);
       if (sort === 'reading_time') return (a.reading_time_minutes ?? 99) - (b.reading_time_minutes ?? 99);
@@ -301,14 +309,14 @@ export function FeedProvider({ children }: { children: ReactNode }) {
 
   return (
     <FeedContext.Provider value={{
-      subscriptions, articles, filter, sort, tagFilter,
+      subscriptions, articles, filter, sort, tagFilter, subFilter,
       loading, refreshing, syncProgress,
       geminiReady: isGeminiConfigured(),
       unreadCount, lastRefreshedAt,
       addFeed, removeFeed, refreshFeeds, saveURL,
       toggleRead, toggleBookmark, removeArticle,
       markAllRead, bulkMarkRead, bulkBookmark, bulkDelete, clearOldRead,
-      setFilter, setSort, setTagFilter,
+      setFilter, setSort, setTagFilter, setSubFilter,
       filteredArticles,
     }}>
       {children}

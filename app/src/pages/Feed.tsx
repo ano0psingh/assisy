@@ -111,11 +111,11 @@ function ContentTypePill({ type, isDark }: { type: string; isDark: boolean }) {
 
 export function Feed() {
   const {
-    subscriptions, filteredArticles, filter, sort, tagFilter,
+    subscriptions, filteredArticles, filter, sort, tagFilter, subFilter,
     loading, refreshing, syncProgress, geminiReady,
     addFeed, removeFeed, refreshFeeds, saveURL,
     toggleRead, toggleBookmark, removeArticle,
-    setFilter, setSort, setTagFilter, articles,
+    setFilter, setSort, setTagFilter, setSubFilter, articles,
     unreadCount, lastRefreshedAt, markAllRead,
     bulkMarkRead, bulkBookmark, bulkDelete, clearOldRead,
   } = useFeed();
@@ -461,6 +461,51 @@ export function Feed() {
               )}
             </div>
           </div>
+
+          {/* Subscription filter pills */}
+          {subscriptions.length > 1 && (
+            <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+              <button
+                onClick={() => setSubFilter(null)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                  !subFilter
+                    ? 'bg-violet-600 text-white'
+                    : isDark
+                      ? 'bg-white/5 text-gray-500 hover:bg-white/10'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+              >
+                All sources
+              </button>
+              {subscriptions.map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => setSubFilter(subFilter === sub.id ? null : sub.id)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                    subFilter === sub.id
+                      ? 'bg-violet-600 text-white'
+                      : isDark
+                        ? 'bg-white/5 text-gray-500 hover:bg-white/10'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  {sub.title || 'Untitled'}
+                </button>
+              ))}
+              <button
+                onClick={() => setSubFilter('saved')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                  subFilter === 'saved'
+                    ? 'bg-violet-600 text-white'
+                    : isDark
+                      ? 'bg-white/5 text-gray-500 hover:bg-white/10'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+              >
+                Saved URLs
+              </button>
+            </div>
+          )}
 
           {/* Tag filter pills */}
           {allTags.length > 0 && (

@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { hasLocalData } from '../../store/cloudStore';
 import { MigrationModal } from './MigrationModal';
 
-const SESSION_KEY = 'assisy_migration_offered';
+const OFFERED_KEY = 'assisy_migration_offered';
 
 export function MigrationModalTrigger() {
   const { user } = useAuth();
@@ -11,10 +11,10 @@ export function MigrationModalTrigger() {
 
   useEffect(() => {
     if (!user?.id) return;
+    if (localStorage.getItem(OFFERED_KEY)) return;
     if (!hasLocalData()) return;
-    if (sessionStorage.getItem(SESSION_KEY)) return;
     setShowModal(true);
-    sessionStorage.setItem(SESSION_KEY, '1');
+    localStorage.setItem(OFFERED_KEY, '1');
   }, [user?.id]);
 
   const handleClose = () => setShowModal(false);
