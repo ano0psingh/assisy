@@ -6,39 +6,97 @@ export function isGeminiConfigured(): boolean {
 }
 
 export interface ArticleSummary {
-  summary: string;
-  key_takeaways: string[];
+  tier: 1 | 2 | 3;
+  surface_claim: string;
+  key_points: string[];
+  implications: string[];
+  source_credibility: 'high' | 'medium' | 'low';
+  open_questions: string[];
   tags: string[];
   reading_time_minutes: number;
   relevance_score: number;
-  content_type: 'deep_dive' | 'quick_tip' | 'opinion' | 'news' | 'tutorial' | 'research';
 }
 
-const SYSTEM_PROMPT = `You are an expert knowledge curator for busy professionals. Your job is to transform articles and newsletters into high-value, actionable intelligence.
+const SYSTEM_PROMPT = `You are a senior analyst synthesizing articles for a busy professional. Your job is NOT to summarize — it is to extract signal and push into implications.
 
 You MUST respond with valid JSON matching this exact schema:
 {
-  "summary": "2-3 sentence core argument summary",
-  "key_takeaways": ["actionable takeaway starting with a verb", ...],
-  "tags": ["topic tag", ...],
+  "tier": 1 | 2 | 3,
+  "surface_claim": "string (1-3 sentences)",
+  "key_points": ["string", ...],
+  "implications": ["string", ...],
+  "source_credibility": "high" | "medium" | "low",
+  "open_questions": ["string", ...],
+  "tags": ["string", ...],
   "reading_time_minutes": number,
-  "relevance_score": number (1-10),
-  "content_type": "deep_dive" | "quick_tip" | "opinion" | "news" | "tutorial" | "research"
+  "relevance_score": number (1-10)
 }
 
-RULES:
-- The summary must capture the CORE ARGUMENT, not surface-level description. Answer: "What is the author really saying, and why does it matter?"
-- Key takeaways must be ACTIONABLE -- each one should start with a verb (e.g. "Use...", "Avoid...", "Consider...")
-- Tags should classify the topic for filtering (e.g. "productivity", "career", "engineering", "ai")
-- Reading time is estimated from the original article length (~230 words per minute)
-- Relevance score (1-10) rates how useful this is for a professional focused on personal growth and productivity
-- If the article is mostly promotional or has little substance, set relevance_score to 1-3
-- content_type must be exactly one of: deep_dive, quick_tip, opinion, news, tutorial, research
-- Respond ONLY with the JSON object, no markdown, no code fences.`;
+TIERING — assess BEFORE writing anything:
+
+Tier 1 — Trade press / industry commentary:
+- One surface_claim sentence + 2-3 key_points max.
+- Empty implications unless there is a genuinely non-obvious mechanism.
+- Default for newsletters, opinion columns, observer takes.
+
+Tier 2 — Practitioner or operator analysis with data:
+- Full treatment. Author has direct experience or proprietary data.
+- 3-5 key_points + 2-4 implications warranted.
+
+Tier 3 — Primary research or deeply reported piece:
+- Full treatment + push harder on second/third-order implications.
+- These are rare. When in doubt, it is probably Tier 2.
+
+WHAT TO WRITE:
+
+surface_claim: State what the article actually claims, clearly and concisely. This anchors everything.
+
+key_points: Stick to what THEY said, not your interpretation. A few sentences each.
+
+implications (Tier 2-3 only): Push into second and third-order consequences:
+- If this is true, what does it mean for adjacent areas not mentioned?
+- What happens when this dynamic compounds over 18-36 months?
+- Who wins and loses that is not obvious from the surface claim?
+- What breaks or becomes untenable if this continues?
+
+source_credibility:
+- "high": Operators with P&L responsibility, proprietary data, specific numbers, direct experience
+- "medium": Informed analysis but from outside, pattern-matching with good reasoning
+- "low": Industry observers commenting on public info, consensus views repackaged as insight
+
+open_questions: Specific, falsifiable markers worth tracking:
+- What concrete event or data point would confirm or refute this?
+- What is the leading indicator?
+- What decision would change based on which way this breaks?
+
+tags: 1-3 topic classification tags for filtering.
+
+reading_time_minutes: Estimated from article length (~230 words/min).
+
+relevance_score: 1-10 for a professional focused on growth and productivity.
+- Tier 1 trade press: typically 3-5
+- Tier 2 operator analysis: typically 6-8
+- Tier 3 primary research: typically 8-10
+- Promotional/low-substance content: 1-3
+
+Respond ONLY with the JSON object. No markdown, no code fences.`;
 
 function buildPrompt(title: string, source: string, content: string): string {
-  const trimmed = content.length > 4000 ? content.slice(0, 4000) + '\n\n[content truncated]' : content;
-  return `ARTICLE TITLE: ${title}\nARTICLE SOURCE: ${source}\n\nARTICLE CONTENT:\n${trimmed}`;
+  const trimmed = content.length > 5000 ? content.slice(0, 5000) + '\n\n[content truncated]' : content;
+  return `Analyze this article.\n\nARTICLE TITLE: ${title}\nARTICLE SOURCE: ${source}\n\nARTICLE CONTENT:\n${trimmed}`;
+}
+
+function mapToLegacy(result: ArticleSummary): ArticleSummary & {
+  summary: string;
+  key_takeaways: string[];
+  content_type: string;
+} {
+  return {
+    ...result,
+    summary: result.surface_claim,
+    key_takeaways: result.key_points,
+    content_type: `tier_${result.tier}`,
+  };
 }
 
 async function summarizeViaGroq(content: string, title: string, source: string): Promise<ArticleSummary> {
@@ -73,26 +131,12 @@ async function summarizeViaGemini(content: string, title: string, source: string
   const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey: GEMINI_KEY! });
 
-  const RESPONSE_SCHEMA = {
-    type: 'object',
-    properties: {
-      summary: { type: 'string' },
-      key_takeaways: { type: 'array', items: { type: 'string' } },
-      tags: { type: 'array', items: { type: 'string' } },
-      reading_time_minutes: { type: 'number' },
-      relevance_score: { type: 'number' },
-      content_type: { type: 'string', enum: ['deep_dive', 'quick_tip', 'opinion', 'news', 'tutorial', 'research'] },
-    },
-    required: ['summary', 'key_takeaways', 'tags', 'reading_time_minutes', 'relevance_score', 'content_type'],
-  };
-
   const response = await ai.models.generateContent({
     model: 'gemini-2.0-flash-lite',
     contents: buildPrompt(title, source, content),
     config: {
       systemInstruction: SYSTEM_PROMPT,
       responseMimeType: 'application/json',
-      responseSchema: RESPONSE_SCHEMA as never,
       temperature: 0.3,
     },
   });
@@ -106,15 +150,15 @@ export async function summarizeArticle(
   title: string,
   source: string,
   maxRetries = 2,
-): Promise<ArticleSummary> {
+): Promise<ArticleSummary & { summary: string; key_takeaways: string[]; content_type: string }> {
   if (!GROQ_KEY && !GEMINI_KEY) throw new Error('No AI API key configured');
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      if (GROQ_KEY) {
-        return await summarizeViaGroq(content, title, source);
-      }
-      return await summarizeViaGemini(content, title, source);
+      const raw = GROQ_KEY
+        ? await summarizeViaGroq(content, title, source)
+        : await summarizeViaGemini(content, title, source);
+      return mapToLegacy(raw);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('rate_limit');

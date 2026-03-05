@@ -111,7 +111,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
           const result = await summarizeArticle(text, art.title ?? '', meta.title);
           await upsertArticle(userId, {
             source_url: art.source_url,
-            summary: result.summary,
+            summary: JSON.stringify(result),
             key_takeaways: result.key_takeaways,
             tags: result.tags,
             reading_time_minutes: result.reading_time_minutes,
@@ -172,7 +172,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
           const result = await summarizeArticle(text, art.title ?? '', sub?.title ?? '');
           await upsertArticle(userId, {
             source_url: art.source_url,
-            summary: result.summary,
+            summary: JSON.stringify(result),
             key_takeaways: result.key_takeaways,
             tags: result.tags,
             reading_time_minutes: result.reading_time_minutes,
@@ -208,7 +208,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         await upsertArticle(userId, {
           source_url: url,
           title: art.title,
-          summary: result.summary,
+          summary: JSON.stringify(result),
           key_takeaways: result.key_takeaways,
           tags: result.tags,
           reading_time_minutes: result.reading_time_minutes,

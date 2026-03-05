@@ -26,6 +26,38 @@ const SUGGESTED_FEEDS = [
   { label: 'WordPress', hint: 'Append /feed to any WordPress URL' },
 ];
 
+interface ParsedAnalysis {
+  tier: number | null;
+  surface_claim: string;
+  key_points: string[];
+  implications: string[];
+  source_credibility: string | null;
+  open_questions: string[];
+}
+
+function parseAnalysis(summaryField: string): ParsedAnalysis {
+  try {
+    const data = JSON.parse(summaryField);
+    return {
+      tier: data.tier ?? null,
+      surface_claim: data.surface_claim ?? data.summary ?? summaryField,
+      key_points: data.key_points ?? data.key_takeaways ?? [],
+      implications: data.implications ?? [],
+      source_credibility: data.source_credibility ?? null,
+      open_questions: data.open_questions ?? [],
+    };
+  } catch {
+    return {
+      tier: null,
+      surface_claim: summaryField,
+      key_points: [],
+      implications: [],
+      source_credibility: null,
+      open_questions: [],
+    };
+  }
+}
+
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -53,11 +85,19 @@ function RelevanceBadge({ score, isDark }: { score: number; isDark: boolean }) {
 }
 
 function ContentTypePill({ type, isDark }: { type: string; isDark: boolean }) {
+  const label = type.startsWith('tier_')
+    ? `Tier ${type.replace('tier_', '')}`
+    : type.replace(/_/g, ' ');
+  const tierColor = type === 'tier_3'
+    ? isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-50 text-amber-700'
+    : type === 'tier_2'
+      ? isDark ? 'bg-blue-500/15 text-blue-400' : 'bg-blue-50 text-blue-700'
+      : type === 'tier_1'
+        ? isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-50 text-slate-500'
+        : isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600';
   return (
-    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-      isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-    }`}>
-      {type.replace(/_/g, ' ')}
+    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${tierColor}`}>
+      {label}
     </span>
   );
 }
@@ -521,43 +561,107 @@ export function Feed() {
                       </div>
                     </div>
 
-                    {/* Summary */}
-                    {article.summary && (
-                      <p className={`mt-3 text-sm leading-relaxed ${
-                        isDark ? 'text-gray-400' : 'text-slate-600'
-                      }`}>
-                        {article.summary}
-                      </p>
-                    )}
+                    {/* Tiered Analysis */}
+                    {article.summary && (() => {
+                      const analysis = parseAnalysis(article.summary);
+                      return (
+                        <div className="mt-3 space-y-3">
+                          {/* Tier badge + Surface claim */}
+                          <div className="flex items-start gap-2">
+                            {analysis.tier && (
+                              <span className={`flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                analysis.tier === 3
+                                  ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
+                                  : analysis.tier === 2
+                                    ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'bg-white/10 text-gray-500' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                                T{analysis.tier}
+                              </span>
+                            )}
+                            <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                              {analysis.surface_claim}
+                            </p>
+                          </div>
 
-                    {/* Key takeaways */}
-                    {article.key_takeaways && article.key_takeaways.length > 0 && (
-                      <div className="mt-3">
-                        <button
-                          onClick={() => toggleTakeaways(article.id)}
-                          className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                            isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-600'
-                          }`}
-                        >
-                          {takeawaysExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                          Key Takeaways ({article.key_takeaways.length})
-                        </button>
-                        {takeawaysExpanded && (
-                          <ul className={`mt-2 space-y-1.5 ml-0.5 ${
-                            isDark ? 'text-gray-400' : 'text-slate-600'
-                          }`}>
-                            {article.key_takeaways.map((t, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm">
-                                <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${
-                                  isDark ? 'bg-violet-400' : 'bg-violet-500'
-                                }`} />
-                                {t}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    )}
+                          {/* Source credibility */}
+                          {analysis.source_credibility && (
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider ${
+                              analysis.source_credibility === 'high'
+                                ? isDark ? 'text-emerald-400' : 'text-emerald-600'
+                                : analysis.source_credibility === 'medium'
+                                  ? isDark ? 'text-yellow-400' : 'text-yellow-600'
+                                  : isDark ? 'text-gray-500' : 'text-slate-400'
+                            }`}>
+                              {analysis.source_credibility === 'high' ? <Star size={10} /> : null}
+                              {analysis.source_credibility} signal source
+                            </span>
+                          )}
+
+                          {/* Key Points */}
+                          {analysis.key_points.length > 0 && (
+                            <div>
+                              <button
+                                onClick={() => toggleTakeaways(article.id)}
+                                className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                                  isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-600'
+                                }`}
+                              >
+                                {takeawaysExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                Key Points ({analysis.key_points.length})
+                                {analysis.implications.length > 0 && ` + ${analysis.implications.length} Implications`}
+                              </button>
+                              {takeawaysExpanded && (
+                                <div className="mt-2 space-y-3">
+                                  <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                    {analysis.key_points.map((t, i) => (
+                                      <li key={i} className="flex items-start gap-2 text-sm">
+                                        <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-violet-400' : 'bg-violet-500'}`} />
+                                        {t}
+                                      </li>
+                                    ))}
+                                  </ul>
+
+                                  {/* Implications */}
+                                  {analysis.implications.length > 0 && (
+                                    <div>
+                                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>
+                                        Implications
+                                      </p>
+                                      <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                        {analysis.implications.map((t, i) => (
+                                          <li key={i} className="flex items-start gap-2 text-sm">
+                                            <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-orange-400' : 'bg-orange-500'}`} />
+                                            {t}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {/* Open Questions */}
+                                  {analysis.open_questions.length > 0 && (
+                                    <div>
+                                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-cyan-400/70' : 'text-cyan-500/80'}`}>
+                                        Worth Watching
+                                      </p>
+                                      <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                        {analysis.open_questions.map((t, i) => (
+                                          <li key={i} className="flex items-start gap-2 text-sm">
+                                            <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-cyan-400' : 'bg-cyan-500'}`} />
+                                            {t}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Tags */}
                     {article.tags && article.tags.length > 0 && (
