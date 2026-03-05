@@ -49,15 +49,22 @@ async function fetchViaRss2Json(feedUrl: string): Promise<RSSFeedMeta | null> {
 }
 
 async function proxyFetch(url: string): Promise<string> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const proxies: Array<(u: string) => string> = [];
 
-  const proxies = [
+  // Use our own Vercel serverless proxy first (same domain, no CORS)
+  if (window.location.hostname !== 'localhost') {
+    proxies.push((u: string) => `/api/proxy?url=${encodeURIComponent(u)}`);
+  }
+
+  // Free proxies as fallback (for local dev or if own proxy fails)
+  proxies.push(
     (u: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
     (u: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ];
+  );
 
   for (const makeUrl of proxies) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const res = await fetch(makeUrl(url), { signal: controller.signal });
       clearTimeout(timeout);
@@ -68,10 +75,11 @@ async function proxyFetch(url: string): Promise<string> {
         return json.contents ?? '';
       }
       return await res.text();
-    } catch { /* try next proxy */ }
+    } catch {
+      clearTimeout(timeout);
+    }
   }
-  clearTimeout(timeout);
-  throw new Error('All CORS proxies failed');
+  throw new Error('All proxies failed. Try again in a moment.');
 }
 
 export async function fetchRSSFeed(feedUrl: string): Promise<RSSFeedMeta> {
