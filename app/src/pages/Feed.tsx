@@ -30,6 +30,7 @@ const CURATED_FEEDS = [
   { label: 'Medium - AI', url: 'https://medium.com/feed/tag/artificial-intelligence', category: 'AI' },
   { label: 'Medium - Programming', url: 'https://medium.com/feed/tag/programming', category: 'Tech' },
   { label: 'James Clear', url: 'https://jamesclear.com/feed', category: 'Productivity' },
+  { label: 'Sahil Bloom', url: 'https://sahilbloom.substack.com/feed', category: 'Growth' },
   { label: 'Collaborative Fund', url: 'https://collabfund.com/blog/feed/', category: 'Finance' },
 ];
 
