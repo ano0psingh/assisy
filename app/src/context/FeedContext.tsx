@@ -118,7 +118,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
             relevance_score: result.relevance_score,
             content_type: result.content_type,
           });
-          if (i < newArticles.length - 1) await delay(4000);
+          if (i < newArticles.length - 1) await delay(3000);
         } catch (e) { console.error('Summary failed for', art.title, e); }
       }
       setSyncProgress(null);
@@ -179,7 +179,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
             relevance_score: result.relevance_score,
             content_type: result.content_type,
           });
-          if (i < unsummarized.length - 1) await delay(4000);
+          if (i < unsummarized.length - 1) await delay(3000);
         } catch (e) { console.error('Summary failed for', art.title, e); }
       }
       setSyncProgress(null);

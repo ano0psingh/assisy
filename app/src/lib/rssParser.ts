@@ -12,15 +12,55 @@ export interface RSSFeedMeta {
   items: RSSItem[];
 }
 
+interface Rss2JsonItem {
+  title: string;
+  link: string;
+  author: string;
+  pubDate: string;
+  content: string;
+  description: string;
+}
+
+interface Rss2JsonResponse {
+  status: string;
+  feed: { title: string; link: string };
+  items: Rss2JsonItem[];
+}
+
+async function fetchViaRss2Json(feedUrl: string): Promise<RSSFeedMeta | null> {
+  try {
+    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+    const res = await fetch(apiUrl);
+    if (!res.ok) return null;
+    const data: Rss2JsonResponse = await res.json();
+    if (data.status !== 'ok') return null;
+    return {
+      title: data.feed.title ?? feedUrl,
+      siteUrl: data.feed.link ?? '',
+      items: data.items.map(item => ({
+        title: item.title ?? '(no title)',
+        link: item.link ?? '',
+        author: item.author ?? '',
+        pubDate: item.pubDate ?? '',
+        content: item.content || item.description || '',
+      })),
+    };
+  } catch { return null; }
+}
+
 async function proxyFetch(url: string): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
   const proxies = [
     (u: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-    (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    (u: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
   ];
 
   for (const makeUrl of proxies) {
     try {
-      const res = await fetch(makeUrl(url));
+      const res = await fetch(makeUrl(url), { signal: controller.signal });
+      clearTimeout(timeout);
       if (!res.ok) continue;
       const contentType = res.headers.get('content-type') ?? '';
       if (contentType.includes('application/json')) {
@@ -30,10 +70,14 @@ async function proxyFetch(url: string): Promise<string> {
       return await res.text();
     } catch { /* try next proxy */ }
   }
+  clearTimeout(timeout);
   throw new Error('All CORS proxies failed');
 }
 
 export async function fetchRSSFeed(feedUrl: string): Promise<RSSFeedMeta> {
+  const jsonResult = await fetchViaRss2Json(feedUrl);
+  if (jsonResult && jsonResult.items.length > 0) return jsonResult;
+
   const xml = await proxyFetch(feedUrl);
   return parseRSSXml(xml, feedUrl);
 }
