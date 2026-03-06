@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, type DragEvent, type KeyboardEvent } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
+import { useProjectContext } from '../context/ProjectContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useTheme } from '../context/ThemeContext';
 import type { Task } from '../types';
@@ -57,7 +58,38 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function Calendar() {
   const { tasks, createTask, updateTask, addToToday, getTodaysTasks } = useTaskContext();
+  const { getTasksBySubProject, subProjects, projects } = useProjectContext();
   const { habits, getHabitLogs } = useHabitContext();
+
+  // Merge project tasks into a unified format for the calendar
+  const projectTasksAsCalendarItems = useMemo(() => {
+    const items: Task[] = [];
+    for (const sp of subProjects) {
+      const pTasks = getTasksBySubProject(sp.id);
+      const project = projects.find(p => p.id === sp.projectId);
+      for (const pt of pTasks) {
+        items.push({
+          id: `pt-${pt.id}`,
+          title: `${pt.title}${project ? ` (${project.title})` : ''}`,
+          category: 'Professional',
+          priority: pt.priority === 'Medium' ? 'High' : pt.priority as 'High' | 'Low',
+          effort: pt.effort === 'Medium' ? 'Low' : pt.effort as 'High' | 'Low',
+          status: pt.status === 'Done' ? 'Completed' : 'Pending',
+          completedAt: pt.completedAt,
+          createdAt: pt.createdAt,
+          dueDate: pt.deadline,
+          focusedDate: pt.focusedDate,
+          isFocusedToday: pt.isFocusedToday,
+          isRecurring: false,
+          xpValue: 0,
+          description: '',
+        } as Task);
+      }
+    }
+    return items;
+  }, [subProjects, projects, getTasksBySubProject]);
+
+  const allTasks = useMemo(() => [...tasks, ...projectTasksAsCalendarItems], [tasks, projectTasksAsCalendarItems]);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -124,7 +156,7 @@ export function Calendar() {
 
   const tasksByCompletedDate = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const t of tasks) {
+    for (const t of allTasks) {
       if (t.status === 'Completed' && t.completedAt) {
         const key = getDateString(new Date(t.completedAt));
         const arr = map.get(key) ?? [];
@@ -133,11 +165,11 @@ export function Calendar() {
       }
     }
     return map;
-  }, [tasks]);
+  }, [allTasks]);
 
   const tasksByDueDate = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const t of tasks) {
+    for (const t of allTasks) {
       if (t.dueDate) {
         const key = getDateString(new Date(t.dueDate));
         const arr = map.get(key) ?? [];
@@ -146,11 +178,11 @@ export function Calendar() {
       }
     }
     return map;
-  }, [tasks]);
+  }, [allTasks]);
 
   const tasksByFocusedDate = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const t of tasks) {
+    for (const t of allTasks) {
       if (t.focusedDate) {
         const arr = map.get(t.focusedDate) ?? [];
         arr.push(t);
@@ -158,11 +190,11 @@ export function Calendar() {
       }
     }
     return map;
-  }, [tasks]);
+  }, [allTasks]);
 
   const tasksByCreatedDate = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const t of tasks) {
+    for (const t of allTasks) {
       if (t.createdAt) {
         const key = getDateString(new Date(t.createdAt));
         const arr = map.get(key) ?? [];
@@ -171,7 +203,7 @@ export function Calendar() {
       }
     }
     return map;
-  }, [tasks]);
+  }, [allTasks]);
 
   const habitLogsByDate = useMemo(() => {
     const map = new Map<string, { habitName: string; value: number }[]>();
