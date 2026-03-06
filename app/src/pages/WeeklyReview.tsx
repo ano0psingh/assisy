@@ -145,7 +145,7 @@ Respond in this format:
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Weekly Review</h1>
+        <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Weekly Review</h1>
         <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Your week at a glance</p>
       </div>
 
@@ -160,7 +160,7 @@ Respond in this format:
           <div className={`absolute -bottom-12 -left-12 w-36 h-36 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-200/30'}`} />
         </div>
 
-        <div className="relative px-6 py-5">
+        <div className="relative px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center gap-2 mb-4">
             <Calendar className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
             <span className={`text-sm font-medium ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{thisWeek.label}</span>
@@ -171,7 +171,7 @@ Respond in this format:
             <div>
               <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Completed</p>
               <div className="flex items-end gap-2">
-                <span className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{completedThisWeek.length}</span>
+                <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{completedThisWeek.length}</span>
                 <span className={`flex items-center gap-0.5 text-xs font-medium pb-1 ${
                   delta > 0
                     ? isDark ? 'text-emerald-400' : 'text-emerald-600'
@@ -188,7 +188,7 @@ Respond in this format:
             {/* Last week */}
             <div>
               <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Last Week</p>
-              <span className={`text-3xl font-bold ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{completedLastWeek.length}</span>
+              <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{completedLastWeek.length}</span>
             </div>
 
             {/* Streak */}
@@ -196,7 +196,7 @@ Respond in this format:
               <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Streak</p>
               <div className="flex items-center gap-1.5">
                 <Flame className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-                <span className={`text-3xl font-bold ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>{userStats.currentStreak}</span>
+                <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>{userStats.currentStreak}</span>
                 <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>days</span>
               </div>
             </div>
@@ -206,7 +206,7 @@ Respond in this format:
               <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Level</p>
               <div className="flex items-center gap-1.5">
                 <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-                <span className={`text-3xl font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{getTotalLevel()}</span>
+                <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{getTotalLevel()}</span>
               </div>
               <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{getTotalXP().toLocaleString()} XP · {getTitle()}</p>
             </div>
@@ -237,7 +237,7 @@ Respond in this format:
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mt-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
           {/* By priority */}
           <div className={cardClass + ' p-4'}>
             <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>High Priority</p>

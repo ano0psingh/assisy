@@ -211,16 +211,16 @@ export function Goals() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Goals</h1>
+          <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Goals</h1>
           <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
             {activeGoalsCount} active • {completedGoalsCount} completed
           </p>
         </div>
         <button
           onClick={() => setIsFormOpen(true)}
-          className="btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2"
+          className="btn-primary px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl flex items-center space-x-2"
         >
           <Plus size={18} />
           <span>New Goal</span>
@@ -228,7 +228,7 @@ export function Goals() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
@@ -286,7 +286,7 @@ export function Goals() {
 
       {/* Goals List */}
       {filteredGoals.length === 0 ? (
-        <div className="card rounded-2xl p-12 text-center">
+        <div className="card rounded-2xl p-6 sm:p-12 text-center">
           <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
             <Target className={`w-8 h-8 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
           </div>

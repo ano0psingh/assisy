@@ -24,7 +24,7 @@ function XPAnimation({ xp, onComplete }: { xp: number; onComplete: () => void })
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
-      <div className="animate-xp-float text-3xl font-bold text-amber-400 drop-shadow-lg flex items-center gap-2">
+      <div className="animate-xp-float text-2xl sm:text-3xl font-bold text-amber-400 drop-shadow-lg flex items-center gap-2">
         <Zap className="w-8 h-8" />
         +{xp} XP
       </div>
@@ -409,11 +409,11 @@ export function Dashboard() {
           <div className={`absolute -bottom-12 -left-12 w-36 h-36 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-200/30'}`} />
         </div>
 
-        <div className="relative px-6 py-5">
+        <div className="relative px-4 py-4 sm:px-6 sm:py-5">
           {/* Top: greeting + actions */}
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, Kage {greetingEmoji}
               </h1>
               <p className={`mt-0.5 text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
@@ -423,7 +423,7 @@ export function Dashboard() {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleOpenPlanYourDay}
                 className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm transition-colors ${
@@ -463,7 +463,7 @@ export function Dashboard() {
       </div>
 
       {/* ── STATS ROW: colorful, compact ────────────── */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-violet-500/10 border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}>
           <div className="flex items-center gap-2 mb-1">
             <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
@@ -545,7 +545,7 @@ export function Dashboard() {
 
       {/* ── TODAY'S TASKS — the hero section ───────────────── */}
       {todaysTasks.length === 0 && todaysProjectTasks.length === 0 ? (
-        <div className={`card rounded-2xl p-10 text-center`}>
+        <div className={`card rounded-2xl p-6 sm:p-10 text-center`}>
           <Sparkles className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
           <h3 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>All clear!</h3>
           <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>No tasks for today.</p>
@@ -632,7 +632,7 @@ export function Dashboard() {
       )}
 
       {/* ── COMPACT STATS ROW ────────────────────────────── */}
-      <div className={`grid grid-cols-4 gap-3`}>
+      <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3`}>
         {[
           { label: 'Level', value: `${getTotalLevel()}`, sub: getTitle(), color: 'violet' },
           { label: 'Tasks', value: `${todaysTasks.length}`, sub: `${carriedForwardCount ? `${carriedForwardCount} carried` : 'today'}`, color: 'blue' },
@@ -704,7 +704,7 @@ export function Dashboard() {
                 : 'bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200'
             }`}
           >
-            <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl ${
+            <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl sm:text-3xl ${
               isDark ? 'bg-violet-500/20' : 'bg-violet-100'
             }`}>
               🌅

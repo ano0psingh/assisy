@@ -112,9 +112,9 @@ export function Habits() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Habits</h1>
+          <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Habits</h1>
           <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
             {stats.todayCompletedCount}/{stats.totalHabits} completed today
           </p>
@@ -150,7 +150,7 @@ export function Habits() {
         </h2>
         
         {habits.length === 0 ? (
-          <div className="card rounded-2xl p-12 text-center">
+          <div className="card rounded-2xl p-6 sm:p-12 text-center">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
               <Flame className={`w-8 h-8 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
             </div>
@@ -191,7 +191,7 @@ export function Habits() {
       {/* Contribution Graph */}
       {habits.length > 0 && (
         <div className="card rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between mb-4">
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               Activity
             </h2>

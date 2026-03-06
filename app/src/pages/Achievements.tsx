@@ -1286,7 +1286,7 @@ function AchievementModal({
         isDark ? 'bg-[#12121a]' : 'bg-white'
       }`}>
         {/* Header with gradient */}
-        <div className={`relative p-8 ${isUnlocked ? `bg-gradient-to-br ${tierStyles.bg}` : ''}`}>
+        <div className={`relative p-4 sm:p-8 ${isUnlocked ? `bg-gradient-to-br ${tierStyles.bg}` : ''}`}>
           {/* Close button */}
           <button 
             onClick={onClose}
@@ -1732,7 +1732,7 @@ export function Achievements() {
         {/* Artifact Vault by Rarity */}
         <div className={`p-5 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
           <h2 className={`text-sm font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>By Rarity</h2>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {(['legendary', 'platinum', 'gold', 'silver', 'bronze'] as const).map(tier => {
               const tierStyles = getTierStyles(tier, isDark);
               const total = achievements.filter(a => getTier(a.xpReward) === tier).length;
@@ -1774,7 +1774,7 @@ export function Achievements() {
         </div>
 
         {/* Achievement Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {sortedAchievements.map((achievement) => {
           const isNew = recentlyUnlocked.has(achievement.id);
           const prediction = getProgressPrediction(achievement, userStats, getTotalXP(), getTotalLevel());
