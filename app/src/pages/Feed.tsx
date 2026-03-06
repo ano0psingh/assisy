@@ -5,7 +5,7 @@ import {
   Newspaper, Plus, Link, RefreshCw, Bookmark, BookmarkCheck,
   Eye, EyeOff, Trash2, ChevronDown, ChevronUp, ExternalLink,
   Rss, Clock, Star, Sparkles, X, Settings2, Loader2,
-  CheckCircle2, Square, CheckSquare2,
+  CheckCircle2, Square, CheckSquare2, ArrowLeft,
 } from 'lucide-react';
 
 const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
@@ -267,22 +267,24 @@ export function Feed() {
           <div className={`absolute -bottom-12 -left-12 w-36 h-36 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-200/30'}`} />
         </div>
 
-        <div className="relative px-6 py-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                isDark ? 'bg-violet-500/20' : 'bg-violet-100'
-              }`}>
-                <Newspaper className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
-              </div>
-              <div>
-                <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Feed</h1>
+        <div className="relative px-4 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <a
+                href="/"
+                className={`p-2 rounded-lg transition-colors flex-shrink-0 ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                title="Back to Assisy"
+              >
+                <ArrowLeft size={18} />
+              </a>
+              <div className="min-w-0">
+                <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Feed</h1>
                 <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                   {articles.length} article{articles.length !== 1 ? 's' : ''} · {unreadCount} unread · {bookmarkedCount} bookmarked
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
               <button
                 onClick={() => { setShowAddFeed(!showAddFeed); setShowSaveURL(false); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${

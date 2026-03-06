@@ -544,8 +544,8 @@ export function Projects() {
             <div className="card rounded-2xl overflow-hidden h-full">
               {/* Detail Header */}
               <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
                     {/* Back button - always show on mobile, only for subproject on desktop */}
                     <button
                       onClick={detailView === 'subproject' ? goBackToProject : () => setDetailView('none')}
@@ -556,13 +556,13 @@ export function Projects() {
                     {detailView === 'project' && selectedProject && (
                       <>
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                           style={{ backgroundColor: `${selectedProject.color}20` }}
                         >
                           <FolderKanban size={20} style={{ color: selectedProject.color }} />
                         </div>
-                        <div>
-                          <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        <div className="min-w-0">
+                          <h2 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
                             {selectedProject.title}
                           </h2>
                           <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
@@ -573,11 +573,11 @@ export function Projects() {
                     )}
                     {detailView === 'subproject' && selectedSubProject && (
                       <>
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
                           <Layers size={20} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
                         </div>
-                        <div>
-                          <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        <div className="min-w-0">
+                          <h2 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
                             {selectedSubProject.title}
                           </h2>
                           <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
@@ -588,7 +588,7 @@ export function Projects() {
                     )}
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     {detailView === 'project' && selectedProject && (
                       <>
                         <button

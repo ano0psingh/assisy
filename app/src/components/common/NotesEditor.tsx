@@ -285,20 +285,20 @@ export function NotesEditor({
               type="button"
               onClick={() => handleFormat(action)}
               title={label}
-              className={`p-1.5 rounded-lg transition-colors ${
+              className={`p-2.5 sm:p-1.5 rounded-lg transition-colors ${
                 isDark
-                  ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/10'
-                  : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+                  ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/10 active:bg-violet-500/20'
+                  : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50 active:bg-violet-100'
               }`}
             >
-              <Icon size={15} />
+              <Icon size={18} className="sm:w-[15px] sm:h-[15px]" />
             </button>
           ))}
 
-          <div className={`mx-2 w-px h-4 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+          <div className={`mx-1 sm:mx-2 w-px h-4 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
 
-          <span className={`text-[10px] tracking-wider uppercase font-medium ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
-            Markdown supported
+          <span className={`text-[10px] tracking-wider uppercase font-medium hidden sm:inline ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+            Markdown
           </span>
         </div>
       )}
@@ -327,8 +327,8 @@ export function NotesEditor({
         style={{
           minHeight: `${minRows * lineHeight + paddingY}px`,
           fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace",
-          fontSize: '13px',
-          lineHeight: '24px',
+          fontSize: '16px',
+          lineHeight: '26px',
           tabSize: 2,
         }}
       />
@@ -341,7 +341,7 @@ export function NotesEditor({
               {wordCount} {wordCount === 1 ? 'word' : 'words'} · {charCount} chars
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
             <kbd className={`text-[9px] px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>Tab</kbd>
             <span className="text-[9px]">indent</span>
             <kbd className={`text-[9px] px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘↵</kbd>
