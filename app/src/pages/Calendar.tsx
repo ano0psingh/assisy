@@ -237,13 +237,22 @@ export function Calendar() {
   // ── Today's schedule sidebar data ──
 
   const todaysTasks = useMemo(() => {
-    const raw = getTodaysTasks();
-    return [...raw].sort((a, b) => {
+    const regularToday = getTodaysTasks();
+    const todayKey = getDateString(today);
+    const projectToday = projectTasksToTasks(subProjects, projects, getTasksBySubProject)
+      .filter(t => {
+        if (t.focusedDate === todayKey) return true;
+        if (t.status === 'Completed' && t.completedAt && getDateString(new Date(t.completedAt)) === todayKey) return true;
+        return false;
+      });
+    const seen = new Set(regularToday.map(t => t.id));
+    const merged = [...regularToday, ...projectToday.filter(t => !seen.has(t.id))];
+    return merged.sort((a, b) => {
       if (a.status === 'Completed' && b.status !== 'Completed') return 1;
       if (a.status !== 'Completed' && b.status === 'Completed') return -1;
       return 0;
     });
-  }, [getTodaysTasks]);
+  }, [getTodaysTasks, today, subProjects, projects, getTasksBySubProject]);
 
   // ── Navigation ──
 
@@ -275,11 +284,6 @@ export function Calendar() {
   });
 
   // ── Drag & Drop handlers ──
-
-  const handleDragStart = (e: DragEvent<HTMLSpanElement>, taskId: string) => {
-    e.dataTransfer.setData('text/plain', taskId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
 
   const handleDragOver = (e: DragEvent<HTMLButtonElement | HTMLDivElement>, dateStr: string) => {
     e.preventDefault();
@@ -494,7 +498,7 @@ export function Calendar() {
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, dateStr)}
                       className={`
-                        relative flex flex-col items-center h-12 md:h-24 py-1.5 md:py-2 rounded-xl transition-colors
+                        relative flex flex-col items-center h-12 md:h-16 py-1.5 md:py-2 rounded-xl transition-colors
                         ${!isCurrentMonth ? (isDark ? 'text-gray-700' : 'text-slate-300') : ''}
                         ${isCurrentMonth && !isToday && !isSelected ? (isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50') : ''}
                         ${isSelected && !isToday ? (isDark ? 'bg-violet-500/15 text-violet-300' : 'bg-violet-50 text-violet-700') : ''}
@@ -526,27 +530,19 @@ export function Calendar() {
                         </div>
                       )}
 
-                      {/* Desktop: task titles */}
+                      {/* Desktop: category dots + count */}
                       {isCurrentMonth && allTasksForDay.length > 0 && (
-                        <div className="hidden md:flex flex-col gap-0.5 mt-1 w-full px-1 overflow-hidden">
-                          {allTasksForDay.slice(0, 2).map((t) => (
-                            <span
-                              key={t.id}
-                              draggable="true"
-                              onDragStart={(e) => handleDragStart(e, t.id)}
-                              className={`text-[10px] leading-tight truncate cursor-grab active:cursor-grabbing rounded px-1 ${
-                                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                              }`}
-                              title={t.title}
-                            >
-                              {t.title}
-                            </span>
+                        <div className="hidden md:flex items-center gap-1 mt-1">
+                          {[...new Set(allTasksForDay.map(t => t.category))].slice(0, 3).map(cat => (
+                            <span key={cat} className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`} />
                           ))}
-                          {allTasksForDay.length > 2 && (
-                            <span className={`text-[10px] leading-tight ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
-                              +{allTasksForDay.length - 2} more
-                            </span>
-                          )}
+                          <span className={`text-[10px] font-medium ${
+                            allTasksForDay.some(t => t.status === 'Completed')
+                              ? isDark ? 'text-emerald-400' : 'text-emerald-600'
+                              : isDark ? 'text-gray-500' : 'text-slate-400'
+                          }`}>
+                            {allTasksForDay.filter(t => t.status === 'Completed').length}/{allTasksForDay.length}
+                          </span>
                         </div>
                       )}
                     </button>
