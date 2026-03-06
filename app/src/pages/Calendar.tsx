@@ -231,7 +231,7 @@ export function Calendar() {
 
   const selectedDateStr = getDateString(selectedDate);
   const selectedCompleted = tasksByCompletedDate.get(selectedDateStr) ?? [];
-  const selectedDue = tasksByDueDate.get(selectedDateStr) ?? [];
+  const selectedDue = (tasksByDueDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
   const selectedFocused = (tasksByFocusedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
   const selectedCreated = (tasksByCreatedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed' && !t.focusedDate);
   const selectedHabits = habitLogsByDate.get(selectedDateStr) ?? [];
