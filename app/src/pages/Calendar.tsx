@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame } from 'lucide-react';
+import { useState, useMemo, useCallback, useRef, type DragEvent, type KeyboardEvent } from 'react';
+import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useTheme } from '../context/ThemeContext';
 import type { Task } from '../types';
+
+type ViewMode = 'month' | 'week';
 
 function getDaysInMonth(year: number, month: number): Date[] {
   const days: Date[] = [];
@@ -23,35 +25,64 @@ function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function getWeekDays(anchorDate: Date): Date[] {
+  const d = new Date(anchorDate);
+  const dayOfWeek = d.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + mondayOffset);
+
+  const days: Date[] = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + i);
+    days.push(day);
+  }
+  return days;
+}
+
 const CATEGORY_DOT_COLOR: Record<string, { dark: string; light: string }> = {
   Personal: { dark: 'bg-violet-400', light: 'bg-violet-500' },
   Professional: { dark: 'bg-blue-400', light: 'bg-blue-500' },
   Financial: { dark: 'bg-amber-400', light: 'bg-amber-500' },
 };
 
+const STATUS_ICON_COLOR: Record<string, { dark: string; light: string }> = {
+  Completed: { dark: 'text-emerald-400', light: 'text-emerald-500' },
+  Pending: { dark: 'text-gray-500', light: 'text-slate-400' },
+  'Carried Forward': { dark: 'text-amber-400', light: 'text-amber-500' },
+};
+
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function Calendar() {
-  const { tasks } = useTaskContext();
+  const { tasks, createTask, updateTask, addToToday, getTodaysTasks } = useTaskContext();
   const { habits, getHabitLogs } = useHabitContext();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const today = new Date();
+  const todayStr = getDateString(today);
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const [inlineCreateDate, setInlineCreateDate] = useState<string | null>(null);
+  const inlineInputRef = useRef<HTMLInputElement>(null);
 
   const monthLabel = new Date(currentYear, currentMonth).toLocaleString('default', {
     month: 'long',
     year: 'numeric',
   });
 
+  // ── Month view grid data ──
+
   const daysInMonth = useMemo(() => getDaysInMonth(currentYear, currentMonth), [currentYear, currentMonth]);
 
   const firstDayOfWeek = useMemo(() => {
     const day = new Date(currentYear, currentMonth, 1).getDay();
-    return day === 0 ? 6 : day - 1; // Monday-based
+    return day === 0 ? 6 : day - 1;
   }, [currentYear, currentMonth]);
 
   const prevMonthDays = useMemo(() => {
@@ -78,7 +109,19 @@ export function Calendar() {
     [prevMonthDays, daysInMonth, nextMonthDays],
   );
 
-  // Pre-index tasks by date for efficient lookup
+  // ── Week view data ──
+
+  const weekDays = useMemo(() => getWeekDays(selectedDate), [selectedDate]);
+
+  const weekLabel = useMemo(() => {
+    const start = weekDays[0];
+    const end = weekDays[6];
+    const fmt = (d: Date) => d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+    return `${fmt(start)} – ${fmt(end)}, ${end.getFullYear()}`;
+  }, [weekDays]);
+
+  // ── Pre-index tasks by date ──
+
   const tasksByCompletedDate = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const t of tasks) {
@@ -145,7 +188,8 @@ export function Calendar() {
     return map;
   }, [habits, getHabitLogs]);
 
-  // Monthly summary stats
+  // ── Monthly summary stats ──
+
   const monthStats = useMemo(() => {
     let completed = 0;
     let habitsLogged = 0;
@@ -163,7 +207,17 @@ export function Calendar() {
     return { completed, habitsLogged, due, planned };
   }, [daysInMonth, tasksByCompletedDate, tasksByDueDate, tasksByFocusedDate, habitLogsByDate]);
 
-  // Selected day details
+  // ── Helpers: get all unique tasks for a day ──
+
+  const getAllTasksForDate = useCallback((dateStr: string): Task[] => {
+    const completed = tasksByCompletedDate.get(dateStr) ?? [];
+    const focused = tasksByFocusedDate.get(dateStr) ?? [];
+    const created = tasksByCreatedDate.get(dateStr) ?? [];
+    return [...new Map([...completed, ...focused, ...created].map(t => [t.id, t])).values()];
+  }, [tasksByCompletedDate, tasksByFocusedDate, tasksByCreatedDate]);
+
+  // ── Selected day details ──
+
   const selectedDateStr = getDateString(selectedDate);
   const selectedCompleted = tasksByCompletedDate.get(selectedDateStr) ?? [];
   const selectedDue = tasksByDueDate.get(selectedDateStr) ?? [];
@@ -172,10 +226,31 @@ export function Calendar() {
   const selectedHabits = habitLogsByDate.get(selectedDateStr) ?? [];
   const hasActivity = selectedCompleted.length > 0 || selectedDue.length > 0 || selectedFocused.length > 0 || selectedCreated.length > 0 || selectedHabits.length > 0;
 
-  const navigate = (dir: -1 | 1) => {
+  // ── Today's schedule sidebar data ──
+
+  const todaysTasks = useMemo(() => {
+    const raw = getTodaysTasks();
+    return [...raw].sort((a, b) => {
+      if (a.status === 'Completed' && b.status !== 'Completed') return 1;
+      if (a.status !== 'Completed' && b.status === 'Completed') return -1;
+      return 0;
+    });
+  }, [getTodaysTasks]);
+
+  // ── Navigation ──
+
+  const navigateMonth = (dir: -1 | 1) => {
     const d = new Date(currentYear, currentMonth + dir, 1);
     setCurrentYear(d.getFullYear());
     setCurrentMonth(d.getMonth());
+  };
+
+  const navigateWeek = (dir: -1 | 1) => {
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() + dir * 7);
+    setSelectedDate(next);
+    setCurrentYear(next.getFullYear());
+    setCurrentMonth(next.getMonth());
   };
 
   const goToToday = () => {
@@ -191,229 +266,524 @@ export function Calendar() {
     year: 'numeric',
   });
 
-  return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-          <CalendarDays className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-        </div>
-        <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Calendar</h1>
-          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-            {monthStats.completed} completed · {monthStats.planned} planned · {monthStats.habitsLogged} habits · {monthStats.due} due
-          </p>
-        </div>
-      </div>
+  // ── Drag & Drop handlers ──
 
-      {/* Month navigation */}
-      <div className="card rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigate(-1)}
-            className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-3">
-            <span className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{monthLabel}</span>
+  const handleDragStart = (e: DragEvent<HTMLSpanElement>, taskId: string) => {
+    e.dataTransfer.setData('text/plain', taskId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLButtonElement | HTMLDivElement>, dateStr: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverDate(dateStr);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDate(null);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLButtonElement | HTMLDivElement>, dateStr: string) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    const taskId = e.dataTransfer.getData('text/plain');
+    if (!taskId) return;
+
+    if (dateStr === todayStr) {
+      addToToday(taskId);
+    } else {
+      updateTask(taskId, { focusedDate: dateStr, isFocusedToday: false });
+    }
+  };
+
+  // ── Inline task creation ──
+
+  const handleInlineCreate = (dateStr: string, title: string) => {
+    if (!title.trim()) return;
+    const newTask = createTask(title.trim(), '', 'Personal', 'High', 'Low', false);
+    if (dateStr === todayStr) {
+      addToToday(newTask.id);
+    } else {
+      updateTask(newTask.id, { focusedDate: dateStr, isFocusedToday: false });
+    }
+    setInlineCreateDate(null);
+  };
+
+  const handleInlineKeyDown = (e: KeyboardEvent<HTMLInputElement>, dateStr: string) => {
+    if (e.key === 'Enter') {
+      handleInlineCreate(dateStr, (e.target as HTMLInputElement).value);
+    } else if (e.key === 'Escape') {
+      setInlineCreateDate(null);
+    }
+  };
+
+  const openInlineCreate = (dateStr: string) => {
+    setInlineCreateDate(dateStr);
+    setTimeout(() => inlineInputRef.current?.focus(), 50);
+  };
+
+  // ── Inline creation input widget ──
+
+  const InlineCreateInput = ({ dateStr }: { dateStr: string }) => {
+    if (inlineCreateDate !== dateStr) return null;
+    return (
+      <div className="mt-1">
+        <input
+          ref={inlineInputRef}
+          type="text"
+          placeholder="Task title…"
+          className={`w-full text-xs px-2 py-1 rounded-lg border outline-none ${
+            isDark
+              ? 'bg-white/5 border-white/10 text-gray-200 placeholder-gray-600 focus:border-violet-500/50'
+              : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-violet-400'
+          }`}
+          onKeyDown={(e) => handleInlineKeyDown(e, dateStr)}
+          onBlur={(e) => {
+            if (e.target.value.trim()) {
+              handleInlineCreate(dateStr, e.target.value);
+            } else {
+              setInlineCreateDate(null);
+            }
+          }}
+        />
+      </div>
+    );
+  };
+
+  // ── Render: task card for week view ──
+
+  const TaskCard = ({ task }: { task: Task }) => (
+    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs ${
+      isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-50 hover:bg-slate-100'
+    } transition-colors`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[task.category]?.dark : CATEGORY_DOT_COLOR[task.category]?.light}`} />
+      <span className={`truncate ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{task.title}</span>
+      {task.status === 'Completed' ? (
+        <CheckCircle2 className={`w-3 h-3 shrink-0 ml-auto ${isDark ? STATUS_ICON_COLOR.Completed.dark : STATUS_ICON_COLOR.Completed.light}`} />
+      ) : (
+        <Circle className={`w-3 h-3 shrink-0 ml-auto ${isDark ? STATUS_ICON_COLOR[task.status]?.dark : STATUS_ICON_COLOR[task.status]?.light}`} />
+      )}
+    </div>
+  );
+
+  // ══════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════
+
+  return (
+    <div className="flex gap-6">
+      {/* Main content */}
+      <div className="flex-1 min-w-0 space-y-6">
+        {/* Page header */}
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
+            <CalendarDays className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+          </div>
+          <div>
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Calendar</h1>
+            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              {monthStats.completed} completed · {monthStats.planned} planned · {monthStats.habitsLogged} habits · {monthStats.due} due
+            </p>
+          </div>
+        </div>
+
+        {/* Navigation + view toggle */}
+        <div className="card rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-4">
             <button
-              onClick={goToToday}
-              className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
-                isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
-              }`}
+              onClick={() => viewMode === 'month' ? navigateMonth(-1) : navigateWeek(-1)}
+              className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
             >
-              Today
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <span className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                {viewMode === 'month' ? monthLabel : weekLabel}
+              </span>
+              <button
+                onClick={goToToday}
+                className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
+                  isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                }`}
+              >
+                Today
+              </button>
+              {/* View mode toggle */}
+              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                <button
+                  onClick={() => setViewMode('month')}
+                  className={`text-xs font-medium px-2.5 py-1 transition-colors ${
+                    viewMode === 'month'
+                      ? isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-100 text-violet-700'
+                      : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  Month
+                </button>
+                <button
+                  onClick={() => setViewMode('week')}
+                  className={`text-xs font-medium px-2.5 py-1 transition-colors ${
+                    viewMode === 'week'
+                      ? isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-100 text-violet-700'
+                      : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  Week
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => viewMode === 'month' ? navigateMonth(1) : navigateWeek(1)}
+              className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-          <button
-            onClick={() => navigate(1)}
-            className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
 
-        {/* Weekday header */}
-        <div className="grid grid-cols-7 mb-1">
-          {WEEKDAYS.map((day) => (
-            <div
-              key={day}
-              className={`text-center text-xs font-medium py-2 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7">
-          {allDays.map((day, idx) => {
-            const dateStr = getDateString(day);
-            const isCurrentMonth = day.getMonth() === currentMonth;
-            const isToday = isSameDay(day, today);
-            const isSelected = isSameDay(day, selectedDate);
-
-            const completed = tasksByCompletedDate.get(dateStr) ?? [];
-            const dueTasks = tasksByDueDate.get(dateStr) ?? [];
-            const focused = tasksByFocusedDate.get(dateStr) ?? [];
-            const created = tasksByCreatedDate.get(dateStr) ?? [];
-            const habitEntries = habitLogsByDate.get(dateStr) ?? [];
-
-            const allTasksForDay = [...new Map([...completed, ...focused, ...created].map(t => [t.id, t])).values()];
-            const categoryDots = [...new Set(allTasksForDay.map((t) => t.category))].slice(0, 3);
-            const hasDue = dueTasks.length > 0;
-            const hasFocused = focused.length > 0;
-            const hasHabit = habitEntries.length > 0;
-
-            return (
-              <button
-                key={idx}
-                onClick={() => setSelectedDate(day)}
-                className={`
-                  relative flex flex-col items-center py-1.5 md:py-2 rounded-xl transition-colors
-                  ${!isCurrentMonth ? (isDark ? 'text-gray-700' : 'text-slate-300') : ''}
-                  ${isCurrentMonth && !isToday && !isSelected ? (isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50') : ''}
-                  ${isSelected && !isToday ? (isDark ? 'bg-violet-500/15 text-violet-300' : 'bg-violet-50 text-violet-700') : ''}
-                `}
-              >
-                <span
-                  className={`
-                    w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium
-                    ${isToday ? 'bg-violet-500 text-white' : ''}
-                    ${isSelected && !isToday ? 'ring-2 ring-violet-400/50' : ''}
-                  `}
-                >
-                  {day.getDate()}
-                </span>
-
-                {/* Indicators */}
-                {isCurrentMonth && (
-                  <div className="flex items-center gap-0.5 mt-0.5 h-2.5">
-                    {categoryDots.map((cat) => (
-                      <span
-                        key={cat}
-                        className={`w-1.5 h-1.5 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`}
-                      />
-                    ))}
-                    {hasFocused && !categoryDots.length && <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-violet-400/60' : 'bg-violet-300'}`} />}
-                    {hasHabit && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-                    {hasDue && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
+          {/* ── MONTH VIEW ── */}
+          {viewMode === 'month' && (
+            <>
+              {/* Weekday header */}
+              <div className="grid grid-cols-7 mb-1">
+                {WEEKDAYS.map((day) => (
+                  <div
+                    key={day}
+                    className={`text-center text-xs font-medium py-2 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}
+                  >
+                    {day}
                   </div>
-                )}
-              </button>
-            );
-          })}
+                ))}
+              </div>
+
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7">
+                {allDays.map((day, idx) => {
+                  const dateStr = getDateString(day);
+                  const isCurrentMonth = day.getMonth() === currentMonth;
+                  const isToday = isSameDay(day, today);
+                  const isSelected = isSameDay(day, selectedDate);
+                  const isDragTarget = dragOverDate === dateStr;
+
+                  const completed = tasksByCompletedDate.get(dateStr) ?? [];
+                  const dueTasks = tasksByDueDate.get(dateStr) ?? [];
+                  const focused = tasksByFocusedDate.get(dateStr) ?? [];
+                  const created = tasksByCreatedDate.get(dateStr) ?? [];
+                  const habitEntries = habitLogsByDate.get(dateStr) ?? [];
+
+                  const allTasksForDay = [...new Map([...completed, ...focused, ...created].map(t => [t.id, t])).values()];
+                  const categoryDots = [...new Set(allTasksForDay.map((t) => t.category))].slice(0, 3);
+                  const hasDue = dueTasks.length > 0;
+                  const hasFocused = focused.length > 0;
+                  const hasHabit = habitEntries.length > 0;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedDate(day)}
+                      onDragOver={(e) => handleDragOver(e, dateStr)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, dateStr)}
+                      className={`
+                        relative flex flex-col items-center h-12 md:h-24 py-1.5 md:py-2 rounded-xl transition-colors
+                        ${!isCurrentMonth ? (isDark ? 'text-gray-700' : 'text-slate-300') : ''}
+                        ${isCurrentMonth && !isToday && !isSelected ? (isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50') : ''}
+                        ${isSelected && !isToday ? (isDark ? 'bg-violet-500/15 text-violet-300' : 'bg-violet-50 text-violet-700') : ''}
+                        ${isDragTarget ? (isDark ? 'ring-2 ring-violet-400/60 bg-violet-500/10' : 'ring-2 ring-violet-400/60 bg-violet-50') : ''}
+                      `}
+                    >
+                      <span
+                        className={`
+                          w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium shrink-0
+                          ${isToday ? 'bg-violet-500 text-white' : ''}
+                          ${isSelected && !isToday ? 'ring-2 ring-violet-400/50' : ''}
+                        `}
+                      >
+                        {day.getDate()}
+                      </span>
+
+                      {/* Mobile: dot indicators */}
+                      {isCurrentMonth && (
+                        <div className="flex items-center gap-0.5 mt-0.5 h-2.5 md:hidden">
+                          {categoryDots.map((cat) => (
+                            <span
+                              key={cat}
+                              className={`w-1.5 h-1.5 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`}
+                            />
+                          ))}
+                          {hasFocused && !categoryDots.length && <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-violet-400/60' : 'bg-violet-300'}`} />}
+                          {hasHabit && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                          {hasDue && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
+                        </div>
+                      )}
+
+                      {/* Desktop: task titles */}
+                      {isCurrentMonth && allTasksForDay.length > 0 && (
+                        <div className="hidden md:flex flex-col gap-0.5 mt-1 w-full px-1 overflow-hidden">
+                          {allTasksForDay.slice(0, 2).map((t) => (
+                            <span
+                              key={t.id}
+                              draggable="true"
+                              onDragStart={(e) => handleDragStart(e, t.id)}
+                              className={`text-[10px] leading-tight truncate cursor-grab active:cursor-grabbing rounded px-1 ${
+                                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                              }`}
+                              title={t.title}
+                            >
+                              {t.title}
+                            </span>
+                          ))}
+                          {allTasksForDay.length > 2 && (
+                            <span className={`text-[10px] leading-tight ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                              +{allTasksForDay.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ── WEEK VIEW ── */}
+          {viewMode === 'week' && (
+            <div className="grid grid-cols-7 gap-2">
+              {weekDays.map((day) => {
+                const dateStr = getDateString(day);
+                const isToday = isSameDay(day, today);
+                const isSelected = isSameDay(day, selectedDate);
+                const allTasksForDay = getAllTasksForDate(dateStr);
+                const dueTasks = tasksByDueDate.get(dateStr) ?? [];
+                const allUnique = [...new Map([...allTasksForDay, ...dueTasks].map(t => [t.id, t])).values()];
+
+                return (
+                  <div
+                    key={dateStr}
+                    onClick={() => setSelectedDate(day)}
+                    onDragOver={(e) => handleDragOver(e, dateStr)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, dateStr)}
+                    className={`
+                      rounded-xl p-2 min-h-[140px] cursor-pointer transition-colors border
+                      ${isToday
+                        ? isDark ? 'border-violet-500/40 bg-violet-500/5' : 'border-violet-300 bg-violet-50/50'
+                        : isSelected
+                          ? isDark ? 'border-violet-500/25 bg-white/[0.02]' : 'border-violet-200 bg-violet-50/30'
+                          : isDark ? 'border-white/5 hover:border-white/10' : 'border-slate-100 hover:border-slate-200'
+                      }
+                      ${dragOverDate === dateStr ? (isDark ? 'ring-2 ring-violet-400/60' : 'ring-2 ring-violet-400/60') : ''}
+                    `}
+                  >
+                    {/* Day header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-medium uppercase ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                          {WEEKDAYS[weekDays.indexOf(day)]}
+                        </span>
+                        <span
+                          className={`
+                            w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium
+                            ${isToday ? 'bg-violet-500 text-white' : isDark ? 'text-gray-300' : 'text-slate-600'}
+                          `}
+                        >
+                          {day.getDate()}
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openInlineCreate(dateStr); }}
+                        className={`w-5 h-5 flex items-center justify-center rounded-md transition-colors ${
+                          isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <InlineCreateInput dateStr={dateStr} />
+
+                    {/* Task cards */}
+                    <div className="space-y-1">
+                      {allUnique.map((task) => (
+                        <div
+                          key={task.id}
+                          draggable="true"
+                          onDragStart={(e: DragEvent<HTMLDivElement>) => {
+                            e.dataTransfer.setData('text/plain', task.id);
+                            e.dataTransfer.effectAllowed = 'move';
+                          }}
+                          className="cursor-grab active:cursor-grabbing"
+                        >
+                          <TaskCard task={task} />
+                        </div>
+                      ))}
+                      {allUnique.length === 0 && (
+                        <p className={`text-[10px] ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>No tasks</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Selected day detail panel */}
+        <div className="card rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {selectedDateLabel}
+            </h2>
+            <button
+              onClick={() => openInlineCreate(selectedDateStr)}
+              className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
+                isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+              }`}
+              title="Add task"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+
+          <InlineCreateInput dateStr={selectedDateStr} />
+
+          {!hasActivity && inlineCreateDate !== selectedDateStr ? (
+            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>No activity</p>
+          ) : (
+            <div className="space-y-4">
+              {/* Completed tasks */}
+              {selectedCompleted.length > 0 && (
+                <div>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Completed ({selectedCompleted.length})
+                  </div>
+                  <ul className="space-y-1.5">
+                    {selectedCompleted.map((t) => (
+                      <li key={t.id} className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
+                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Focused/planned tasks */}
+              {selectedFocused.length > 0 && (
+                <div>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    Planned ({selectedFocused.length})
+                  </div>
+                  <ul className="space-y-1.5">
+                    {selectedFocused.map((t) => (
+                      <li key={t.id} className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
+                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                        <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Created tasks (pending, not focused) */}
+              {selectedCreated.length > 0 && (
+                <div>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                    <Circle className="w-3.5 h-3.5" />
+                    Created ({selectedCreated.length})
+                  </div>
+                  <ul className="space-y-1.5">
+                    {selectedCreated.map((t) => (
+                      <li key={t.id} className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
+                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                        <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Due tasks */}
+              {selectedDue.length > 0 && (
+                <div>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                    <Clock className="w-3.5 h-3.5" />
+                    Due ({selectedDue.length})
+                  </div>
+                  <ul className="space-y-1.5">
+                    {selectedDue.map((t) => (
+                      <li key={t.id} className="flex items-center gap-2">
+                        <Circle className={`w-3 h-3 ${t.status === 'Completed' ? (isDark ? 'text-emerald-400' : 'text-emerald-500') : (isDark ? 'text-red-400' : 'text-red-500')}`} />
+                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                        <span className={`text-xs ml-auto ${t.status === 'Completed' ? (isDark ? 'text-emerald-500' : 'text-emerald-600') : (isDark ? 'text-red-500' : 'text-red-600')}`}>
+                          {t.status}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Habits */}
+              {selectedHabits.length > 0 && (
+                <div>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                    <Flame className="w-3.5 h-3.5" />
+                    Habits ({selectedHabits.length})
+                  </div>
+                  <ul className="space-y-1.5">
+                    {selectedHabits.map((h, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <CheckCircle2 className={`w-3.5 h-3.5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{h.habitName}</span>
+                        <span className={`text-xs ml-auto ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>×{h.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Selected day detail panel */}
-      <div className="card rounded-2xl p-5">
-        <h2 className={`text-base font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          {selectedDateLabel}
-        </h2>
-
-        {!hasActivity ? (
-          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>No activity</p>
-        ) : (
-          <div className="space-y-4">
-            {/* Completed tasks */}
-            {selectedCompleted.length > 0 && (
-              <div>
-                <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Completed ({selectedCompleted.length})
-                </div>
-                <ul className="space-y-1.5">
-                  {selectedCompleted.map((t) => (
-                    <li key={t.id} className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Focused/planned tasks */}
-            {selectedFocused.length > 0 && (
-              <div>
-                <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                  <CalendarDays className="w-3.5 h-3.5" />
-                  Planned ({selectedFocused.length})
-                </div>
-                <ul className="space-y-1.5">
-                  {selectedFocused.map((t) => (
-                    <li key={t.id} className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
-                      <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Created tasks (pending, not focused) */}
-            {selectedCreated.length > 0 && (
-              <div>
-                <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                  <Circle className="w-3.5 h-3.5" />
-                  Created ({selectedCreated.length})
-                </div>
-                <ul className="space-y-1.5">
-                  {selectedCreated.map((t) => (
-                    <li key={t.id} className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
-                      <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Due tasks */}
-            {selectedDue.length > 0 && (
-              <div>
-                <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                  <Clock className="w-3.5 h-3.5" />
-                  Due ({selectedDue.length})
-                </div>
-                <ul className="space-y-1.5">
-                  {selectedDue.map((t) => (
-                    <li key={t.id} className="flex items-center gap-2">
-                      <Circle className={`w-3 h-3 ${t.status === 'Completed' ? (isDark ? 'text-emerald-400' : 'text-emerald-500') : (isDark ? 'text-red-400' : 'text-red-500')}`} />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
-                      <span className={`text-xs ml-auto ${t.status === 'Completed' ? (isDark ? 'text-emerald-500' : 'text-emerald-600') : (isDark ? 'text-red-500' : 'text-red-600')}`}>
-                        {t.status}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Habits */}
-            {selectedHabits.length > 0 && (
-              <div>
-                <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-                  <Flame className="w-3.5 h-3.5" />
-                  Habits ({selectedHabits.length})
-                </div>
-                <ul className="space-y-1.5">
-                  {selectedHabits.map((h, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-3.5 h-3.5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{h.habitName}</span>
-                      <span className={`text-xs ml-auto ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>×{h.value}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+      {/* ── TODAY'S SCHEDULE SIDEBAR (desktop only) ── */}
+      <div className={`hidden md:block w-64 shrink-0`}>
+        <div className={`card rounded-2xl p-4 sticky top-6`}>
+          <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            Today&apos;s Schedule
+          </h3>
+          {todaysTasks.length === 0 ? (
+            <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks planned for today</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {todaysTasks.map((t) => (
+                <li key={t.id} className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
+                  <span className={`text-xs truncate ${
+                    t.status === 'Completed'
+                      ? isDark ? 'text-gray-600 line-through' : 'text-slate-400 line-through'
+                      : isDark ? 'text-gray-300' : 'text-slate-600'
+                  }`}>
+                    {t.title}
+                  </span>
+                  {t.status === 'Completed' && (
+                    <CheckCircle2 className={`w-3 h-3 shrink-0 ml-auto ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className={`mt-3 pt-3 border-t text-xs ${isDark ? 'border-white/5 text-gray-500' : 'border-slate-100 text-slate-400'}`}>
+            {todaysTasks.filter(t => t.status === 'Completed').length}/{todaysTasks.length} completed
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
