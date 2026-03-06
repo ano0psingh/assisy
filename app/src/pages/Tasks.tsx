@@ -297,19 +297,19 @@ export function Tasks() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>All Tasks</h1>
-          <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{tasks.length} total tasks</p>
+          <h1 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>All Tasks</h1>
+          <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{tasks.length} total tasks</p>
         </div>
-        <button onClick={() => setIsTaskFormOpen(true)} className="btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2">
+        <button onClick={() => setIsTaskFormOpen(true)} className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base">
           <Plus size={18} />
           <span>Add Task</span>
         </button>
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}

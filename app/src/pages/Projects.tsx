@@ -396,10 +396,10 @@ export function Projects() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Projects</h1>
-          <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <h1 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Projects</h1>
+          <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
             {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -409,7 +409,7 @@ export function Projects() {
             setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
             setIsProjectFormOpen(true);
           }}
-          className="btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2"
+          className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base"
         >
           <Plus size={18} />
           <span>New Project</span>
@@ -418,7 +418,7 @@ export function Projects() {
 
       <div className="flex gap-6">
         {/* Main Content - Project List or Detail View */}
-        <div className={`flex-1 ${detailView !== 'none' ? 'hidden lg:block lg:w-1/3' : ''}`}>
+        <div className={`flex-1 ${detailView !== 'none' ? 'hidden md:block md:w-1/3' : ''}`}>
           {/* Project Status Filter */}
           <div className="mb-4">
             <div className={`flex items-center space-x-2`}>
@@ -540,20 +540,19 @@ export function Projects() {
 
         {/* Detail Panel */}
         {detailView !== 'none' && (
-          <div className="flex-1 lg:w-2/3">
+          <div className="flex-1 md:w-2/3">
             <div className="card rounded-2xl overflow-hidden h-full">
               {/* Detail Header */}
               <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    {detailView === 'subproject' && (
-                      <button
-                        onClick={goBackToProject}
-                        className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-                      >
-                        <ChevronLeft size={20} />
-                      </button>
-                    )}
+                    {/* Back button - always show on mobile, only for subproject on desktop */}
+                    <button
+                      onClick={detailView === 'subproject' ? goBackToProject : () => setDetailView('none')}
+                      className={`p-2 rounded-lg transition-colors ${detailView === 'project' ? 'md:hidden' : ''} ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
                     {detailView === 'project' && selectedProject && (
                       <>
                         <div
@@ -1113,7 +1112,7 @@ export function Projects() {
             </div>
           );
           const priorityEffort = (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Priority</label>
                 <select value={taskForm.priority} onChange={e => setTaskForm(prev => ({ ...prev, priority: e.target.value as any }))} className={inputCls}>
