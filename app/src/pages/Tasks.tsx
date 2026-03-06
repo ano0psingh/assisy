@@ -202,10 +202,11 @@ export function Tasks() {
     effort: 'High' | 'Low';
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
+    specificDays?: number[];
     goalId?: string;
     dueDate?: Date;
   }) => {
-    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, undefined, data.goalId, data.dueDate);
+    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, data.specificDays, data.goalId, data.dueDate);
     
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
@@ -226,21 +227,19 @@ export function Tasks() {
     effort: 'High' | 'Low';
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
+    specificDays?: number[];
     goalId?: string;
     dueDate?: Date;
   }) => {
     if (!editingTask) return;
 
-    // Handle goal linking/unlinking
     const oldGoalId = editingTask.goalId;
     const newGoalId = data.goalId;
 
-    // Unlink from old goal if changed
     if (oldGoalId && oldGoalId !== newGoalId) {
       unlinkTaskFromGoal(oldGoalId, editingTask.id);
     }
 
-    // Link to new goal if set
     if (newGoalId && newGoalId !== oldGoalId) {
       linkTaskToGoal(newGoalId, editingTask.id);
     }
@@ -253,6 +252,7 @@ export function Tasks() {
       effort: data.effort,
       isRecurring: data.isRecurring,
       recurrencePattern: data.recurrencePattern,
+      specificDays: data.specificDays,
       goalId: data.goalId,
       dueDate: data.dueDate,
     });

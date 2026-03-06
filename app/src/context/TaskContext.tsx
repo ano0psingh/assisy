@@ -216,7 +216,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           if (task.recurrencePattern === 'daily') {
             return true;
           }
-          if (task.recurrencePattern === 'weekly') {
+          if (task.recurrencePattern === 'weekly' || task.recurrencePattern === 'specific_days') {
             const dayOfWeek = today.getDay();
             return task.specificDays?.includes(dayOfWeek) || false;
           }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper, Menu, X, ClipboardList } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, CalendarDays, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper, Menu, X, ClipboardList } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -55,6 +55,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
     { icon: CheckSquare, label: 'Tasks', to: '/tasks' },
     { icon: Target, label: 'Goals', to: '/goals' },
     { icon: Calendar, label: 'Habits', to: '/habits' },
+    { icon: CalendarDays, label: 'Calendar', to: '/calendar' },
     { icon: FolderKanban, label: 'Projects', to: '/projects' },
     { icon: Trophy, label: 'Achievements', to: '/achievements' },
     { icon: BarChart3, label: 'Stats', to: '/stats' },

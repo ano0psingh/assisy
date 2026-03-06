@@ -14,6 +14,7 @@ interface TaskFormProps {
     effort: Effort;
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
+    specificDays?: number[];
     goalId?: string;
     dueDate?: Date;
     addToToday?: boolean;
@@ -35,6 +36,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const [effort, setEffort] = useState<Effort>('Low');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState<RecurrencePattern>('daily');
+  const [specificDays, setSpecificDays] = useState<number[]>([]);
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
 
@@ -47,6 +49,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       setEffort(editingTask.effort);
       setIsRecurring(editingTask.isRecurring);
       setRecurrencePattern(editingTask.recurrencePattern || 'daily');
+      setSpecificDays(editingTask.specificDays || []);
       setSelectedGoalId(editingTask.goalId || '');
       setDueDate(editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : '');
     } else {
@@ -62,6 +65,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     setEffort('Low');
     setIsRecurring(false);
     setRecurrencePattern('daily');
+    setSpecificDays([]);
     setSelectedGoalId('');
     setDueDate('');
   };
@@ -78,6 +82,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       effort,
       isRecurring,
       recurrencePattern: isRecurring ? recurrencePattern : undefined,
+      specificDays: isRecurring && recurrencePattern === 'specific_days' ? specificDays : undefined,
       goalId: selectedGoalId || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       addToToday: !editingTask ? defaultAddToToday : undefined,
@@ -259,23 +264,55 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         <span className={`text-sm transition-colors ${isDark ? 'text-gray-400 group-hover:text-gray-200' : 'text-slate-600 group-hover:text-slate-800'}`}>Recurring task</span>
       </label>
       {isRecurring && (
-        <div className="grid grid-cols-2 gap-2 animate-fade-in">
-          {(['daily', 'weekly'] as const).map((pattern) => (
-            <button
-              key={pattern}
-              type="button"
-              onClick={() => setRecurrencePattern(pattern)}
-              className={`px-3 py-2.5 rounded-xl text-sm font-medium capitalize transition-all border ${
-                recurrencePattern === pattern
-                  ? isDark ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 'bg-violet-50 text-violet-600 border-violet-200'
-                  : isDark
-                    ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
-                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {pattern}
-            </button>
-          ))}
+        <div className="space-y-3 animate-fade-in">
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { value: 'daily' as const, label: 'Daily' },
+              { value: 'weekly' as const, label: 'Weekly' },
+              { value: 'specific_days' as const, label: 'Custom' },
+            ]).map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setRecurrencePattern(value)}
+                className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                  recurrencePattern === value
+                    ? isDark ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 'bg-violet-50 text-violet-600 border-violet-200'
+                    : isDark
+                      ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {recurrencePattern === 'specific_days' && (
+            <div className="flex gap-1.5 animate-fade-in">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => setSpecificDays(prev =>
+                    prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i]
+                  )}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                    specificDays.includes(i)
+                      ? isDark ? 'bg-violet-500/30 text-violet-300 border border-violet-500/40' : 'bg-violet-100 text-violet-700 border border-violet-200'
+                      : isDark ? 'bg-white/5 text-gray-500 border border-white/10' : 'bg-slate-50 text-slate-400 border border-slate-200'
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          )}
+          <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+            {recurrencePattern === 'daily' ? 'Repeats every day' :
+             recurrencePattern === 'weekly' ? 'Repeats every week on this day' :
+             specificDays.length === 0 ? 'Select days' :
+             `Every ${specificDays.sort().map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}`}
+          </p>
         </div>
       )}
     </div>

@@ -156,7 +156,7 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
                   return (
                     <div
                       key={dayIndex}
-                      className={`w-[12px] h-[12px] rounded-sm transition-colors ${getColor(dayData.value)}`}
+                      className={`w-[12px] h-[12px] rounded-sm transition-all duration-150 hover:scale-150 hover:rounded cursor-default ${getColor(dayData.value)}`}
                       title={`${dayData.date}: ${dayData.value}`}
                     />
                   );

@@ -10,6 +10,8 @@ import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { NotesEditor } from '../components/common/NotesEditor';
+import { ContributionGraph } from '../components/habits/ContributionGraph';
+import { isNotificationSupported, hasAskedBefore, requestPermission, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { useUndo } from '../components/common/UndoToast';
 import { getQuoteOfTheDay } from '../data/quotes';
@@ -111,7 +113,7 @@ export function Dashboard() {
     markPlanYourDaySeen,
   } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
-  const { habits } = useHabitContext();
+  const { habits, getHabitLogs } = useHabitContext();
   const { 
     getTodaysProjectTasks, 
     updateTaskStatus, 
@@ -140,6 +142,17 @@ export function Dashboard() {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [hasCarriedForward, setHasCarriedForward] = useState(false);
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
+
+  useEffect(() => {
+    if (isNotificationSupported() && !hasAskedBefore() && getPermissionStatus() === 'default') {
+      const timer = setTimeout(() => setShowNotifBanner(true), 5000);
+      return () => clearTimeout(timer);
+    }
+    if (getPermissionStatus() === 'granted') {
+      startDailyPlanningReminder(9);
+    }
+  }, []);
   const [xpAnimation, setXpAnimation] = useState<{ show: boolean; xp: number }>({ show: false, xp: 0 });
   const [isPlanYourDayOpen, setIsPlanYourDayOpen] = useState(false);
   const [dailyBonusResult, setDailyBonusResult] = useState<{ show: boolean; xp: number; streak: number; multiplier: number } | null>(null);
@@ -397,6 +410,35 @@ export function Dashboard() {
 
   return (
     <div className="space-y-5">
+      {/* Notification permission banner */}
+      {showNotifBanner && (
+        <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 animate-slide-down ${
+          isDark ? 'bg-violet-500/10 border border-violet-500/20' : 'bg-violet-50 border border-violet-200'
+        }`}>
+          <p className={`text-sm ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
+            Enable notifications for Pomodoro alerts and daily planning reminders?
+          </p>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={async () => {
+                const granted = await requestPermission();
+                if (granted) startDailyPlanningReminder(9);
+                setShowNotifBanner(false);
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+            >
+              Enable
+            </button>
+            <button
+              onClick={() => { setShowNotifBanner(false); localStorage.setItem('assisy_notification_permission', 'dismissed'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── HERO BANNER: greeting + quote + actions ──── */}
       <div className={`relative overflow-hidden rounded-2xl ${
         isDark
@@ -676,6 +718,34 @@ export function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* ── ACTIVITY HEATMAP ──────────── */}
+      {(() => {
+        const activityLogs: { date: string; value: number }[] = [];
+        const dateMap = new Map<string, number>();
+        tasks.forEach(t => {
+          if (t.status === 'Completed' && t.completedAt) {
+            const d = new Date(t.completedAt).toISOString().split('T')[0];
+            dateMap.set(d, (dateMap.get(d) || 0) + 1);
+          }
+        });
+        habits.forEach(h => {
+          getHabitLogs(h.id, 84).forEach(log => {
+            if (log.value > 0) {
+              dateMap.set(log.date, (dateMap.get(log.date) || 0) + 1);
+            }
+          });
+        });
+        dateMap.forEach((value, date) => activityLogs.push({ date, value }));
+        return (
+          <div className={`rounded-2xl p-4 ${isDark ? 'bg-white/[0.03] border border-white/[0.07]' : 'bg-white border border-neutral-200'}`}>
+            <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+              <Flame size={14} /> Activity
+            </h3>
+            <ContributionGraph logs={activityLogs} weeks={12} />
+          </div>
+        );
+      })()}
 
       <TaskForm
         isOpen={isTaskFormOpen}

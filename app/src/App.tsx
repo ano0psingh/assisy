@@ -8,6 +8,7 @@ import { Projects } from './pages/Projects';
 import { Achievements } from './pages/Achievements';
 import { Stats } from './pages/Stats';
 import { WeeklyReview } from './pages/WeeklyReview';
+import { Calendar } from './pages/Calendar';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/review" element={<WeeklyReview />} />
+          <Route path="/calendar" element={<Calendar />} />
         </Routes>
       </Layout>
     </BrowserRouter>

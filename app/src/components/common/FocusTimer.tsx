@@ -4,6 +4,7 @@ import { useGamification } from '../../context/GamificationContext';
 import { useAuth } from '../../context/AuthContext';
 import { saveSettings } from '../../store/unifiedStore';
 import { Play, Pause, RotateCcw, X, Zap, Timer, SkipForward, Coffee, Brain, Settings2 } from 'lucide-react';
+import { notifyPomodoroComplete } from '../../lib/notifications';
 
 type Phase = 'work' | 'shortBreak' | 'longBreak';
 
@@ -129,6 +130,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
   const completePhase = useCallback(() => {
     setRunning(false);
     playNotificationSound();
+    notifyPomodoroComplete(phase);
     setJustCompleted(phase);
 
     if (phase === 'work') {
