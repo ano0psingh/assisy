@@ -10,7 +10,6 @@ import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { NotesEditor } from '../components/common/NotesEditor';
-import { ContributionGraph } from '../components/habits/ContributionGraph';
 import { isNotificationSupported, hasAskedBefore, requestPermission, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { useUndo } from '../components/common/UndoToast';
@@ -113,7 +112,7 @@ export function Dashboard() {
     markPlanYourDaySeen,
   } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
-  const { habits, getHabitLogs } = useHabitContext();
+  const { habits } = useHabitContext();
   const { 
     getTodaysProjectTasks, 
     updateTaskStatus, 
@@ -719,33 +718,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ── ACTIVITY HEATMAP ──────────── */}
-      {(() => {
-        const activityLogs: { date: string; value: number }[] = [];
-        const dateMap = new Map<string, number>();
-        tasks.forEach(t => {
-          if (t.status === 'Completed' && t.completedAt) {
-            const d = new Date(t.completedAt).toISOString().split('T')[0];
-            dateMap.set(d, (dateMap.get(d) || 0) + 1);
-          }
-        });
-        habits.forEach(h => {
-          getHabitLogs(h.id, 84).forEach(log => {
-            if (log.value > 0) {
-              dateMap.set(log.date, (dateMap.get(log.date) || 0) + 1);
-            }
-          });
-        });
-        dateMap.forEach((value, date) => activityLogs.push({ date, value }));
-        return (
-          <div className={`rounded-2xl p-4 ${isDark ? 'bg-white/[0.03] border border-white/[0.07]' : 'bg-white border border-neutral-200'}`}>
-            <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-              <Flame size={14} /> Activity
-            </h3>
-            <ContributionGraph logs={activityLogs} weeks={12} />
-          </div>
-        );
-      })()}
 
       <TaskForm
         isOpen={isTaskFormOpen}
