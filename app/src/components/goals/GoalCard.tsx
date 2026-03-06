@@ -57,10 +57,10 @@ export function GoalCard({
 
   return (
     <div 
-      className={`group rounded-xl p-5 transition-all duration-200 cursor-pointer ${
-        isDark 
-          ? `bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 ${isCompleted || isArchived ? 'opacity-60' : ''}`
-          : `bg-white border border-slate-200 hover:shadow-md hover:border-slate-300 ${isCompleted || isArchived ? 'opacity-60 bg-slate-50' : ''}`
+      className={`group rounded-xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.99] ${
+        isDark
+          ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${isCompleted || isArchived ? 'opacity-60' : ''}`
+          : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${isCompleted || isArchived ? 'opacity-60 bg-neutral-50' : ''}`
       }`}
       onClick={() => onClick(goal)}
     >

@@ -73,10 +73,10 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: Habit
   };
 
   return (
-    <div className={`group rounded-xl p-4 transition-all duration-200 ${
-      isDark 
-        ? `bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] ${isCompleted ? 'border-emerald-500/30' : ''}`
-        : `bg-white border border-slate-200 hover:shadow-md ${isCompleted ? 'border-emerald-300 bg-emerald-50/30' : ''}`
+    <div className={`group rounded-xl p-4 transition-all duration-200 ease-spring active:scale-[0.99] ${
+      isDark
+        ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${isCompleted ? 'border-emerald-500/30' : ''}`
+        : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${isCompleted ? 'border-emerald-300 bg-emerald-50/30' : ''}`
     }`}>
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center space-x-4 flex-1 min-w-0">

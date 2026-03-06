@@ -1,4 +1,5 @@
 import { useState, useCallback, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { useTheme } from '../../context/ThemeContext';
 import { GlobalSearch } from '../common/GlobalSearch';
@@ -12,6 +13,7 @@ export function Layout({ children }: LayoutProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [focusTimerOpen, setFocusTimerOpen] = useState(false);
+  const location = useLocation();
 
   const handleTimerToggle = useCallback(() => {
     setFocusTimerOpen(prev => !prev);
@@ -21,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
     <div className={`min-h-screen flex flex-col ${isDark ? 'dark' : ''}`}>
       <Header onOpenFocusTimer={handleTimerToggle} />
       <main className="flex-1 px-4 py-4 md:px-6 md:py-8">
-        <div className="max-w-6xl mx-auto animate-fade-in">
+        <div key={location.pathname} className="max-w-6xl mx-auto animate-fade-in">
           {children}
         </div>
       </main>

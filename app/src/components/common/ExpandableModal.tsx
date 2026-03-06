@@ -120,14 +120,14 @@ export function ExpandableModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
-        className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
+        className={`absolute inset-0 backdrop-blur-md ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
         onClick={onClose}
       />
       <div className={`relative rounded-2xl shadow-elevated w-full ${maxWidth} max-h-[90vh] flex flex-col animate-slide-up overflow-hidden ${
         isDark
-          ? 'bg-[#12121a] border border-white/10'
+          ? 'bg-[#141418] border border-white/[0.08]'
           : 'bg-white'
       }`}>
         {header}

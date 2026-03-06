@@ -104,10 +104,10 @@ export function TaskCard({
     || (onMoveToProject && !isCompleted);
 
   return (
-    <div className={`group rounded-xl px-4 py-3 transition-all duration-200 ${
+    <div className={`group rounded-xl px-4 py-3 transition-all duration-200 ease-spring active:scale-[0.99] ${
       isDark
-        ? `bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 ${isCompleted ? 'opacity-60' : ''}`
-        : `bg-white border border-slate-200 hover:shadow-md hover:border-slate-300 ${isCompleted ? 'opacity-60 bg-slate-50' : ''}`
+        ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${isCompleted ? 'opacity-60' : ''}`
+        : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${isCompleted ? 'opacity-60 bg-neutral-50' : ''}`
     }`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
