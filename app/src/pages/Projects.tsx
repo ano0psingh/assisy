@@ -287,10 +287,10 @@ export function Projects() {
 
     return (
       <div key={task.id} style={{ marginLeft: depth * 20 }}>
-        <div className={`group flex items-center justify-between p-3 rounded-xl transition-all ${
+        <div className={`group flex items-center justify-between gap-2 p-3 rounded-xl transition-all overflow-hidden ${
           isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
         } ${task.status === 'Done' ? 'opacity-60' : ''}`}>
-          <div className="flex items-center space-x-3 flex-1 min-w-0">
+          <div className="flex items-center space-x-3 flex-1 min-w-0 overflow-hidden">
             {/* Status Toggle */}
             <button
               onClick={() => cycleTaskStatus(task)}
@@ -307,29 +307,26 @@ export function Projects() {
             </button>
 
             {/* Task Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2">
-                <span className={`text-sm font-medium truncate ${
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`text-sm font-medium truncate min-w-0 ${
                   task.status === 'Done' 
                     ? isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through'
                     : isDark ? 'text-white' : 'text-slate-800'
                 }`}>
                   {task.title}
                 </span>
-                {/* Priority badge */}
                 {task.priority === 'High' && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-500/20 text-red-400">HIGH</span>
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-500/20 text-red-400 flex-shrink-0">HIGH</span>
                 )}
-                {/* Sub-tasks indicator */}
                 {subTasks.length > 0 && (
-                  <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <span className={`text-xs flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                     ({subTasks.filter(st => st.status === 'Done').length}/{subTasks.length})
                   </span>
                 )}
               </div>
-              {/* Tags */}
               {task.tags.length > 0 && (
-                <div className="flex items-center space-x-1 mt-1">
+                <div className="flex items-center gap-1 mt-1 flex-wrap">
                   {task.tags.map(tag => (
                     <span key={tag} className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
                       {tag}
@@ -483,16 +480,16 @@ export function Projects() {
                       className={`p-4 cursor-pointer transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}
                       onClick={() => openProjectDetail(project)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                      <div className="flex items-center justify-between gap-2 overflow-hidden">
+                        <div className="flex items-center space-x-3 min-w-0 flex-1">
                           <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                             style={{ backgroundColor: `${project.color}20` }}
                           >
                             <FolderKanban size={20} style={{ color: project.color }} />
                           </div>
-                          <div>
-                            <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                          <div className="min-w-0">
+                            <h3 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
                               {project.title}
                             </h3>
                             <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
@@ -501,9 +498,8 @@ export function Projects() {
                           </div>
                         </div>
 
-                        <div className="flex items-center space-x-3">
-                          {/* Status Badge */}
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        <div className="flex items-center space-x-2 flex-shrink-0">
+                          <span className={`text-xs px-2 py-0.5 rounded-full hidden sm:inline ${
                             project.status === 'Active' 
                               ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                               : project.status === 'Completed'
@@ -513,8 +509,7 @@ export function Projects() {
                             {project.status}
                           </span>
                           
-                          {/* Progress */}
-                          <div className="flex items-center space-x-2">
+                          <div className="hidden sm:flex items-center space-x-2">
                             <div className={`w-20 h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
                               <div
                                 className="h-full rounded-full transition-all"
@@ -526,7 +521,7 @@ export function Projects() {
                             </span>
                           </div>
 
-                          <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                          <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
                         </div>
                       </div>
                     </div>
@@ -540,7 +535,7 @@ export function Projects() {
 
         {/* Detail Panel */}
         {detailView !== 'none' && (
-          <div className="flex-1 md:w-2/3">
+          <div className="flex-1 md:w-2/3 min-w-0">
             <div className="card rounded-2xl overflow-hidden h-full">
               {/* Detail Header */}
               <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
@@ -739,13 +734,13 @@ export function Projects() {
                             }`}
                             onClick={() => openSubProjectDetail(subProject)}
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
+                            <div className="flex items-center justify-between gap-2 overflow-hidden">
+                              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
                                   <Layers size={16} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
                                 </div>
-                                <div>
-                                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                                <div className="min-w-0">
+                                  <h4 className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
                                     {subProject.title}
                                   </h4>
                                   <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
@@ -754,11 +749,11 @@ export function Projects() {
                                 </div>
                               </div>
 
-                              <div className="flex items-center space-x-3">
-                                <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(subProject.status)}`}>
+                              <div className="flex items-center space-x-2 flex-shrink-0">
+                                <span className={`text-xs px-2 py-1 rounded-full hidden sm:inline ${getStatusColor(subProject.status)}`}>
                                   {subProject.status}
                                 </span>
-                                <div className="flex items-center space-x-2">
+                                <div className="hidden sm:flex items-center space-x-2">
                                   <div className={`w-16 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                                     <div
                                       className="h-full rounded-full bg-violet-500 transition-all"
@@ -767,7 +762,7 @@ export function Projects() {
                                   </div>
                                   <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{progress}%</span>
                                 </div>
-                                <ChevronRight size={16} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
+                                <ChevronRight size={16} className={`flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
                               </div>
                             </div>
                           </div>
