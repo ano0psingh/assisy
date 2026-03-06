@@ -5,6 +5,7 @@ import { useProjectContext } from '../context/ProjectContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useTheme } from '../context/ThemeContext';
 import type { Task } from '../types';
+import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 
 type ViewMode = 'month' | 'week';
 
@@ -61,35 +62,10 @@ export function Calendar() {
   const { getTasksBySubProject, subProjects, projects } = useProjectContext();
   const { habits, getHabitLogs } = useHabitContext();
 
-  // Merge project tasks into a unified format for the calendar
-  const projectTasksAsCalendarItems = useMemo(() => {
-    const items: Task[] = [];
-    for (const sp of subProjects) {
-      const pTasks = getTasksBySubProject(sp.id);
-      const project = projects.find(p => p.id === sp.projectId);
-      for (const pt of pTasks) {
-        items.push({
-          id: `pt-${pt.id}`,
-          title: `${pt.title}${project ? ` (${project.title})` : ''}`,
-          category: 'Professional',
-          priority: pt.priority === 'Medium' ? 'High' : pt.priority as 'High' | 'Low',
-          effort: pt.effort === 'Medium' ? 'Low' : pt.effort as 'High' | 'Low',
-          status: pt.status === 'Done' ? 'Completed' : 'Pending',
-          completedAt: pt.completedAt,
-          createdAt: pt.createdAt,
-          dueDate: pt.deadline,
-          focusedDate: pt.focusedDate,
-          isFocusedToday: pt.isFocusedToday,
-          isRecurring: false,
-          xpValue: 0,
-          description: '',
-        } as Task);
-      }
-    }
-    return items;
-  }, [subProjects, projects, getTasksBySubProject]);
-
-  const allTasks = useMemo(() => [...tasks, ...projectTasksAsCalendarItems], [tasks, projectTasksAsCalendarItems]);
+  const allTasks = useMemo(
+    () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
+    [tasks, subProjects, projects, getTasksBySubProject],
+  );
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 

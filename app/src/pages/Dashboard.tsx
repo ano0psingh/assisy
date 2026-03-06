@@ -11,6 +11,7 @@ import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { NotesEditor } from '../components/common/NotesEditor';
 import { isNotificationSupported, hasAskedBefore, requestPermission, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
+import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { useUndo } from '../components/common/UndoToast';
 import { getQuoteOfTheDay } from '../data/quotes';
@@ -120,6 +121,9 @@ export function Dashboard() {
     removeTaskFromToday: removeProjectTaskFromToday,
     getProject,
     getSubProject,
+    subProjects,
+    projects,
+    getTasksBySubProject,
   } = useProjectContext();
   const { theme } = useTheme();
   const { pushUndo } = useUndo();
@@ -222,20 +226,25 @@ export function Dashboard() {
   }, []);
 
   // Weekly review — all tasks, not just Professional
+  const allTasksForStats = useMemo(
+    () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
+    [tasks, subProjects, projects, getTasksBySubProject],
+  );
+
   const weeklyProfessionalReview = useMemo(() => {
     const { monday, sunday } = getWeekBounds();
     
-    const completedThisWeek = tasks.filter(t => {
+    const completedThisWeek = allTasksForStats.filter(t => {
       if (t.status !== 'Completed' || !t.completedAt) return false;
       const completedDate = new Date(t.completedAt);
       return completedDate >= monday && completedDate <= sunday;
     });
     
-    const backlog = tasks.filter(t => 
+    const backlog = allTasksForStats.filter(t => 
       t.status === 'Pending' || t.status === 'Carried Forward'
     );
     
-    const carriedForward = tasks.filter(t => 
+    const carriedForward = allTasksForStats.filter(t => 
       t.status === 'Carried Forward'
     );
     
@@ -246,7 +255,7 @@ export function Dashboard() {
       weekStart: monday,
       weekEnd: sunday,
     };
-  }, [tasks, getWeekBounds]);
+  }, [allTasksForStats, getWeekBounds]);
 
   useEffect(() => {
     if (!loading && !hasCarriedForward) {

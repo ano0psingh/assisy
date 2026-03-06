@@ -16,10 +16,12 @@ import {
 } from 'lucide-react';
 import { isGeminiConfigured } from '../lib/gemini';
 import { useTaskContext } from '../context/TaskContext';
+import { useProjectContext } from '../context/ProjectContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useGamification } from '../context/GamificationContext';
 import { useTheme } from '../context/ThemeContext';
+import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 
 function getWeekRange(weeksAgo = 0): { start: Date; end: Date; label: string } {
   const now = new Date();
@@ -45,6 +47,11 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function WeeklyReview() {
   const { tasks } = useTaskContext();
+  const { subProjects, projects, getTasksBySubProject } = useProjectContext();
+  const allTasks = useMemo(
+    () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
+    [tasks, subProjects, projects, getTasksBySubProject],
+  );
   const { goals } = useGoalContext();
   const { habits, getHabitStreak, getHabitLogs } = useHabitContext();
   const { getTotalXP, getTotalLevel, getTitle, userStats } = useGamification();
@@ -55,12 +62,12 @@ export function WeeklyReview() {
   const lastWeek = useMemo(() => getWeekRange(1), []);
 
   const completedThisWeek = useMemo(
-    () => tasks.filter(t => t.status === 'Completed' && isInRange(t.completedAt, thisWeek.start, thisWeek.end)),
-    [tasks, thisWeek],
+    () => allTasks.filter(t => t.status === 'Completed' && isInRange(t.completedAt, thisWeek.start, thisWeek.end)),
+    [allTasks, thisWeek],
   );
   const completedLastWeek = useMemo(
-    () => tasks.filter(t => t.status === 'Completed' && isInRange(t.completedAt, lastWeek.start, lastWeek.end)),
-    [tasks, lastWeek],
+    () => allTasks.filter(t => t.status === 'Completed' && isInRange(t.completedAt, lastWeek.start, lastWeek.end)),
+    [allTasks, lastWeek],
   );
 
   const delta = completedThisWeek.length - completedLastWeek.length;
@@ -133,8 +140,8 @@ Respond in this format:
   }, [aiLoading, completedThisWeek, completedLastWeek, tasks, userStats, getTotalLevel, getTotalXP, goals, habits, getHabitStreak, getHabitLogs]);
 
   const pendingCount = useMemo(
-    () => tasks.filter(t => t.status === 'Pending' || t.status === 'Carried Forward').length,
-    [tasks],
+    () => allTasks.filter(t => t.status === 'Pending' || t.status === 'Carried Forward').length,
+    [allTasks],
   );
 
   const activeGoals = useMemo(() => goals.filter(g => g.status === 'Active'), [goals]);
