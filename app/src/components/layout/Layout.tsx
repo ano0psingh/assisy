@@ -20,13 +20,13 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className={`min-h-screen flex flex-col ${isDark ? 'dark' : ''}`}>
       <Header onOpenFocusTimer={handleTimerToggle} />
-      <main className="flex-1 px-6 py-8">
+      <main className="flex-1 px-4 py-4 md:px-6 md:py-8">
         <div className="max-w-6xl mx-auto animate-fade-in">
           {children}
         </div>
       </main>
 
-      <footer className={`border-t py-4 px-6 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+      <footer className={`border-t py-4 px-4 md:px-6 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
         <div className={`max-w-6xl mx-auto flex items-center justify-between text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
           <span>Assisy</span>
           <span>Built for productivity</span>

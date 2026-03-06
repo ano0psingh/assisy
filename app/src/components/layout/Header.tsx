@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper, Menu, X, ClipboardList } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -28,6 +28,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut, isConfigured } = useAuth();
 
   const { addToToday: addTaskToToday } = useTaskContext();
@@ -57,30 +58,44 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
     { icon: FolderKanban, label: 'Projects', to: '/projects' },
     { icon: Trophy, label: 'Achievements', to: '/achievements' },
     { icon: BarChart3, label: 'Stats', to: '/stats' },
+    { icon: ClipboardList, label: 'Review', to: '/review' },
   ];
 
   const feedNavCls = isDark
     ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
     : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50';
 
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <>
-      <header className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
+      <header className={`sticky top-0 z-40 border-b transition-colors duration-300 ${
         isDark
           ? 'bg-[#0a0a0f]/80 backdrop-blur-xl border-white/10'
           : 'bg-white/80 backdrop-blur-xl border-slate-200'
       }`}>
-        <div className="px-6 py-0 flex items-center justify-between h-14">
-          {/* Logo */}
+        <div className="px-4 md:px-6 py-0 flex items-center justify-between h-14">
+          {/* Left: Logo + hamburger on mobile */}
           <div className="flex items-center space-x-2.5 flex-shrink-0">
+            {/* Hamburger - mobile only */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className={`p-1.5 rounded-lg md:hidden transition-colors ${
+                isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              }`}
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
             <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</span>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex items-center space-x-0.5 mx-4">
+          {/* Desktop Navigation - hidden on mobile */}
+          <nav className="hidden md:flex items-center space-x-0.5 mx-4">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -110,10 +125,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
           {/* Right actions */}
           <div className="flex items-center space-x-1.5 flex-shrink-0">
-            {/* Search trigger */}
+            {/* Search trigger - desktop only */}
             <button
               onClick={triggerSearch}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
                 isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
               title="Search (⌘K)"
@@ -122,11 +137,11 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               <kbd className={`text-[9px] px-1 py-0.5 rounded hidden sm:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
             </button>
 
-            {/* Focus timer */}
+            {/* Focus timer - desktop only */}
             {onOpenFocusTimer && (
               <button
                 onClick={onOpenFocusTimer}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`hidden md:block p-2 rounded-lg transition-colors ${
                   isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
                 }`}
                 title="Focus Timer"
@@ -137,8 +152,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
             <QuickAddTask onSubmit={handleQuickAdd} />
 
-            {/* XP/Level pill */}
-            <div className={`flex items-center space-x-2 rounded-lg px-2.5 py-1.5 text-xs ${
+            {/* XP/Level pill - desktop only */}
+            <div className={`hidden md:flex items-center space-x-2 rounded-lg px-2.5 py-1.5 text-xs ${
               isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
             }`}>
               <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
@@ -150,10 +165,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               </div>
             </div>
 
-            {/* Data export/import */}
+            {/* Data export/import - desktop only */}
             <button
               onClick={() => setDataModalOpen(true)}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`hidden md:block p-2 rounded-lg transition-colors ${
                 isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
               title="Backup & Restore"
@@ -161,7 +176,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               <Download size={16} />
             </button>
 
-            {/* Auth */}
+            {/* Auth - avatar always visible, sign-in desktop only */}
             {isConfigured && (
               user ? (
                 <div className="relative">
@@ -216,7 +231,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               ) : (
                 <button
                   onClick={() => setLoginModalOpen(true)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                  className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${
                     isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
                   }`}
                   title="Sign in to sync"
@@ -227,10 +242,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               )
             )}
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle - desktop only */}
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`hidden md:block p-2 rounded-lg transition-colors ${
                 isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
               aria-label="Toggle theme"
@@ -240,6 +255,156 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </div>
         </div>
       </header>
+
+      {/* ── Mobile Drawer ── */}
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+          mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={closeMobileMenu}
+      />
+      {/* Drawer panel */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${isDark ? 'bg-[#0a0a0f] border-r border-white/10' : 'bg-white border-r border-slate-200'}`}
+      >
+        {/* Drawer header */}
+        <div className={`flex items-center justify-between px-4 h-14 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600">
+              <Sparkles className="text-white w-4 h-4" />
+            </div>
+            <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</span>
+          </div>
+          <button
+            onClick={closeMobileMenu}
+            className={`p-1.5 rounded-lg transition-colors ${
+              isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            }`}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Drawer body */}
+        <div className="flex flex-col h-[calc(100%-3.5rem)] overflow-y-auto">
+          {/* XP/Level pill */}
+          <div className="px-4 pt-4 pb-2">
+            <div className={`flex items-center space-x-2 rounded-lg px-3 py-2.5 text-xs ${
+              isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+            }`}>
+              <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+              <span className={`font-semibold tabular-nums ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</span>
+              <div className={`w-px h-3.5 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
+              <span className="text-violet-500 font-semibold">Lv {level}</span>
+              <div className={`w-12 h-1 rounded-full overflow-hidden ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`}>
+                <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Nav links */}
+          <nav className="px-3 py-2 space-y-0.5">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={closeMobileMenu}
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                      : isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  }`
+                }
+              >
+                <item.icon size={18} />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+            <a
+              href="/feed.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={closeMobileMenu}
+              className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${feedNavCls}`}
+            >
+              <Newspaper size={18} />
+              <span>Feed</span>
+            </a>
+          </nav>
+
+          {/* Divider */}
+          <div className={`mx-4 my-2 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+
+          {/* Action buttons */}
+          <div className="px-3 space-y-0.5">
+            <button
+              onClick={() => { triggerSearch(); closeMobileMenu(); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Search size={18} />
+              <span>Search</span>
+              <kbd className={`ml-auto text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
+            </button>
+
+            {onOpenFocusTimer && (
+              <button
+                onClick={() => { onOpenFocusTimer(); closeMobileMenu(); }}
+                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Timer size={18} />
+                <span>Focus Timer</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => { setDataModalOpen(true); closeMobileMenu(); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Download size={18} />
+              <span>Backup & Restore</span>
+            </button>
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Bottom section: auth + theme */}
+          <div className={`px-3 py-3 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+            {isConfigured && !user && (
+              <button
+                onClick={() => { setLoginModalOpen(true); closeMobileMenu(); }}
+                className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 mb-2 rounded-lg text-sm font-medium transition-colors ${
+                  isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                }`}
+              >
+                <LogIn size={16} />
+                Sign in
+              </button>
+            )}
+
+            <button
+              onClick={() => { toggleTheme(); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {isDark ? <Moon size={18} /> : <Sun size={18} />}
+              <span>{isDark ? 'Dark mode' : 'Light mode'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Data Export/Import Modal */}
       <ExpandableModal
