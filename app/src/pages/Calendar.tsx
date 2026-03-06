@@ -105,6 +105,31 @@ export function Calendar() {
     return map;
   }, [tasks]);
 
+  const tasksByFocusedDate = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasks) {
+      if (t.focusedDate) {
+        const arr = map.get(t.focusedDate) ?? [];
+        arr.push(t);
+        map.set(t.focusedDate, arr);
+      }
+    }
+    return map;
+  }, [tasks]);
+
+  const tasksByCreatedDate = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasks) {
+      if (t.createdAt) {
+        const key = getDateString(new Date(t.createdAt));
+        const arr = map.get(key) ?? [];
+        arr.push(t);
+        map.set(key, arr);
+      }
+    }
+    return map;
+  }, [tasks]);
+
   const habitLogsByDate = useMemo(() => {
     const map = new Map<string, { habitName: string; value: number }[]>();
     for (const habit of habits) {
@@ -125,23 +150,27 @@ export function Calendar() {
     let completed = 0;
     let habitsLogged = 0;
     let due = 0;
+    let planned = 0;
 
     for (const day of daysInMonth) {
       const key = getDateString(day);
       completed += tasksByCompletedDate.get(key)?.length ?? 0;
       habitsLogged += habitLogsByDate.get(key)?.length ?? 0;
       due += tasksByDueDate.get(key)?.length ?? 0;
+      planned += tasksByFocusedDate.get(key)?.length ?? 0;
     }
 
-    return { completed, habitsLogged, due };
-  }, [daysInMonth, tasksByCompletedDate, tasksByDueDate, habitLogsByDate]);
+    return { completed, habitsLogged, due, planned };
+  }, [daysInMonth, tasksByCompletedDate, tasksByDueDate, tasksByFocusedDate, habitLogsByDate]);
 
   // Selected day details
   const selectedDateStr = getDateString(selectedDate);
   const selectedCompleted = tasksByCompletedDate.get(selectedDateStr) ?? [];
   const selectedDue = tasksByDueDate.get(selectedDateStr) ?? [];
+  const selectedFocused = (tasksByFocusedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
+  const selectedCreated = (tasksByCreatedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed' && !t.focusedDate);
   const selectedHabits = habitLogsByDate.get(selectedDateStr) ?? [];
-  const hasActivity = selectedCompleted.length > 0 || selectedDue.length > 0 || selectedHabits.length > 0;
+  const hasActivity = selectedCompleted.length > 0 || selectedDue.length > 0 || selectedFocused.length > 0 || selectedCreated.length > 0 || selectedHabits.length > 0;
 
   const navigate = (dir: -1 | 1) => {
     const d = new Date(currentYear, currentMonth + dir, 1);
@@ -172,7 +201,7 @@ export function Calendar() {
         <div>
           <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Calendar</h1>
           <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-            {monthStats.completed} tasks completed · {monthStats.habitsLogged} habits logged · {monthStats.due} due
+            {monthStats.completed} completed · {monthStats.planned} planned · {monthStats.habitsLogged} habits · {monthStats.due} due
           </p>
         </div>
       </div>
@@ -227,10 +256,14 @@ export function Calendar() {
 
             const completed = tasksByCompletedDate.get(dateStr) ?? [];
             const dueTasks = tasksByDueDate.get(dateStr) ?? [];
+            const focused = tasksByFocusedDate.get(dateStr) ?? [];
+            const created = tasksByCreatedDate.get(dateStr) ?? [];
             const habitEntries = habitLogsByDate.get(dateStr) ?? [];
 
-            const categoryDots = [...new Set(completed.map((t) => t.category))].slice(0, 3);
+            const allTasksForDay = [...new Map([...completed, ...focused, ...created].map(t => [t.id, t])).values()];
+            const categoryDots = [...new Set(allTasksForDay.map((t) => t.category))].slice(0, 3);
             const hasDue = dueTasks.length > 0;
+            const hasFocused = focused.length > 0;
             const hasHabit = habitEntries.length > 0;
 
             return (
@@ -263,6 +296,7 @@ export function Calendar() {
                         className={`w-1.5 h-1.5 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`}
                       />
                     ))}
+                    {hasFocused && !categoryDots.length && <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-violet-400/60' : 'bg-violet-300'}`} />}
                     {hasHabit && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
                     {hasDue && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
                   </div>
@@ -295,6 +329,44 @@ export function Calendar() {
                     <li key={t.id} className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
                       <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Focused/planned tasks */}
+            {selectedFocused.length > 0 && (
+              <div>
+                <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  Planned ({selectedFocused.length})
+                </div>
+                <ul className="space-y-1.5">
+                  {selectedFocused.map((t) => (
+                    <li key={t.id} className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                      <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Created tasks (pending, not focused) */}
+            {selectedCreated.length > 0 && (
+              <div>
+                <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <Circle className="w-3.5 h-3.5" />
+                  Created ({selectedCreated.length})
+                </div>
+                <ul className="space-y-1.5">
+                  {selectedCreated.map((t) => (
+                    <li key={t.id} className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                      <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
                     </li>
                   ))}
                 </ul>
