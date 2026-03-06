@@ -268,8 +268,8 @@ export function Feed() {
         </div>
 
         <div className="relative px-4 py-4 sm:px-6 sm:py-5">
-          <div className="flex items-center justify-between mb-4 gap-2">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="mb-4 space-y-3">
+            <div className="flex items-center gap-3">
               <a
                 href="/"
                 className={`p-2 rounded-lg transition-colors flex-shrink-0 ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
@@ -284,7 +284,7 @@ export function Feed() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => { setShowAddFeed(!showAddFeed); setShowSaveURL(false); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
