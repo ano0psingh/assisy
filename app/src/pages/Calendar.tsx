@@ -20,7 +20,10 @@ function getDaysInMonth(year: number, month: number): Date[] {
 }
 
 function getDateString(d: Date): string {
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -758,7 +761,7 @@ export function Calendar() {
       </div>
 
       {/* ── TODAY'S SCHEDULE SIDEBAR (desktop only) ── */}
-      <div className={`hidden md:block w-64 shrink-0`}>
+      <div className={`hidden md:block w-72 shrink-0`}>
         <div className={`card rounded-2xl p-4 sticky top-6`}>
           <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             Today&apos;s Schedule
