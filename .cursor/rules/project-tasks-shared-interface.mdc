@@ -1,0 +1,47 @@
+---
+description: ProjectTask and Task are separate types - always merge them for cross-cutting features
+globs: app/src/pages/*.tsx
+alwaysApply: false
+---
+
+# Project Tasks Must Be Included in Cross-Cutting Features
+
+## The Issue
+
+Assisy has two separate task types:
+- `Task` (from `TaskContext`) — regular tasks on Dashboard
+- `ProjectTask` (from `ProjectContext`) — tasks inside projects/sub-projects
+
+They have different status values, priority scales, and fields. A full type merge is planned but not done yet.
+
+## The Rule
+
+When building any feature that shows tasks across the whole app (calendar, stats, weekly review, search, etc.), you MUST include both regular tasks AND project tasks.
+
+Use the shared utility `projectTasksToTasks()` from `lib/mergeProjectTasks.ts`:
+
+```typescript
+import { useProjectContext } from '../context/ProjectContext';
+import { projectTasksToTasks } from '../lib/mergeProjectTasks';
+
+const { subProjects, projects, getTasksBySubProject } = useProjectContext();
+const allTasks = useMemo(
+  () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
+  [tasks, subProjects, projects, getTasksBySubProject],
+);
+```
+
+Then use `allTasks` instead of `tasks` for any cross-cutting computation.
+
+## Already Applied To
+- Calendar.tsx
+- Dashboard.tsx (weekly stats)
+- WeeklyReview.tsx
+
+## Field Mapping (ProjectTask → Task)
+- `Done` → `Completed`, `In Progress`/`Backlog` → `Pending`
+- `deadline` → `dueDate`
+- `priority: Medium` → `High`, `effort: Medium` → `Low`
+- Category defaults to `Professional`
+- Title includes project name: "Task (Project Name)"
+- ID prefixed with `pt-` to avoid collisions
