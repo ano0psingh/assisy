@@ -5,7 +5,7 @@ import {
   Plus, FolderKanban, ChevronRight, 
   Pencil, Trash2, Play, CheckCircle2, Circle,
   X, ListTodo, Layers,
-  CalendarPlus, ChevronLeft
+  CalendarPlus, CalendarCheck, ChevronLeft
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
 import { NotesEditor } from '../components/common/NotesEditor';
@@ -343,14 +343,14 @@ export function Projects() {
             {task.status !== 'Done' && (
               <button
                 onClick={() => isAddedToToday ? removeTaskFromToday(task.id) : addTaskToToday(task.id)}
-                className={`p-1.5 rounded-lg transition-colors ${
+                className={`p-1.5 rounded-lg transition-all ${
                   isAddedToToday
-                    ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                    ? isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
                     : isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'
                 }`}
-                title={isAddedToToday ? 'Remove from Today' : 'Add to Today'}
+                title={isAddedToToday ? 'Added to Today (click to remove)' : 'Add to Today'}
               >
-                <CalendarPlus size={14} />
+                {isAddedToToday ? <CalendarCheck size={14} /> : <CalendarPlus size={14} />}
               </button>
             )}
             {/* Add Sub-task */}
