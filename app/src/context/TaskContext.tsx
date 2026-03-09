@@ -255,6 +255,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     
     setTasks(prev => {
       const updated = prev.map(task => {
+        // Reset recurring tasks that were completed on a previous day
+        if (task.isRecurring && task.status === 'Completed' && task.completedAt) {
+          const completedDateStr = new Date(task.completedAt).toDateString();
+          if (completedDateStr !== todayStr) {
+            return { ...task, status: 'Pending' as const };
+          }
+        }
+
         const taskDate = new Date(task.createdAt).toDateString();
         if (
           task.status === 'Pending' &&
