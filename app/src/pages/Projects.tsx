@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
 import { TiptapEditor } from '../components/common/TiptapEditor';
-import { TiptapViewer } from '../components/common/TiptapViewer';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 
 type ViewMode = 'list' | 'board';
@@ -339,54 +338,47 @@ export function Projects() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {/* Add to Today */}
+          <div className="flex items-center space-x-1">
+            {/* Add to Today -- always visible when active */}
             {task.status !== 'Done' && (
               <button
                 onClick={() => isAddedToToday ? removeTaskFromToday(task.id) : addTaskToToday(task.id)}
                 className={`p-1.5 rounded-lg transition-all ${
                   isAddedToToday
                     ? isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
-                    : isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'
+                    : 'opacity-0 group-hover:opacity-100 ' + (isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600')
                 }`}
                 title={isAddedToToday ? 'Added to Today (click to remove)' : 'Add to Today'}
               >
                 {isAddedToToday ? <CalendarCheck size={14} /> : <CalendarPlus size={14} />}
               </button>
             )}
-            {/* Add Sub-task */}
-            <button
-              onClick={() => openCreateSubTask(task)}
-              className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
-              title="Add sub-task"
-            >
-              <Plus size={14} />
-            </button>
-            {/* Edit */}
-            <button
-              onClick={() => openEditTask(task)}
-              className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
-              title="Edit"
-            >
-              <Pencil size={14} />
-            </button>
-            {/* Delete */}
-            <button
-              onClick={() => deleteProjectTask(task.id)}
-              className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}
-              title="Delete"
-            >
-              <Trash2 size={14} />
-            </button>
+            {/* Other actions - hover only */}
+            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => openCreateSubTask(task)}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+                title="Add sub-task"
+              >
+                <Plus size={14} />
+              </button>
+              <button
+                onClick={() => openEditTask(task)}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+                title="Edit"
+              >
+                <Pencil size={14} />
+              </button>
+              <button
+                onClick={() => deleteProjectTask(task.id)}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}
+                title="Delete"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Description */}
-        {task.description && task.description.trim() && (
-          <div className={`mx-3 mb-2 pt-1 border-t ${isDark ? 'border-white/[0.05]' : 'border-slate-50'}`}>
-            <TiptapViewer content={task.description} collapsible maxHeight={50} />
-          </div>
-        )}
 
         {/* Sub-tasks */}
         {subTasks.length > 0 && (

@@ -42,7 +42,7 @@ export function TiptapEditor({
     },
     editorProps: {
       attributes: {
-        class: 'tiptap-content outline-none min-h-[120px] px-4 py-3 text-sm leading-relaxed',
+        class: 'tiptap-content outline-none min-h-[150px] md:min-h-[250px] px-4 py-3 text-sm leading-relaxed',
       },
     },
   });
