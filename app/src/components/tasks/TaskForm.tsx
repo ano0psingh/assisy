@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { Sparkles, Target, Pencil, Calendar } from 'lucide-react';
-import { NotesEditor } from '../common/NotesEditor';
+import { TiptapEditor } from '../common/TiptapEditor';
 import { ExpandableModal } from '../common/ExpandableModal';
 
 interface TaskFormProps {
@@ -133,12 +133,10 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const notesField = (isFS: boolean) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
       <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Notes</label>
-      <NotesEditor
-        value={description}
+      <TiptapEditor
+        content={description}
         onChange={setDescription}
-        placeholder={'Add notes, checklists, or details...\n\nTip: Type "- " for bullets, "[] " for checklists'}
-        minRows={isFS ? 14 : 4}
-        maxRows={isFS ? 30 : 12}
+        placeholder={'Add notes, checklists, or details...'}
       />
     </div>
   );

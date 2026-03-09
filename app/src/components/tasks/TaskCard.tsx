@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { TiptapViewer } from '../common/TiptapViewer';
 import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock } from 'lucide-react';
 
 interface TaskCardProps {
@@ -254,6 +255,12 @@ export function TaskCard({
           </div>
         </div>
       </div>
+      {/* Description preview */}
+      {task.description && task.description.trim() && (
+        <div className={`mt-2 pt-2 border-t ${isDark ? 'border-white/[0.05]' : 'border-slate-100'}`}>
+          <TiptapViewer content={task.description} collapsible maxHeight={60} />
+        </div>
+      )}
     </div>
   );
 }

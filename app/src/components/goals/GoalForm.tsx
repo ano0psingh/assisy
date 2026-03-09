@@ -3,7 +3,7 @@ import type { TaskCategory, Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { Target, Pencil, GitBranch } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
-import { NotesEditor } from '../common/NotesEditor';
+import { TiptapEditor } from '../common/TiptapEditor';
 
 interface GoalFormProps {
   onSubmit: (data: {
@@ -91,12 +91,10 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
   const notesField = (isFS: boolean) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
       <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Notes</label>
-      <NotesEditor
-        value={description}
+      <TiptapEditor
+        content={description}
         onChange={setDescription}
-        placeholder={'Describe your goal, add milestones...\n\nTip: Type "- " for bullets, "[] " for checklists'}
-        minRows={isFS ? 12 : 4}
-        maxRows={isFS ? 28 : 10}
+        placeholder={'Describe your goal, add milestones...'}
       />
     </div>
   );

@@ -8,7 +8,8 @@ import {
   CalendarPlus, CalendarCheck, ChevronLeft
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
-import { NotesEditor } from '../components/common/NotesEditor';
+import { TiptapEditor } from '../components/common/TiptapEditor';
+import { TiptapViewer } from '../components/common/TiptapViewer';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 
 type ViewMode = 'list' | 'board';
@@ -379,6 +380,13 @@ export function Projects() {
             </button>
           </div>
         </div>
+
+        {/* Description */}
+        {task.description && task.description.trim() && (
+          <div className={`mx-3 mb-2 pt-1 border-t ${isDark ? 'border-white/[0.05]' : 'border-slate-50'}`}>
+            <TiptapViewer content={task.description} collapsible maxHeight={50} />
+          </div>
+        )}
 
         {/* Sub-tasks */}
         {subTasks.length > 0 && (
@@ -900,12 +908,10 @@ export function Projects() {
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
               <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes & Ideas</label>
-              <NotesEditor
-                value={projectForm.description}
+              <TiptapEditor
+                content={projectForm.description}
                 onChange={val => setProjectForm(prev => ({ ...prev, description: val }))}
-                placeholder={'Notes, ideas, context...\n\nTip: Type "- " for bullets, "[] " for checklists'}
-                minRows={isFS ? 12 : 4}
-                maxRows={isFS ? 26 : 10}
+                placeholder="Notes, ideas, context..."
               />
             </div>
           );
@@ -1024,7 +1030,7 @@ export function Projects() {
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
               <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
-              <NotesEditor value={subProjectForm.description} onChange={val => setSubProjectForm(prev => ({ ...prev, description: val }))} placeholder={'Add notes or a description...\n\nTip: Type "- " for bullets, "[] " for checklists'} minRows={isFS ? 10 : 3} maxRows={isFS ? 24 : 8} />
+              <TiptapEditor content={subProjectForm.description} onChange={val => setSubProjectForm(prev => ({ ...prev, description: val }))} placeholder="Add notes or a description..." />
             </div>
           );
           const deadlineInput = (
@@ -1103,7 +1109,7 @@ export function Projects() {
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
               <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
-              <NotesEditor value={taskForm.description} onChange={val => setTaskForm(prev => ({ ...prev, description: val }))} placeholder={'Add notes or details...\n\nTip: Type "- " for bullets, "[] " for checklists'} minRows={isFS ? 10 : 3} maxRows={isFS ? 24 : 8} />
+              <TiptapEditor content={taskForm.description} onChange={val => setTaskForm(prev => ({ ...prev, description: val }))} placeholder="Add notes or details..." />
             </div>
           );
           const priorityEffort = (

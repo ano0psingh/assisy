@@ -3,7 +3,7 @@ import type { Goal, Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { Target, Plus, Link2, Unlink, Check } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
-import { NotesEditor } from '../common/NotesEditor';
+import { TiptapEditor } from '../common/TiptapEditor';
 
 interface GoalDetailProps {
   goal: Goal;
@@ -209,12 +209,10 @@ export function GoalDetail({
                       className={`w-full px-4 py-2.5 mb-4 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
                       autoFocus
                     />
-                    <NotesEditor
-                      value={editDescription}
+                    <TiptapEditor
+                      content={editDescription}
                       onChange={setEditDescription}
                       placeholder="Add a description..."
-                      minRows={10}
-                      maxRows={24}
                     />
                   </>
                 ) : (
@@ -250,12 +248,10 @@ export function GoalDetail({
                     className={`w-full px-4 py-2.5 mb-3 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
                     autoFocus
                   />
-                  <NotesEditor
-                    value={editDescription}
+                  <TiptapEditor
+                    content={editDescription}
                     onChange={setEditDescription}
                     placeholder="Add a description..."
-                    minRows={3}
-                    maxRows={8}
                   />
                 </>
               ) : (

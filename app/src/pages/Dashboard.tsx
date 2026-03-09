@@ -9,7 +9,7 @@ import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, Rot
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
-import { NotesEditor } from '../components/common/NotesEditor';
+import { TiptapEditor } from '../components/common/TiptapEditor';
 import { isNotificationSupported, hasAskedBefore, requestPermission, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 import { ExpandableModal } from '../components/common/ExpandableModal';
@@ -877,7 +877,7 @@ export function Dashboard() {
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
               <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
-              <NotesEditor value={projectTaskForm.description} onChange={(val) => setProjectTaskForm(prev => ({ ...prev, description: val }))} placeholder={'Add notes, checklists, or details...\n\nTip: Type "- " for bullets, "[] " for checklists'} minRows={isFS ? 12 : 4} maxRows={isFS ? 26 : 12} />
+              <TiptapEditor content={projectTaskForm.description} onChange={(val) => setProjectTaskForm(prev => ({ ...prev, description: val }))} placeholder="Add notes, checklists, or details..." />
             </div>
           );
           const statusSelector = (

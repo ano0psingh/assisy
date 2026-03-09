@@ -3,7 +3,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Zap, Trophy, AlertCircle, Lightbulb, Target, BookOpen } from 'lucide-react';
 import type { DailyLog } from '../../types';
 import { ExpandableModal } from '../common/ExpandableModal';
-import { NotesEditor } from '../common/NotesEditor';
+import { TiptapEditor } from '../common/TiptapEditor';
 
 interface DailyCheckInProps {
   isOpen: boolean;
@@ -94,14 +94,10 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
         {icon}
         {label}
       </label>
-      <NotesEditor
-        value={value}
+      <TiptapEditor
+        content={value}
         onChange={onChange}
         placeholder={placeholder}
-        minRows={isFS ? 4 : 2}
-        maxRows={isFS ? 12 : 6}
-        showToolbar={isFS}
-        showWordCount={false}
       />
     </div>
   );
