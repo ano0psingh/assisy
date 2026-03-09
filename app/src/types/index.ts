@@ -2,7 +2,7 @@ export type TaskCategory = 'Personal' | 'Financial' | 'Professional';
 export type Priority = 'High' | 'Low';
 export type Effort = 'High' | 'Low';
 export type TaskStatus = 'Pending' | 'Completed' | 'Carried Forward';
-export type RecurrencePattern = 'daily' | 'weekly' | 'specific_days';
+export type RecurrencePattern = 'daily' | 'weekly' | 'specific_days' | 'monthly';
 
 export interface Task {
   id: string;
@@ -16,6 +16,7 @@ export interface Task {
   isRecurring: boolean;
   recurrencePattern?: RecurrencePattern;
   specificDays?: number[];
+  monthDay?: number;
   createdAt: Date;
   completedAt?: Date;
   dueDate?: Date;

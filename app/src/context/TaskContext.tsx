@@ -20,7 +20,8 @@ interface TaskContextType {
     recurrencePattern?: RecurrencePattern,
     specificDays?: number[],
     goalId?: string,
-    dueDate?: Date
+    dueDate?: Date,
+    monthDay?: number
   ) => Task;
   linkTaskToGoal: (taskId: string, goalId: string) => void;
   unlinkTaskFromGoal: (taskId: string) => void;
@@ -80,7 +81,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     recurrencePattern?: RecurrencePattern,
     specificDays?: number[],
     goalId?: string,
-    dueDate?: Date
+    dueDate?: Date,
+    monthDay?: number
   ): Task => {
     const xpValue = getTaskXPValue({
       category,
@@ -99,6 +101,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       isRecurring,
       recurrencePattern,
       specificDays,
+      monthDay,
       goalId,
       dueDate,
       createdAt: new Date(),
@@ -219,6 +222,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           if (task.recurrencePattern === 'weekly' || task.recurrencePattern === 'specific_days') {
             const dayOfWeek = today.getDay();
             return task.specificDays?.includes(dayOfWeek) || false;
+          }
+          if (task.recurrencePattern === 'monthly') {
+            return today.getDate() === (task.monthDay ?? 1);
           }
         }
         

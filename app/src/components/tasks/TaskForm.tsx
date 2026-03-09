@@ -15,6 +15,7 @@ interface TaskFormProps {
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
     specificDays?: number[];
+    monthDay?: number;
     goalId?: string;
     dueDate?: Date;
     addToToday?: boolean;
@@ -37,6 +38,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrencePattern, setRecurrencePattern] = useState<RecurrencePattern>('daily');
   const [specificDays, setSpecificDays] = useState<number[]>([]);
+  const [monthDay, setMonthDay] = useState<number>(1);
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
 
@@ -50,6 +52,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       setIsRecurring(editingTask.isRecurring);
       setRecurrencePattern(editingTask.recurrencePattern || 'daily');
       setSpecificDays(editingTask.specificDays || []);
+      setMonthDay(editingTask.monthDay ?? 1);
       setSelectedGoalId(editingTask.goalId || '');
       setDueDate(editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : '');
     } else {
@@ -66,6 +69,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     setIsRecurring(false);
     setRecurrencePattern('daily');
     setSpecificDays([]);
+    setMonthDay(1);
     setSelectedGoalId('');
     setDueDate('');
   };
@@ -83,6 +87,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       isRecurring,
       recurrencePattern: isRecurring ? recurrencePattern : undefined,
       specificDays: isRecurring && recurrencePattern === 'specific_days' ? specificDays : undefined,
+      monthDay: isRecurring && recurrencePattern === 'monthly' ? monthDay : undefined,
       goalId: selectedGoalId || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       addToToday: !editingTask ? defaultAddToToday : undefined,
@@ -265,10 +270,11 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       </label>
       {isRecurring && (
         <div className="space-y-3 animate-fade-in">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {([
               { value: 'daily' as const, label: 'Daily' },
               { value: 'weekly' as const, label: 'Weekly' },
+              { value: 'monthly' as const, label: 'Monthly' },
               { value: 'specific_days' as const, label: 'Custom' },
             ]).map(({ value, label }) => (
               <button
@@ -307,9 +313,29 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               ))}
             </div>
           )}
+          {recurrencePattern === 'monthly' && (
+            <div className="flex items-center gap-3 animate-fade-in">
+              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>On day</span>
+              <select
+                value={monthDay}
+                onChange={e => setMonthDay(Number(e.target.value))}
+                className={`px-3 py-2 rounded-lg text-sm border outline-none ${
+                  isDark
+                    ? 'bg-white/5 border-white/10 text-white focus:border-violet-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                }`}
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>of every month</span>
+            </div>
+          )}
           <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
             {recurrencePattern === 'daily' ? 'Repeats every day' :
              recurrencePattern === 'weekly' ? 'Repeats every week on this day' :
+             recurrencePattern === 'monthly' ? `Repeats on the ${monthDay}${monthDay === 1 ? 'st' : monthDay === 2 ? 'nd' : monthDay === 3 ? 'rd' : 'th'} of every month` :
              specificDays.length === 0 ? 'Select days' :
              `Every ${specificDays.sort().map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}`}
           </p>

@@ -203,10 +203,11 @@ export function Tasks() {
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
     specificDays?: number[];
+    monthDay?: number;
     goalId?: string;
     dueDate?: Date;
   }) => {
-    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, data.specificDays, data.goalId, data.dueDate);
+    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, data.specificDays, data.goalId, data.dueDate, data.monthDay);
     
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
@@ -228,6 +229,7 @@ export function Tasks() {
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
     specificDays?: number[];
+    monthDay?: number;
     goalId?: string;
     dueDate?: Date;
   }) => {
@@ -253,6 +255,7 @@ export function Tasks() {
       isRecurring: data.isRecurring,
       recurrencePattern: data.recurrencePattern,
       specificDays: data.specificDays,
+      monthDay: data.monthDay,
       goalId: data.goalId,
       dueDate: data.dueDate,
     });
