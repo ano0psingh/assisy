@@ -1,20 +1,24 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
+import { useDailyLogContext } from '../context/DailyLogContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
-import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, RotateCcw, CheckCircle2, ListTodo, Circle, Play, Pencil, Trophy, Crown, AlertTriangle } from 'lucide-react';
+import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, CheckCircle2, ListTodo, Circle, Play, Pencil, Trophy, Crown, AlertTriangle, CalendarMinus, BookOpen, Check, Target, Minus } from 'lucide-react';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { TiptapEditor } from '../components/common/TiptapEditor';
-import { isNotificationSupported, hasAskedBefore, requestPermission, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
+import { isNotificationSupported, requestPermission, sendNotification, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
+import { subscribeToPush } from '../lib/pushSubscription';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { useUndo } from '../components/common/UndoToast';
 import { getQuoteOfTheDay } from '../data/quotes';
+import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import type { Task, ProjectTask, WorkItemStatus, RecurrencePattern } from '../types';
 
 // XP Animation Component
@@ -96,6 +100,7 @@ function BacklogPicker({ tasks, onAdd, isDark }: { tasks: Task[]; onAdd: (id: st
 }
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const { 
     tasks, 
     getTodaysTasks, 
@@ -113,7 +118,8 @@ export function Dashboard() {
     markPlanYourDaySeen,
   } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
-  const { habits } = useHabitContext();
+  const { habits, logHabit, getTodaysLog: getTodaysHabitLog } = useHabitContext();
+  const { getTodaysLog: getTodaysDailyLog, createOrUpdateLog, hasCheckedInToday } = useDailyLogContext();
   const { 
     getTodaysProjectTasks, 
     updateTaskStatus, 
@@ -148,17 +154,19 @@ export function Dashboard() {
   const [showNotifBanner, setShowNotifBanner] = useState(false);
 
   useEffect(() => {
-    if (isNotificationSupported() && !hasAskedBefore() && getPermissionStatus() === 'default') {
-      const timer = setTimeout(() => setShowNotifBanner(true), 5000);
-      return () => clearTimeout(timer);
-    }
-    if (getPermissionStatus() === 'granted') {
+    const status = getPermissionStatus();
+    if (status === 'granted') {
       startDailyPlanningReminder(9);
+    } else if (isNotificationSupported() && status !== 'unsupported') {
+      const timer = setTimeout(() => setShowNotifBanner(true), 3000);
+      return () => clearTimeout(timer);
     }
   }, []);
   const [xpAnimation, setXpAnimation] = useState<{ show: boolean; xp: number }>({ show: false, xp: 0 });
   const [isPlanYourDayOpen, setIsPlanYourDayOpen] = useState(false);
   const [dailyBonusResult, setDailyBonusResult] = useState<{ show: boolean; xp: number; streak: number; multiplier: number } | null>(null);
+  const [isCheckInOpen, setIsCheckInOpen] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const [editingProjectTask, setEditingProjectTask] = useState<ProjectTask | null>(null);
   const [projectTaskForm, setProjectTaskForm] = useState({ title: '', description: '' });
 
@@ -185,6 +193,11 @@ export function Dashboard() {
     .filter(h => h.streakCount > 0)
     .sort((a, b) => b.streakCount - a.streakCount)
     .slice(0, 3);
+
+  const habitCheckInStats = useMemo(() => {
+    const todayCompletedCount = habits.filter(h => getTodaysHabitLog(h.id) > 0).length;
+    return { todayCompletedCount, totalHabits: habits.length };
+  }, [habits, getTodaysHabitLog]);
 
   // All hooks must be called before any early returns
   const handleToggleComplete = useCallback((taskId: string) => {
@@ -272,6 +285,8 @@ export function Dashboard() {
             streak: userStats.dailyLoginStreak + 1,
             multiplier: result.streakMultiplier,
           });
+          // Auto-dismiss after 4s
+          setTimeout(() => setDailyBonusResult(null), 4000);
           // Check achievements after login
           setTimeout(() => checkAndUnlockAchievements(), 200);
         }
@@ -293,6 +308,25 @@ export function Dashboard() {
       createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate);
     });
   }, [tasks, deleteTask, createTask, pushUndo]);
+
+  const todayTaskIds = useMemo(() => new Set(getTodaysTasks().map(t => t.id)), [getTodaysTasks, tasks]);
+  const activeGoalIds = useMemo(() => new Set(goals.filter(g => g.status === 'Active').map(g => g.id)), [goals]);
+  const suggestionGroups = useMemo(() => {
+    const notToday = (t: Task) => !todayTaskIds.has(t.id) && t.status !== 'Completed';
+    const notRecurring = (t: Task) => !t.isRecurring; // recurring tasks auto-appear on their scheduled day
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const overdue = tasks.filter(t => notToday(t) && notRecurring(t) && t.dueDate && new Date(t.dueDate) < now);
+    const fromGoals = tasks.filter(t => notToday(t) && notRecurring(t) && t.goalId && activeGoalIds.has(t.goalId));
+    const fromGoalsExcludingOverdue = fromGoals.filter(t => !overdue.includes(t));
+    const suggested = getSuggestedTasks();
+    const otherTasks = suggested.filter(t => !overdue.some(o => o.id === t.id) && !fromGoalsExcludingOverdue.some(f => f.id === t.id));
+    return [
+      { label: 'Overdue', tasks: overdue, icon: AlertTriangle },
+      { label: 'From your goals', tasks: fromGoalsExcludingOverdue, icon: Target },
+      { label: 'Other tasks', tasks: otherTasks, icon: ListTodo },
+    ].filter(g => g.tasks.length > 0);
+  }, [tasks, todayTaskIds, activeGoalIds, getSuggestedTasks]);
   
   // Early return AFTER all hooks
   if (loading) {
@@ -304,7 +338,6 @@ export function Dashboard() {
   }
 
   const todaysTasks = getTodaysTasks();
-  const carriedForwardCount = todaysTasks.filter(t => t.status === 'Carried Forward').length;
   const quote = getQuoteOfTheDay();
 
   const handleCreateTask = (data: {
@@ -408,6 +441,9 @@ export function Dashboard() {
   // All today's tasks as a flat list sorted by priority
   const allTodayPending = todaysTasks.filter(t => t.status !== 'Completed');
   const allTodayCompleted = todaysTasks.filter(t => t.status === 'Completed');
+  const projectTasksDone = todaysProjectTasks.filter(t => t.status === 'Done').length;
+  const totalTodayTasks = todaysTasks.length + todaysProjectTasks.length;
+  const totalTodayDone = allTodayCompleted.length + projectTasksDone;
 
   const greetingEmoji = (() => {
     const hour = new Date().getHours();
@@ -418,34 +454,74 @@ export function Dashboard() {
 
   return (
     <div className="space-y-5">
-      {/* Notification permission banner */}
-      {showNotifBanner && (
-        <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 animate-slide-down ${
-          isDark ? 'bg-violet-500/10 border border-violet-500/20' : 'bg-violet-50 border border-violet-200'
-        }`}>
-          <p className={`text-sm ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
-            Enable notifications for Pomodoro alerts and daily planning reminders?
-          </p>
-          <div className="flex gap-2 flex-shrink-0">
-            <button
-              onClick={async () => {
-                const granted = await requestPermission();
-                if (granted) startDailyPlanningReminder(9);
-                setShowNotifBanner(false);
-              }}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-            >
-              Enable
-            </button>
-            <button
-              onClick={() => { setShowNotifBanner(false); localStorage.setItem('assisy_notification_permission', 'dismissed'); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-            >
-              Later
-            </button>
+      {/* Notification status */}
+      {(() => {
+        const status = getPermissionStatus();
+        if (status === 'unsupported') return null;
+        if (status === 'granted' && !showNotifBanner) return null;
+        return (
+          <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 ${
+            status === 'denied'
+              ? isDark ? 'bg-red-500/10 border border-red-500/20' : 'bg-red-50 border border-red-200'
+              : isDark ? 'bg-violet-500/10 border border-violet-500/20' : 'bg-violet-50 border border-violet-200'
+          }`}>
+            <div>
+              <p className={`text-sm font-medium ${
+                status === 'denied'
+                  ? isDark ? 'text-red-300' : 'text-red-700'
+                  : isDark ? 'text-violet-300' : 'text-violet-700'
+              }`}>
+                {status === 'denied'
+                  ? 'Notifications blocked'
+                  : 'Enable notifications for habit reminders'}
+              </p>
+              {status === 'denied' && (
+                <p className={`text-xs mt-0.5 ${isDark ? 'text-red-400/60' : 'text-red-500/60'}`}>
+                  Open browser settings → Site settings → Notifications → Allow for this site
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              {status === 'default' && (
+                <>
+                  <button
+                    onClick={async () => {
+                      const granted = await requestPermission();
+                      if (granted) {
+                        startDailyPlanningReminder(9);
+                        const reminders = habits.filter(h => h.reminderTime).map(h => ({ name: h.name, time: h.reminderTime! }));
+                        await subscribeToPush('local', reminders);
+                        await sendNotification('Notifications enabled!', { body: 'You\'ll receive habit reminders even when the app is closed.' });
+                      }
+                      setShowNotifBanner(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+                  >
+                    Enable
+                  </button>
+                  <button
+                    onClick={() => setShowNotifBanner(false)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    Later
+                  </button>
+                </>
+              )}
+              {status === 'granted' && (
+                <button
+                  onClick={async () => {
+                    await sendNotification('Test notification', { body: 'Notifications are working!' });
+                    setShowNotifBanner(false);
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                >
+                  Test
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── HERO BANNER: greeting + quote + actions ──── */}
       <div className={`relative overflow-hidden rounded-2xl ${
@@ -468,8 +544,8 @@ export function Dashboard() {
               </h1>
               <p className={`mt-0.5 text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                {todaysTasks.length > 0 && (
-                  <span className={isDark ? 'text-violet-400' : 'text-violet-600'}> · {allTodayCompleted.length}/{todaysTasks.length} done</span>
+                {totalTodayTasks > 0 && (
+                  <span className={isDark ? 'text-violet-400' : 'text-violet-600'}> · {totalTodayDone} of {totalTodayTasks} done</span>
                 )}
               </p>
             </div>
@@ -484,6 +560,11 @@ export function Dashboard() {
               >
                 <ListPlus size={16} />
                 <span>Plan Day</span>
+                {getSuggestedTasks().length > 0 && (
+                  <span className={`ml-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
+                    isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-200 text-violet-700'
+                  }`}>{getSuggestedTasks().length}</span>
+                )}
               </button>
               <button
                 onClick={() => setIsTaskFormOpen(true)}
@@ -512,8 +593,49 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ── STATS ROW: colorful, compact ────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* ── STATS ROW: collapsible on mobile, full on md+ ────────────── */}
+      {/* Mobile: compact row when collapsed, tap to expand */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setStatsExpanded(prev => !prev)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setStatsExpanded(prev => !prev); }}
+        className={`md:hidden ${statsExpanded ? 'hidden' : ''} grid grid-cols-4 gap-2 rounded-xl border p-2 transition-colors ${
+          isDark ? 'bg-white/[0.04] border-white/10' : 'bg-slate-50 border-slate-200'
+        }`}
+      >
+        <div className="flex flex-col items-center gap-0.5 py-1">
+          <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+          <span className={`text-sm font-bold ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{getTotalLevel()}</span>
+          <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Level</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 py-1">
+          <CheckSquare className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
+          <span className={`text-sm font-bold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{totalTodayDone}/{totalTodayTasks}</span>
+          <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 py-1">
+          <Flame className={`w-4 h-4 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
+          <span className={`text-sm font-bold ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>{userStats.currentStreak}</span>
+          <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Streak</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 py-1">
+          <Trophy className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+          <span className={`text-sm font-bold ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{getUnlockedAchievements().length}</span>
+          <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Badges</span>
+        </div>
+      </div>
+      {/* Desktop: always full cards. Mobile: full cards only when expanded */}
+      {statsExpanded && (
+        <button
+          type="button"
+          onClick={() => setStatsExpanded(false)}
+          className={`md:hidden text-xs font-medium mb-1 ${isDark ? 'text-gray-500 hover:text-gray-400' : 'text-slate-500 hover:text-slate-600'}`}
+        >
+          ▼ Collapse stats
+        </button>
+      )}
+      <div className={`gap-3 ${statsExpanded ? 'grid' : 'hidden md:grid'} grid-cols-2 sm:grid-cols-4`}>
         <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-violet-500/10 border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}>
           <div className="flex items-center gap-2 mb-1">
             <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
@@ -527,8 +649,8 @@ export function Dashboard() {
             <CheckSquare className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
             <span className={`text-xs ${isDark ? 'text-blue-400/70' : 'text-blue-500/80'}`}>Tasks</span>
           </div>
-          <div className={`text-xl font-bold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{todaysTasks.length}</div>
-          <p className={`text-[10px] mt-0.5 ${isDark ? 'text-blue-400/50' : 'text-blue-500/60'}`}>{carriedForwardCount ? `${carriedForwardCount} carried` : 'today'}</p>
+          <div className={`text-xl font-bold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{totalTodayDone}/{totalTodayTasks}</div>
+          <p className={`text-[10px] mt-0.5 ${isDark ? 'text-blue-400/50' : 'text-blue-500/60'}`}>done today</p>
         </div>
         <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-orange-500/10 border border-orange-500/15' : 'bg-orange-50 border border-orange-100'}`}>
           <div className="flex items-center gap-2 mb-1">
@@ -565,6 +687,95 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* ── DAILY CHECK-IN (habits inline + reflect) ── */}
+      {habits.length > 0 && (
+        <div className={`rounded-xl border overflow-hidden ${
+          isDark ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200'
+        }`}>
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <BookOpen size={18} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+              <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Daily Check-In</span>
+              <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                {habitCheckInStats.todayCompletedCount}/{habitCheckInStats.totalHabits} done
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCheckInOpen(true)}
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                hasCheckedInToday()
+                  ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
+                  : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {hasCheckedInToday() ? 'Update reflection' : 'Reflect'}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2 p-3">
+            {habits.map((habit) => {
+              const value = getTodaysHabitLog(habit.id);
+              const isBoolean = habit.trackingType === 'boolean';
+              if (isBoolean) {
+                const done = value > 0;
+                return (
+                  <button
+                    key={habit.id}
+                    type="button"
+                    onClick={() => logHabit(habit.id, done ? 0 : 1)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-left text-sm transition-all ${
+                      done
+                        ? isDark ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                    }`}
+                  >
+                    {done ? <Check size={14} strokeWidth={2.5} /> : <Circle size={14} className="opacity-50" />}
+                    <span className="truncate max-w-[120px]">{habit.name}</span>
+                  </button>
+                );
+              }
+              // Count or duration: +/- controls
+              const unit = habit.trackingType === 'duration' ? ' min' : '';
+              const target = habit.dailyTarget;
+              const metTarget = target ? value >= target : value > 0;
+              return (
+                <div
+                  key={habit.id}
+                  className={`inline-flex items-center gap-1 rounded-lg border text-sm ${
+                    metTarget
+                      ? isDark ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'
+                      : value > 0
+                        ? isDark ? 'bg-violet-500/10 border-violet-500/20' : 'bg-violet-50 border-violet-200'
+                        : isDark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-100'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => logHabit(habit.id, Math.max(0, value - 1))}
+                    className={`p-2 rounded-l-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-200 text-slate-600'}`}
+                    aria-label="Decrease"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className={`min-w-[2rem] text-center font-medium tabular-nums text-xs ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    {target ? `${value}/${target}` : value}{unit}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => logHabit(habit.id, value + 1)}
+                    className={`p-2 rounded-r-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-200 text-slate-600'}`}
+                    aria-label="Increase"
+                  >
+                    <Plus size={14} />
+                  </button>
+                  <span className={`pl-1 pr-2 text-xs truncate max-w-[100px] ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{habit.name}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ── OVERDUE WARNING ───────────────────────────── */}
       {(() => {
         const now = new Date();
@@ -592,6 +803,48 @@ export function Dashboard() {
           </div>
         );
       })()}
+
+      {/* ── SUGGESTED FOR YOU (pattern-based) ───────────────── */}
+      {suggestionGroups.length > 0 && (
+        <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200'}`}>
+          <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+            <Sparkles size={18} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
+            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Suggested for you</span>
+          </div>
+          <div className="divide-y divide-white/5">
+            {suggestionGroups.map((group) => (
+              <div key={group.label} className="p-3">
+                <p className={`text-xs font-medium mb-2 flex items-center gap-1.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  <group.icon size={12} />
+                  {group.label} ({group.tasks.length})
+                </p>
+                <div className="space-y-1.5">
+                  {group.tasks.slice(0, 4).map((task) => (
+                    <div
+                      key={task.id}
+                      className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
+                    >
+                      <span className={`text-sm truncate flex-1 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{task.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => addToToday(task.id)}
+                        className={`text-xs font-medium px-2.5 py-1 rounded-lg flex-shrink-0 transition-colors ${
+                          isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                        }`}
+                      >
+                        Add to Today
+                      </button>
+                    </div>
+                  ))}
+                  {group.tasks.length > 4 && (
+                    <p className={`text-[10px] pl-3 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>+{group.tasks.length - 4} more in backlog</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── TODAY'S TASKS — the hero section ───────────────── */}
       {todaysTasks.length === 0 && todaysProjectTasks.length === 0 ? (
@@ -643,10 +896,25 @@ export function Dashboard() {
                   >
                     {task.title}
                   </h3>
-                  <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigate('/projects'); }}
+                    className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 cursor-pointer hover:ring-1 transition-all ${isDark ? 'bg-violet-500/15 text-violet-400 hover:ring-violet-500/40' : 'bg-violet-50 text-violet-600 hover:ring-violet-300'}`}
+                    title="Go to Projects"
+                  >
                     {project?.title}{subProject ? ` → ${subProject.title}` : ''}
-                  </span>
+                  </button>
                   {task.priority === 'High' && <Flame size={14} className="flex-shrink-0 text-red-500" />}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeProjectTaskFromToday(task.id); }}
+                    className={`p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 ${
+                      isDark
+                        ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20'
+                        : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                    }`}
+                    title="Remove from Today"
+                  >
+                    <CalendarMinus size={14} />
+                  </button>
                 </div>
               </div>
             );
@@ -681,48 +949,53 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* ── COMPACT STATS ROW ────────────────────────────── */}
-      <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3`}>
-        {[
-          { label: 'Level', value: `${getTotalLevel()}`, sub: getTitle(), color: 'violet' },
-          { label: 'Tasks', value: `${todaysTasks.length}`, sub: `${carriedForwardCount ? `${carriedForwardCount} carried` : 'today'}`, color: 'blue' },
-          { label: 'Streak', value: `${userStats.currentStreak}`, sub: 'days', color: 'orange' },
-          { label: 'Achievements', value: `${getUnlockedAchievements().length}`, sub: 'unlocked', color: 'amber' },
-        ].map(({ label, value, sub }) => (
-          <div key={label} className={`card rounded-xl px-4 py-3`}>
-            <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{value}</div>
-            <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{sub}</p>
+      {/* ── WEEKLY REVIEW (richer summary) ──────────── */}
+      <div
+        onClick={() => navigate('/review')}
+        className={`rounded-xl px-4 py-3 cursor-pointer transition-all ${
+          isDark ? 'bg-slate-500/5 border border-white/5 hover:border-white/10 hover:bg-slate-500/10' : 'bg-slate-50 border border-slate-100 hover:border-slate-200 hover:shadow-sm'
+        }`}
+      >
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-500/15' : 'bg-slate-200/70'}`}>
+              <Calendar className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
+            </div>
+            <div>
+              <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>This Week</span>
+              <span className={`text-xs ml-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                {weeklyProfessionalReview.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weeklyProfessionalReview.weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
           </div>
-        ))}
-      </div>
-
-
-      {/* ── WEEKLY REVIEW (compact summary) ──────────── */}
-      <div className={`rounded-xl px-4 py-3 flex items-center justify-between ${
-        isDark ? 'bg-slate-500/5 border border-white/5' : 'bg-slate-50 border border-slate-100'
-      }`}>
-        <div className="flex items-center gap-2.5">
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-500/15' : 'bg-slate-200/70'}`}>
-            <Calendar className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
-          </div>
-          <div>
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>This Week</span>
-            <span className={`text-xs ml-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
-              {weeklyProfessionalReview.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weeklyProfessionalReview.weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </span>
-          </div>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-200/70 text-slate-500'}`}>View full review →</span>
         </div>
-        <div className="flex items-center gap-3 text-xs font-medium">
-          <span className={`flex items-center gap-1 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-            <CheckCircle2 size={12} /> {weeklyProfessionalReview.completed.length}
-          </span>
-          <span className={`flex items-center gap-1 ${isDark ? 'text-blue-400' : 'text-blue-500'}`}>
-            <ListTodo size={12} /> {weeklyProfessionalReview.backlog.length}
-          </span>
-          {weeklyProfessionalReview.carriedForward.length > 0 && (
-            <span className={`flex items-center gap-1 ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>
-              <RotateCcw size={12} /> {weeklyProfessionalReview.carriedForward.length}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-xs">
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 size={12} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+            <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>
+              <span className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{weeklyProfessionalReview.completed.length}</span> completed
             </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <ListTodo size={12} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
+            <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>
+              <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{weeklyProfessionalReview.backlog.length}</span> pending
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Flame size={12} className={isDark ? 'text-orange-400' : 'text-orange-500'} />
+            <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>
+              <span className={`font-semibold ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>{userStats.currentStreak}</span> day streak
+            </span>
+          </div>
+          {projects.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Zap size={12} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+              <span className={`truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
+              </span>
+            </div>
           )}
         </div>
       </div>
@@ -737,6 +1010,16 @@ export function Dashboard() {
         defaultAddToToday={true}
       />
 
+      <DailyCheckIn
+        isOpen={isCheckInOpen}
+        existingLog={getTodaysDailyLog()}
+        onSubmit={(data) => {
+          createOrUpdateLog(new Date(), data);
+          setIsCheckInOpen(false);
+        }}
+        onCancel={() => setIsCheckInOpen(false)}
+      />
+
       {/* XP Animation */}
       {xpAnimation.show && (
         <XPAnimation 
@@ -747,32 +1030,35 @@ export function Dashboard() {
 
       {/* Daily Login Bonus Notification */}
       {dailyBonusResult?.show && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
+        <div
+          className="fixed top-4 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[70] animate-slide-down"
+          onClick={() => setDailyBonusResult(null)}
+        >
           <div 
-            className={`flex items-center space-x-4 p-5 rounded-2xl shadow-elevated max-w-md ${
+            className={`flex items-center space-x-3 p-4 rounded-2xl shadow-elevated max-w-sm mx-auto ${
               isDark 
-                ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30' 
-                : 'bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200'
+                ? 'bg-[#1a1a2e]/95 backdrop-blur border border-violet-500/30' 
+                : 'bg-white/95 backdrop-blur border border-violet-200'
             }`}
           >
-            <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl sm:text-3xl ${
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
               isDark ? 'bg-violet-500/20' : 'bg-violet-100'
             }`}>
               🌅
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className={`text-xs font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
                 Welcome Back! Daily Bonus
               </p>
-              <h4 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 +{dailyBonusResult.xp} XP
               </h4>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+              <div className="flex items-center space-x-2">
+                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
                   🔥 {dailyBonusResult.streak} day streak
                 </span>
                 {dailyBonusResult.multiplier > 1 && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                     isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
                   }`}>
                     {dailyBonusResult.multiplier}x bonus

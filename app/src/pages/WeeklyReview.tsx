@@ -13,12 +13,16 @@ import {
   Minus,
   Sparkles,
   Loader2,
+  FolderKanban,
+  Newspaper,
+  Lightbulb,
 } from 'lucide-react';
 import { isGeminiConfigured } from '../lib/gemini';
 import { useTaskContext } from '../context/TaskContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
+import { useFeed } from '../context/FeedContext';
 import { useGamification } from '../context/GamificationContext';
 import { useTheme } from '../context/ThemeContext';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
@@ -47,7 +51,8 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function WeeklyReview() {
   const { tasks } = useTaskContext();
-  const { subProjects, projects, getTasksBySubProject } = useProjectContext();
+  const { subProjects, projects, projectTasks, getTasksBySubProject, getProject } = useProjectContext();
+  const { articles } = useFeed();
   const allTasks = useMemo(
     () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
     [tasks, subProjects, projects, getTasksBySubProject],
@@ -145,6 +150,71 @@ Respond in this format:
   );
 
   const activeGoals = useMemo(() => goals.filter(g => g.status === 'Active'), [goals]);
+
+  // Project breakdown: tasks completed this week by project
+  const projectCompletedThisWeek = useMemo(
+    () => projectTasks.filter(
+      t => t.status === 'Done' && t.completedAt && isInRange(t.completedAt, thisWeek.start, thisWeek.end)
+    ),
+    [projectTasks, thisWeek],
+  );
+  const byProject = useMemo(() => {
+    const map = new Map<string, { title: string; count: number }>();
+    projectCompletedThisWeek.forEach(t => {
+      const project = getProject(t.projectId);
+      const title = project?.title ?? 'Project';
+      const cur = map.get(t.projectId);
+      map.set(t.projectId, { title, count: (cur?.count ?? 0) + 1 });
+    });
+    return Array.from(map.entries()).map(([id, v]) => ({ projectId: id, ...v }));
+  }, [projectCompletedThisWeek, getProject]);
+
+  // Feed summary: articles read/bookmarked this week
+  const feedSummary = useMemo(() => {
+    const weekStart = thisWeek.start.getTime();
+    const weekEnd = thisWeek.end.getTime();
+    const inWeek = (d: string | null) => {
+      if (!d) return false;
+      const t = new Date(d).getTime();
+      return t >= weekStart && t <= weekEnd;
+    };
+    const read = articles.filter(a => a.read && (inWeek(a.published_at ?? null) || inWeek(a.created_at)));
+    const bookmarked = articles.filter(a => a.bookmarked && (inWeek(a.published_at ?? null) || inWeek(a.created_at)));
+    const recentRead = read.slice(0, 3).map(a => a.title || 'Untitled');
+    return { readCount: read.length, bookmarkedCount: bookmarked.length, recentTitles: recentRead };
+  }, [articles, thisWeek]);
+
+  // Rule-based actionable insights (no AI)
+  const ruleBasedInsights = useMemo(() => {
+    const bullets: string[] = [];
+    if (pendingCount > 8) {
+      bullets.push(`You have ${pendingCount} pending tasks – consider picking your top 3 for tomorrow.`);
+    }
+    if (delta < 0 && completedThisWeek.length > 0) {
+      bullets.push('Fewer tasks completed than last week – small steps still count. Focus on one win tomorrow.');
+    }
+    if (byCategory.Personal > 0 && byCategory.Professional === 0 && tasks.some(t => t.category === 'Professional')) {
+      bullets.push('No professional tasks completed this week – add one high-impact item for next week.');
+    }
+    const perfectHabits = habits.filter(h => {
+      const weekLogs = (h.logs || []).filter(
+        log => log.value > 0 && isInRange(log.date, thisWeek.start, thisWeek.end)
+      );
+      const uniqueDays = new Set(weekLogs.map(l => l.date)).size;
+      return uniqueDays >= 7;
+    });
+    if (perfectHabits.length > 0) {
+      bullets.push(`Great week for ${perfectHabits.map(h => h.name).join(', ')} – keep it up!`);
+    }
+    if (activeGoals.some(g => g.progress >= 90)) {
+      const nearlyDone = activeGoals.filter(g => g.progress >= 90);
+      bullets.push(`${nearlyDone.map(g => g.title).join(', ')} ${nearlyDone.length === 1 ? 'is' : 'are'} almost there – one more push!`);
+    }
+    if (bullets.length === 0) {
+      bullets.push('Review your goals and plan 1–2 key tasks for next week.');
+    }
+    return bullets;
+  }, [pendingCount, delta, completedThisWeek, byCategory, tasks, habits, thisWeek, activeGoals]);
 
   const cardClass = `rounded-2xl ${isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'}`;
 
@@ -270,6 +340,27 @@ Respond in this format:
         </div>
       </div>
 
+      {/* ── 2b. PROJECT BREAKDOWN ───────────────────── */}
+      {byProject.length > 0 && (
+        <div>
+          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+            <FolderKanban size={16} /> Project progress this week
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {byProject.map(({ projectId, title, count }) => (
+              <div key={projectId} className={cardClass + ' p-4'}>
+                <p className={`text-xs font-medium truncate mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{title}</p>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+                  <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{count}</span>
+                  <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>done</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── 3. HABIT SCORECARD ───────────────────────── */}
       <div>
         <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
@@ -365,6 +456,46 @@ Respond in this format:
             ))}
           </div>
         )}
+      </div>
+
+      {/* ── 4b. FEED SUMMARY ────────────────────────── */}
+      <div>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+          <Newspaper size={16} /> Feed this week
+        </h2>
+        <div className={cardClass + ' p-4'}>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+              Read <strong className={isDark ? 'text-white' : 'text-slate-800'}>{feedSummary.readCount}</strong>
+            </span>
+            <span className={isDark ? 'text-gray-600' : 'text-slate-300'}>·</span>
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+              Bookmarked <strong className={isDark ? 'text-white' : 'text-slate-800'}>{feedSummary.bookmarkedCount}</strong>
+            </span>
+          </div>
+          {feedSummary.recentTitles.filter(Boolean).length > 0 && (
+            <p className={`text-xs mt-2 truncate max-w-full ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+              Recent: {feedSummary.recentTitles.filter(Boolean).join(' · ')}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* ── 4c. QUICK INSIGHTS (rule-based) ──────────── */}
+      <div>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+          <Lightbulb size={16} /> Quick insights
+        </h2>
+        <div className={cardClass + ' p-4'}>
+          <ul className="space-y-2">
+            {ruleBasedInsights.map((text, i) => (
+              <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                <span className={isDark ? 'text-amber-400' : 'text-amber-500'} aria-hidden>•</span>
+                <span>{text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* ── 5. AI WEEKLY INSIGHT ────────────── */}

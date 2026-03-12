@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { Zap, Pencil, Heart } from 'lucide-react';
+import { Zap, Pencil, Heart, Target, Bell } from 'lucide-react';
 import type { TrackingType, Habit } from '../../types';
 import { ExpandableModal } from '../common/ExpandableModal';
 
@@ -15,6 +15,8 @@ interface HabitFormProps {
     trackingType: TrackingType;
     category: string;
     xpPerUnit: number;
+    dailyTarget?: number;
+    reminderTime?: string;
   }) => void;
   onCancel: () => void;
   editingHabit?: HabitWithLogs | null;
@@ -42,6 +44,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
   const [trackingType, setTrackingType] = useState<TrackingType>('duration');
   const [category, setCategory] = useState('Health');
   const [xpPerUnit, setXpPerUnit] = useState(1);
+  const [dailyTarget, setDailyTarget] = useState<string>('');
+  const [reminderTime, setReminderTime] = useState('');
 
   useEffect(() => {
     if (editingHabit) {
@@ -49,6 +53,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
       setTrackingType(editingHabit.trackingType);
       setCategory(editingHabit.category);
       setXpPerUnit(editingHabit.xpPerUnit);
+      setDailyTarget(editingHabit.dailyTarget ? String(editingHabit.dailyTarget) : '');
+      setReminderTime(editingHabit.reminderTime ?? '');
     } else {
       resetForm();
     }
@@ -59,11 +65,21 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
     setTrackingType('duration');
     setCategory('Health');
     setXpPerUnit(1);
+    setDailyTarget('');
+    setReminderTime('');
   };
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onSubmit({ name: name.trim(), trackingType, category, xpPerUnit });
+    const target = parseInt(dailyTarget) || undefined;
+    onSubmit({
+      name: name.trim(),
+      trackingType,
+      category,
+      xpPerUnit,
+      dailyTarget: trackingType === 'boolean' ? undefined : target,
+      reminderTime: reminderTime || undefined,
+    });
     resetForm();
   };
 
@@ -136,6 +152,50 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
     </div>
   );
 
+  const targetField = trackingType !== 'boolean' ? (
+    <div>
+      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <div className="flex items-center gap-2">
+          <Target size={16} className="text-emerald-500" />
+          Daily Target <span className={`text-xs font-normal ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>(optional)</span>
+        </div>
+      </label>
+      <input
+        type="number"
+        value={dailyTarget}
+        onChange={(e) => setDailyTarget(e.target.value)}
+        placeholder={trackingType === 'duration' ? 'e.g. 30 (minutes)' : 'e.g. 8 (glasses)'}
+        min="1"
+        className={inputCls}
+      />
+      <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+        {dailyTarget
+          ? `Progress shows as X/${dailyTarget}${trackingType === 'duration' ? ' min' : ''}. Streak counts when target is met.`
+          : 'Leave empty to count any value > 0 as done.'}
+      </p>
+    </div>
+  ) : null;
+
+  const reminderField = (
+    <div>
+      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <div className="flex items-center gap-2">
+          <Bell size={16} className="text-violet-500" />
+          Daily Reminder <span className={`text-xs font-normal ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>(optional)</span>
+        </div>
+      </label>
+      <input
+        type="time"
+        value={reminderTime}
+        onChange={(e) => setReminderTime(e.target.value)}
+        className={inputCls}
+      />
+      <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+        {reminderTime ? `You'll get a notification at ${reminderTime} daily.` : 'Set a time to get reminded about this habit.'}
+      </p>
+    </div>
+  );
+
   const xpField = (
     <div>
       <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
@@ -198,10 +258,12 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
               {nameField}
               {trackingTypeField}
             </div>
-            <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+            <div className={`w-80 flex-shrink-0 p-6 space-y-5 overflow-y-auto ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
               <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Settings</h3>
               {categoryField}
+              {targetField}
               {xpField}
+              {reminderField}
             </div>
           </div>
         ) : (
@@ -209,7 +271,9 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
             {nameField}
             {trackingTypeField}
             {categoryField}
+            {targetField}
             {xpField}
+            {reminderField}
           </div>
         )
       }

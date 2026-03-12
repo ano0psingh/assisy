@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, CheckSquare, Target, FolderKanban, Calendar, ArrowRight } from 'lucide-react';
+import { Search, CheckSquare, Target, FolderKanban, Calendar, ArrowRight, Newspaper, ListTodo } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useTaskContext } from '../../context/TaskContext';
 import { useGoalContext } from '../../context/GoalContext';
 import { useHabitContext } from '../../context/HabitContext';
 import { useProjectContext } from '../../context/ProjectContext';
+import { useFeed } from '../../context/FeedContext';
 
 type SearchResult = {
   id: string;
-  type: 'task' | 'goal' | 'habit' | 'project';
+  type: 'task' | 'goal' | 'habit' | 'project' | 'project_task' | 'feed';
   title: string;
   subtitle?: string;
   status?: string;
@@ -28,7 +29,8 @@ export function GlobalSearch() {
   const { tasks } = useTaskContext();
   const { goals } = useGoalContext();
   const { habits } = useHabitContext();
-  const { projects } = useProjectContext();
+  const { projects, projectTasks, getProject, getSubProject } = useProjectContext();
+  const { articles } = useFeed();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -109,8 +111,38 @@ export function GlobalSearch() {
       }
     });
 
-    return items.slice(0, 12);
-  }, [query, tasks, goals, habits, projects]);
+    projectTasks.forEach(pt => {
+      if (pt.title.toLowerCase().includes(q) || pt.description?.toLowerCase().includes(q)) {
+        const project = getProject(pt.projectId);
+        const sub = getSubProject(pt.subProjectId);
+        const subtitle = [project?.title, sub?.title].filter(Boolean).join(' → ');
+        items.push({
+          id: `pt-${pt.id}`,
+          type: 'project_task',
+          title: pt.title,
+          subtitle: subtitle || 'Project task',
+          status: pt.status,
+          route: '/projects',
+        });
+      }
+    });
+
+    articles.forEach(a => {
+      const title = a.title ?? '';
+      const summary = a.summary ?? '';
+      if (title.toLowerCase().includes(q) || summary.toLowerCase().includes(q)) {
+        items.push({
+          id: a.id,
+          type: 'feed',
+          title: title || 'Untitled article',
+          subtitle: a.author ?? undefined,
+          route: '/feed',
+        });
+      }
+    });
+
+    return items.slice(0, 14);
+  }, [query, tasks, goals, habits, projects, projectTasks, getProject, getSubProject, articles]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -139,6 +171,8 @@ export function GlobalSearch() {
       case 'goal': return <Target size={14} />;
       case 'habit': return <Calendar size={14} />;
       case 'project': return <FolderKanban size={14} />;
+      case 'project_task': return <ListTodo size={14} />;
+      case 'feed': return <Newspaper size={14} />;
     }
   };
 
@@ -148,6 +182,8 @@ export function GlobalSearch() {
       case 'goal': return isDark ? 'text-violet-400' : 'text-violet-500';
       case 'habit': return isDark ? 'text-orange-400' : 'text-orange-500';
       case 'project': return isDark ? 'text-emerald-400' : 'text-emerald-500';
+      case 'project_task': return isDark ? 'text-teal-400' : 'text-teal-500';
+      case 'feed': return isDark ? 'text-amber-400' : 'text-amber-500';
     }
   };
 
@@ -168,7 +204,7 @@ export function GlobalSearch() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search tasks, goals, habits, projects..."
+              placeholder="Search tasks, goals, habits, projects, feed..."
               className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-gray-500' : 'text-slate-800 placeholder-slate-400'}`}
             />
             <kbd className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>ESC</kbd>
@@ -199,7 +235,9 @@ export function GlobalSearch() {
                     <p className={`text-xs truncate ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{result.subtitle}</p>
                   )}
                 </div>
-                <span className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{result.type}</span>
+                <span className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                  {result.type === 'project_task' ? 'Task' : result.type === 'feed' ? 'Article' : result.type}
+                </span>
                 {idx === selectedIndex && <ArrowRight size={12} className={isDark ? 'text-violet-400' : 'text-violet-500'} />}
               </button>
             ))}

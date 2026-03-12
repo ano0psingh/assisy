@@ -46,6 +46,19 @@ export function Goals() {
     .filter(t => t.status === 'Completed')
     .map(t => t.id);
 
+  // Clean up stale linkedTaskIds (references to tasks that no longer exist)
+  const taskIdSet = useMemo(() => new Set(tasks.map(t => t.id)), [tasks]);
+  useMemo(() => {
+    goals.forEach(goal => {
+      const valid = goal.linkedTaskIds.filter(id => taskIdSet.has(id));
+      if (valid.length !== goal.linkedTaskIds.length) {
+        updateGoal(goal.id, { linkedTaskIds: valid });
+      }
+    });
+  // Run only when task set changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskIdSet]);
+
   // Filter and sort goals - only show top-level goals in main list
   const filteredGoals = useMemo(() => {
     return goals
@@ -325,7 +338,7 @@ export function Goals() {
                 <GoalCard
                   goal={goal}
                   progress={getGoalProgress(goal)}
-                  linkedTasksCount={hasChildren ? subGoals.length : goal.linkedTaskIds.length}
+                  linkedTasksCount={hasChildren ? subGoals.length : getLinkedTasks(goal).length}
                   completedTasksCount={hasChildren 
                     ? subGoals.filter(sg => sg.status === 'Completed').length 
                     : getCompletedTasksCount(goal)
@@ -355,7 +368,7 @@ export function Goals() {
                         <GoalCard
                           goal={subGoal}
                           progress={getGoalProgress(subGoal)}
-                          linkedTasksCount={subGoal.linkedTaskIds.length}
+                          linkedTasksCount={getLinkedTasks(subGoal).length}
                           completedTasksCount={getCompletedTasksCount(subGoal)}
                           onComplete={handleCompleteGoal}
                           onArchive={archiveGoal}

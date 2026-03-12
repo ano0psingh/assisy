@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useRef, type DragEvent, type KeyboardEvent } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus, BookOpen } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useHabitContext } from '../context/HabitContext';
+import { useDailyLogContext } from '../context/DailyLogContext';
 import { useTheme } from '../context/ThemeContext';
 import type { Task } from '../types';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
@@ -64,6 +65,7 @@ export function Calendar() {
   const { tasks, createTask, updateTask, addToToday, getTodaysTasks } = useTaskContext();
   const { getTasksBySubProject, subProjects, projects } = useProjectContext();
   const { habits, getHabitLogs } = useHabitContext();
+  const { dailyLogs } = useDailyLogContext();
 
   const allTasks = useMemo(
     () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
@@ -199,6 +201,18 @@ export function Calendar() {
     return map;
   }, [habits, getHabitLogs]);
 
+  // ── Check-in logs by date ──
+
+  const checkInByDate = useMemo(() => {
+    const map = new Map<string, (typeof dailyLogs)[number]>();
+    for (const log of dailyLogs) {
+      const d = log.date instanceof Date ? log.date : new Date(log.date);
+      const key = d.toISOString().split('T')[0];
+      map.set(key, log);
+    }
+    return map;
+  }, [dailyLogs]);
+
   // ── Monthly summary stats ──
 
   const monthStats = useMemo(() => {
@@ -235,7 +249,8 @@ export function Calendar() {
   const selectedFocused = (tasksByFocusedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
   const selectedCreated = (tasksByCreatedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed' && !t.focusedDate);
   const selectedHabits = habitLogsByDate.get(selectedDateStr) ?? [];
-  const hasActivity = selectedCompleted.length > 0 || selectedDue.length > 0 || selectedFocused.length > 0 || selectedCreated.length > 0 || selectedHabits.length > 0;
+  const selectedCheckIn = checkInByDate.get(selectedDateStr);
+  const hasActivity = selectedCompleted.length > 0 || selectedDue.length > 0 || selectedFocused.length > 0 || selectedCreated.length > 0 || selectedHabits.length > 0 || !!selectedCheckIn;
 
   // ── Today's schedule sidebar data ──
 
@@ -492,6 +507,7 @@ export function Calendar() {
                   const hasDue = dueTasks.length > 0;
                   const hasFocused = focused.length > 0;
                   const hasHabit = habitEntries.length > 0;
+                  const hasCheckIn = checkInByDate.has(dateStr);
 
                   return (
                     <button
@@ -529,6 +545,7 @@ export function Calendar() {
                           ))}
                           {hasFocused && !categoryDots.length && <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-violet-400/60' : 'bg-violet-300'}`} />}
                           {hasHabit && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                          {hasCheckIn && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
                           {hasDue && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
                         </div>
                       )}
@@ -753,6 +770,51 @@ export function Calendar() {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Daily Check-In */}
+              {selectedCheckIn && (
+                <div>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                    <BookOpen className="w-3.5 h-3.5" />
+                    Check-In
+                    {selectedCheckIn.energyLevel && (
+                      <span className={`ml-auto normal-case tracking-normal px-1.5 py-0.5 rounded-full ${
+                        selectedCheckIn.energyLevel <= 3 ? 'bg-red-500/20 text-red-400'
+                        : selectedCheckIn.energyLevel <= 6 ? 'bg-amber-500/20 text-amber-400'
+                        : 'bg-emerald-500/20 text-emerald-400'
+                      }`}>
+                        Energy {selectedCheckIn.energyLevel}/10
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { html: selectedCheckIn.wins, icon: '✓', color: 'text-emerald-500', label: 'Wins' },
+                      { html: selectedCheckIn.challenges, icon: '!', color: 'text-red-400', label: 'Challenges' },
+                      { html: selectedCheckIn.learnings, icon: '💡', color: 'text-amber-400', label: 'Learnings' },
+                      { html: selectedCheckIn.tomorrowFocus, icon: '→', color: 'text-violet-400', label: 'Focus' },
+                    ].filter(s => s.html).map((section) => {
+                      const el = document.createElement('div');
+                      el.innerHTML = section.html!;
+                      const items = Array.from(el.querySelectorAll('li'));
+                      const lines = items.length > 0
+                        ? items.map(li => li.textContent?.trim()).filter(Boolean)
+                        : (el.textContent || '').split('\n').map(s => s.trim()).filter(Boolean);
+                      if (lines.length === 0) return null;
+                      return (
+                        <div key={section.label}>
+                          <p className={`text-[10px] font-medium mb-0.5 ${section.color}`}>{section.label}</p>
+                          {lines.map((line, i) => (
+                            <p key={i} className={`text-xs pl-3 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+                              <span className={section.color}>•</span> {line}
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

@@ -28,6 +28,7 @@ export interface FeedArticle {
   read: boolean;
   bookmarked: boolean;
   created_at: string;
+  goalId?: string;
 }
 
 const SUB_KEY = 'assisy_feed_subscriptions';

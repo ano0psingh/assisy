@@ -5,13 +5,15 @@ import {
   Plus, FolderKanban, ChevronRight, 
   Pencil, Trash2, Play, CheckCircle2, Circle,
   X, ListTodo, Layers,
-  CalendarPlus, CalendarCheck, ChevronLeft
+  CalendarPlus, CalendarCheck, ChevronLeft,
+  LayoutGrid, Table2,
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
 import { TiptapEditor } from '../components/common/TiptapEditor';
 import { ExpandableModal } from '../components/common/ExpandableModal';
+import { TaskSheet } from '../components/projects/TaskSheet';
 
-type ViewMode = 'list' | 'board';
+type PageView = 'cards' | 'sheet';
 type DetailView = 'none' | 'project' | 'subproject';
 
 export function Projects() {
@@ -42,7 +44,7 @@ export function Projects() {
   const isDark = theme === 'dark';
 
   // View state
-  const [_viewMode, _setViewMode] = useState<ViewMode>('list'); // Reserved for future board view
+  const [pageView, setPageView] = useState<PageView>('cards');
   const [detailView, setDetailView] = useState<DetailView>('none');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<string | null>(null);
@@ -339,22 +341,29 @@ export function Projects() {
 
           {/* Actions */}
           <div className="flex items-center space-x-1">
-            {/* Add to Today -- always visible when active */}
-            {task.status !== 'Done' && (
+            {/* Add to Today -- visible only when added, hover-only otherwise */}
+            {task.status !== 'Done' && isAddedToToday && (
               <button
-                onClick={() => isAddedToToday ? removeTaskFromToday(task.id) : addTaskToToday(task.id)}
+                onClick={() => removeTaskFromToday(task.id)}
                 className={`p-1.5 rounded-lg transition-all ${
-                  isAddedToToday
-                    ? isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
-                    : 'opacity-0 group-hover:opacity-100 ' + (isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600')
+                  isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
                 }`}
-                title={isAddedToToday ? 'Added to Today (click to remove)' : 'Add to Today'}
+                title="Added to Today (click to remove)"
               >
-                {isAddedToToday ? <CalendarCheck size={14} /> : <CalendarPlus size={14} />}
+                <CalendarCheck size={14} />
               </button>
             )}
             {/* Other actions - hover only */}
             <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {task.status !== 'Done' && !isAddedToToday && (
+                <button
+                  onClick={() => addTaskToToday(task.id)}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'}`}
+                  title="Add to Today"
+                >
+                  <CalendarPlus size={14} />
+                </button>
+              )}
               <button
                 onClick={() => openCreateSubTask(task)}
                 className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
@@ -400,19 +409,51 @@ export function Projects() {
             {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setEditingProject(null);
-            setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
-            setIsProjectFormOpen(true);
-          }}
-          className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base"
-        >
-          <Plus size={18} />
-          <span>New Project</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Cards / Sheet toggle */}
+          <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <button
+              type="button"
+              onClick={() => { setPageView('cards'); }}
+              className={`p-2 transition-colors ${
+                pageView === 'cards'
+                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                  : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'
+              }`}
+              title="Card view"
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPageView('sheet'); }}
+              className={`p-2 transition-colors ${
+                pageView === 'sheet'
+                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                  : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'
+              }`}
+              title="Sheet view"
+            >
+              <Table2 size={16} />
+            </button>
+          </div>
+          <button
+            onClick={() => {
+              setEditingProject(null);
+              setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
+              setIsProjectFormOpen(true);
+            }}
+            className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base"
+          >
+            <Plus size={18} />
+            <span>New Project</span>
+          </button>
+        </div>
       </div>
 
+      {pageView === 'sheet' ? (
+        <TaskSheet />
+      ) : (
       <div className="flex gap-6">
         {/* Main Content - Project List or Detail View */}
         <div className={`flex-1 ${detailView !== 'none' ? 'hidden md:block md:w-1/3' : ''}`}>
@@ -857,6 +898,7 @@ export function Projects() {
           </div>
         )}
       </div>
+      )}
 
       {/* Project Form Modal */}
       <ExpandableModal

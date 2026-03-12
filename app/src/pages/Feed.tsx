@@ -119,9 +119,21 @@ export function Feed() {
     setFilter, setSort, setTagFilter, setSubFilter, articles,
     unreadCount, lastRefreshedAt, markAllRead,
     bulkMarkRead, bulkBookmark, bulkDelete, clearOldRead,
+    linkArticleToGoal,
   } = useFeed();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  const [availableGoals, setAvailableGoals] = useState<{ id: string; title: string }[]>([]);
+  useEffect(() => {
+    try {
+      const data = localStorage.getItem('life-rpg-goals');
+      if (data) {
+        const goals = JSON.parse(data) as { id: string; title: string; status: string }[];
+        setAvailableGoals(goals.filter(g => g.status === 'Active'));
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [showSaveURL, setShowSaveURL] = useState(false);
@@ -727,6 +739,24 @@ export function Feed() {
                         >
                           {article.bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
                         </button>
+                        {availableGoals.length > 0 && (
+                          <select
+                            value={article.goalId ?? ''}
+                            onChange={(e) => linkArticleToGoal(article.id, e.target.value || null)}
+                            title="Link to Goal"
+                            className={`w-24 text-[11px] py-0.5 pl-1.5 pr-5 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
+                              article.goalId
+                                ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                                : isDark ? 'bg-white/5 text-gray-600 hover:text-gray-300' : 'bg-slate-50 text-slate-400 hover:text-slate-600'
+                            }`}
+                            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")" }}
+                          >
+                            <option value="">{article.goalId ? 'Unlink' : 'Goal'}</option>
+                            {availableGoals.map(g => (
+                              <option key={g.id} value={g.id}>{g.title}</option>
+                            ))}
+                          </select>
+                        )}
                         <button
                           onClick={() => removeArticle(article.id)}
                           title="Delete"

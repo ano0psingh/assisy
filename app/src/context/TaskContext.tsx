@@ -40,6 +40,9 @@ interface TaskContextType {
   getSuggestedTasks: () => Task[];
   hasSeenPlanYourDay: () => boolean;
   markPlanYourDaySeen: () => void;
+  skipOccurrence: (taskId: string) => void;
+  pauseRecurring: (taskId: string, days: number) => void;
+  resumeRecurring: (taskId: string) => void;
 }
 
 const TaskContext = createContext<TaskContextType | null>(null);
@@ -67,8 +70,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const savedTasks = LocalStorage.getTasks();
-    setTasks(savedTasks);
+    const todayStr = new Date().toDateString();
+    let needsSave = false;
+    const processed = savedTasks.map(task => {
+      if (task.isRecurring && task.status === 'Completed' && task.completedAt) {
+        const completedDateStr = new Date(task.completedAt).toDateString();
+        if (completedDateStr !== todayStr) {
+          needsSave = true;
+          return { ...task, status: 'Pending' as const };
+        }
+      }
+      return task;
+    });
+    setTasks(processed);
+    if (needsSave) {
+      LocalStorage.saveTasks(processed);
+    }
     setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataVersion]);
 
   const createTask = useCallback((
@@ -176,7 +195,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   const getTodayStr = useCallback((): string => {
-    return new Date().toISOString().split('T')[0];
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }, []);
 
   const getTodaysTasks = useCallback((): Task[] => {
@@ -185,7 +205,23 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     
     return tasks
       .filter(task => {
-        if (task.status === 'Completed') return false;
+        // For recurring tasks: if completed on a PREVIOUS day, treat as available again
+        if (task.isRecurring && task.status === 'Completed' && task.completedAt) {
+          const completedStr = new Date(task.completedAt).toISOString().split('T')[0];
+          if (completedStr === todayStr) {
+            return true; // completed today — show in completed section
+          }
+          // Completed on a previous day — check if it's scheduled for today and show as pending
+        }
+
+        // Non-recurring completed tasks stay hidden
+        if (task.status === 'Completed' && !task.isRecurring) return false;
+        // Recurring completed today — already handled above
+        if (task.status === 'Completed' && task.isRecurring) {
+          const completedStr = task.completedAt ? new Date(task.completedAt).toISOString().split('T')[0] : '';
+          if (completedStr === todayStr) return true;
+          // Fall through to recurring schedule check below
+        }
         
         // 1. Manually focused for today
         if (task.isFocusedToday && task.focusedDate === todayStr) {
@@ -214,8 +250,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           }
         }
         
-        // 4. Recurring tasks
+        // 4. Recurring tasks (may be Pending or Completed-on-previous-day)
         if (task.isRecurring) {
+          // Skip if paused
+          if (task.pausedUntil && todayStr <= task.pausedUntil) return false;
+          // Skip if this date is in skippedDates
+          if (task.skippedDates?.includes(todayStr)) return false;
+
           if (task.recurrencePattern === 'daily') {
             return true;
           }
@@ -232,6 +273,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (task.status === 'Carried Forward') return true;
         
         return false;
+      })
+      .map(task => {
+        // Auto-reset recurring tasks completed on a previous day so they appear as pending
+        if (task.isRecurring && task.status === 'Completed' && task.completedAt) {
+          const completedStr = new Date(task.completedAt).toISOString().split('T')[0];
+          if (completedStr !== todayStr) {
+            return { ...task, status: 'Pending' as const };
+          }
+        }
+        return task;
       })
       .sort((a, b) => {
         const priorityOrder = { High: 0, Low: 1 };
@@ -315,7 +366,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     });
   }, [userId]);
 
-  // Get tasks suggested for "Plan Your Day" - pending tasks not already in today
+  // Get tasks suggested for "Plan Your Day" - pending tasks not already in today (exclude recurring; they auto-appear on scheduled days)
   const getSuggestedTasks = useCallback((): Task[] => {
     const todayTasks = getTodaysTasks();
     const todayTaskIds = new Set(todayTasks.map(t => t.id));
@@ -323,6 +374,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return tasks
       .filter(task => {
         if (task.status === 'Completed') return false;
+        if (task.isRecurring) return false; // recurring tasks auto-added to their scheduled day
         if (todayTaskIds.has(task.id)) return false;
         return true;
       })
@@ -354,6 +406,39 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('planYourDay_lastSeen', todayStr);
   }, [getTodayStr]);
 
+  const skipOccurrence = useCallback((taskId: string) => {
+    const todayStr = getTodayStr();
+    setTasks(prev => {
+      const updated = prev.map(task => {
+        if (task.id !== taskId) return task;
+        const existing = task.skippedDates ?? [];
+        if (existing.includes(todayStr)) return task;
+        return { ...task, skippedDates: [...existing, todayStr] };
+      });
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+  }, [getTodayStr, userId]);
+
+  const pauseRecurring = useCallback((taskId: string, days: number) => {
+    const until = new Date();
+    until.setDate(until.getDate() + days);
+    const untilStr = until.toISOString().split('T')[0];
+    setTasks(prev => {
+      const updated = updateTaskInArray(prev, taskId, { pausedUntil: untilStr });
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const resumeRecurring = useCallback((taskId: string) => {
+    setTasks(prev => {
+      const updated = updateTaskInArray(prev, taskId, { pausedUntil: undefined });
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
   return (
     <TaskContext.Provider value={{
       tasks,
@@ -376,6 +461,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       getSuggestedTasks,
       hasSeenPlanYourDay,
       markPlanYourDaySeen,
+      skipOccurrence,
+      pauseRecurring,
+      resumeRecurring,
     }}>
       {children}
     </TaskContext.Provider>

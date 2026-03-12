@@ -21,8 +21,10 @@ export interface Task {
   completedAt?: Date;
   dueDate?: Date;
   xpValue: number;
-  isFocusedToday?: boolean; // Manually added to Today's Tasks
-  focusedDate?: string; // Date when task was focused (YYYY-MM-DD)
+  isFocusedToday?: boolean;
+  focusedDate?: string; // YYYY-MM-DD
+  pausedUntil?: string; // YYYY-MM-DD — recurring task paused until this date
+  skippedDates?: string[]; // YYYY-MM-DD — specific dates to skip for recurring tasks
 }
 
 export type GoalStatus = 'Active' | 'Completed' | 'Archived';
@@ -68,6 +70,19 @@ export interface Habit {
   streakCount: number;
   lastCompletedDate?: Date;
   xpPerUnit: number;
+  dailyTarget?: number; // e.g. 8 glasses, 30 min — undefined means "any > 0"
+  reminderTime?: string; // HH:MM format for notification, e.g. "07:00"
+}
+
+// ============ Metrics Types ============
+
+export interface MetricEntry {
+  id: string;
+  date: string; // YYYY-MM-DD
+  metricType: string; // e.g. "Weight", "Body Fat %", "Waist", "Sleep Hours"
+  value: number;
+  unit: string; // e.g. "kg", "%", "cm", "hrs"
+  note?: string;
 }
 
 // ============ Project Management Types ============

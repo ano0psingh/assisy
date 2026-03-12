@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Goal, Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Target, Plus, Link2, Unlink, Check } from 'lucide-react';
+import { Target, Plus, Link2, Unlink, Check, BookOpen, ExternalLink } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { TiptapEditor } from '../common/TiptapEditor';
 
@@ -42,6 +42,15 @@ export function GoalDetail({
   );
 
   const completedLinkedTasks = linkedTasks.filter(t => t.status === 'Completed');
+
+  const linkedArticles = useMemo(() => {
+    try {
+      const data = localStorage.getItem('assisy_feed_articles');
+      if (!data) return [];
+      const articles = JSON.parse(data) as { id: string; title: string | null; source_url: string; goalId?: string; reading_time_minutes?: number | null; relevance_score?: number | null; tags?: string[] | null }[];
+      return articles.filter(a => a.goalId === goal.id);
+    } catch { return []; }
+  }, [goal.id]);
 
   const handleSaveEdit = () => {
     onUpdateGoal(goal.id, {
@@ -175,6 +184,43 @@ export function GoalDetail({
     </div>
   );
 
+  const relatedArticlesSection = linkedArticles.length > 0 ? (
+    <div>
+      <label className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+        <BookOpen size={14} /> Related Articles ({linkedArticles.length})
+      </label>
+      <div className="space-y-2">
+        {linkedArticles.map(article => (
+          <a
+            key={article.id}
+            href={article.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center justify-between p-3 rounded-xl transition-colors group ${
+              isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10' : 'bg-slate-50 border border-slate-100 hover:bg-slate-100'
+            }`}
+          >
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{article.title || 'Untitled'}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {article.reading_time_minutes && (
+                  <span className={`text-[10px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.reading_time_minutes} min read</span>
+                )}
+                {article.relevance_score && (
+                  <span className={`text-[10px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.relevance_score}/10</span>
+                )}
+              </div>
+            </div>
+            <ExternalLink size={14} className={`flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+          </a>
+        ))}
+      </div>
+      <p className={`text-xs mt-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+        Total reading: ~{linkedArticles.reduce((s, a) => s + (a.reading_time_minutes ?? 0), 0)} min across {linkedArticles.length} article{linkedArticles.length !== 1 ? 's' : ''}
+      </p>
+    </div>
+  ) : null;
+
   const editButtons = isEditing ? (
     <div className="flex justify-end space-x-2">
       <button onClick={() => setIsEditing(false)} className={`px-4 py-2 rounded-lg text-sm ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}>Cancel</button>
@@ -230,6 +276,7 @@ export function GoalDetail({
             <div className={`w-96 flex-shrink-0 p-6 space-y-6 overflow-y-auto ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
               {progressBar}
               {linkedTasksSection}
+              {relatedArticlesSection}
             </div>
           </div>
         ) : (
@@ -266,6 +313,7 @@ export function GoalDetail({
             </div>
             {progressBar}
             {linkedTasksSection}
+            {relatedArticlesSection}
           </div>
         )
       }

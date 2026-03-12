@@ -19,9 +19,12 @@ interface DailyLogContextType {
 
 const DailyLogContext = createContext<DailyLogContextType | null>(null);
 
-// Helper to get date string in YYYY-MM-DD format for comparison
+// Helper to get date string in YYYY-MM-DD format using LOCAL time
 const getDateString = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
 export function DailyLogProvider({ children }: { children: ReactNode }) {

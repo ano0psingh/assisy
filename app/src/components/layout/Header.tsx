@@ -60,11 +60,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
     { icon: Trophy, label: 'Achievements', to: '/achievements' },
     { icon: BarChart3, label: 'Stats', to: '/stats' },
     { icon: ClipboardList, label: 'Review', to: '/review' },
+    { icon: Newspaper, label: 'Feed', to: '/feed' },
   ];
-
-  const feedNavCls = isDark
-    ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50';
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -113,15 +110,6 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 <span className="hidden lg:inline">{item.label}</span>
               </NavLink>
             ))}
-            <a
-              href="/feed.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${feedNavCls}`}
-            >
-              <Newspaper size={15} />
-              <span className="hidden lg:inline">Feed</span>
-            </a>
           </nav>
 
           {/* Right actions */}
@@ -326,16 +314,6 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 <span>{item.label}</span>
               </NavLink>
             ))}
-            <a
-              href="/feed.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={closeMobileMenu}
-              className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${feedNavCls}`}
-            >
-              <Newspaper size={18} />
-              <span>Feed</span>
-            </a>
           </nav>
 
           {/* Divider */}

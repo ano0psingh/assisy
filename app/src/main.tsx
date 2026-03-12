@@ -11,6 +11,7 @@ import { HabitProvider } from './context/HabitContext.tsx'
 import { DailyLogProvider } from './context/DailyLogContext.tsx'
 import { ProjectProvider } from './context/ProjectContext.tsx'
 import { GamificationProvider } from './context/GamificationContext.tsx'
+import { FeedProvider } from './context/FeedContext.tsx'
 import { UndoProvider } from './components/common/UndoToast.tsx'
 import { CloudSyncEffect } from './components/auth/CloudSyncEffect.tsx'
 import { MigrationModalTrigger } from './components/auth/MigrationModalTrigger.tsx'
@@ -28,9 +29,11 @@ createRoot(document.getElementById('root')!).render(
                 <HabitProvider>
                   <DailyLogProvider>
                     <ProjectProvider>
-                      <UndoProvider>
-                        <App />
-                      </UndoProvider>
+                      <FeedProvider>
+                        <UndoProvider>
+                          <App />
+                        </UndoProvider>
+                      </FeedProvider>
                     </ProjectProvider>
                   </DailyLogProvider>
                 </HabitProvider>

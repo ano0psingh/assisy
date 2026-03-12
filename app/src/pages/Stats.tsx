@@ -1,11 +1,28 @@
-import { CheckSquare, Zap, Flame, Trophy } from 'lucide-react';
+import { useMemo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  CartesianGrid,
+} from 'recharts';
+import { CheckSquare, Zap, Flame, Trophy, TrendingUp, Clock, AlertTriangle, Lightbulb, Target } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
+import { useHabitContext } from '../context/HabitContext';
+import { useGoalContext } from '../context/GoalContext';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
 import { SkillTreeViz } from '../components/gamification/SkillTreeViz';
 
 export function Stats() {
   const { tasks } = useTaskContext();
+  const { habits, getHabitLogs } = useHabitContext();
+  const { goals } = useGoalContext();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const { 
@@ -24,6 +41,133 @@ export function Stats() {
   const highEffortCompleted = completedTasks.filter(t => t.effort === 'High').length;
 
   const unlockedAchievements = getUnlockedAchievements();
+
+  // Weekly completion rate
+  const weeklyStats = useMemo(() => {
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+    weekStart.setHours(0, 0, 0, 0);
+    const completedThisWeek = completedTasks.filter(t => t.completedAt && new Date(t.completedAt) >= weekStart);
+    const totalThisWeek = tasks.filter(t => new Date(t.createdAt) >= weekStart || (t.completedAt && new Date(t.completedAt) >= weekStart));
+    const rate = totalThisWeek.length > 0 ? Math.round((completedThisWeek.length / totalThisWeek.length) * 100) : 0;
+    return { completed: completedThisWeek.length, total: totalThisWeek.length, rate };
+  }, [tasks, completedTasks]);
+
+  // Most productive time of day
+  const productiveTime = useMemo(() => {
+    const hours: Record<string, number> = {};
+    completedTasks.forEach(t => {
+      if (!t.completedAt) return;
+      const h = new Date(t.completedAt).getHours();
+      const bucket = h < 6 ? 'Night (12-6 AM)' : h < 12 ? 'Morning (6 AM-12 PM)' : h < 18 ? 'Afternoon (12-6 PM)' : 'Evening (6 PM-12 AM)';
+      hours[bucket] = (hours[bucket] ?? 0) + 1;
+    });
+    const sorted = Object.entries(hours).sort(([, a], [, b]) => b - a);
+    return sorted.length > 0 ? { time: sorted[0][0], count: sorted[0][1], breakdown: sorted } : null;
+  }, [completedTasks]);
+
+  // Habit streak alerts
+  const habitAlerts = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return habits.filter(h => {
+      if (h.streakCount <= 0) return false;
+      if (h.lastCompletedDate && new Date(h.lastCompletedDate).toDateString() === todayStr) return false;
+      return true;
+    });
+  }, [habits]);
+
+  // Chart data: last 14 days completions
+  const weeklyTrendData = useMemo(() => {
+    const days: { date: string; completed: number; label: string }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayEnd = new Date(d);
+      dayEnd.setHours(23, 59, 59, 999);
+      const count = completedTasks.filter(t => {
+        if (!t.completedAt) return false;
+        const completed = new Date(t.completedAt);
+        return completed >= d && completed <= dayEnd;
+      }).length;
+      days.push({
+        date: dateStr,
+        completed: count,
+        label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      });
+    }
+    return days;
+  }, [completedTasks]);
+
+  // Category pie data
+  const categoryPieData = useMemo(() => [
+    { name: 'Personal', value: personalTasks.length, color: '#3b82f6' },
+    { name: 'Financial', value: financialTasks.length, color: '#10b981' },
+    { name: 'Professional', value: professionalTasks.length, color: '#64748b' },
+  ].filter(d => d.value > 0), [personalTasks.length, financialTasks.length, professionalTasks.length]);
+
+  // Time of day bar data
+  const timeOfDayData = useMemo(() => {
+    if (!productiveTime?.breakdown?.length) return [];
+    return productiveTime.breakdown.map(([time, count]) => ({ time, count }));
+  }, [productiveTime]);
+
+  // Habit completion count per day (how many habits done each day)
+  const habitChartData = useMemo(() => {
+    if (habits.length === 0) return [];
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekStart = new Date();
+    const day = weekStart.getDay();
+    const monOffset = day === 0 ? -6 : 1 - day;
+    weekStart.setDate(weekStart.getDate() + monOffset);
+    weekStart.setHours(0, 0, 0, 0);
+    const points: { day: string; done: number; total: number }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      let done = 0;
+      habits.forEach(h => {
+        const logs = getHabitLogs(h.id, 14);
+        const val = logs.find(l => l.date === dateStr)?.value ?? 0;
+        const target = h.dailyTarget || 1;
+        if (val >= target) done++;
+      });
+      points.push({ day: dayLabels[i], done, total: habits.length });
+    }
+    return points;
+  }, [habits, getHabitLogs]);
+
+  // Personalized recommendations
+  const recommendations = useMemo(() => {
+    const tips: { icon: typeof Lightbulb; text: string; type: 'warning' | 'tip' | 'success' }[] = [];
+    if (weeklyStats.rate < 50 && weeklyStats.total > 0) {
+      tips.push({ icon: AlertTriangle, text: `Weekly completion at ${weeklyStats.rate}%. Consider reducing scope or breaking tasks smaller.`, type: 'warning' });
+    }
+    if (habitAlerts.length > 0) {
+      tips.push({ icon: Flame, text: `${habitAlerts.length} habit streak${habitAlerts.length > 1 ? 's' : ''} at risk today. Complete them to keep your momentum!`, type: 'warning' });
+    }
+    const overdue = tasks.filter(t => t.status !== 'Completed' && t.dueDate && new Date(t.dueDate) < new Date());
+    if (overdue.length > 0) {
+      tips.push({ icon: AlertTriangle, text: `${overdue.length} overdue task${overdue.length > 1 ? 's' : ''}. Reschedule or complete them to reduce mental load.`, type: 'warning' });
+    }
+    const activeGoals = goals.filter(g => g.status === 'Active');
+    if (activeGoals.length === 0 && tasks.length >= 5) {
+      tips.push({ icon: Target, text: `You have ${tasks.length} tasks but no active goals. Create goals to give your tasks purpose.`, type: 'tip' });
+    }
+    if (weeklyStats.rate >= 80) {
+      tips.push({ icon: TrendingUp, text: `Great week! ${weeklyStats.rate}% completion rate. You're in the zone.`, type: 'success' });
+    }
+    if (userStats.currentStreak >= 7) {
+      tips.push({ icon: Flame, text: `${userStats.currentStreak} day streak! Consistency is your superpower.`, type: 'success' });
+    }
+    if (productiveTime) {
+      tips.push({ icon: Clock, text: `You're most productive in the ${productiveTime.time.split(' ')[0].toLowerCase()} (${productiveTime.count} tasks completed). Schedule important work then.`, type: 'tip' });
+    }
+    return tips;
+  }, [weeklyStats, habitAlerts, tasks, goals, userStats, productiveTime]);
 
   return (
     <div className="space-y-8">
@@ -50,6 +194,155 @@ export function Stats() {
             <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Insights & Recommendations */}
+      {recommendations.length > 0 && (
+        <div className="card rounded-2xl p-5">
+          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+            <Lightbulb size={14} /> Insights
+          </h2>
+          <div className="space-y-2">
+            {recommendations.map((rec, i) => (
+              <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${
+                rec.type === 'warning'
+                  ? isDark ? 'bg-amber-500/10 border border-amber-500/15' : 'bg-amber-50 border border-amber-100'
+                  : rec.type === 'success'
+                    ? isDark ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-emerald-50 border border-emerald-100'
+                    : isDark ? 'bg-blue-500/10 border border-blue-500/15' : 'bg-blue-50 border border-blue-100'
+              }`}>
+                <rec.icon size={16} className={`flex-shrink-0 mt-0.5 ${
+                  rec.type === 'warning' ? isDark ? 'text-amber-400' : 'text-amber-500'
+                    : rec.type === 'success' ? isDark ? 'text-emerald-400' : 'text-emerald-500'
+                    : isDark ? 'text-blue-400' : 'text-blue-500'
+                }`} />
+                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{rec.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Weekly Performance */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="card rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp size={16} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+            <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>This Week</p>
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{weeklyStats.rate}%</div>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+            {weeklyStats.completed} of {weeklyStats.total} tasks completed
+          </p>
+          <div className={`h-1.5 rounded-full overflow-hidden mt-2 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+            <div className={`h-full rounded-full transition-all duration-500 ${weeklyStats.rate >= 70 ? 'bg-emerald-500' : weeklyStats.rate >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${weeklyStats.rate}%` }} />
+          </div>
+        </div>
+        <div className="card rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={16} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
+            <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Peak Productivity</p>
+          </div>
+          {productiveTime ? (
+            <>
+              <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{productiveTime.time.split(' ')[0]}</div>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{productiveTime.count} tasks completed in this window</p>
+            </>
+          ) : (
+            <p className={`text-sm ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Complete tasks to see patterns</p>
+          )}
+        </div>
+        <div className="card rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame size={16} className={habitAlerts.length > 0 ? 'text-amber-500' : isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+            <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Habit Health</p>
+          </div>
+          {habitAlerts.length > 0 ? (
+            <>
+              <div className="text-lg font-bold text-amber-500">{habitAlerts.length} at risk</div>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                {habitAlerts.map(h => h.name).join(', ')}
+              </p>
+            </>
+          ) : habits.length > 0 ? (
+            <>
+              <div className={`text-lg font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>All good</div>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>All habit streaks are safe today</p>
+            </>
+          ) : (
+            <p className={`text-sm ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Create habits to track</p>
+          )}
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="space-y-6">
+        <h2 className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Charts</h2>
+        <div className="card rounded-2xl p-5">
+          <p className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Completions (last 14 days)</p>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyTrendData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
+                <Tooltip contentStyle={isDark ? { background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)' } : {}} formatter={(value) => [value ?? 0, 'Completed']} labelFormatter={(_, payload) => payload?.[0]?.payload?.label} />
+                <Bar dataKey="completed" fill={isDark ? '#8b5cf6' : '#7c3aed'} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="card rounded-2xl p-5">
+            <p className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>By category</p>
+            {categoryPieData.length > 0 ? (
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={categoryPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={64} paddingAngle={2} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
+                      {categoryPieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value ?? 0, 'Tasks']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className={`text-sm py-8 text-center ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Complete tasks to see breakdown</p>
+            )}
+          </div>
+          <div className="card rounded-2xl p-5">
+            <p className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Productive time of day</p>
+            {timeOfDayData.length > 0 ? (
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={timeOfDayData} layout="vertical" margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
+                    <YAxis type="category" dataKey="time" width={100} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
+                    <Tooltip contentStyle={isDark ? { background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)' } : {}} />
+                    <Bar dataKey="count" fill={isDark ? '#06b6d4' : '#0891b2'} radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className={`text-sm py-8 text-center ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Complete tasks to see patterns</p>
+            )}
+          </div>
+        </div>
+        {habits.length > 0 && (
+          <div className="card rounded-2xl p-5">
+            <p className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Habits completed this week</p>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={habitChartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
+                  <YAxis domain={[0, habits.length]} allowDecimals={false} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
+                  <Tooltip contentStyle={isDark ? { background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)' } : {}} formatter={(value) => [`${value}/${habits.length}`, 'Habits done']} />
+                  <Bar dataKey="done" fill={isDark ? '#10b981' : '#059669'} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Activity Metrics */}

@@ -760,7 +760,10 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   }, [skillTrees, achievements, userStats, userId]);
 
   // Get today's date string
-  const getTodayStr = useCallback(() => new Date().toISOString().split('T')[0], []);
+  const getTodayStr = useCallback(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
 
   // Map task category to skill category
   const mapCategoryToSkill = (category: TaskCategory): SkillCategory => {

@@ -57,6 +57,7 @@ interface FeedContextType {
   setSort: (s: FeedSort) => void;
   setTagFilter: (tag: string | null) => void;
   setSubFilter: (subId: string | null) => void;
+  linkArticleToGoal: (articleId: string, goalId: string | null) => void;
   filteredArticles: FeedArticle[];
 }
 
@@ -307,6 +308,18 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       return new Date(b.published_at ?? b.created_at).getTime() - new Date(a.published_at ?? a.created_at).getTime();
     });
 
+  const linkArticleToGoal = useCallback((articleId: string, goalId: string | null) => {
+    setArticles(prev => prev.map(a =>
+      a.id === articleId ? { ...a, goalId: goalId ?? undefined } : a
+    ));
+    const key = 'assisy_feed_articles';
+    try {
+      const stored: FeedArticle[] = JSON.parse(localStorage.getItem(key) ?? '[]');
+      const updated = stored.map((a: FeedArticle) => a.id === articleId ? { ...a, goalId: goalId ?? undefined } : a);
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch { /* ignore */ }
+  }, []);
+
   return (
     <FeedContext.Provider value={{
       subscriptions, articles, filter, sort, tagFilter, subFilter,
@@ -316,7 +329,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       addFeed, removeFeed, refreshFeeds, saveURL,
       toggleRead, toggleBookmark, removeArticle,
       markAllRead, bulkMarkRead, bulkBookmark, bulkDelete, clearOldRead,
-      setFilter, setSort, setTagFilter, setSubFilter,
+      setFilter, setSort, setTagFilter, setSubFilter, linkArticleToGoal,
       filteredArticles,
     }}>
       {children}

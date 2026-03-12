@@ -9,6 +9,7 @@ import { Achievements } from './pages/Achievements';
 import { Stats } from './pages/Stats';
 import { WeeklyReview } from './pages/WeeklyReview';
 import { Calendar } from './pages/Calendar';
+import { Feed } from './pages/Feed';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/stats" element={<Stats />} />
           <Route path="/review" element={<WeeklyReview />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/feed" element={<Feed />} />
         </Routes>
       </Layout>
     </BrowserRouter>

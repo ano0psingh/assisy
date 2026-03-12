@@ -133,66 +133,58 @@ export function applyPayloadToLocal(payload: UserDataPayload): void {
 }
 
 export function saveTasks(tasks: unknown[], userId: string | null): void {
+  LocalStorage.saveTasks(tasks as Parameters<typeof LocalStorage.saveTasks>[0]);
   if (userId) {
     debouncedSave('tasks', userId, () => { saveUserData(userId, { tasks }); });
-  } else {
-    LocalStorage.saveTasks(tasks as Parameters<typeof LocalStorage.saveTasks>[0]);
   }
 }
 
 export function saveGoals(goals: unknown[], userId: string | null): void {
+  LocalStorage.saveGoals(goals as Parameters<typeof LocalStorage.saveGoals>[0]);
   if (userId) {
     debouncedSave('goals', userId, () => { saveUserData(userId, { goals }); });
-  } else {
-    LocalStorage.saveGoals(goals as Parameters<typeof LocalStorage.saveGoals>[0]);
   }
 }
 
 export function saveHabits(habits: unknown[], userId: string | null): void {
+  LocalStorage.saveHabits(habits as Parameters<typeof LocalStorage.saveHabits>[0]);
   if (userId) {
     debouncedSave('habits', userId, () => { saveUserData(userId, { habits }); });
-  } else {
-    LocalStorage.saveHabits(habits as Parameters<typeof LocalStorage.saveHabits>[0]);
   }
 }
 
 export function saveHabitLogs(logs: Record<string, unknown>, userId: string | null): void {
+  localStorage.setItem('life-rpg-habit-logs', JSON.stringify(logs));
   if (userId) {
     debouncedSave('habit_logs', userId, () => { saveUserData(userId, { habit_logs: logs }); });
-  } else {
-    localStorage.setItem('life-rpg-habit-logs', JSON.stringify(logs));
   }
 }
 
 export function saveDailyLogs(logs: unknown[], userId: string | null): void {
+  LocalStorage.saveDailyLogs(logs as Parameters<typeof LocalStorage.saveDailyLogs>[0]);
   if (userId) {
     debouncedSave('daily_logs', userId, () => { saveUserData(userId, { daily_logs: logs }); });
-  } else {
-    LocalStorage.saveDailyLogs(logs as Parameters<typeof LocalStorage.saveDailyLogs>[0]);
   }
 }
 
 export function saveProjects(projects: unknown[], userId: string | null): void {
+  localStorage.setItem('assisy_projects', JSON.stringify(projects));
   if (userId) {
     debouncedSave('projects', userId, () => { saveUserData(userId, { projects }); });
-  } else {
-    localStorage.setItem('assisy_projects', JSON.stringify(projects));
   }
 }
 
 export function saveSubProjects(subProjects: unknown[], userId: string | null): void {
+  localStorage.setItem('assisy_subprojects', JSON.stringify(subProjects));
   if (userId) {
     debouncedSave('sub_projects', userId, () => { saveUserData(userId, { sub_projects: subProjects }); });
-  } else {
-    localStorage.setItem('assisy_subprojects', JSON.stringify(subProjects));
   }
 }
 
 export function saveProjectTasks(tasks: unknown[], userId: string | null): void {
+  localStorage.setItem('assisy_project_tasks', JSON.stringify(tasks));
   if (userId) {
     debouncedSave('project_tasks', userId, () => { saveUserData(userId, { project_tasks: tasks }); });
-  } else {
-    localStorage.setItem('assisy_project_tasks', JSON.stringify(tasks));
   }
 }
 
@@ -202,32 +194,30 @@ export function saveGamification(
   userStats: unknown,
   userId: string | null
 ): void {
+  localStorage.setItem('assisy_skill_trees', JSON.stringify(skillTrees));
+  localStorage.setItem('assisy_achievements', JSON.stringify(achievements));
+  localStorage.setItem('assisy_user_stats', JSON.stringify(userStats));
   if (userId) {
     debouncedSave('gamification', userId, () => {
       saveUserData(userId, { gamification: { skillTrees, achievements, userStats } });
     });
-  } else {
-    localStorage.setItem('assisy_skill_trees', JSON.stringify(skillTrees));
-    localStorage.setItem('assisy_achievements', JSON.stringify(achievements));
-    localStorage.setItem('assisy_user_stats', JSON.stringify(userStats));
   }
 }
 
 export function saveSettings(partial: Record<string, unknown>, userId: string | null): void {
+  if (partial.theme) localStorage.setItem('life-rpg-theme', String(partial.theme));
+  if (partial.equippedTitle) localStorage.setItem('equippedTitle', String(partial.equippedTitle));
+  if (partial.achievement_sounds_enabled !== undefined)
+    localStorage.setItem('achievement_sounds_enabled', String(partial.achievement_sounds_enabled));
+  if (partial.planYourDay_lastSeen) localStorage.setItem('planYourDay_lastSeen', String(partial.planYourDay_lastSeen));
+  if (partial.assisy_pomodoro_settings)
+    localStorage.setItem('assisy_pomodoro_settings', JSON.stringify(partial.assisy_pomodoro_settings));
+  if (partial.assisy_pomodoro_today)
+    localStorage.setItem('assisy_pomodoro_today', JSON.stringify(partial.assisy_pomodoro_today));
   if (userId) {
     debouncedSave('settings', userId, () => {
       const merged = { ...getSettingsLocal(), ...partial };
       saveUserData(userId, { settings: merged });
     });
-  } else {
-    if (partial.theme) localStorage.setItem('life-rpg-theme', String(partial.theme));
-    if (partial.equippedTitle) localStorage.setItem('equippedTitle', String(partial.equippedTitle));
-    if (partial.achievement_sounds_enabled !== undefined)
-      localStorage.setItem('achievement_sounds_enabled', String(partial.achievement_sounds_enabled));
-    if (partial.planYourDay_lastSeen) localStorage.setItem('planYourDay_lastSeen', String(partial.planYourDay_lastSeen));
-    if (partial.assisy_pomodoro_settings)
-      localStorage.setItem('assisy_pomodoro_settings', JSON.stringify(partial.assisy_pomodoro_settings));
-    if (partial.assisy_pomodoro_today)
-      localStorage.setItem('assisy_pomodoro_today', JSON.stringify(partial.assisy_pomodoro_today));
   }
 }

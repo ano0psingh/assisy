@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Flame, Plus, BookOpen } from 'lucide-react';
+import { Flame, Plus, BookOpen, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useDailyLogContext } from '../context/DailyLogContext';
@@ -7,6 +7,7 @@ import { HabitCard } from '../components/habits/HabitCard';
 import { HabitForm } from '../components/habits/HabitForm';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import { ContributionGraph } from '../components/habits/ContributionGraph';
+import { BodyMetrics } from '../components/habits/BodyMetrics';
 import type { TrackingType, Habit } from '../types';
 
 interface HabitWithLogs extends Habit {
@@ -72,8 +73,10 @@ export function Habits() {
     trackingType: TrackingType;
     category: string;
     xpPerUnit: number;
+    dailyTarget?: number;
+    reminderTime?: string;
   }) => {
-    createHabit(data.name, data.trackingType, data.category, data.xpPerUnit);
+    createHabit(data.name, data.trackingType, data.category, data.xpPerUnit, data.dailyTarget, data.reminderTime);
     setIsHabitFormOpen(false);
   };
 
@@ -82,6 +85,8 @@ export function Habits() {
     trackingType: TrackingType;
     category: string;
     xpPerUnit: number;
+    dailyTarget?: number;
+    reminderTime?: string;
   }) => {
     if (!editingHabit) return;
     updateHabit(editingHabit.id, {
@@ -89,6 +94,8 @@ export function Habits() {
       trackingType: data.trackingType,
       category: data.category,
       xpPerUnit: data.xpPerUnit,
+      dailyTarget: data.dailyTarget,
+      reminderTime: data.reminderTime,
     });
     setEditingHabit(null);
     setIsHabitFormOpen(false);
@@ -131,7 +138,12 @@ export function Habits() {
             }`}
           >
             <BookOpen size={18} />
-            <span>{checkedInToday ? 'Update Check-In' : 'Daily Check-In'}</span>
+            <span>
+              {checkedInToday ? 'Update Check-In' : 'Daily Check-In'}
+              {stats.totalHabits > 0 && (
+                <span className="ml-1 opacity-90">({stats.todayCompletedCount}/{stats.totalHabits})</span>
+              )}
+            </span>
           </button>
           <button
             onClick={() => setIsHabitFormOpen(true)}
@@ -214,6 +226,9 @@ export function Habits() {
         </div>
       )}
 
+      {/* Body Metrics */}
+      <BodyMetrics />
+
       {/* Recent Check-ins Summary */}
       {recentLogs.length > 0 && (
         <div className="card rounded-2xl p-5">
@@ -221,43 +236,56 @@ export function Habits() {
             Recent Check-ins
           </h2>
           <div className="space-y-3">
-            {recentLogs.slice(0, 5).map((log) => (
-              <div 
-                key={log.id}
-                className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                    {new Date(log.date).toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </span>
-                  {log.energyLevel && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      log.energyLevel <= 3 
-                        ? 'bg-red-500/20 text-red-400'
-                        : log.energyLevel <= 6
-                        ? 'bg-amber-500/20 text-amber-400'
-                        : 'bg-emerald-500/20 text-emerald-400'
-                    }`}>
-                      Energy: {log.energyLevel}/10
+            {recentLogs.slice(0, 5).map((log) => {
+              const htmlToLines = (html: string): string[] => {
+                const el = document.createElement('div');
+                el.innerHTML = html;
+                const items = Array.from(el.querySelectorAll('li'));
+                if (items.length > 0) return items.map(li => li.textContent?.trim() || '').filter(Boolean);
+                return (el.textContent || '').split('\n').map(s => s.trim()).filter(Boolean);
+              };
+              return (
+                <div 
+                  key={log.id}
+                  className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                      {new Date(log.date).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
                     </span>
+                    {log.energyLevel && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                        log.energyLevel <= 3 
+                          ? 'bg-red-500/20 text-red-400'
+                          : log.energyLevel <= 6
+                          ? 'bg-amber-500/20 text-amber-400'
+                          : 'bg-emerald-500/20 text-emerald-400'
+                      }`}>
+                        <Zap size={10} />{log.energyLevel}/10
+                      </span>
+                    )}
+                  </div>
+                  {log.wins && (
+                    <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                      {htmlToLines(log.wins).slice(0, 3).map((line, i) => (
+                        <p key={i}><span className="text-emerald-500">•</span> {line}</p>
+                      ))}
+                    </div>
+                  )}
+                  {log.tomorrowFocus && (
+                    <div className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                      {htmlToLines(log.tomorrowFocus).slice(0, 1).map((line, i) => (
+                        <p key={i}><span className="text-violet-500">→</span> {line}</p>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {log.wins && (
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-                    <span className="text-emerald-500">✓</span> {log.wins}
-                  </p>
-                )}
-                {log.tomorrowFocus && (
-                  <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-                    <span className="text-violet-500">→</span> Focus: {log.tomorrowFocus}
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -31,6 +31,13 @@ export function ExpandableModal({
     if (!isOpen) {
       setIsFullScreen(false);
     }
+    // Hide bottom nav when modal is open
+    if (isOpen) {
+      document.documentElement.setAttribute('data-modal-open', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-modal-open');
+    }
+    return () => document.documentElement.removeAttribute('data-modal-open');
   }, [isOpen]);
 
   useEffect(() => {
@@ -95,7 +102,7 @@ export function ExpandableModal({
   );
 
   const footerEl = footer ? (
-    <div className={`flex-shrink-0 px-6 py-4 border-t ${
+    <div className={`flex-shrink-0 px-6 py-4 pb-safe border-t ${
       isDark ? 'border-white/10' : 'border-slate-100'
     }`}>
       {footer}
@@ -104,7 +111,7 @@ export function ExpandableModal({
 
   if (isFullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col">
+      <div className="fixed inset-0 z-[60] flex flex-col">
         <div className={`absolute inset-0 ${isDark ? 'bg-[#0a0a12]' : 'bg-slate-50'}`} />
         <div className={`relative flex flex-col h-full w-full animate-fade-in ${
           isDark ? 'bg-[#0a0a12]' : 'bg-slate-50'
@@ -120,12 +127,12 @@ export function ExpandableModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 animate-fade-in">
       <div
         className={`absolute inset-0 backdrop-blur-md ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
         onClick={onClose}
       />
-      <div className={`relative rounded-2xl shadow-elevated w-full ${maxWidth} max-h-[90vh] flex flex-col animate-slide-up overflow-hidden ${
+      <div className={`relative rounded-t-2xl sm:rounded-2xl shadow-elevated w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col animate-slide-up overflow-hidden ${
         isDark
           ? 'bg-[#141418] border border-white/[0.08]'
           : 'bg-white'

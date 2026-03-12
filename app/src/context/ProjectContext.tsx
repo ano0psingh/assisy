@@ -442,9 +442,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // ============ Today Integration ============
 
   const addTaskToToday = useCallback((taskId: string) => {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     setProjectTasks(prev => prev.map(t =>
       t.id === taskId
-        ? { ...t, isFocusedToday: true, updatedAt: new Date() }
+        ? { ...t, isFocusedToday: true, focusedDate: today, updatedAt: new Date() }
         : t
     ));
   }, []);

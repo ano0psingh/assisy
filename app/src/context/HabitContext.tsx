@@ -5,6 +5,8 @@ import { saveHabits as saveHabitsToStore, saveHabitLogs as saveHabitLogsToStore 
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
+import { getPermissionStatus, startHabitReminders, stopHabitReminders } from '../lib/notifications';
+import { updatePushReminders } from '../lib/pushSubscription';
 
 interface HabitLog {
   date: string; // YYYY-MM-DD format
@@ -22,12 +24,15 @@ interface HabitContextType {
     name: string,
     trackingType: TrackingType,
     category: string,
-    xpPerUnit?: number
+    xpPerUnit?: number,
+    dailyTarget?: number,
+    reminderTime?: string,
   ) => HabitWithLogs;
   updateHabit: (habitId: string, updates: Partial<Habit>) => void;
   deleteHabit: (habitId: string) => void;
   logHabit: (habitId: string, value: number, date?: Date) => void;
   getHabitStreak: (habitId: string) => number;
+  getLongestStreak: (habitId: string) => number;
   getTodaysLog: (habitId: string) => number;
   getHabitLogs: (habitId: string, days?: number) => HabitLog[];
   getHabitById: (habitId: string) => HabitWithLogs | undefined;
@@ -38,17 +43,20 @@ const HabitContext = createContext<HabitContextType | null>(null);
 
 const HABIT_LOGS_KEY = 'life-rpg-habit-logs';
 
-// Helper to get date string in YYYY-MM-DD format
+// Helper to get date string in YYYY-MM-DD format using LOCAL time (not UTC)
 const getDateString = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
-// Helper to calculate streak
-const calculateStreak = (logs: HabitLog[]): number => {
+// Helper to calculate streak — threshold defaults to 1 (any > 0), but uses dailyTarget when set
+const calculateStreak = (logs: HabitLog[], threshold = 1): number => {
   if (logs.length === 0) return 0;
   
   const sortedLogs = [...logs]
-    .filter(log => log.value > 0)
+    .filter(log => log.value >= threshold)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   if (sortedLogs.length === 0) return 0;
@@ -79,6 +87,26 @@ const calculateStreak = (logs: HabitLog[]): number => {
   return streak;
 };
 
+const calculateLongestStreak = (logs: HabitLog[], threshold = 1): number => {
+  const dates = new Set(logs.filter(l => l.value >= threshold).map(l => l.date));
+  if (dates.size === 0) return 0;
+  const sorted = [...dates].sort();
+  let longest = 1;
+  let current = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1]);
+    const curr = new Date(sorted[i]);
+    const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86400000);
+    if (diffDays === 1) {
+      current++;
+      longest = Math.max(longest, current);
+    } else {
+      current = 1;
+    }
+  }
+  return longest;
+};
+
 export function HabitProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { dataVersion } = useDataVersion();
@@ -95,12 +123,24 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     const habitsWithLogs: HabitWithLogs[] = savedHabits.map(habit => ({
       ...habit,
       logs: logsMap[habit.id] || [],
-      streakCount: calculateStreak(logsMap[habit.id] || []),
+      streakCount: calculateStreak(logsMap[habit.id] || [], habit.dailyTarget || 1),
     }));
     
     setHabits(habitsWithLogs);
     setLoading(false);
   }, [dataVersion]);
+
+  // Start habit reminders (local + push) when habits with reminder times exist
+  useEffect(() => {
+    const withReminders = habits.filter(h => h.reminderTime);
+    if (getPermissionStatus() === 'granted') {
+      if (withReminders.length > 0) {
+        startHabitReminders(withReminders.map(h => ({ name: h.name, reminderTime: h.reminderTime })));
+        updatePushReminders(withReminders.map(h => ({ name: h.name, time: h.reminderTime! })));
+      }
+    }
+    return () => stopHabitReminders();
+  }, [habits]);
 
   // Save habits (without logs)
   const saveHabits = useCallback((habitsToSave: HabitWithLogs[]) => {
@@ -121,7 +161,9 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     name: string,
     trackingType: TrackingType,
     category: string,
-    xpPerUnit: number = 1
+    xpPerUnit: number = 1,
+    dailyTarget?: number,
+    reminderTime?: string,
   ): HabitWithLogs => {
     const newHabit: HabitWithLogs = {
       id: uuidv4(),
@@ -130,6 +172,8 @@ export function HabitProvider({ children }: { children: ReactNode }) {
       category,
       streakCount: 0,
       xpPerUnit,
+      dailyTarget,
+      reminderTime,
       logs: [],
     };
 
@@ -184,7 +228,7 @@ export function HabitProvider({ children }: { children: ReactNode }) {
             newLogs = [...habit.logs, { date: dateStr, value }];
           }
           
-          const newStreak = calculateStreak(newLogs);
+          const newStreak = calculateStreak(newLogs, habit.dailyTarget || 1);
           
           return {
             ...habit,
@@ -205,6 +249,12 @@ export function HabitProvider({ children }: { children: ReactNode }) {
   const getHabitStreak = useCallback((habitId: string): number => {
     const habit = habits.find(h => h.id === habitId);
     return habit?.streakCount || 0;
+  }, [habits]);
+
+  const getLongestStreak = useCallback((habitId: string): number => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return 0;
+    return calculateLongestStreak(habit.logs, habit.dailyTarget || 1);
   }, [habits]);
 
   const getTodaysLog = useCallback((habitId: string): number => {
@@ -249,6 +299,7 @@ export function HabitProvider({ children }: { children: ReactNode }) {
       deleteHabit,
       logHabit,
       getHabitStreak,
+      getLongestStreak,
       getTodaysLog,
       getHabitLogs,
       getHabitById,

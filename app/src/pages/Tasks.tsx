@@ -12,9 +12,10 @@ import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
 type ViewMode = 'list' | 'grouped' | 'matrix';
+type SmartFilter = 'none' | 'overdue' | 'due_today' | 'due_week' | 'high_priority' | 'quick_wins' | 'in_today';
 
 export function Tasks() {
-  const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, getTodaysTasks } = useTaskContext();
+  const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, removeFromToday, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
   const { projects, createProjectTask, getSubProjectsByProject } = useProjectContext();
   const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements, recordTaskCreated } = useGamification();
@@ -29,6 +30,7 @@ export function Tasks() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
+  const [smartFilter, setSmartFilter] = useState<SmartFilter>('none');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set(['unlinked']));
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
@@ -39,6 +41,12 @@ export function Tasks() {
   const [taskToMove, setTaskToMove] = useState<Task | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>('');
+
+  const goalMap = useMemo(() => {
+    const m = new Map<string, string>();
+    goals.forEach(g => m.set(g.id, g.title));
+    return m;
+  }, [goals]);
 
   // Get active projects for the move modal
   const activeProjects = useMemo(() => 
@@ -83,6 +91,10 @@ export function Tasks() {
     setTaskToMove(null);
   };
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const nowDate = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+  const weekEnd = (() => { const d = new Date(nowDate); d.setDate(d.getDate() + 7); return d; })();
+
   const filteredTasks = tasks
     .filter(task => {
       if (statusFilter === 'pending') return task.status !== 'Completed';
@@ -92,6 +104,30 @@ export function Tasks() {
     .filter(task => {
       if (categoryFilter === 'all') return true;
       return task.category === categoryFilter;
+    })
+    .filter(task => {
+      if (smartFilter === 'none') return true;
+      switch (smartFilter) {
+        case 'overdue': {
+          if (task.status === 'Completed' || !task.dueDate) return false;
+          const due = new Date(task.dueDate); due.setHours(0,0,0,0);
+          return due < nowDate;
+        }
+        case 'due_today': {
+          if (task.status === 'Completed' || !task.dueDate) return false;
+          const due = new Date(task.dueDate); due.setHours(0,0,0,0);
+          return due.getTime() === nowDate.getTime();
+        }
+        case 'due_week': {
+          if (task.status === 'Completed' || !task.dueDate) return false;
+          const due = new Date(task.dueDate); due.setHours(0,0,0,0);
+          return due >= nowDate && due <= weekEnd;
+        }
+        case 'high_priority': return task.priority === 'High';
+        case 'quick_wins': return task.priority === 'High' && task.effort === 'Low';
+        case 'in_today': return !!(task.isFocusedToday && task.focusedDate === todayStr);
+        default: return true;
+      }
     })
     .sort((a, b) => {
       if (a.status === 'Completed' && b.status !== 'Completed') return 1;
@@ -324,17 +360,15 @@ export function Tasks() {
           >
             <ListFilter size={15} />
             <span>Filters</span>
-            {(statusFilter !== 'all' || categoryFilter !== 'all') && (
-              <span className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center ${
-                isDark ? 'bg-violet-500 text-white' : 'bg-violet-500 text-white'
-              }`}>
-                {(statusFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0)}
+            {(statusFilter !== 'all' || categoryFilter !== 'all' || smartFilter !== 'none') && (
+              <span className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center bg-violet-500 text-white`}>
+                {(statusFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0) + (smartFilter !== 'none' ? 1 : 0)}
               </span>
             )}
           </button>
-          {(statusFilter !== 'all' || categoryFilter !== 'all') && (
+          {(statusFilter !== 'all' || categoryFilter !== 'all' || smartFilter !== 'none') && (
             <button
-              onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }}
+              onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); setSmartFilter('none'); }}
               className={`text-xs px-2 py-1 rounded-lg transition-colors ${
                 isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
@@ -371,42 +405,70 @@ export function Tasks() {
         </div>
       </div>
       {filtersOpen && (
-        <div className={`card rounded-xl p-3 flex flex-wrap items-center gap-3 animate-fade-in`}>
-          <div className="flex items-center gap-2">
-            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status</label>
-            <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-              {(['all', 'pending', 'completed'] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-2.5 py-1 text-xs font-medium capitalize transition-all ${
-                    statusFilter === status
-                      ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                      : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
+        <div className={`card rounded-xl p-3 space-y-3 animate-fade-in`}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status</label>
+              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {(['all', 'pending', 'completed'] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status)}
+                    className={`px-2.5 py-1 text-xs font-medium capitalize transition-all ${
+                      statusFilter === status
+                        ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Category</label>
+              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                {(['all', 'Personal', 'Financial', 'Professional'] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`px-2.5 py-1 text-xs font-medium transition-all ${
+                      categoryFilter === cat
+                        ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    {cat === 'all' ? 'All' : cat}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Category</label>
-            <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-              {(['all', 'Personal', 'Financial', 'Professional'] as const).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-all ${
-                    categoryFilter === cat
-                      ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                      : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
-                  }`}
-                >
-                  {cat === 'all' ? 'All' : cat}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Quick</label>
+            {([
+              { id: 'none' as const, label: 'All' },
+              { id: 'overdue' as const, label: 'Overdue' },
+              { id: 'due_today' as const, label: 'Due Today' },
+              { id: 'due_week' as const, label: 'Due This Week' },
+              { id: 'high_priority' as const, label: 'High Priority' },
+              { id: 'quick_wins' as const, label: 'Quick Wins' },
+              { id: 'in_today' as const, label: "In Today's Plan" },
+            ]).map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setSmartFilter(id)}
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+                  smartFilter === id
+                    ? id === 'overdue'
+                      ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
+                      : isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                    : isDark ? 'text-gray-400 hover:bg-white/5 bg-white/[0.02]' : 'text-slate-500 hover:bg-slate-50 bg-slate-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -434,14 +496,19 @@ export function Tasks() {
                 <div className="space-y-3">
                   {pendingTasks.map((task, index) => (
                     <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 30}ms` }}>
-                      <TaskCard 
-                        task={task} 
-                        onToggleComplete={handleToggleComplete} 
+                      <TaskCard
+                        task={task}
+                        onToggleComplete={handleToggleComplete}
                         onDelete={handleDeleteWithUndo}
                         onEdit={handleEdit}
                         onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                        onRemoveFromToday={removeFromToday}
                         onMoveToProject={handleOpenMoveToProject}
                         showTodayActions={!todayTaskIds.has(task.id)}
+                        goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
+                        onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined}
+                        onPauseRecurring={task.isRecurring ? pauseRecurring : undefined}
+                        onResumeRecurring={task.isRecurring ? resumeRecurring : undefined}
                       />
                     </div>
                   ))}
@@ -504,6 +571,7 @@ export function Tasks() {
                               onToggleComplete={handleToggleComplete} 
                               onDelete={handleDeleteWithUndo}
                               onEdit={handleEdit}
+                              goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
                             />
                           </div>
                         ))}
@@ -537,7 +605,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
                 ))
               )}
             </div>
@@ -562,7 +630,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
                 ))
               )}
             </div>
@@ -587,7 +655,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
                 ))
               )}
             </div>
@@ -612,7 +680,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
                 ))
               )}
             </div>
@@ -736,8 +804,10 @@ export function Tasks() {
                               onDelete={handleDeleteWithUndo}
                               onEdit={handleEdit}
                               onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                              onRemoveFromToday={removeFromToday}
                               onMoveToProject={handleOpenMoveToProject}
                               showTodayActions={!todayTaskIds.has(task.id)}
+                              goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
                             />
                           </div>
                         ))}
@@ -813,7 +883,9 @@ export function Tasks() {
                                     onDelete={handleDeleteWithUndo}
                                     onEdit={handleEdit}
                                     onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                                    onRemoveFromToday={removeFromToday}
                                     onMoveToProject={handleOpenMoveToProject}
+                                    goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
                                     showTodayActions={!todayTaskIds.has(task.id)}
                                   />
                                 </div>
