@@ -12,7 +12,7 @@ import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 
 type FilterStatus = 'all' | 'pending' | 'completed';
 type ViewMode = 'list' | 'grouped' | 'matrix';
-type SmartFilter = 'none' | 'overdue' | 'due_today' | 'due_week' | 'high_priority' | 'quick_wins' | 'in_today';
+type SmartFilter = 'none' | 'overdue' | 'due_today' | 'due_week' | 'high_priority' | 'quick_wins' | 'in_today' | 'recurring';
 
 export function Tasks() {
   const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, removeFromToday, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
@@ -97,7 +97,23 @@ export function Tasks() {
 
   const filteredTasks = tasks
     .filter(task => {
-      if (statusFilter === 'pending') return task.status !== 'Completed';
+      if (statusFilter === 'pending') {
+        if (task.status === 'Completed') return false;
+        if (task.isRecurring) {
+          const today = new Date();
+          const dayOfWeek = today.getDay();
+          const dayOfMonth = today.getDate();
+          if (task.pausedUntil && todayStr <= task.pausedUntil) return false;
+          if (task.skippedDates?.includes(todayStr)) return false;
+          if (task.recurrencePattern === 'daily') return true;
+          if (task.recurrencePattern === 'weekly' || task.recurrencePattern === 'specific_days') {
+            return task.specificDays?.includes(dayOfWeek) || false;
+          }
+          if (task.recurrencePattern === 'monthly') return dayOfMonth === (task.monthDay ?? 1);
+          return false;
+        }
+        return true;
+      }
       if (statusFilter === 'completed') return task.status === 'Completed';
       return true;
     })
@@ -126,6 +142,7 @@ export function Tasks() {
         case 'high_priority': return task.priority === 'High';
         case 'quick_wins': return task.priority === 'High' && task.effort === 'Low';
         case 'in_today': return !!(task.isFocusedToday && task.focusedDate === todayStr);
+        case 'recurring': return task.isRecurring;
         default: return true;
       }
     })
@@ -454,6 +471,7 @@ export function Tasks() {
               { id: 'high_priority' as const, label: 'High Priority' },
               { id: 'quick_wins' as const, label: 'Quick Wins' },
               { id: 'in_today' as const, label: "In Today's Plan" },
+              { id: 'recurring' as const, label: 'Recurring' },
             ]).map(({ id, label }) => (
               <button
                 key={id}
