@@ -46,9 +46,20 @@ function migrateGoal(goal: Goal): Goal {
   };
 }
 
+export interface LevelUpEvent {
+  goalId: string;
+  goalTitle: string;
+  goalTheme?: GoalTheme;
+  oldLevel: number;
+  newLevel: number;
+  totalXP: number;
+}
+
 interface GoalContextType {
   goals: Goal[];
   loading: boolean;
+  levelUpEvent: LevelUpEvent | null;
+  clearLevelUp: () => void;
   createGoal: (
     title: string,
     description?: string,
@@ -94,6 +105,9 @@ export function GoalProvider({ children }: { children: ReactNode }) {
   const userId = user?.id ?? null;
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [levelUpEvent, setLevelUpEvent] = useState<LevelUpEvent | null>(null);
+
+  const clearLevelUp = useCallback(() => setLevelUpEvent(null), []);
 
   useEffect(() => {
     const savedGoals = LocalStorage.getGoals();
@@ -304,8 +318,19 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     setGoals(prev => {
       const updated = prev.map(goal => {
         if (goal.id !== goalId) return goal;
+        const oldLevel = goal.level || 1;
         const newTotalXP = (goal.totalXP || 0) + xp;
         const levelInfo = getLevelFromXP(newTotalXP);
+        if (levelInfo.level > oldLevel) {
+          setLevelUpEvent({
+            goalId: goal.id,
+            goalTitle: goal.title,
+            goalTheme: goal.theme,
+            oldLevel,
+            newLevel: levelInfo.level,
+            totalXP: newTotalXP,
+          });
+        }
         return { ...goal, totalXP: newTotalXP, ...levelInfo };
       });
       saveGoalsToStore(updated, userId);
@@ -333,6 +358,7 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     setGoals(prev => {
       const updated = prev.map(goal => {
         if (goal.id !== goalId) return goal;
+        const oldLevel = goal.level || 1;
         const milestones = (goal.milestones || []).map(m => {
           if (m.id !== milestoneId || m.isCompleted) return m;
           return { ...m, isCompleted: true, completedAt: new Date() };
@@ -341,6 +367,16 @@ export function GoalProvider({ children }: { children: ReactNode }) {
         const bonusXP = completedMilestone?.xpReward || 0;
         const newTotalXP = (goal.totalXP || 0) + bonusXP;
         const levelInfo = getLevelFromXP(newTotalXP);
+        if (levelInfo.level > oldLevel) {
+          setLevelUpEvent({
+            goalId: goal.id,
+            goalTitle: goal.title,
+            goalTheme: goal.theme,
+            oldLevel,
+            newLevel: levelInfo.level,
+            totalXP: newTotalXP,
+          });
+        }
         return { ...goal, milestones, totalXP: newTotalXP, ...levelInfo };
       });
       saveGoalsToStore(updated, userId);
@@ -388,6 +424,8 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     <GoalContext.Provider value={{
       goals,
       loading,
+      levelUpEvent,
+      clearLevelUp,
       createGoal,
       updateGoal,
       deleteGoal,

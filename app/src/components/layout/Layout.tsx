@@ -5,6 +5,7 @@ import { BottomNav } from './BottomNav';
 import { useTheme } from '../../context/ThemeContext';
 import { GlobalSearch } from '../common/GlobalSearch';
 import { FocusTimer } from '../common/FocusTimer';
+import { LevelUpCelebration } from '../common/LevelUpCelebration';
 
 interface LayoutProps {
   children: ReactNode;
@@ -38,6 +39,7 @@ export function Layout({ children }: LayoutProps) {
 
       <BottomNav />
       <GlobalSearch />
+      <LevelUpCelebration />
       <FocusTimer
         isOpen={focusTimerOpen}
         onClose={() => setFocusTimerOpen(false)}
