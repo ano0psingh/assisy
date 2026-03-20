@@ -52,7 +52,7 @@ export function UndoProvider({ children }: { children: ReactNode }) {
 
       {/* Toast */}
       {action && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-slide-up">
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-slide-up">
           <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-elevated ${
             isDark
               ? 'bg-[#1a1a2e] border border-white/10 text-gray-200'

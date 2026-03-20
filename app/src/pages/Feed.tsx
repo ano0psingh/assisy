@@ -1301,7 +1301,7 @@ export function Feed() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-xl w-full px-4">
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[60] max-w-xl w-full px-4">
           <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-xl ${
             isDark
               ? 'bg-gray-900/90 border border-white/10'

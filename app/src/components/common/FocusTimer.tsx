@@ -202,7 +202,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
     return (
       <button
         onClick={onReopen || onClose}
-        className={`fixed bottom-6 right-6 z-[55] flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-105 ${
+        className={`fixed bottom-20 md:bottom-6 right-6 z-[55] flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-105 ${
           phase === 'work'
             ? isDark ? 'bg-violet-500/20 border border-violet-500/30 text-violet-400' : 'bg-violet-100 border border-violet-200 text-violet-600'
             : isDark ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400' : 'bg-emerald-100 border border-emerald-200 text-emerald-600'

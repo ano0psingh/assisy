@@ -110,7 +110,7 @@ export function QuickCaptureFAB() {
       {expanded ? (
         <div
           ref={cardRef}
-          className={`rounded-2xl shadow-xl p-3 w-64 animate-slide-up ${
+          className={`rounded-2xl shadow-xl p-3 w-64 max-w-[calc(100vw-2rem)] animate-slide-up ${
             isDark
               ? 'bg-gray-800 border border-white/10'
               : 'bg-white border border-slate-200'
