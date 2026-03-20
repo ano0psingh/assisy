@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/push/cron",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/feed.html", "destination": "/feed.html" },
     { "source": "/api/:path*", "destination": "/api/:path*" },

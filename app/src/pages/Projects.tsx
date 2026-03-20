@@ -6,12 +6,26 @@ import {
   Pencil, Trash2, Play, CheckCircle2, Circle,
   X, ListTodo, Layers,
   CalendarPlus, CalendarCheck, ChevronLeft,
-  LayoutGrid, Table2,
+  LayoutGrid, Table2, Sparkles, Loader2, Check,
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
 import { TiptapEditor } from '../components/common/TiptapEditor';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { TaskSheet } from '../components/projects/TaskSheet';
+import { askAIJson, isAIConfigured } from '../lib/ai';
+
+interface AIPlanTask {
+  title: string;
+  priority: 'High' | 'Medium' | 'Low';
+  effort: 'High' | 'Medium' | 'Low';
+  selected: boolean;
+}
+
+interface AIPlanSubProject {
+  title: string;
+  tasks: AIPlanTask[];
+  selected: boolean;
+}
 
 type PageView = 'cards' | 'sheet';
 type DetailView = 'none' | 'project' | 'subproject';
@@ -84,6 +98,75 @@ export function Projects() {
     deadline: '',
     parentTaskId: '',
   });
+
+  // AI Plan state
+  const [aiPlan, setAiPlan] = useState<AIPlanSubProject[] | null>(null);
+  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+  const [aiPlanError, setAiPlanError] = useState<string | null>(null);
+
+  const handleGenerateAIPlan = async () => {
+    if (!projectForm.title.trim()) return;
+    setAiPlanLoading(true);
+    setAiPlanError(null);
+    try {
+      const result = await askAIJson<{ subProjects: { title: string; tasks: { title: string; priority: 'High' | 'Medium' | 'Low'; effort: 'High' | 'Medium' | 'Low' }[] }[] }>(
+        `Create a project plan for: ${projectForm.title}. Description: ${projectForm.description || 'No description provided'}. Generate sub-projects and tasks to achieve this project's goals. Respond with JSON: {"subProjects": [{"title": string, "tasks": [{"title": string, "priority": "High"|"Medium"|"Low", "effort": "High"|"Medium"|"Low"}]}]}`,
+      );
+      if (result.subProjects) {
+        setAiPlan(result.subProjects.map(sp => ({
+          ...sp,
+          selected: true,
+          tasks: sp.tasks.map(t => ({ ...t, selected: true })),
+        })));
+      }
+    } catch {
+      setAiPlanError('Failed to generate plan. Try again.');
+    } finally {
+      setAiPlanLoading(false);
+    }
+  };
+
+  const handleCreatePlanItems = (projectId: string) => {
+    if (!aiPlan) return;
+    for (const sp of aiPlan) {
+      if (!sp.selected) continue;
+      const newSP = createSubProject(projectId, sp.title);
+      for (const task of sp.tasks) {
+        if (task.selected) {
+          createProjectTask(newSP.id, task.title, undefined, task.priority, task.effort);
+        }
+      }
+    }
+    setAiPlan(null);
+  };
+
+  const handleCreateProjectWithPlan = () => {
+    if (!projectForm.title.trim()) return;
+    const newProject = createProject(
+      projectForm.title,
+      projectForm.description,
+      projectForm.color,
+      projectForm.deadline ? new Date(projectForm.deadline) : undefined,
+    );
+    if (aiPlan) {
+      handleCreatePlanItems(newProject.id);
+    }
+    setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
+    setAiPlan(null);
+    setIsProjectFormOpen(false);
+  };
+
+  const toggleSubProjectSelection = (spIndex: number) => {
+    setAiPlan(prev => prev?.map((sp, i) =>
+      i === spIndex ? { ...sp, selected: !sp.selected, tasks: sp.tasks.map(t => ({ ...t, selected: !sp.selected })) } : sp
+    ) ?? null);
+  };
+
+  const toggleTaskSelection = (spIndex: number, taskIndex: number) => {
+    setAiPlan(prev => prev?.map((sp, i) =>
+      i === spIndex ? { ...sp, tasks: sp.tasks.map((t, j) => j === taskIndex ? { ...t, selected: !t.selected } : t) } : sp
+    ) ?? null);
+  };
 
   // Filter projects by status
   const filteredProjects = useMemo(() => {
@@ -903,22 +986,22 @@ export function Projects() {
       {/* Project Form Modal */}
       <ExpandableModal
         isOpen={isProjectFormOpen}
-        onClose={() => { setIsProjectFormOpen(false); setEditingProject(null); }}
+        onClose={() => { setIsProjectFormOpen(false); setEditingProject(null); setAiPlan(null); setAiPlanError(null); }}
         title={editingProject ? 'Edit Project' : 'New Project'}
         icon={<FolderKanban className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
         footer={
           <div className="flex justify-end space-x-3">
             <button
-              onClick={() => { setIsProjectFormOpen(false); setEditingProject(null); }}
+              onClick={() => { setIsProjectFormOpen(false); setEditingProject(null); setAiPlan(null); }}
               className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
             >
               Cancel
             </button>
             <button
-              onClick={editingProject ? handleUpdateProject : handleCreateProject}
+              onClick={editingProject ? handleUpdateProject : (aiPlan ? handleCreateProjectWithPlan : handleCreateProject)}
               className="btn-primary px-4 py-2 rounded-xl"
             >
-              {editingProject ? 'Save' : 'Create'}
+              {editingProject ? 'Save' : aiPlan ? 'Create with Plan' : 'Create'}
             </button>
           </div>
         }
@@ -1003,11 +1086,101 @@ export function Projects() {
             </div>
           ) : null;
 
+          const aiPlanSection = !editingProject && isAIConfigured() ? (
+            <div>
+              {!aiPlan ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAIPlan}
+                    disabled={aiPlanLoading || !projectForm.title.trim()}
+                    className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                      aiPlanLoading || !projectForm.title.trim()
+                        ? isDark ? 'bg-violet-500/10 text-violet-400/50 cursor-not-allowed' : 'bg-violet-50 text-violet-400 cursor-not-allowed'
+                        : isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                    }`}
+                  >
+                    {aiPlanLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                    {aiPlanLoading ? 'Generating plan...' : 'AI: Generate Plan'}
+                  </button>
+                  {aiPlanError && <p className={`text-xs mt-1.5 ${isDark ? 'text-red-400' : 'text-red-500'}`}>{aiPlanError}</p>}
+                  {!projectForm.title.trim() && <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Enter a project title first</p>}
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>AI-Generated Plan</span>
+                    <button
+                      type="button"
+                      onClick={() => setAiPlan(null)}
+                      className={`text-xs ${isDark ? 'text-gray-500 hover:text-gray-400' : 'text-slate-500 hover:text-slate-600'}`}
+                    >
+                      Discard
+                    </button>
+                  </div>
+                  <div className={`rounded-xl border max-h-64 overflow-y-auto ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                    {aiPlan.map((sp, spIdx) => (
+                      <div key={spIdx} className={`${spIdx > 0 ? `border-t ${isDark ? 'border-white/5' : 'border-slate-100'}` : ''}`}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSubProjectSelection(spIdx)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
+                            isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                            sp.selected
+                              ? isDark ? 'bg-violet-500 text-white' : 'bg-violet-500 text-white'
+                              : isDark ? 'border border-white/20' : 'border border-slate-300'
+                          }`}>
+                            {sp.selected && <Check size={12} />}
+                          </div>
+                          <Layers size={14} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+                          <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{sp.title}</span>
+                        </button>
+                        {sp.tasks.map((task, tIdx) => (
+                          <button
+                            key={tIdx}
+                            type="button"
+                            onClick={() => toggleTaskSelection(spIdx, tIdx)}
+                            className={`w-full flex items-center gap-2 pl-10 pr-3 py-1.5 text-left transition-colors ${
+                              isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
+                              task.selected
+                                ? isDark ? 'bg-violet-500/80 text-white' : 'bg-violet-400 text-white'
+                                : isDark ? 'border border-white/15' : 'border border-slate-300'
+                            }`}>
+                              {task.selected && <Check size={10} />}
+                            </div>
+                            <span className={`text-xs flex-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{task.title}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                              task.priority === 'High'
+                                ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
+                                : task.priority === 'Medium'
+                                  ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                                  : isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-slate-100 text-slate-500'
+                            }`}>{task.priority}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <p className={`text-xs mt-1.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                    Uncheck items you don't want. Click "Create with Plan" to create everything.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : null;
+
           return isFS ? (
             <div className="flex h-full">
               <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
                 {titleInput}
                 {notesInput}
+                {aiPlanSection}
               </div>
               <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
                 <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Project details</h3>
@@ -1023,6 +1196,7 @@ export function Projects() {
               {colorInput}
               {deadlineInput}
               {statusInput}
+              {aiPlanSection}
             </div>
           );
         }}

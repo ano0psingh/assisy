@@ -116,14 +116,15 @@ export function startHabitReminders(habits: { name: string; reminderTime?: strin
 
   const check = () => {
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const nowTime = `${hh}:${mm}`;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     habits.forEach(h => {
       if (!h.reminderTime) return;
-      if (nowTime !== h.reminderTime) return;
+      const [rh, rm] = h.reminderTime.split(':').map(Number);
+      const reminderMinutes = (rh || 0) * 60 + (rm || 0);
+      const diff = Math.abs(nowMinutes - reminderMinutes);
+      if (diff > 2 && (1440 - diff) > 2) return;
       const key = notifiedKey(h.name);
       if (localStorage.getItem(key) === todayStr) return;
       notifyHabitReminder(h.name);

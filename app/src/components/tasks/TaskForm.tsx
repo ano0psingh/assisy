@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
 import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Sparkles, Target, Pencil, Calendar } from 'lucide-react';
+import { Sparkles, Target, Pencil, Calendar, Loader2, Check, Square, CheckSquare } from 'lucide-react';
 import { TiptapEditor } from '../common/TiptapEditor';
 import { ExpandableModal } from '../common/ExpandableModal';
+import { askAIJson, isAIConfigured } from '../../lib/ai';
+
+interface SuggestedSubtask {
+  title: string;
+  effort: 'High' | 'Low';
+  selected: boolean;
+}
 
 interface TaskFormProps {
   onSubmit: (data: {
@@ -25,9 +32,10 @@ interface TaskFormProps {
   goals?: Goal[];
   editingTask?: Task | null;
   defaultAddToToday?: boolean;
+  onCreateSubtasks?: (subtasks: { title: string; effort: Effort }[]) => void;
 }
 
-export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, defaultAddToToday = false }: TaskFormProps) {
+export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, defaultAddToToday = false, onCreateSubtasks }: TaskFormProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [title, setTitle] = useState('');
@@ -41,6 +49,10 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const [monthDay, setMonthDay] = useState<number>(1);
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
+
+  const [subtasks, setSubtasks] = useState<SuggestedSubtask[]>([]);
+  const [decomposing, setDecomposing] = useState(false);
+  const [decomposeError, setDecomposeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (editingTask) {
@@ -72,9 +84,38 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     setMonthDay(1);
     setSelectedGoalId('');
     setDueDate('');
+    setSubtasks([]);
+    setDecomposeError(null);
   };
 
   const availableGoals = goals.filter(g => g.status === 'Active' && g.category === category);
+
+  const handleDecompose = async () => {
+    setDecomposing(true);
+    setDecomposeError(null);
+    try {
+      const descText = description.replace(/<[^>]*>/g, '').trim();
+      const prompt = `Break this task into 3-6 smaller, actionable sub-tasks. Task: ${title}. Description: ${descText || 'None'}. Respond with JSON: {"subtasks": [{"title": string, "effort": "High"|"Low"}]}`;
+      const result = await askAIJson<{ subtasks: { title: string; effort: 'High' | 'Low' }[] }>(prompt);
+      setSubtasks(result.subtasks.map(st => ({ ...st, selected: true })));
+    } catch {
+      setDecomposeError('Failed to break down task. Please try again.');
+    } finally {
+      setDecomposing(false);
+    }
+  };
+
+  const handleCreateSelected = () => {
+    const selected = subtasks.filter(s => s.selected).map(s => ({ title: s.title, effort: s.effort }));
+    if (selected.length > 0 && onCreateSubtasks) {
+      onCreateSubtasks(selected);
+    }
+    setSubtasks([]);
+  };
+
+  const toggleSubtask = (index: number) => {
+    setSubtasks(prev => prev.map((s, i) => i === index ? { ...s, selected: !s.selected } : s));
+  };
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -116,6 +157,56 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 placeholder-slate-400'
   }`;
 
+  const showDecomposeButton = isAIConfigured() && title.trim().length > 30 && !editingTask;
+
+  const subtaskSection = subtasks.length > 0 ? (
+    <div className={`mt-3 p-3 rounded-xl border ${isDark ? 'bg-violet-500/10 border-violet-500/20' : 'bg-violet-50 border-violet-200'}`}>
+      <div className={`flex items-center gap-2 text-sm font-medium mb-2 ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
+        <Sparkles size={14} />
+        Suggested Sub-tasks
+      </div>
+      <div className="space-y-1.5">
+        {subtasks.map((st, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => toggleSubtask(i)}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+              st.selected
+                ? isDark ? 'bg-violet-500/20 text-white' : 'bg-violet-100 text-slate-800'
+                : isDark ? 'bg-white/5 text-gray-400' : 'bg-white text-slate-500'
+            }`}
+          >
+            {st.selected
+              ? <CheckSquare size={15} className={isDark ? 'text-violet-400' : 'text-violet-600'} />
+              : <Square size={15} className={isDark ? 'text-gray-600' : 'text-slate-300'} />
+            }
+            <span className="flex-1">{st.title}</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+              st.effort === 'High'
+                ? isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
+                : isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+            }`}>{st.effort}</span>
+          </button>
+        ))}
+      </div>
+      {onCreateSubtasks && subtasks.some(s => s.selected) && (
+        <button
+          type="button"
+          onClick={handleCreateSelected}
+          className={`mt-2.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+            isDark
+              ? 'bg-violet-500/30 text-violet-200 hover:bg-violet-500/40'
+              : 'bg-violet-600 text-white hover:bg-violet-700'
+          }`}
+        >
+          <Check size={14} />
+          Create {subtasks.filter(s => s.selected).length} selected
+        </button>
+      )}
+    </div>
+  ) : null;
+
   const titleField = (isFS: boolean) => (
     <div>
       <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Title *</label>
@@ -127,6 +218,25 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         placeholder="What needs to be done?"
         autoFocus
       />
+      {showDecomposeButton && subtasks.length === 0 && (
+        <button
+          type="button"
+          onClick={handleDecompose}
+          disabled={decomposing}
+          className={`mt-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            isDark
+              ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 border border-violet-500/30 disabled:opacity-50'
+              : 'bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 disabled:opacity-50'
+          }`}
+        >
+          {decomposing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+          {decomposing ? 'Breaking down...' : 'Break this down'}
+        </button>
+      )}
+      {decomposeError && (
+        <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{decomposeError}</p>
+      )}
+      {subtaskSection}
     </div>
   );
 

@@ -29,6 +29,18 @@ export interface Task {
 
 export type GoalStatus = 'Active' | 'Completed' | 'Archived';
 
+export type GoalTheme = 'forest' | 'mountain' | 'ocean' | 'space' | 'garden';
+
+export interface GoalMilestone {
+  id: string;
+  title: string;
+  description?: string;
+  isCompleted: boolean;
+  completedAt?: Date;
+  xpReward: number;
+  order: number;
+}
+
 export interface Goal {
   id: string;
   title: string;
@@ -41,6 +53,12 @@ export interface Goal {
   completedAt?: Date;
   parentGoalId?: string;
   subGoalIds?: string[];
+  level: number;
+  totalXP: number;
+  currentLevelXP: number;
+  xpToNextLevel: number;
+  milestones: GoalMilestone[];
+  theme?: GoalTheme;
 }
 
 export interface DailyLog {
@@ -51,6 +69,7 @@ export interface DailyLog {
   challenges?: string;
   learnings?: string;
   tomorrowFocus?: string;
+  sentimentScore?: number; // 1-10, AI-generated mood score
   habits: {
     meditation?: number;
     reading?: number;

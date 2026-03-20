@@ -16,16 +16,31 @@ import {
   FolderKanban,
   Newspaper,
   Lightbulb,
+  AlertTriangle,
+  Heart,
+  Activity,
+  BarChart3,
 } from 'lucide-react';
-import { isGeminiConfigured } from '../lib/gemini';
+import { askAIJson, isAIConfigured } from '../lib/ai';
 import { useTaskContext } from '../context/TaskContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
+import { useDailyLogContext } from '../context/DailyLogContext';
 import { useFeed } from '../context/FeedContext';
 import { useGamification } from '../context/GamificationContext';
 import { useTheme } from '../context/ThemeContext';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
+
+interface WeeklyInsight {
+  achievements: string[];
+  slacked_areas: string[];
+  delayed_items: string[];
+  energy_pattern: string;
+  habit_analysis: string;
+  actionable_focus: string[];
+  motivational_note: string;
+}
 
 function getWeekRange(weeksAgo = 0): { start: Date; end: Date; label: string } {
   const now = new Date();
@@ -52,6 +67,7 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export function WeeklyReview() {
   const { tasks } = useTaskContext();
   const { subProjects, projects, projectTasks, getTasksBySubProject, getProject } = useProjectContext();
+  const { getRecentLogs } = useDailyLogContext();
   const { articles } = useFeed();
   const allTasks = useMemo(
     () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
@@ -88,23 +104,56 @@ export function WeeklyReview() {
     Low: completedThisWeek.filter(t => t.priority === 'Low').length,
   }), [completedThisWeek]);
 
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [aiInsight, setAiInsight] = useState<WeeklyInsight | string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
   const generateInsight = useCallback(async () => {
     if (aiLoading) return;
     setAiLoading(true);
     try {
-      const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
-      if (!GROQ_KEY && !isGeminiConfigured()) {
-        setAiInsight('No AI API key configured. Add VITE_GROQ_API_KEY to .env.local.');
+      if (!isAIConfigured()) {
+        setAiInsight('No AI API key configured. Add VITE_GROQ_API_KEY or VITE_GEMINI_API_KEY to .env.local.');
         return;
       }
+
+      const now = new Date();
+      const recentLogs = getRecentLogs(7);
+      const dailyCheckIns = recentLogs.map(log => ({
+        date: log.date,
+        energyLevel: log.energyLevel,
+        wins: log.wins,
+        challenges: log.challenges,
+        learnings: log.learnings,
+        tomorrowFocus: log.tomorrowFocus,
+      }));
+
+      const overdueTasks = allTasks
+        .filter(t => t.status === 'Pending' && t.dueDate && new Date(t.dueDate) < now)
+        .map(t => ({ title: t.title, dueDate: t.dueDate }));
+
+      const carriedForwardCount = allTasks.filter(t => t.status === 'Carried Forward').length;
+
+      const delayedTasks = allTasks
+        .filter(t => t.dueDate && isInRange(t.dueDate, thisWeek.start, thisWeek.end) && t.status !== 'Completed')
+        .map(t => ({ title: t.title, dueDate: t.dueDate }));
+
+      const brokenStreaks = habits
+        .filter(h => {
+          const streak = getHabitStreak(h.id);
+          if (streak !== 0) return false;
+          const allLogs = getHabitLogs(h.id, 365);
+          return allLogs.some(l => new Date(l.date) < thisWeek.start);
+        })
+        .map(h => h.name);
 
       const weekData = {
         tasksCompleted: completedThisWeek.length,
         tasksLastWeek: completedLastWeek.length,
-        tasksByCategory: { Personal: completedThisWeek.filter(t => t.category === 'Personal').length, Financial: completedThisWeek.filter(t => t.category === 'Financial').length, Professional: completedThisWeek.filter(t => t.category === 'Professional').length },
+        tasksByCategory: {
+          Personal: completedThisWeek.filter(t => t.category === 'Personal').length,
+          Financial: completedThisWeek.filter(t => t.category === 'Financial').length,
+          Professional: completedThisWeek.filter(t => t.category === 'Professional').length,
+        },
         highPriorityDone: completedThisWeek.filter(t => t.priority === 'High').length,
         pendingTasks: tasks.filter(t => t.status === 'Pending').length,
         streak: userStats.currentStreak,
@@ -112,37 +161,42 @@ export function WeeklyReview() {
         xp: getTotalXP(),
         activeGoals: goals.filter(g => g.status === 'Active').map(g => ({ title: g.title, progress: g.progress })),
         habits: habits.map(h => ({ name: h.name, streak: getHabitStreak(h.id), logs7d: getHabitLogs(h.id, 7).filter(l => l.value > 0).length })),
+        dailyCheckIns,
+        overdueTasks,
+        carriedForwardTasks: carriedForwardCount,
+        delayedTasks,
+        brokenStreaks,
       };
 
-      const prompt = `You are a supportive productivity coach. Based on this user's weekly data, provide a brief, actionable weekly review in 3 sections. Be specific and reference actual numbers.
+      const prompt = `You are a supportive but honest productivity coach. Based on this user's weekly data including their daily check-ins, provide a detailed weekly review.
 
 WEEKLY DATA:
 ${JSON.stringify(weekData, null, 2)}
 
-Respond in this format:
-**What went well:** (2-3 sentences about achievements)
-**Where to improve:** (2-3 sentences about gaps, be constructive not harsh)
-**Focus for next week:** (2-3 specific, actionable suggestions)`;
+Respond ONLY with valid JSON matching this exact schema:
+{
+  "achievements": ["specific things accomplished with numbers"],
+  "slacked_areas": ["where consistency dropped or tasks were skipped"],
+  "delayed_items": ["tasks/goals that fell behind schedule"],
+  "energy_pattern": "observation about energy levels through the week",
+  "habit_analysis": "which habits were maintained vs dropped",
+  "actionable_focus": ["3 specific things to focus on next week"],
+  "motivational_note": "a brief encouraging message"
+}`;
 
-      if (GROQ_KEY) {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.5,
-          }),
-        });
-        const data = await res.json();
-        setAiInsight(data.choices?.[0]?.message?.content ?? 'No insight generated.');
-      }
+      const result = await askAIJson<WeeklyInsight>(prompt, { temperature: 0.5 });
+      setAiInsight(result);
     } catch (e) {
-      setAiInsight(`Error: ${e instanceof Error ? e.message : 'Unknown'}`);
+      const msg = e instanceof Error ? e.message : 'Unknown';
+      if (typeof e === 'object' && e !== null && 'message' in e) {
+        setAiInsight(`Error: ${msg}`);
+      } else {
+        setAiInsight(`Error: ${msg}`);
+      }
     } finally {
       setAiLoading(false);
     }
-  }, [aiLoading, completedThisWeek, completedLastWeek, tasks, userStats, getTotalLevel, getTotalXP, goals, habits, getHabitStreak, getHabitLogs]);
+  }, [aiLoading, completedThisWeek, completedLastWeek, tasks, allTasks, thisWeek, userStats, getTotalLevel, getTotalXP, goals, habits, getHabitStreak, getHabitLogs, getRecentLogs]);
 
   const pendingCount = useMemo(
     () => allTasks.filter(t => t.status === 'Pending' || t.status === 'Carried Forward').length,
@@ -503,8 +557,123 @@ Respond in this format:
         <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
           <Sparkles size={16} /> AI Coach
         </h2>
-        <div className={cardClass + ' p-5'}>
-          {aiInsight ? (
+
+        {aiInsight && typeof aiInsight === 'object' ? (
+          <div className="space-y-3">
+            {/* Achievements */}
+            {aiInsight.achievements?.length > 0 && (
+              <div className={`rounded-2xl p-4 ${isDark ? 'bg-emerald-500/[0.06] border border-emerald-500/15' : 'bg-emerald-50 border border-emerald-100'}`}>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <CheckCircle2 size={15} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Achievements</h3>
+                </div>
+                <ul className="space-y-1.5">
+                  {aiInsight.achievements.map((item, i) => (
+                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-emerald-200/80' : 'text-emerald-800'}`}>
+                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Slacked Areas */}
+            {aiInsight.slacked_areas?.length > 0 && (
+              <div className={`rounded-2xl p-4 ${isDark ? 'bg-amber-500/[0.06] border border-amber-500/15' : 'bg-amber-50 border border-amber-100'}`}>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <AlertTriangle size={15} className={isDark ? 'text-amber-400' : 'text-amber-600'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>Slacked Areas</h3>
+                </div>
+                <ul className="space-y-1.5">
+                  {aiInsight.slacked_areas.map((item, i) => (
+                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-amber-200/80' : 'text-amber-800'}`}>
+                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-amber-400' : 'bg-amber-500'}`} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Delayed Items */}
+            {aiInsight.delayed_items?.length > 0 && (
+              <div className={`rounded-2xl p-4 ${isDark ? 'bg-red-500/[0.06] border border-red-500/15' : 'bg-red-50 border border-red-100'}`}>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <TrendingDown size={15} className={isDark ? 'text-red-400' : 'text-red-600'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-red-400' : 'text-red-700'}`}>Delayed Items</h3>
+                </div>
+                <ul className="space-y-1.5">
+                  {aiInsight.delayed_items.map((item, i) => (
+                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-red-200/80' : 'text-red-800'}`}>
+                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-red-400' : 'bg-red-500'}`} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Energy Pattern */}
+            {aiInsight.energy_pattern && (
+              <div className={`rounded-2xl p-4 ${isDark ? 'bg-sky-500/[0.06] border border-sky-500/15' : 'bg-sky-50 border border-sky-100'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity size={15} className={isDark ? 'text-sky-400' : 'text-sky-600'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-sky-400' : 'text-sky-700'}`}>Energy Pattern</h3>
+                </div>
+                <p className={`text-sm ${isDark ? 'text-sky-200/80' : 'text-sky-800'}`}>{aiInsight.energy_pattern}</p>
+              </div>
+            )}
+
+            {/* Habit Analysis */}
+            {aiInsight.habit_analysis && (
+              <div className={`rounded-2xl p-4 ${isDark ? 'bg-orange-500/[0.06] border border-orange-500/15' : 'bg-orange-50 border border-orange-100'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart3 size={15} className={isDark ? 'text-orange-400' : 'text-orange-600'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-orange-400' : 'text-orange-700'}`}>Habit Analysis</h3>
+                </div>
+                <p className={`text-sm ${isDark ? 'text-orange-200/80' : 'text-orange-800'}`}>{aiInsight.habit_analysis}</p>
+              </div>
+            )}
+
+            {/* Actionable Focus */}
+            {aiInsight.actionable_focus?.length > 0 && (
+              <div className={`rounded-2xl p-4 ${isDark ? 'bg-violet-500/[0.06] border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <Target size={15} className={isDark ? 'text-violet-400' : 'text-violet-600'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-violet-400' : 'text-violet-700'}`}>Focus Next Week</h3>
+                </div>
+                <ul className="space-y-1.5">
+                  {aiInsight.actionable_focus.map((item, i) => (
+                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-violet-200/80' : 'text-violet-800'}`}>
+                      <span className={`mt-0.5 text-xs font-bold flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>{i + 1}</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Motivational Note */}
+            {aiInsight.motivational_note && (
+              <div className={`rounded-2xl p-4 text-center ${isDark ? 'bg-pink-500/[0.06] border border-pink-500/15' : 'bg-pink-50 border border-pink-100'}`}>
+                <Heart size={16} className={`mx-auto mb-2 ${isDark ? 'text-pink-400' : 'text-pink-500'}`} />
+                <p className={`text-sm italic ${isDark ? 'text-pink-200/80' : 'text-pink-700'}`}>{aiInsight.motivational_note}</p>
+              </div>
+            )}
+
+            <div className="pt-1">
+              <button
+                onClick={generateInsight}
+                disabled={aiLoading}
+                className={`text-xs font-medium ${isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-600 hover:text-violet-500'}`}
+              >
+                {aiLoading ? 'Regenerating...' : 'Regenerate'}
+              </button>
+            </div>
+          </div>
+        ) : aiInsight && typeof aiInsight === 'string' ? (
+          <div className={cardClass + ' p-5'}>
             <div className="space-y-3">
               <div className={`text-sm leading-relaxed whitespace-pre-line ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                 {aiInsight.split(/\*\*(.*?)\*\*/g).map((part, i) =>
@@ -519,7 +688,9 @@ Respond in this format:
                 Regenerate
               </button>
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className={cardClass + ' p-5'}>
             <div className="text-center py-2">
               <p className={`text-sm mb-3 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                 Get an AI-powered analysis of your week
@@ -533,8 +704,8 @@ Respond in this format:
                 {aiLoading ? 'Analyzing your week...' : 'Generate Weekly Insight'}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

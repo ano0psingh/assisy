@@ -1,10 +1,50 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Goal, GoalStatus, TaskCategory } from '../types';
+import type { Goal, GoalStatus, TaskCategory, GoalMilestone, GoalTheme } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { saveGoals as saveGoalsToStore } from '../store/unifiedStore';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
+
+// XP required for each level (exponential curve)
+const LEVEL_THRESHOLDS = [0, 100, 250, 500, 850, 1300, 1900, 2700, 3800, 5200, 7000];
+
+export function getLevelFromXP(totalXP: number): { level: number; currentLevelXP: number; xpToNextLevel: number } {
+  let level = 1;
+  for (let i = 1; i < LEVEL_THRESHOLDS.length; i++) {
+    if (totalXP >= LEVEL_THRESHOLDS[i]) {
+      level = i + 1;
+    } else {
+      break;
+    }
+  }
+  const maxLevel = LEVEL_THRESHOLDS.length;
+  if (level >= maxLevel) {
+    return { level: maxLevel, currentLevelXP: 0, xpToNextLevel: 0 };
+  }
+  const currentThreshold = LEVEL_THRESHOLDS[level - 1];
+  const nextThreshold = LEVEL_THRESHOLDS[level];
+  return {
+    level,
+    currentLevelXP: totalXP - currentThreshold,
+    xpToNextLevel: nextThreshold - currentThreshold,
+  };
+}
+
+function migrateGoal(goal: Goal): Goal {
+  if (goal.level !== undefined && goal.totalXP !== undefined && goal.milestones !== undefined) return goal;
+  const totalXP = goal.totalXP ?? Math.round((goal.progress || 0) * 10);
+  const { level, currentLevelXP, xpToNextLevel } = getLevelFromXP(totalXP);
+  return {
+    ...goal,
+    level: goal.level ?? level,
+    totalXP,
+    currentLevelXP: goal.currentLevelXP ?? currentLevelXP,
+    xpToNextLevel: goal.xpToNextLevel ?? xpToNextLevel,
+    milestones: goal.milestones ?? [],
+    theme: goal.theme ?? undefined,
+  };
+}
 
 interface GoalContextType {
   goals: Goal[];
@@ -13,7 +53,8 @@ interface GoalContextType {
     title: string,
     description?: string,
     category?: TaskCategory,
-    parentGoalId?: string
+    parentGoalId?: string,
+    theme?: GoalTheme
   ) => Goal;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
   deleteGoal: (goalId: string) => void;
@@ -29,6 +70,10 @@ interface GoalContextType {
   getTopLevelGoals: () => Goal[];
   getSubGoals: (parentGoalId: string) => Goal[];
   calculateGoalProgress: (goal: Goal, completedTaskIds: string[], allGoals: Goal[]) => number;
+  addXPToGoal: (goalId: string, xp: number) => void;
+  addMilestone: (goalId: string, milestone: Omit<GoalMilestone, 'id' | 'isCompleted' | 'completedAt'>) => void;
+  completeMilestone: (goalId: string, milestoneId: string) => void;
+  removeMilestone: (goalId: string, milestoneId: string) => void;
 }
 
 const GoalContext = createContext<GoalContextType | null>(null);
@@ -56,17 +101,18 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     // Clean up orphaned sub-goals (where parentGoalId points to non-existent goal)
     const validGoalIds = new Set(savedGoals.map(g => g.id));
     const cleanedGoals = savedGoals.filter(goal => {
-      // Keep if no parent OR parent exists
       if (!goal.parentGoalId) return true;
       return validGoalIds.has(goal.parentGoalId);
     });
     
-    // If we cleaned up any orphans, save the cleaned list
-    if (cleanedGoals.length !== savedGoals.length) {
-      saveGoalsToStore(cleanedGoals, userId);
+    // Migrate goals to include new XP/level fields
+    const migratedGoals = cleanedGoals.map(migrateGoal);
+    
+    if (migratedGoals.length !== savedGoals.length || migratedGoals.some((g, i) => g !== cleanedGoals[i])) {
+      saveGoalsToStore(migratedGoals, userId);
     }
     
-    setGoals(cleanedGoals);
+    setGoals(migratedGoals);
     setLoading(false);
   }, [dataVersion, userId]);
 
@@ -74,7 +120,8 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     title: string,
     description: string = '',
     category: TaskCategory = 'Personal',
-    parentGoalId?: string
+    parentGoalId?: string,
+    theme?: GoalTheme
   ): Goal => {
     const newGoal: Goal = {
       id: uuidv4(),
@@ -87,6 +134,12 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       createdAt: new Date(),
       parentGoalId,
       subGoalIds: [],
+      level: 1,
+      totalXP: 0,
+      currentLevelXP: 0,
+      xpToNextLevel: LEVEL_THRESHOLDS[1],
+      milestones: [],
+      theme,
     };
 
     setGoals(prev => {
@@ -247,8 +300,65 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     return goals.filter(goal => goal.parentGoalId === parentGoalId);
   }, [goals]);
 
-  // Pure function to calculate progress - doesn't trigger state updates
-  // For parent goals: progress = ALL tasks (own + sub-goals) completed / total
+  const addXPToGoal = useCallback((goalId: string, xp: number) => {
+    setGoals(prev => {
+      const updated = prev.map(goal => {
+        if (goal.id !== goalId) return goal;
+        const newTotalXP = (goal.totalXP || 0) + xp;
+        const levelInfo = getLevelFromXP(newTotalXP);
+        return { ...goal, totalXP: newTotalXP, ...levelInfo };
+      });
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const addMilestone = useCallback((goalId: string, milestone: Omit<GoalMilestone, 'id' | 'isCompleted' | 'completedAt'>) => {
+    setGoals(prev => {
+      const updated = prev.map(goal => {
+        if (goal.id !== goalId) return goal;
+        const newMilestone: GoalMilestone = {
+          ...milestone,
+          id: uuidv4(),
+          isCompleted: false,
+        };
+        return { ...goal, milestones: [...(goal.milestones || []), newMilestone] };
+      });
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const completeMilestone = useCallback((goalId: string, milestoneId: string) => {
+    setGoals(prev => {
+      const updated = prev.map(goal => {
+        if (goal.id !== goalId) return goal;
+        const milestones = (goal.milestones || []).map(m => {
+          if (m.id !== milestoneId || m.isCompleted) return m;
+          return { ...m, isCompleted: true, completedAt: new Date() };
+        });
+        const completedMilestone = milestones.find(m => m.id === milestoneId);
+        const bonusXP = completedMilestone?.xpReward || 0;
+        const newTotalXP = (goal.totalXP || 0) + bonusXP;
+        const levelInfo = getLevelFromXP(newTotalXP);
+        return { ...goal, milestones, totalXP: newTotalXP, ...levelInfo };
+      });
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const removeMilestone = useCallback((goalId: string, milestoneId: string) => {
+    setGoals(prev => {
+      const updated = prev.map(goal => {
+        if (goal.id !== goalId) return goal;
+        return { ...goal, milestones: (goal.milestones || []).filter(m => m.id !== milestoneId) };
+      });
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
   const calculateGoalProgress = useCallback((goal: Goal, completedTaskIds: string[], allGoals: Goal[]): number => {
     // Collect ALL linked task IDs (from this goal and all descendant sub-goals)
     const allLinkedTaskIds: string[] = [...goal.linkedTaskIds];
@@ -293,6 +403,10 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       getTopLevelGoals,
       getSubGoals,
       calculateGoalProgress,
+      addXPToGoal,
+      addMilestone,
+      completeMilestone,
+      removeMilestone,
     }}>
       {children}
     </GoalContext.Provider>

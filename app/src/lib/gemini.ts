@@ -15,6 +15,7 @@ export interface ArticleSummary {
   tags: string[];
   reading_time_minutes: number;
   relevance_score: number;
+  matched_goals?: string[];
 }
 
 const SYSTEM_PROMPT = `You are a senior analyst synthesizing articles for a busy professional. Your job is NOT to summarize — it is to extract signal and push into implications.
@@ -79,11 +80,18 @@ relevance_score: 1-10 for a professional focused on growth and productivity.
 - Tier 3 primary research: typically 8-10
 - Promotional/low-substance content: 1-3
 
+Additionally, if active goal titles are provided, assess which goals this article is most relevant to.
+Add a "matched_goals" field to your JSON response: an array of goal titles that this article is relevant to (empty array if none match).
+
 Respond ONLY with the JSON object. No markdown, no code fences.`;
 
-function buildPrompt(title: string, source: string, content: string): string {
+function buildPrompt(title: string, source: string, content: string, goalTitles?: string[]): string {
   const trimmed = content.length > 5000 ? content.slice(0, 5000) + '\n\n[content truncated]' : content;
-  return `Analyze this article.\n\nARTICLE TITLE: ${title}\nARTICLE SOURCE: ${source}\n\nARTICLE CONTENT:\n${trimmed}`;
+  let prompt = `Analyze this article.\n\nARTICLE TITLE: ${title}\nARTICLE SOURCE: ${source}\n\nARTICLE CONTENT:\n${trimmed}`;
+  if (goalTitles?.length) {
+    prompt += `\n\nUSER'S ACTIVE GOALS: ${goalTitles.join(', ')}`;
+  }
+  return prompt;
 }
 
 function mapToLegacy(result: ArticleSummary): ArticleSummary & {
@@ -99,7 +107,7 @@ function mapToLegacy(result: ArticleSummary): ArticleSummary & {
   };
 }
 
-async function summarizeViaGroq(content: string, title: string, source: string): Promise<ArticleSummary> {
+async function summarizeViaGroq(content: string, title: string, source: string, goalTitles?: string[]): Promise<ArticleSummary> {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -110,7 +118,7 @@ async function summarizeViaGroq(content: string, title: string, source: string):
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: buildPrompt(title, source, content) },
+        { role: 'user', content: buildPrompt(title, source, content, goalTitles) },
       ],
       temperature: 0.3,
       response_format: { type: 'json_object' },
@@ -127,13 +135,13 @@ async function summarizeViaGroq(content: string, title: string, source: string):
   return JSON.parse(text) as ArticleSummary;
 }
 
-async function summarizeViaGemini(content: string, title: string, source: string): Promise<ArticleSummary> {
+async function summarizeViaGemini(content: string, title: string, source: string, goalTitles?: string[]): Promise<ArticleSummary> {
   const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey: GEMINI_KEY! });
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.0-flash-lite',
-    contents: buildPrompt(title, source, content),
+    contents: buildPrompt(title, source, content, goalTitles),
     config: {
       systemInstruction: SYSTEM_PROMPT,
       responseMimeType: 'application/json',
@@ -150,14 +158,15 @@ export async function summarizeArticle(
   title: string,
   source: string,
   maxRetries = 2,
+  goalTitles?: string[],
 ): Promise<ArticleSummary & { summary: string; key_takeaways: string[]; content_type: string }> {
   if (!GROQ_KEY && !GEMINI_KEY) throw new Error('No AI API key configured');
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const raw = GROQ_KEY
-        ? await summarizeViaGroq(content, title, source)
-        : await summarizeViaGemini(content, title, source);
+        ? await summarizeViaGroq(content, title, source, goalTitles)
+        : await summarizeViaGemini(content, title, source, goalTitles);
       return mapToLegacy(raw);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';

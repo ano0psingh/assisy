@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Flame, Plus, BookOpen, Zap } from 'lucide-react';
+import { Flame, Plus, BookOpen, Zap, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useDailyLogContext } from '../context/DailyLogContext';
@@ -8,6 +8,7 @@ import { HabitForm } from '../components/habits/HabitForm';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import { ContributionGraph } from '../components/habits/ContributionGraph';
 import { BodyMetrics } from '../components/habits/BodyMetrics';
+import { askAI, isAIConfigured } from '../lib/ai';
 import type { TrackingType, Habit } from '../types';
 
 interface HabitWithLogs extends Habit {
@@ -37,9 +38,14 @@ export function Habits() {
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [selectedHabitForGraph, setSelectedHabitForGraph] = useState<string | null>(null);
 
+  const [aiInsights, setAiInsights] = useState<string | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+
   const todaysDailyLog = getTodaysDailyLog();
   const checkedInToday = hasCheckedInToday();
   const recentLogs = getRecentLogs(7);
+  const recentLogs30 = getRecentLogs(30);
   const stats = useMemo(() => {
     const todayCompletedCount = habits.filter(h => getTodaysLog(h.id) > 0).length;
     
@@ -67,6 +73,39 @@ export function Habits() {
     
     return Array.from(logMap.entries()).map(([date, value]) => ({ date, value }));
   }, [habits, selectedHabitForGraph]);
+
+  const moodScores = useMemo(() => {
+    return recentLogs30
+      .filter(log => typeof log.sentimentScore === 'number')
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map(log => ({ date: new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), score: log.sentimentScore! }));
+  }, [recentLogs30]);
+
+  const handleGenerateInsights = async () => {
+    setInsightsLoading(true);
+    setInsightsError(null);
+    try {
+      const habitData = habits.map(h => {
+        const last30 = h.logs
+          .filter(l => {
+            const logDate = new Date(l.date);
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - 30);
+            return logDate >= cutoff;
+          });
+        const completedDays = last30.filter(l => l.value > 0).length;
+        return `${h.name} (${h.trackingType}): ${completedDays}/30 days completed`;
+      }).join('; ');
+
+      const prompt = `You are a habit coach. Analyze these habit tracking patterns and provide 3-4 specific insights about consistency, suggestions for improvement, and habit stacking opportunities. Habits: ${habitData}`;
+      const result = await askAI(prompt);
+      setAiInsights(result);
+    } catch {
+      setInsightsError('Failed to generate insights. Please try again.');
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   const handleCreateHabit = (data: {
     name: string;
@@ -223,6 +262,82 @@ export function Habits() {
             weeks={12}
             maxValue={selectedHabitForGraph ? undefined : habits.length}
           />
+        </div>
+      )}
+
+      {/* AI Habit Insights */}
+      {isAIConfigured() && habits.length > 0 && (
+        <div className="card rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <Sparkles size={18} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+              AI Habit Insights
+            </h2>
+            <button
+              onClick={handleGenerateInsights}
+              disabled={insightsLoading}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                isDark
+                  ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 border border-violet-500/30 disabled:opacity-50'
+                  : 'bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 disabled:opacity-50'
+              }`}
+            >
+              {insightsLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+              {insightsLoading ? 'Analyzing...' : 'Generate Insights'}
+            </button>
+          </div>
+          {insightsError && (
+            <div className={`flex items-center gap-2 text-sm p-3 rounded-lg ${isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'}`}>
+              <AlertTriangle size={14} />
+              {insightsError}
+            </div>
+          )}
+          {aiInsights && (
+            <div className={`text-sm leading-relaxed whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+              {aiInsights}
+            </div>
+          )}
+          {!aiInsights && !insightsLoading && !insightsError && (
+            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              Click "Generate Insights" to get AI-powered analysis of your habit patterns.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Mood Trend Sparkline */}
+      {moodScores.length >= 2 && (
+        <div className="card rounded-2xl p-5">
+          <h2 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            Mood Trend
+          </h2>
+          <div className="overflow-x-auto">
+            <svg viewBox={`0 0 ${Math.max(moodScores.length * 40, 200)} 80`} className="w-full h-20" preserveAspectRatio="none">
+              <polyline
+                fill="none"
+                stroke={isDark ? '#a78bfa' : '#7c3aed'}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={moodScores.map((s, i) => `${i * 40 + 20},${80 - (s.score / 10) * 70}`).join(' ')}
+              />
+              {moodScores.map((s, i) => (
+                <g key={i}>
+                  <circle
+                    cx={i * 40 + 20}
+                    cy={80 - (s.score / 10) * 70}
+                    r="3"
+                    fill={isDark ? '#a78bfa' : '#7c3aed'}
+                  />
+                  <title>{s.date}: {s.score}/10</title>
+                </g>
+              ))}
+            </svg>
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{moodScores[0]?.date}</span>
+            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{moodScores[moodScores.length - 1]?.date}</span>
+          </div>
         </div>
       )}
 

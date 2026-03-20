@@ -5,7 +5,7 @@ import {
   Newspaper, Plus, Link, RefreshCw, Bookmark, BookmarkCheck,
   Eye, EyeOff, Trash2, ChevronDown, ChevronUp, ExternalLink,
   Rss, Clock, Star, Sparkles, X, Settings2, Loader2,
-  CheckCircle2, Square, CheckSquare2, ArrowLeft,
+  CheckCircle2, Square, CheckSquare2, ArrowLeft, MoreHorizontal, Filter,
 } from 'lucide-react';
 
 const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
@@ -142,6 +142,9 @@ export function Feed() {
   const [addingFeed, setAddingFeed] = useState(false);
   const [savingUrl, setSavingUrl] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [mobileTagsOpen, setMobileTagsOpen] = useState(false);
   const [expandedTakeaways, setExpandedTakeaways] = useState<Set<string>>(new Set());
   const [sortOpen, setSortOpen] = useState(false);
   const [showAllTags, setShowAllTags] = useState(false);
@@ -165,11 +168,15 @@ export function Feed() {
     [subscriptions],
   );
 
-  const allTags = useMemo(() => {
-    const tagSet = new Set<string>();
-    articles.forEach(a => a.tags?.forEach(t => tagSet.add(t)));
-    return Array.from(tagSet).sort();
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    articles.forEach(a => a.tags?.forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+    return counts;
   }, [articles]);
+
+  const allTags = useMemo(() => {
+    return Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+  }, [tagCounts]);
 
   // Escape key clears selection
   useEffect(() => {
@@ -319,44 +326,102 @@ export function Feed() {
                 <Link size={16} />
                 <span>Save URL</span>
               </button>
-              <button
-                onClick={refreshFeeds}
-                disabled={refreshing}
-                className={`flex flex-col items-center px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
-                  isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
-                } disabled:opacity-50`}
-              >
-                <span className="flex items-center gap-1.5">
-                  <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-                  Check for new
-                </span>
-                {lastRefreshedAt && (
-                  <span className={`text-[10px] leading-tight ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
-                    Last checked {relativeTime(lastRefreshedAt)}
-                  </span>
-                )}
-              </button>
-              {unreadCount > 0 && (
+
+              {/* Desktop-only: Check for new, Mark all read, Settings */}
+              <div className="hidden md:flex items-center gap-2">
                 <button
-                  onClick={markAllRead}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  onClick={refreshFeeds}
+                  disabled={refreshing}
+                  className={`flex flex-col items-center px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
                     isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                  } disabled:opacity-50`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                    Check for new
+                  </span>
+                  {lastRefreshedAt && (
+                    <span className={`text-[10px] leading-tight ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                      Last checked {relativeTime(lastRefreshedAt)}
+                    </span>
+                  )}
+                </button>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                    }`}
+                  >
+                    <Eye size={16} />
+                    <span>Mark all read</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowSidebar(!showSidebar)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    showSidebar
+                      ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
+                      : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
                   }`}
                 >
-                  <Eye size={16} />
-                  <span>Mark all read</span>
+                  <Settings2 size={16} />
                 </button>
-              )}
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  showSidebar
-                    ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
-                    : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
-                }`}
-              >
-                <Settings2 size={16} />
-              </button>
+              </div>
+
+              {/* Mobile-only: More dropdown */}
+              <div className="relative md:hidden">
+                <button
+                  onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    moreMenuOpen
+                      ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
+                      : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                  }`}
+                >
+                  <MoreHorizontal size={16} />
+                  <span>More</span>
+                </button>
+                {moreMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setMoreMenuOpen(false)} />
+                    <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 min-w-[180px] ${
+                      isDark ? 'bg-gray-900 border border-white/10' : 'bg-white border border-slate-200'
+                    }`}>
+                      <button
+                        onClick={() => { refreshFeeds(); setMoreMenuOpen(false); }}
+                        disabled={refreshing}
+                        className={`w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                          isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                        } disabled:opacity-50`}
+                      >
+                        <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+                        Check for new
+                      </button>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => { markAllRead(); setMoreMenuOpen(false); }}
+                          className={`w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                            isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Eye size={15} />
+                          Mark all read
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { setMobileSidebarOpen(true); setMoreMenuOpen(false); }}
+                        className={`w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                          isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Settings2 size={15} />
+                        Subscriptions
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -526,7 +591,8 @@ export function Feed() {
           {/* Tag filter pills */}
           {allTags.length > 0 && (
             <div className="mt-3">
-              <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Desktop: wrapped layout */}
+              <div className="hidden md:flex items-center gap-1.5 flex-wrap">
                 {tagFilter && (
                   <button
                     onClick={() => setTagFilter(null)}
@@ -563,6 +629,72 @@ export function Feed() {
                   </button>
                 )}
               </div>
+
+              {/* Mobile: horizontal scroll with top 5 + Filter dropdown */}
+              <div className="md:hidden">
+                <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap flex-nowrap pb-1 scrollbar-none">
+                  {tagFilter && (
+                    <button
+                      onClick={() => setTagFilter(null)}
+                      className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                        isDark ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-red-50 text-red-500 hover:bg-red-100'
+                      }`}
+                    >
+                      <X size={10} /> Clear
+                    </button>
+                  )}
+                  {allTags.slice(0, 5).map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
+                      className={`flex-shrink-0 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                        tagFilter === tag
+                          ? 'bg-violet-600 text-white'
+                          : isDark
+                            ? 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-400'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                  {allTags.length > 5 && (
+                    <div className="relative flex-shrink-0">
+                      <button
+                        onClick={() => setMobileTagsOpen(!mobileTagsOpen)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                          isDark ? 'bg-white/5 text-violet-400 hover:bg-white/10' : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
+                        }`}
+                      >
+                        <Filter size={10} />
+                        +{allTags.length - 5}
+                      </button>
+                      {mobileTagsOpen && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setMobileTagsOpen(false)} />
+                          <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 max-h-60 overflow-y-auto min-w-[160px] ${
+                            isDark ? 'bg-gray-900 border border-white/10' : 'bg-white border border-slate-200'
+                          }`}>
+                            {allTags.slice(5).map(tag => (
+                              <button
+                                key={tag}
+                                onClick={() => { setTagFilter(tagFilter === tag ? null : tag); setMobileTagsOpen(false); }}
+                                className={`w-full text-left px-3 py-2 text-xs transition-colors ${
+                                  tagFilter === tag
+                                    ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                                }`}
+                              >
+                                {tag} ({tagCounts[tag]})
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -596,9 +728,9 @@ export function Feed() {
       )}
 
       {/* Main layout: articles + optional sidebar */}
-      <div className={`flex gap-5 ${showSidebar ? '' : ''}`}>
+      <div className={`flex gap-5`}>
         {/* Article list */}
-        <div className={`flex-1 min-w-0 space-y-3 ${showSidebar ? 'max-w-[calc(100%-320px)]' : ''}`}>
+        <div className={`flex-1 min-w-0 space-y-3 ${showSidebar ? 'md:max-w-[calc(100%-320px)]' : ''}`}>
           {filteredArticles.length === 0 ? (
             filter === 'unread' ? (
               <div className={`rounded-2xl p-10 text-center ${
@@ -654,7 +786,7 @@ export function Feed() {
                         : isDark ? 'bg-white/[0.04] border border-white/10 hover:bg-white/[0.06]' : 'bg-white border border-slate-200 hover:shadow-md'
                   }`}
                 >
-                  <div className="px-5 py-4">
+                  <div className="px-3 py-3 sm:px-5 sm:py-4">
                     {/* Title row */}
                     <div className="flex items-start gap-3">
                       {/* Selection checkbox */}
@@ -898,9 +1030,9 @@ export function Feed() {
           )}
         </div>
 
-        {/* Subscriptions sidebar */}
+        {/* Subscriptions sidebar — desktop only */}
         {showSidebar && (
-          <div className={`w-[300px] flex-shrink-0 rounded-2xl h-fit sticky top-4 ${
+          <div className={`hidden md:block w-[300px] flex-shrink-0 rounded-2xl h-fit sticky top-4 ${
             isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
           }`}>
             <div className="px-4 py-4">
@@ -1026,6 +1158,142 @@ export function Feed() {
           </div>
         )}
       </div>
+
+      {/* Mobile sidebar modal overlay */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
+          <div className={`absolute inset-0 overflow-y-auto ${
+            isDark ? 'bg-gray-950' : 'bg-white'
+          }`}>
+            <div className="px-4 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Subscriptions</h2>
+                <button
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {subscriptions.length === 0 ? (
+                <p className={`text-sm text-center py-8 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                  No feeds yet
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {subscriptions.map(sub => (
+                    <div
+                      key={sub.id}
+                      className={`rounded-xl px-3 py-2.5 transition-colors ${
+                        isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                              {sub.title || 'Untitled Feed'}
+                            </p>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                              isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'
+                            }`}>
+                              {subArticleCounts[sub.id] || 0}
+                            </span>
+                          </div>
+                          <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                            {sub.feed_url}
+                          </p>
+                          {sub.last_fetched_at && (
+                            <p className={`text-[10px] mt-1 ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>
+                              Last fetched {relativeTime(sub.last_fetched_at)}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => removeFeed(sub.id)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
+                          }`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Curated suggested feeds */}
+              <div className={`mt-4 pt-4 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${
+                  isDark ? 'text-gray-500' : 'text-slate-400'
+                }`}>
+                  Suggested Feeds
+                </h3>
+                <div className="space-y-1.5">
+                  {CURATED_FEEDS.map(sf => {
+                    const alreadySubscribed = subscribedUrls.has(sf.url);
+                    return (
+                      <div
+                        key={sf.url}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
+                          isDark ? 'bg-white/[0.03]' : 'bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                              {sf.label}
+                            </p>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                              isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-200/70 text-slate-400'
+                            }`}>
+                              {sf.category}
+                            </span>
+                          </div>
+                        </div>
+                        {alreadySubscribed ? (
+                          <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+                        ) : (
+                          <button
+                            onClick={() => addFeed(sf.url)}
+                            className={`p-1 rounded-md transition-colors ${
+                              isDark
+                                ? 'hover:bg-violet-500/20 text-gray-500 hover:text-violet-400'
+                                : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'
+                            }`}
+                            title={`Add ${sf.label}`}
+                          >
+                            <Plus size={14} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Clear old read articles */}
+              <div className={`mt-4 pt-4 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+                <button
+                  onClick={handleClearOldRead}
+                  disabled={clearingOld}
+                  className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    isDark
+                      ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                  } disabled:opacity-50`}
+                >
+                  {clearingOld ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                  Clear read articles older than 7 days
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (

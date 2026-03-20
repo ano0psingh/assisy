@@ -13,7 +13,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '',
 );
 
-function getTimeInTimezone(tz: string): string {
+function getMinutesInTimezone(tz: string): number {
   try {
     const now = new Date();
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -22,12 +22,22 @@ function getTimeInTimezone(tz: string): string {
       minute: '2-digit',
       hour12: false,
     }).formatToParts(now);
-    const hh = parts.find(p => p.type === 'hour')?.value || '00';
-    const mm = parts.find(p => p.type === 'minute')?.value || '00';
-    return `${hh}:${mm}`;
+    const hh = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
+    const mm = parseInt(parts.find(p => p.type === 'minute')?.value || '0');
+    return hh * 60 + mm;
   } catch {
-    return '99:99';
+    return -1;
   }
+}
+
+function timeToMinutes(time: string): number {
+  const [hh, mm] = time.split(':').map(Number);
+  return (hh || 0) * 60 + (mm || 0);
+}
+
+function isWithinWindow(currentMinutes: number, targetMinutes: number, windowMinutes: number): boolean {
+  const diff = Math.abs(currentMinutes - targetMinutes);
+  return diff <= windowMinutes || (1440 - diff) <= windowMinutes;
 }
 
 function getDateInTimezone(tz: string): string {
@@ -64,34 +74,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let sent = 0;
     const staleEndpoints: string[] = [];
 
+    const WINDOW_MINUTES = 5;
+
     for (const sub of subs) {
       const tz = sub.timezone || 'Asia/Kolkata';
-      const currentTime = getTimeInTimezone(tz);
+      const currentMinutes = getMinutesInTimezone(tz);
       const todayStr = getDateInTimezone(tz);
       const reminders: { name: string; time: string }[] = sub.habit_reminders || [];
+      const lastSent: Record<string, string> = sub.last_sent || {};
 
-      // Check daily planning reminder
       const planHour = sub.daily_planning_hour ?? 9;
-      const planTime = `${String(planHour).padStart(2, '0')}:00`;
-      const planKey = `plan_${sub.endpoint}_${todayStr}`;
+      const planMinutes = planHour * 60;
 
       const dueReminders: string[] = [];
 
-      if (currentTime === planTime) {
-        // Check if already sent today (use a simple in-memory approach for cron)
+      if (isWithinWindow(currentMinutes, planMinutes, WINDOW_MINUTES) && lastSent['daily_plan'] !== todayStr) {
         dueReminders.push('daily_plan');
       }
 
-      // Check habit reminders
       for (const r of reminders) {
-        if (r.time === currentTime) {
+        const targetMinutes = timeToMinutes(r.time);
+        if (isWithinWindow(currentMinutes, targetMinutes, WINDOW_MINUTES) && lastSent[r.name] !== todayStr) {
           dueReminders.push(r.name);
         }
       }
 
       if (dueReminders.length === 0) continue;
 
-      // Send notifications
       for (const reminder of dueReminders) {
         const payload = reminder === 'daily_plan'
           ? JSON.stringify({ title: 'Plan your day', body: 'Take a minute to review your tasks and set priorities.', tag: 'daily-planning' })
@@ -100,6 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         try {
           await webpush.sendNotification(sub.subscription, payload);
           sent++;
+          lastSent[reminder] = todayStr;
         } catch (err: unknown) {
           const statusCode = (err as { statusCode?: number })?.statusCode;
           if (statusCode === 410 || statusCode === 404) {
@@ -107,6 +117,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
       }
+
+      // Persist last_sent to prevent duplicate sends
+      await supabase
+        .from('push_subscriptions')
+        .update({ last_sent: lastSent })
+        .eq('endpoint', sub.endpoint);
     }
 
     // Clean up stale subscriptions

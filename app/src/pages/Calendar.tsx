@@ -1,14 +1,23 @@
 import { useState, useMemo, useCallback, useRef, type DragEvent, type KeyboardEvent } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus, BookOpen } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus, BookOpen, Sparkles, X, Check, Loader2 } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useDailyLogContext } from '../context/DailyLogContext';
 import { useTheme } from '../context/ThemeContext';
+import { askAIJson, isAIConfigured } from '../lib/ai';
 import type { Task } from '../types';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 
 type ViewMode = 'month' | 'week';
+
+interface AIScheduleSuggestion {
+  taskTitle: string;
+  suggestedDay: string;
+  reason: string;
+  taskId?: string;
+  dismissed?: boolean;
+}
 
 function getDaysInMonth(year: number, month: number): Date[] {
   const days: Date[] = [];
@@ -65,7 +74,7 @@ export function Calendar() {
   const { tasks, createTask, updateTask, addToToday, getTodaysTasks } = useTaskContext();
   const { getTasksBySubProject, subProjects, projects } = useProjectContext();
   const { habits, getHabitLogs } = useHabitContext();
-  const { dailyLogs } = useDailyLogContext();
+  const { dailyLogs, getRecentLogs } = useDailyLogContext();
 
   const allTasks = useMemo(
     () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
@@ -83,6 +92,107 @@ export function Calendar() {
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
   const [inlineCreateDate, setInlineCreateDate] = useState<string | null>(null);
   const inlineInputRef = useRef<HTMLInputElement>(null);
+
+  // ── AI Smart Scheduling state ──
+  const [aiSuggestions, setAiSuggestions] = useState<AIScheduleSuggestion[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const handleAISchedule = useCallback(async () => {
+    setAiLoading(true);
+    setAiPanelOpen(true);
+    try {
+      const pendingTasks = allTasks
+        .filter(t => t.status === 'Pending')
+        .map(t => ({
+          id: t.id,
+          title: t.title,
+          effort: t.effort,
+          priority: t.priority,
+          category: t.category,
+          dueDate: t.dueDate ? new Date(t.dueDate).toISOString().split('T')[0] : null,
+        }));
+
+      const recentLogs = getRecentLogs(30);
+      const energyByDay: Record<string, { total: number; count: number }> = {};
+      for (const log of recentLogs) {
+        if (log.energyLevel != null) {
+          const d = new Date(log.date);
+          const dayName = DAY_NAMES[d.getDay()];
+          if (!energyByDay[dayName]) energyByDay[dayName] = { total: 0, count: 0 };
+          energyByDay[dayName].total += log.energyLevel;
+          energyByDay[dayName].count += 1;
+        }
+      }
+      const energyData: Record<string, number> = {};
+      for (const [day, { total, count }] of Object.entries(energyByDay)) {
+        energyData[day] = Math.round((total / count) * 10) / 10;
+      }
+
+      const wkDays = getWeekDays(selectedDate);
+      const weekDistribution = wkDays.map(d => {
+        const key = getDateString(d);
+        const dayTasks = allTasks.filter(t => {
+          if (t.focusedDate === key) return true;
+          if (t.completedAt && getDateString(new Date(t.completedAt)) === key) return true;
+          if (getDateString(new Date(t.createdAt)) === key) return true;
+          return false;
+        });
+        return { day: DAY_NAMES[d.getDay()], taskCount: dayTasks.length };
+      });
+
+      const prompt = `You are a productivity scheduling assistant. Based on the user's energy patterns and pending tasks, suggest optimal task scheduling for this week. Energy by day of week: ${JSON.stringify(energyData)}. Current week distribution: ${JSON.stringify(weekDistribution)}. Pending tasks: ${JSON.stringify(pendingTasks.slice(0, 20))}. Respond with JSON: {"suggestions": [{"taskTitle": string, "suggestedDay": string (day name), "reason": string}]}`;
+
+      const result = await askAIJson<{ suggestions: AIScheduleSuggestion[] }>(prompt, {
+        temperature: 0.4,
+      });
+
+      const mapped = (result.suggestions ?? []).map(s => {
+        const match = pendingTasks.find(
+          t => t.title.toLowerCase() === s.taskTitle.toLowerCase()
+            || t.title.toLowerCase().includes(s.taskTitle.toLowerCase())
+            || s.taskTitle.toLowerCase().includes(t.title.toLowerCase()),
+        );
+        return { ...s, taskId: match?.id, dismissed: false };
+      });
+
+      setAiSuggestions(mapped);
+    } catch (err) {
+      console.error('AI scheduling failed:', err);
+      setAiSuggestions([]);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [allTasks, getRecentLogs, selectedDate]);
+
+  const acceptSuggestion = useCallback((suggestion: AIScheduleSuggestion) => {
+    if (!suggestion.taskId) return;
+    const dayIndex = DAY_NAMES.indexOf(suggestion.suggestedDay);
+    if (dayIndex === -1) return;
+
+    const wkDays = getWeekDays(selectedDate);
+    const targetDay = wkDays.find(d => d.getDay() === dayIndex);
+    if (!targetDay) return;
+
+    const dateStr = getDateString(targetDay);
+    if (dateStr === todayStr) {
+      addToToday(suggestion.taskId);
+    } else {
+      updateTask(suggestion.taskId, { focusedDate: dateStr, isFocusedToday: false });
+    }
+
+    setAiSuggestions(prev =>
+      prev.map(s => s.taskTitle === suggestion.taskTitle ? { ...s, dismissed: true } : s),
+    );
+  }, [selectedDate, todayStr, addToToday, updateTask]);
+
+  const dismissSuggestion = useCallback((taskTitle: string) => {
+    setAiSuggestions(prev =>
+      prev.map(s => s.taskTitle === taskTitle ? { ...s, dismissed: true } : s),
+    );
+  }, []);
 
   const monthLabel = new Date(currentYear, currentMonth).toLocaleString('default', {
     month: 'long',
@@ -462,6 +572,20 @@ export function Calendar() {
                   Week
                 </button>
               </div>
+              {isAIConfigured() && (
+                <button
+                  onClick={handleAISchedule}
+                  disabled={aiLoading}
+                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                    isDark
+                      ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 disabled:opacity-50'
+                      : 'bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:opacity-50'
+                  }`}
+                >
+                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  AI Schedule
+                </button>
+              )}
             </div>
 
             <button
@@ -653,6 +777,86 @@ export function Calendar() {
             </div>
           )}
         </div>
+
+        {/* ── AI SUGGESTIONS PANEL ── */}
+        {aiPanelOpen && (
+          <div className={`card rounded-2xl p-5 border ${isDark ? 'border-amber-500/20' : 'border-amber-200'}`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  AI Schedule Suggestions
+                </h2>
+              </div>
+              <button
+                onClick={() => setAiPanelOpen(false)}
+                className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
+                  isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {aiLoading ? (
+              <div className="flex items-center justify-center py-8 gap-2">
+                <Loader2 className={`w-5 h-5 animate-spin ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Analyzing your energy patterns and tasks…</span>
+              </div>
+            ) : aiSuggestions.filter(s => !s.dismissed).length === 0 ? (
+              <p className={`text-sm py-4 text-center ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                {aiSuggestions.length > 0 ? 'All suggestions handled!' : 'No suggestions available. Make sure you have pending tasks and recent check-in data.'}
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {aiSuggestions.filter(s => !s.dismissed).map((suggestion) => (
+                  <div
+                    key={suggestion.taskTitle}
+                    className={`flex items-start gap-3 p-3 rounded-xl ${isDark ? 'bg-white/[0.03]' : 'bg-slate-50'}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>
+                        {suggestion.taskTitle}
+                      </p>
+                      <p className={`text-xs mt-0.5 ${isDark ? 'text-amber-400/80' : 'text-amber-600'}`}>
+                        → {suggestion.suggestedDay}
+                      </p>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                        {suggestion.reason}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                      {suggestion.taskId && (
+                        <button
+                          onClick={() => acceptSuggestion(suggestion)}
+                          className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
+                            isDark
+                              ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
+                              : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                          }`}
+                          title="Accept suggestion"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => dismissSuggestion(suggestion.taskTitle)}
+                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
+                          isDark
+                            ? 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
+                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                        }`}
+                        title="Dismiss suggestion"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Selected day detail panel */}
         <div className="card rounded-2xl p-5">

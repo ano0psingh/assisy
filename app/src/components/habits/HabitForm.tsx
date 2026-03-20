@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { Zap, Pencil, Heart, Target, Bell } from 'lucide-react';
+import { useHabitContext } from '../../context/HabitContext';
+import { Zap, Pencil, Heart, Target, Bell, Sparkles, Loader2 } from 'lucide-react';
 import type { TrackingType, Habit } from '../../types';
 import { ExpandableModal } from '../common/ExpandableModal';
+import { askAIJson, isAIConfigured } from '../../lib/ai';
 
 interface HabitWithLogs extends Habit {
   logs: { date: string; value: number }[];
@@ -38,6 +40,7 @@ const TRACKING_TYPES: { value: TrackingType; label: string; description: string 
 
 export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFormProps) {
   const { theme } = useTheme();
+  const { getHabitLogs } = useHabitContext();
   const isDark = theme === 'dark';
 
   const [name, setName] = useState('');
@@ -46,6 +49,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
   const [xpPerUnit, setXpPerUnit] = useState(1);
   const [dailyTarget, setDailyTarget] = useState<string>('');
   const [reminderTime, setReminderTime] = useState('');
+  const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [aiReason, setAiReason] = useState<string | null>(null);
 
   useEffect(() => {
     if (editingHabit) {
@@ -67,7 +72,34 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
     setXpPerUnit(1);
     setDailyTarget('');
     setReminderTime('');
+    setAiReason(null);
   };
+
+  const handleAISuggestTime = async () => {
+    if (!editingHabit) return;
+    const logs = getHabitLogs(editingHabit.id, 30);
+    if (logs.length < 5) return;
+    setAiSuggesting(true);
+    setAiReason(null);
+    try {
+      const times = logs.map(l => l.date).join(', ');
+      const result = await askAIJson<{ suggested_time: string; reason: string }>(
+        `Based on these habit completion times over the last 30 days, suggest the optimal reminder time. The habit "${editingHabit.name}" was completed on these dates: ${times}. Consider that most people complete habits at consistent times. Respond with JSON: {"suggested_time": "HH:MM", "reason": "brief explanation"}`,
+      );
+      if (result.suggested_time) {
+        setReminderTime(result.suggested_time);
+      }
+      if (result.reason) {
+        setAiReason(result.reason);
+      }
+    } catch {
+      setAiReason('Could not generate suggestion. Try again later.');
+    } finally {
+      setAiSuggesting(false);
+    }
+  };
+
+  const showAISuggest = isAIConfigured() && !!editingHabit && (editingHabit.logs?.length ?? 0) >= 5;
 
   const handleSubmit = () => {
     if (!name.trim()) return;
@@ -184,12 +216,34 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
           Daily Reminder <span className={`text-xs font-normal ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>(optional)</span>
         </div>
       </label>
-      <input
-        type="time"
-        value={reminderTime}
-        onChange={(e) => setReminderTime(e.target.value)}
-        className={inputCls}
-      />
+      <div className="flex items-center gap-2">
+        <input
+          type="time"
+          value={reminderTime}
+          onChange={(e) => { setReminderTime(e.target.value); setAiReason(null); }}
+          className={inputCls}
+        />
+        {showAISuggest && (
+          <button
+            type="button"
+            onClick={handleAISuggestTime}
+            disabled={aiSuggesting}
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+              aiSuggesting
+                ? isDark ? 'bg-violet-500/10 text-violet-400/60' : 'bg-violet-50 text-violet-400'
+                : isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+            }`}
+          >
+            {aiSuggesting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            AI suggest
+          </button>
+        )}
+      </div>
+      {aiReason && (
+        <p className={`text-xs mt-1.5 px-2.5 py-1.5 rounded-lg ${isDark ? 'bg-violet-500/10 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
+          {aiReason}
+        </p>
+      )}
       <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
         {reminderTime ? `You'll get a notification at ${reminderTime} daily.` : 'Set a time to get reminded about this habit.'}
       </p>

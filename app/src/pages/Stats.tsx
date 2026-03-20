@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -11,13 +11,16 @@ import {
   Cell,
   CartesianGrid,
 } from 'recharts';
-import { CheckSquare, Zap, Flame, Trophy, TrendingUp, Clock, AlertTriangle, Lightbulb, Target } from 'lucide-react';
+import { CheckSquare, Zap, Flame, Trophy, TrendingUp, Clock, AlertTriangle, Lightbulb, Target, Sparkles, Activity, BarChart3, Loader2 } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useGoalContext } from '../context/GoalContext';
+import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
 import { SkillTreeViz } from '../components/gamification/SkillTreeViz';
+import { askAIJson, isAIConfigured } from '../lib/ai';
+import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 
 export function Stats() {
   const { tasks } = useTaskContext();
@@ -25,13 +28,19 @@ export function Stats() {
   const { goals } = useGoalContext();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { subProjects, projects, getTasksBySubProject } = useProjectContext();
   const { 
     userStats, 
     getUnlockedAchievements,
   } = useGamification();
+
+  const allTasks = useMemo(
+    () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
+    [tasks, subProjects, projects, getTasksBySubProject],
+  );
   
-  const completedTasks = tasks.filter(t => t.status === 'Completed');
-  const pendingTasks = tasks.filter(t => t.status !== 'Completed');
+  const completedTasks = allTasks.filter(t => t.status === 'Completed');
+  const pendingTasks = allTasks.filter(t => t.status !== 'Completed');
   
   const personalTasks = completedTasks.filter(t => t.category === 'Personal');
   const financialTasks = completedTasks.filter(t => t.category === 'Financial');
@@ -49,10 +58,10 @@ export function Stats() {
     weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
     weekStart.setHours(0, 0, 0, 0);
     const completedThisWeek = completedTasks.filter(t => t.completedAt && new Date(t.completedAt) >= weekStart);
-    const totalThisWeek = tasks.filter(t => new Date(t.createdAt) >= weekStart || (t.completedAt && new Date(t.completedAt) >= weekStart));
+    const totalThisWeek = allTasks.filter(t => new Date(t.createdAt) >= weekStart || (t.completedAt && new Date(t.completedAt) >= weekStart));
     const rate = totalThisWeek.length > 0 ? Math.round((completedThisWeek.length / totalThisWeek.length) * 100) : 0;
     return { completed: completedThisWeek.length, total: totalThisWeek.length, rate };
-  }, [tasks, completedTasks]);
+  }, [allTasks, completedTasks]);
 
   // Most productive time of day
   const productiveTime = useMemo(() => {
@@ -149,13 +158,13 @@ export function Stats() {
     if (habitAlerts.length > 0) {
       tips.push({ icon: Flame, text: `${habitAlerts.length} habit streak${habitAlerts.length > 1 ? 's' : ''} at risk today. Complete them to keep your momentum!`, type: 'warning' });
     }
-    const overdue = tasks.filter(t => t.status !== 'Completed' && t.dueDate && new Date(t.dueDate) < new Date());
+    const overdue = allTasks.filter(t => t.status !== 'Completed' && t.dueDate && new Date(t.dueDate) < new Date());
     if (overdue.length > 0) {
       tips.push({ icon: AlertTriangle, text: `${overdue.length} overdue task${overdue.length > 1 ? 's' : ''}. Reschedule or complete them to reduce mental load.`, type: 'warning' });
     }
     const activeGoals = goals.filter(g => g.status === 'Active');
-    if (activeGoals.length === 0 && tasks.length >= 5) {
-      tips.push({ icon: Target, text: `You have ${tasks.length} tasks but no active goals. Create goals to give your tasks purpose.`, type: 'tip' });
+    if (activeGoals.length === 0 && allTasks.length >= 5) {
+      tips.push({ icon: Target, text: `You have ${allTasks.length} tasks but no active goals. Create goals to give your tasks purpose.`, type: 'tip' });
     }
     if (weeklyStats.rate >= 80) {
       tips.push({ icon: TrendingUp, text: `Great week! ${weeklyStats.rate}% completion rate. You're in the zone.`, type: 'success' });
@@ -167,7 +176,119 @@ export function Stats() {
       tips.push({ icon: Clock, text: `You're most productive in the ${productiveTime.time.split(' ')[0].toLowerCase()} (${productiveTime.count} tasks completed). Schedule important work then.`, type: 'tip' });
     }
     return tips;
-  }, [weeklyStats, habitAlerts, tasks, goals, userStats, productiveTime]);
+  }, [weeklyStats, habitAlerts, allTasks, goals, userStats, productiveTime]);
+
+  // AI Deep Analysis
+  interface AIAnalysis {
+    trends: string[];
+    predictions: string[];
+    comparisons: string[];
+    patterns: string[];
+    actionable: string[];
+  }
+
+  const AI_CACHE_KEY = 'assisy-ai-stats-analysis';
+
+  const getCachedAnalysis = useCallback((): AIAnalysis | null => {
+    try {
+      const raw = localStorage.getItem(AI_CACHE_KEY);
+      if (!raw) return null;
+      const { date, data } = JSON.parse(raw);
+      if (date === new Date().toISOString().split('T')[0]) return data as AIAnalysis;
+    } catch { /* ignore */ }
+    return null;
+  }, []);
+
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(getCachedAnalysis);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const generateAIAnalysis = useCallback(async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const now = new Date();
+
+      // Weekly completion rates for last 4 weeks
+      const weeklyRates: { week: string; completed: number; total: number; rate: number }[] = [];
+      for (let w = 3; w >= 0; w--) {
+        const wStart = new Date(now);
+        wStart.setDate(wStart.getDate() - wStart.getDay() + 1 - w * 7);
+        wStart.setHours(0, 0, 0, 0);
+        const wEnd = new Date(wStart);
+        wEnd.setDate(wEnd.getDate() + 6);
+        wEnd.setHours(23, 59, 59, 999);
+        const wCompleted = completedTasks.filter(t => t.completedAt && new Date(t.completedAt) >= wStart && new Date(t.completedAt) <= wEnd).length;
+        const wTotal = allTasks.filter(t => (new Date(t.createdAt) >= wStart && new Date(t.createdAt) <= wEnd) || (t.completedAt && new Date(t.completedAt) >= wStart && new Date(t.completedAt) <= wEnd)).length;
+        weeklyRates.push({
+          week: `${wStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${wEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+          completed: wCompleted,
+          total: wTotal,
+          rate: wTotal > 0 ? Math.round((wCompleted / wTotal) * 100) : 0,
+        });
+      }
+
+      // Habit consistency over last 30 days
+      const habitConsistency = habits.map(h => {
+        const logs = getHabitLogs(h.id, 30);
+        const target = h.dailyTarget || 1;
+        const daysCompleted = logs.filter(l => l.value >= target).length;
+        return { name: h.name, streak: h.streakCount, daysCompleted, rate: Math.round((daysCompleted / 30) * 100) };
+      });
+
+      // Goal progress
+      const activeGoals = goals.filter(g => g.status === 'Active');
+      const goalProgress = activeGoals.map(g => ({
+        title: g.title,
+        level: g.level,
+        progress: g.progress,
+        milestonesCompleted: g.milestones.filter(m => m.isCompleted).length,
+        milestonesTotal: g.milestones.length,
+      }));
+
+      // Tasks by category and priority
+      const byCategory = { Personal: personalTasks.length, Financial: financialTasks.length, Professional: professionalTasks.length };
+      const byPriority = { High: completedTasks.filter(t => t.priority === 'High').length, Low: completedTasks.filter(t => t.priority === 'Low').length };
+
+      const statsPayload = {
+        totalCompleted: completedTasks.length,
+        totalPending: pendingTasks.length,
+        byCategory,
+        byPriority,
+        weeklyRates,
+        habitConsistency,
+        goalProgress,
+        streaks: { current: userStats.currentStreak, longest: userStats.longestStreak, loginStreak: userStats.dailyLoginStreak },
+        productiveTime: productiveTime ? { peak: productiveTime.time, count: productiveTime.count } : null,
+        totalXP: userStats.totalXPEarned,
+        daysActive: userStats.totalDaysActive,
+        productiveDays: userStats.productiveDays,
+        perfectDays: userStats.perfectDays,
+      };
+
+      const result = await askAIJson<AIAnalysis>(
+        `You are a productivity analyst. Provide a deep analysis of this user's patterns. Stats: ${JSON.stringify(statsPayload)}. Respond with JSON: {"trends": [string], "predictions": [string], "comparisons": [string], "patterns": [string], "actionable": [string]}. Each array should have 2-4 concise bullet points.`,
+      );
+
+      setAiAnalysis(result);
+      localStorage.setItem(AI_CACHE_KEY, JSON.stringify({ date: new Date().toISOString().split('T')[0], data: result }));
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Failed to generate analysis');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [completedTasks, allTasks, pendingTasks, habits, getHabitLogs, goals, personalTasks, financialTasks, professionalTasks, userStats, productiveTime]);
+
+  const analysisSections = useMemo(() => {
+    if (!aiAnalysis) return [];
+    return [
+      { key: 'trends', title: 'Trends', items: aiAnalysis.trends, icon: TrendingUp, color: 'blue' },
+      { key: 'predictions', title: 'Predictions', items: aiAnalysis.predictions, icon: Sparkles, color: 'violet' },
+      { key: 'comparisons', title: 'Comparisons', items: aiAnalysis.comparisons, icon: BarChart3, color: 'amber' },
+      { key: 'patterns', title: 'Patterns', items: aiAnalysis.patterns, icon: Activity, color: 'emerald' },
+      { key: 'actionable', title: 'Actionable Items', items: aiAnalysis.actionable, icon: Target, color: 'red' },
+    ].filter(s => s.items && s.items.length > 0);
+  }, [aiAnalysis]);
 
   return (
     <div className="space-y-8">
@@ -220,6 +341,61 @@ export function Stats() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* AI Deep Analysis */}
+      {isAIConfigured() && (
+        <div className="card rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`text-sm font-semibold flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+              <Sparkles size={14} className={isDark ? 'text-violet-400' : 'text-violet-500'} /> AI Deep Analysis
+            </h2>
+            <button
+              onClick={generateAIAnalysis}
+              disabled={aiLoading}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                aiLoading
+                  ? isDark ? 'bg-white/5 text-gray-500 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : isDark ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+              }`}
+            >
+              {aiLoading ? <><Loader2 size={12} className="animate-spin" /> Analyzing...</> : <><Sparkles size={12} /> Generate Analysis</>}
+            </button>
+          </div>
+
+          {aiError && (
+            <div className={`p-3 rounded-xl text-sm mb-4 ${isDark ? 'bg-red-500/10 border border-red-500/15 text-red-400' : 'bg-red-50 border border-red-100 text-red-600'}`}>
+              {aiError}
+            </div>
+          )}
+
+          {analysisSections.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {analysisSections.map(({ key, title, items, icon: Icon, color }) => (
+                <div key={key} className={`p-4 rounded-xl ${isDark ? 'bg-white/[0.03] border border-white/[0.06]' : 'bg-slate-50/80 border border-slate-100'}`}>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isDark ? `bg-${color}-500/20` : `bg-${color}-50`}`}>
+                      <Icon size={13} className={isDark ? `text-${color}-400` : `text-${color}-500`} />
+                    </div>
+                    <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? `text-${color}-400` : `text-${color}-600`}`}>{title}</h3>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {items.map((item, i) => (
+                      <li key={i} className={`text-sm leading-relaxed flex gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                        <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? `bg-${color}-400` : `bg-${color}-500`}`} />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ) : !aiLoading && (
+            <p className={`text-sm text-center py-6 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+              Click "Generate Analysis" to get AI-powered insights about your productivity patterns.
+            </p>
+          )}
         </div>
       )}
 
