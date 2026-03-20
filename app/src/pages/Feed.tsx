@@ -794,9 +794,8 @@ export function Feed() {
                   }`}
                 >
                   <div className="px-3 py-3 sm:px-5 sm:py-4">
-                    {/* Title row */}
-                    <div className="flex items-start gap-3">
-                      {/* Selection checkbox */}
+                    {/* Title + checkbox row — full width on mobile */}
+                    <div className="flex items-start gap-2">
                       <button
                         onClick={() => toggleSelection(article.id)}
                         className={`mt-0.5 flex-shrink-0 transition-colors ${
@@ -814,26 +813,24 @@ export function Feed() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => { if (!article.read) toggleRead(article.id, true); }}
-                          className={`text-base font-semibold leading-snug hover:underline decoration-violet-500/40 underline-offset-2 inline-flex items-center gap-1.5 ${
+                          className={`text-sm sm:text-base font-semibold leading-snug hover:underline decoration-violet-500/40 underline-offset-2 ${
                             article.read
                               ? isDark ? 'text-gray-400' : 'text-slate-500'
                               : isDark ? 'text-white' : 'text-slate-800'
                           }`}
                         >
                           {article.title || article.source_url}
-                          <ExternalLink size={13} className="flex-shrink-0 opacity-40" />
+                          <ExternalLink size={11} className="inline ml-1 opacity-40" />
                         </a>
 
                         {/* Meta row */}
-                        <div className={`flex items-center gap-2 mt-1.5 flex-wrap text-xs ${
+                        <div className={`flex items-center gap-1.5 mt-1 flex-wrap text-[11px] ${
                           isDark ? 'text-gray-500' : 'text-slate-400'
                         }`}>
-                          {article.author && <span>{article.author}</span>}
-                          {article.author && sub?.title && <span>·</span>}
                           {sub?.title && <span>{sub.title}</span>}
                           {article.published_at && (
                             <>
-                              <span>·</span>
+                              {sub?.title && <span>·</span>}
                               <span>{relativeTime(article.published_at)}</span>
                             </>
                           )}
@@ -843,7 +840,7 @@ export function Feed() {
                               <span className={`inline-flex items-center gap-0.5 ${
                                 isDark ? 'text-blue-400/70' : 'text-blue-500/80'
                               }`}>
-                                <Clock size={10} /> {article.reading_time_minutes} min
+                                <Clock size={9} /> {article.reading_time_minutes}m
                               </span>
                             </>
                           )}
@@ -855,57 +852,57 @@ export function Feed() {
                           )}
                         </div>
                       </div>
+                    </div>
 
-                      {/* Action buttons - always visible, compact */}
-                      <div className="flex items-center gap-0.5 flex-shrink-0">
-                        <button
-                          onClick={() => toggleRead(article.id, !article.read)}
-                          title={article.read ? 'Mark unread' : 'Mark read'}
-                          className={`p-1 rounded-lg transition-colors ${
-                            isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
+                    {/* Action buttons — separate row below title on mobile, inline on desktop */}
+                    <div className="flex items-center gap-1 mt-2 ml-6 sm:ml-0">
+                      <button
+                        onClick={() => toggleRead(article.id, !article.read)}
+                        title={article.read ? 'Mark unread' : 'Mark read'}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
+                        }`}
+                      >
+                        {article.read ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                      <button
+                        onClick={() => toggleBookmark(article.id, !article.bookmarked)}
+                        title={article.bookmarked ? 'Remove bookmark' : 'Bookmark'}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          article.bookmarked
+                            ? isDark ? 'text-amber-400 hover:bg-amber-500/15' : 'text-amber-500 hover:bg-amber-50'
+                            : isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
+                        }`}
+                      >
+                        {article.bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+                      </button>
+                      {availableGoals.length > 0 && (
+                        <select
+                          value={article.goalId ?? ''}
+                          onChange={(e) => linkArticleToGoal(article.id, e.target.value || null)}
+                          title="Link to Goal"
+                          className={`w-20 sm:w-24 text-[11px] py-0.5 pl-1.5 pr-5 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
+                            article.goalId
+                              ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                              : isDark ? 'bg-white/5 text-gray-600 hover:text-gray-300' : 'bg-slate-50 text-slate-400 hover:text-slate-600'
                           }`}
+                          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")" }}
                         >
-                          {article.read ? <EyeOff size={14} /> : <Eye size={14} />}
-                        </button>
-                        <button
-                          onClick={() => toggleBookmark(article.id, !article.bookmarked)}
-                          title={article.bookmarked ? 'Remove bookmark' : 'Bookmark'}
-                          className={`p-1 rounded-lg transition-colors ${
-                            article.bookmarked
-                              ? isDark ? 'text-amber-400 hover:bg-amber-500/15' : 'text-amber-500 hover:bg-amber-50'
-                              : isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
-                          }`}
-                        >
-                          {article.bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
-                        </button>
-                        {availableGoals.length > 0 && (
-                          <select
-                            value={article.goalId ?? ''}
-                            onChange={(e) => linkArticleToGoal(article.id, e.target.value || null)}
-                            title="Link to Goal"
-                            className={`w-24 text-[11px] py-0.5 pl-1.5 pr-5 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
-                              article.goalId
-                                ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                                : isDark ? 'bg-white/5 text-gray-600 hover:text-gray-300' : 'bg-slate-50 text-slate-400 hover:text-slate-600'
-                            }`}
-                            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")" }}
-                          >
-                            <option value="">{article.goalId ? 'Unlink' : 'Goal'}</option>
-                            {availableGoals.map(g => (
-                              <option key={g.id} value={g.id}>{g.title}</option>
-                            ))}
-                          </select>
-                        )}
-                        <button
-                          onClick={() => removeArticle(article.id)}
-                          title="Delete"
-                          className={`p-1 rounded-lg transition-colors ${
-                            isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
-                          }`}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                          <option value="">{article.goalId ? 'Unlink' : 'Goal'}</option>
+                          {availableGoals.map(g => (
+                            <option key={g.id} value={g.id}>{g.title}</option>
+                          ))}
+                        </select>
+                      )}
+                      <button
+                        onClick={() => removeArticle(article.id)}
+                        title="Delete"
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
+                        }`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
 
                     {/* Tiered Analysis */}
