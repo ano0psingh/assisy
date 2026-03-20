@@ -8,6 +8,7 @@ import { FocusTimer } from '../common/FocusTimer';
 import { LevelUpCelebration } from '../common/LevelUpCelebration';
 import { QuickCaptureFAB } from '../common/QuickCaptureFAB';
 import { OnboardingTour } from '../common/OnboardingTour';
+import { RecurringXPEffect } from '../common/RecurringXPEffect';
 
 const PAGE_ORDER = ['/', '/tasks', '/calendar', '/feed'];
 const SWIPE_MIN_X = 80;
@@ -95,6 +96,7 @@ export function Layout({ children }: LayoutProps) {
         onReopen={() => setFocusTimerOpen(true)}
       />
       <OnboardingTour />
+      <RecurringXPEffect />
     </div>
   );
 }

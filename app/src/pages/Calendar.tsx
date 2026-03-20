@@ -105,7 +105,7 @@ export function Calendar() {
     setAiPanelOpen(true);
     try {
       const pendingTasks = allTasks
-        .filter(t => t.status === 'Pending')
+        .filter(t => t.status === 'Pending' && !t.isRecurring)
         .map(t => ({
           id: t.id,
           title: t.title,

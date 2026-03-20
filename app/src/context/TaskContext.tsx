@@ -61,6 +61,63 @@ const updateTaskInArray = (tasks: Task[], taskId: string, updates: Partial<Task>
   });
 };
 
+function getDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function wasExpectedOn(dateStr: string, task: Pick<Task, 'recurrencePattern' | 'specificDays' | 'monthDay' | 'pausedUntil' | 'skippedDates'>): boolean {
+  if (task.pausedUntil && dateStr <= task.pausedUntil) return false;
+  if (task.skippedDates?.includes(dateStr)) return false;
+  const d = new Date(dateStr + 'T12:00:00');
+  if (task.recurrencePattern === 'daily') return true;
+  if (task.recurrencePattern === 'weekly' || task.recurrencePattern === 'specific_days') {
+    return task.specificDays?.includes(d.getDay()) || false;
+  }
+  if (task.recurrencePattern === 'monthly') {
+    return d.getDate() === (task.monthDay ?? 1);
+  }
+  return false;
+}
+
+function calculateRecurringStreak(completionLog: string[], task: Pick<Task, 'recurrencePattern' | 'specificDays' | 'monthDay' | 'pausedUntil' | 'skippedDates'>): number {
+  const logSet = new Set(completionLog);
+  let streak = 0;
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+
+  for (let i = 0; i < 365; i++) {
+    const dateStr = getDateStr(d);
+    if (wasExpectedOn(dateStr, task)) {
+      if (logSet.has(dateStr)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+export function getRecurringCompletionRate(task: Task, days: number = 30): { completed: number; expected: number; rate: number } {
+  const log = new Set(task.completionLog || []);
+  let completed = 0;
+  let expected = 0;
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+
+  for (let i = 0; i < days; i++) {
+    const dateStr = getDateStr(d);
+    if (wasExpectedOn(dateStr, task)) {
+      expected++;
+      if (log.has(dateStr)) completed++;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+
+  return { completed, expected, rate: expected > 0 ? Math.round((completed / expected) * 100) : 0 };
+}
+
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { dataVersion } = useDataVersion();
@@ -174,10 +231,29 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const completeTask = useCallback((taskId: string) => {
     setTasks(prev => {
-      const updated = updateTaskInArray(prev, taskId, {
+      const task = prev.find(t => t.id === taskId);
+      if (!task) return prev;
+
+      const todayStr = getDateStr(new Date());
+      const updates: Partial<Task> = {
         status: 'Completed',
         completedAt: new Date(),
-      });
+      };
+
+      if (task.isRecurring) {
+        const log = task.completionLog || [];
+        if (!log.includes(todayStr)) {
+          updates.completionLog = [...log, todayStr];
+        } else {
+          updates.completionLog = log;
+        }
+
+        const streak = calculateRecurringStreak(updates.completionLog, task);
+        updates.streakCount = streak;
+        updates.longestStreak = Math.max(streak, task.longestStreak || 0);
+      }
+
+      const updated = updateTaskInArray(prev, taskId, updates);
       saveTasksToStore(updated, userId);
       return updated;
     });

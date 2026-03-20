@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { TiptapViewer } from '../common/TiptapViewer';
 import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
 import { hapticLight, hapticMedium } from '../../lib/haptics';
+import { getRecurringCompletionRate } from '../../context/TaskContext';
 
 interface TaskCardProps {
   task: Task;
@@ -322,6 +323,26 @@ export function TaskCard({
                     })()}
                   </span>
                 )}
+                {task.isRecurring && (task.streakCount ?? 0) > 0 && (
+                  <span className="text-[10px] whitespace-nowrap text-orange-500">
+                    <Flame size={10} className="inline -mt-0.5" /> {task.streakCount}d streak
+                  </span>
+                )}
+                {task.isRecurring && task.completionLog && (() => {
+                  const rate = getRecurringCompletionRate(task, 30);
+                  if (rate.expected <= 0) return null;
+                  const pct = Math.round(rate.rate * 100);
+                  const color = pct >= 80
+                    ? isDark ? 'text-emerald-400' : 'text-emerald-500'
+                    : pct >= 50
+                      ? isDark ? 'text-amber-400' : 'text-amber-500'
+                      : isDark ? 'text-gray-500' : 'text-slate-400';
+                  return (
+                    <span className={`text-[10px] whitespace-nowrap ${color}`}>
+                      {rate.completed}/{rate.expected} ({pct}%)
+                    </span>
+                  );
+                })()}
                 {task.dueDate && (() => {
                   const { text, isOverdue: overdue } = formatDueDate(task.dueDate);
                   return (

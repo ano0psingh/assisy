@@ -25,6 +25,9 @@ export interface Task {
   focusedDate?: string; // YYYY-MM-DD
   pausedUntil?: string; // YYYY-MM-DD — recurring task paused until this date
   skippedDates?: string[]; // YYYY-MM-DD — specific dates to skip for recurring tasks
+  completionLog?: string[]; // YYYY-MM-DD — dates this recurring task was completed
+  streakCount?: number; // current consecutive completion streak for recurring tasks
+  longestStreak?: number; // best streak ever for recurring tasks
 }
 
 export type GoalStatus = 'Active' | 'Completed' | 'Archived';
