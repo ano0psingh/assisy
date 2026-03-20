@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useFeed, type FeedFilter, type FeedSort } from '../context/FeedContext';
 import { useTheme } from '../context/ThemeContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import {
   Newspaper, Plus, Link, RefreshCw, Bookmark, BookmarkCheck,
   Eye, EyeOff, Trash2, ChevronDown, ChevronUp, ExternalLink,
@@ -123,6 +125,10 @@ export function Feed() {
   } = useFeed();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({
+    onRefresh: refreshFeeds,
+  });
 
   const [availableGoals, setAvailableGoals] = useState<{ id: string; title: string }[]>([]);
   useEffect(() => {
@@ -262,7 +268,8 @@ export function Feed() {
   }
 
   return (
-    <div className="space-y-5">
+    <div ref={containerRef} className="space-y-5">
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       {/* Gemini banner */}
       {!geminiReady && (
         <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${

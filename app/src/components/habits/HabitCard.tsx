@@ -3,6 +3,7 @@ import type { Habit } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useHabitContext } from '../../context/HabitContext';
 import { Flame, Trash2, Plus, Minus, Check, Pencil, Trophy } from 'lucide-react';
+import { hapticLight } from '../../lib/haptics';
 
 interface HabitLog {
   date: string;
@@ -33,12 +34,14 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: Habit
   const progressPct = target ? Math.min(100, Math.round((todaysValue / target) * 100)) : (todaysValue > 0 ? 100 : 0);
 
   const handleIncrement = () => {
+    hapticLight();
     const newValue = todaysValue + 1;
     setInputValue(newValue.toString());
     onLog(habit.id, newValue);
   };
 
   const handleDecrement = () => {
+    hapticLight();
     const newValue = Math.max(0, todaysValue - 1);
     setInputValue(newValue.toString());
     onLog(habit.id, newValue);
@@ -54,6 +57,7 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: Habit
   };
 
   const handleBooleanToggle = () => {
+    hapticLight();
     onLog(habit.id, todaysValue > 0 ? 0 : 1);
   };
 

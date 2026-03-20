@@ -101,10 +101,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (dueReminders.length === 0) continue;
 
+      let userData: { tasks?: any[]; habits?: any[]; gamification?: any } | null = null;
+      try {
+        const { data } = await supabase
+          .from('user_data')
+          .select('tasks, habits, gamification')
+          .eq('user_id', sub.user_id)
+          .single();
+        userData = data;
+      } catch {
+        // Fall back to generic messages if fetch fails
+      }
+
       for (const reminder of dueReminders) {
-        const payload = reminder === 'daily_plan'
-          ? JSON.stringify({ title: 'Plan your day', body: 'Take a minute to review your tasks and set priorities.', tag: 'daily-planning' })
-          : JSON.stringify({ title: `Don't forget: ${reminder}`, body: `Time to check in on your ${reminder} habit.`, tag: `habit-${reminder}` });
+        let payload: string;
+
+        if (reminder === 'daily_plan') {
+          let body = 'Take a minute to review your tasks and set priorities.';
+          if (userData) {
+            const pendingCount = (userData.tasks || []).filter((t: any) => t.status === 'Pending').length;
+            const currentStreak = userData.gamification?.userStats?.currentStreak || 0;
+            const habitCount = (userData.habits || []).filter((h: any) => (h.streakCount || 0) > 0).length;
+            if (currentStreak > 0 || pendingCount > 0 || habitCount > 0) {
+              body = `${currentStreak}-day streak! ${pendingCount} tasks today. ${habitCount} active habit streaks.`;
+            }
+          }
+          payload = JSON.stringify({ title: 'Plan your day', body, tag: 'daily-planning' });
+        } else {
+          let body = `Time to check in on your ${reminder} habit.`;
+          if (userData) {
+            const habit = (userData.habits || []).find((h: any) => h.name === reminder);
+            if (habit && (habit.streakCount || 0) > 0) {
+              body = `Don't break your ${habit.streakCount}-day ${reminder} streak!`;
+            }
+          }
+          payload = JSON.stringify({ title: `Don't forget: ${reminder}`, body, tag: `habit-${reminder}` });
+        }
 
         try {
           await webpush.sendNotification(sub.subscription, payload);

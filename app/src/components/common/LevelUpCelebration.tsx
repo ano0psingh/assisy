@@ -3,6 +3,7 @@ import { Crown, Sparkles, X } from 'lucide-react';
 import { useGoalContext, type LevelUpEvent } from '../../context/GoalContext';
 import { GoalTree } from '../goals/GoalTree';
 import { useTheme } from '../../context/ThemeContext';
+import { hapticHeavy } from '../../lib/haptics';
 
 const CONFETTI_COLORS = ['#A78BFA', '#F472B6', '#34D399', '#FBBF24', '#60A5FA', '#F87171'];
 
@@ -44,6 +45,7 @@ export function LevelUpCelebration() {
     if (levelUpEvent) {
       setEvent(levelUpEvent);
       setVisible(true);
+      hapticHeavy();
     }
   }, [levelUpEvent]);
 

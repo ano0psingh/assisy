@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { TiptapViewer } from '../common/TiptapViewer';
-import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play } from 'lucide-react';
+import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
+import { hapticLight, hapticMedium } from '../../lib/haptics';
 
 interface TaskCardProps {
   task: Task;
@@ -155,20 +156,71 @@ export function TaskCard({
     || (isInTodayView && canRemoveFromToday && onRemoveFromToday)
     || (onMoveToProject && !isCompleted);
 
+  // Long-press quick actions
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTouchStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [quickAction, setQuickAction] = useState<{ x: number; y: number } | null>(null);
+  const quickActionRef = useRef<HTMLDivElement>(null);
+
+  const clearLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!quickAction) return;
+    const dismiss = (e: MouseEvent | TouchEvent) => {
+      if (quickActionRef.current && !quickActionRef.current.contains(e.target as Node)) {
+        setQuickAction(null);
+      }
+    };
+    const t = setTimeout(() => {
+      document.addEventListener('mousedown', dismiss);
+      document.addEventListener('touchstart', dismiss, { passive: true });
+    }, 50);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('mousedown', dismiss);
+      document.removeEventListener('touchstart', dismiss);
+    };
+  }, [quickAction]);
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
+    const touch = e.touches[0];
+    touchStartX.current = touch.clientX;
+    longPressTouchStart.current = { x: touch.clientX, y: touch.clientY };
     didSwipe.current = false;
+
+    clearLongPress();
+    longPressTimer.current = setTimeout(() => {
+      hapticMedium();
+      setQuickAction({ x: touch.clientX, y: touch.clientY });
+      longPressTimer.current = null;
+    }, 500);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    const dx = e.touches[0].clientX - touchStartX.current;
-    const clamped = Math.max(-SWIPE_MAX, Math.min(SWIPE_MAX, dx));
+    const touch = e.touches[0];
+    const dx = touch.clientX - longPressTouchStart.current.x;
+    const dy = touch.clientY - longPressTouchStart.current.y;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+      clearLongPress();
+    }
+
+    const swipeDx = touch.clientX - touchStartX.current;
+    const clamped = Math.max(-SWIPE_MAX, Math.min(SWIPE_MAX, swipeDx));
     setSwipeOffset(clamped);
   };
 
   const handleTouchEnd = () => {
+    clearLongPress();
+    if (quickAction) return;
+
     if (swipeOffset >= SWIPE_THRESHOLD) {
       didSwipe.current = true;
+      hapticLight();
       onToggleComplete(task.id);
     } else if (swipeOffset <= -SWIPE_THRESHOLD) {
       didSwipe.current = true;
@@ -210,8 +262,8 @@ export function TaskCard({
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           {/* Checkbox */}
           <button
-            onClick={() => onToggleComplete(task.id)}
-            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+            onClick={() => { hapticLight(); onToggleComplete(task.id); }}
+            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 min-w-[44px] min-h-[44px] p-2.5 -m-2 ${
               isCompleted
                 ? 'bg-emerald-500 border-emerald-500'
                 : isDark
@@ -296,7 +348,7 @@ export function TaskCard({
           {isFocusedToday && !isCompleted && onRemoveFromToday && (
             <button
               onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); }}
-              className={`p-1.5 rounded-lg transition-all ${
+              className={`p-2 rounded-lg transition-all min-w-[44px] min-h-[44px] flex items-center justify-center ${
                 isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
               }`}
               title="Added to Today (click to remove)"
@@ -308,7 +360,7 @@ export function TaskCard({
           {showTodayActions && !isFocusedToday && !isInTodayView && onAddToToday && !isCompleted && (
             <button
               onClick={(e) => { e.stopPropagation(); onAddToToday(task.id); }}
-              className={`p-1.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
                 isDark
                   ? 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/20'
                   : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
@@ -321,7 +373,7 @@ export function TaskCard({
 
 <button
               onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-              className={`p-1.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
                 isDark
                   ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/20'
                   : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
@@ -336,7 +388,7 @@ export function TaskCard({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setMenuOpen(!menuOpen); }}
-              className={`p-1.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
                 menuOpen ? 'opacity-100' : ''
               } ${
                 isDark
@@ -446,6 +498,58 @@ export function TaskCard({
         </div>
       )}
       </div>
+
+      {/* Long-press quick action popup */}
+      {quickAction && (
+        <div
+          ref={quickActionRef}
+          className={`fixed z-[100] rounded-xl shadow-lg border py-1 animate-fade-in min-w-[160px] ${
+            isDark ? 'bg-[#1a1a2e] border-white/10' : 'bg-white border-slate-200'
+          }`}
+          style={{
+            left: Math.min(quickAction.x, window.innerWidth - 180),
+            top: Math.max(8, quickAction.y - 120),
+          }}
+        >
+          {!isCompleted && (
+            <button
+              onClick={() => { onToggleComplete(task.id); setQuickAction(null); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+                isDark ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-emerald-600 hover:bg-emerald-50'
+              }`}
+            >
+              <Check size={15} /> Complete
+            </button>
+          )}
+          {onAddToToday && !isCompleted && !isFocusedToday && (
+            <button
+              onClick={() => { onAddToToday(task.id); setQuickAction(null); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+                isDark ? 'text-blue-400 hover:bg-blue-500/10' : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <Calendar size={15} /> Tomorrow
+            </button>
+          )}
+          <button
+            onClick={() => { onEdit(task); setQuickAction(null); }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+              isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Pencil size={15} /> Edit
+          </button>
+          <div className={`my-1 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+          <button
+            onClick={() => { if (confirm('Delete this task?')) onDelete(task.id); setQuickAction(null); }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+              isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
+            }`}
+          >
+            <Trash2 size={15} /> Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }

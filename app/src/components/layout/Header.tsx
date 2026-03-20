@@ -78,7 +78,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             {/* Hamburger - mobile only */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className={`p-1.5 rounded-lg md:hidden transition-colors ${
+              className={`p-2.5 -ml-1 rounded-lg md:hidden transition-colors ${
                 isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
               }`}
               aria-label="Open menu"
@@ -178,11 +178,11 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                       <img
                         src={user.user_metadata.avatar_url}
                         alt=""
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-9 h-9 rounded-full object-cover"
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                         {(user.email?.[0] ?? '?').toUpperCase()}
                       </div>
                     )}
@@ -269,7 +269,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </div>
           <button
             onClick={closeMobileMenu}
-            className={`p-1.5 rounded-lg transition-colors ${
+            className={`p-2.5 rounded-lg transition-colors ${
               isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
             }`}
             aria-label="Close menu"
@@ -303,7 +303,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 to={item.to}
                 onClick={closeMobileMenu}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  `flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                     isActive
                       ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                       : isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'

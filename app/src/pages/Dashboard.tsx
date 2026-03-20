@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
@@ -14,9 +14,12 @@ import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { TiptapEditor } from '../components/common/TiptapEditor';
 import { isNotificationSupported, requestPermission, sendNotification, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { subscribeToPush } from '../lib/pushSubscription';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 import { ExpandableModal } from '../components/common/ExpandableModal';
+import { hapticLight } from '../lib/haptics';
 import { useUndo } from '../components/common/UndoToast';
 import { getQuoteOfTheDay } from '../data/quotes';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
@@ -170,10 +173,20 @@ export function Dashboard() {
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
   const [habitsExpanded, setHabitsExpanded] = useState(false);
+  const [habitSwipeOffsets, setHabitSwipeOffsets] = useState<Record<string, number>>({});
+  const habitTouchStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [editingProjectTask, setEditingProjectTask] = useState<ProjectTask | null>(null);
   const [projectTaskForm, setProjectTaskForm] = useState({ title: '', description: '' });
   const [morningBriefing, setMorningBriefing] = useState<string | null>(null);
   const [briefingLoading, setBriefingLoading] = useState(false);
+
+  const handlePullRefresh = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const { pullDistance, isRefreshing, containerRef } = usePullToRefresh({
+    onRefresh: handlePullRefresh,
+  });
 
   // Get today's project tasks
   const todaysProjectTasks = getTodaysProjectTasks();
@@ -542,7 +555,8 @@ export function Dashboard() {
   })();
 
   return (
-    <div className="space-y-5">
+    <div ref={containerRef} className="space-y-5">
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {/* Notification status */}
       {(() => {
         const status = getPermissionStatus();
@@ -706,6 +720,49 @@ export function Dashboard() {
                   </p>
                   <p className={`text-xs mt-1 ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>— {quote.author}</p>
                 </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE HERO CARD: at-a-glance summary ── */}
+      <div className={`md:hidden rounded-xl p-4 ${
+        isDark
+          ? 'bg-gradient-to-br from-violet-500/10 via-purple-500/8 to-indigo-500/10 border border-violet-500/15'
+          : 'bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 border border-violet-100'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Flame className={`w-6 h-6 ${userStats.currentStreak > 7 ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]' : isDark ? 'text-orange-400' : 'text-orange-500'}`} />
+            <div>
+              <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{userStats.currentStreak}</span>
+              <span className={`text-xs ml-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>day streak</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Circular progress ring */}
+            <div className="relative flex items-center justify-center">
+              <svg width="44" height="44" viewBox="0 0 44 44" className="-rotate-90">
+                <circle cx="22" cy="22" r="18" fill="none" strokeWidth="3" className={isDark ? 'stroke-white/10' : 'stroke-slate-200'} />
+                <circle
+                  cx="22" cy="22" r="18" fill="none" strokeWidth="3" strokeLinecap="round"
+                  className={isDark ? 'stroke-violet-400' : 'stroke-violet-500'}
+                  strokeDasharray={`${totalTodayTasks > 0 ? (totalTodayDone / totalTodayTasks) * 113.1 : 0} 113.1`}
+                />
+              </svg>
+              <span className={`absolute text-[10px] font-bold ${isDark ? 'text-violet-300' : 'text-violet-600'}`}>
+                {totalTodayDone}/{totalTodayTasks}
+              </span>
+            </div>
+            <div className="text-right">
+              <p className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                {totalTodayDone}/{totalTodayTasks} <span className={isDark ? 'text-gray-500' : 'text-slate-500'}>done</span>
+              </p>
+              {habitCheckInStats.totalHabits > 0 && (
+                <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  {habitCheckInStats.todayCompletedCount}/{habitCheckInStats.totalHabits} habits
+                </p>
               )}
             </div>
           </div>
@@ -884,20 +941,54 @@ export function Dashboard() {
                     const isBoolean = habit.trackingType === 'boolean';
                     if (isBoolean) {
                       const done = value > 0;
+                      const offset = habitSwipeOffsets[habit.id] || 0;
                       return (
-                        <button
-                          key={habit.id}
-                          type="button"
-                          onClick={() => logHabit(habit.id, done ? 0 : 1)}
-                          className={`flex items-center justify-between min-h-[44px] px-3 py-2 rounded-lg text-sm transition-all ${
-                            done
-                              ? isDark ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
-                          }`}
-                        >
-                          <span className="truncate">{habit.name}</span>
-                          {done ? <Check size={16} strokeWidth={2.5} className="flex-shrink-0 ml-2" /> : <Circle size={16} className="opacity-40 flex-shrink-0 ml-2" />}
-                        </button>
+                        <div key={habit.id} className="relative rounded-lg overflow-hidden">
+                          {offset > 0 && (
+                            <div className={`absolute inset-0 flex items-center pl-3 rounded-lg transition-opacity ${
+                              offset > 30 ? 'opacity-100' : 'opacity-40'
+                            } ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}>
+                              <Check size={18} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => { hapticLight(); logHabit(habit.id, done ? 0 : 1); }}
+                            onTouchStart={(e) => {
+                              const t = e.touches[0];
+                              habitTouchStart.current = { x: t.clientX, y: t.clientY };
+                            }}
+                            onTouchMove={(e) => {
+                              const t = e.touches[0];
+                              const dx = t.clientX - habitTouchStart.current.x;
+                              const dy = t.clientY - habitTouchStart.current.y;
+                              if (Math.abs(dy) > 30) {
+                                setHabitSwipeOffsets(prev => ({ ...prev, [habit.id]: 0 }));
+                                return;
+                              }
+                              const clamped = Math.min(80, Math.max(0, dx));
+                              setHabitSwipeOffsets(prev => ({ ...prev, [habit.id]: clamped }));
+                            }}
+                            onTouchEnd={() => {
+                              const off = habitSwipeOffsets[habit.id] || 0;
+                              if (off >= 60) {
+                                hapticLight();
+                                logHabit(habit.id, done ? 0 : 1);
+                              }
+                              setHabitSwipeOffsets(prev => ({ ...prev, [habit.id]: 0 }));
+                            }}
+                            onTouchCancel={() => setHabitSwipeOffsets(prev => ({ ...prev, [habit.id]: 0 }))}
+                            style={{ transform: `translateX(${offset}px)`, transition: offset === 0 ? 'transform 0.2s ease-out' : 'none' }}
+                            className={`relative w-full flex items-center justify-between min-h-[44px] px-3 py-2 rounded-lg text-sm ${
+                              done
+                                ? isDark ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                            }`}
+                          >
+                            <span className="truncate">{habit.name}</span>
+                            {done ? <Check size={16} strokeWidth={2.5} className="flex-shrink-0 ml-2" /> : <Circle size={16} className="opacity-40 flex-shrink-0 ml-2" />}
+                          </button>
+                        </div>
                       );
                     }
                     const unit = habit.trackingType === 'duration' ? ' min' : '';
@@ -1279,7 +1370,7 @@ export function Dashboard() {
 
       {/* Achievement Unlock Notification */}
       {recentUnlocks.length > 0 && (
-        <div className="fixed bottom-4 right-4 z-50 space-y-2 animate-slide-up">
+        <div className="fixed bottom-24 right-4 md:bottom-4 z-50 space-y-2 animate-slide-up">
           {recentUnlocks.map((achievement) => (
             <div 
               key={achievement.id}
