@@ -9,6 +9,7 @@ import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import { ContributionGraph } from '../components/habits/ContributionGraph';
 import { BodyMetrics } from '../components/habits/BodyMetrics';
 import { askAI, isAIConfigured } from '../lib/ai';
+import { formatAIText } from '../lib/formatAIText';
 import type { TrackingType, Habit } from '../types';
 
 interface HabitWithLogs extends Habit {
@@ -293,9 +294,10 @@ export function Habits() {
             </div>
           )}
           {aiInsights && (
-            <div className={`text-sm leading-relaxed whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
-              {aiInsights}
-            </div>
+            <div
+              className={`text-sm leading-relaxed space-y-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}
+              dangerouslySetInnerHTML={{ __html: formatAIText(aiInsights) }}
+            />
           )}
           {!aiInsights && !insightsLoading && !insightsError && (
             <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>

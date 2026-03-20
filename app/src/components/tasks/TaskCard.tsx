@@ -263,7 +263,7 @@ export function TaskCard({
           {/* Checkbox */}
           <button
             onClick={() => { hapticLight(); onToggleComplete(task.id); }}
-            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 min-w-[44px] min-h-[44px] p-2.5 -m-2 ${
+            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
               isCompleted
                 ? 'bg-emerald-500 border-emerald-500'
                 : isDark
@@ -348,7 +348,7 @@ export function TaskCard({
           {isFocusedToday && !isCompleted && onRemoveFromToday && (
             <button
               onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); }}
-              className={`p-2 rounded-lg transition-all min-w-[44px] min-h-[44px] flex items-center justify-center ${
+              className={`p-1.5 rounded-lg transition-all ${
                 isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
               }`}
               title="Added to Today (click to remove)"
@@ -360,7 +360,7 @@ export function TaskCard({
           {showTodayActions && !isFocusedToday && !isInTodayView && onAddToToday && !isCompleted && (
             <button
               onClick={(e) => { e.stopPropagation(); onAddToToday(task.id); }}
-              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+              className={`p-1.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
                 isDark
                   ? 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/20'
                   : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
@@ -373,7 +373,7 @@ export function TaskCard({
 
 <button
               onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+              className={`p-1.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
                 isDark
                   ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/20'
                   : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
@@ -388,7 +388,7 @@ export function TaskCard({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setMenuOpen(!menuOpen); }}
-              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+              className={`p-1.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
                 menuOpen ? 'opacity-100' : ''
               } ${
                 isDark

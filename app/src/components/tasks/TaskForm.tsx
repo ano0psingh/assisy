@@ -482,12 +482,12 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     >
       {(isFS) =>
         isFS ? (
-          <div className="flex h-full">
-            <div className={`flex-1 flex flex-col p-8 space-y-5 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className="flex flex-col sm:flex-row sm:h-full">
+            <div className={`flex-1 flex flex-col p-5 sm:p-8 space-y-5 sm:border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               {titleField(true)}
               {notesField(true)}
             </div>
-            <div className={`w-80 flex-shrink-0 p-6 space-y-5 overflow-y-auto ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+            <div className={`flex-shrink-0 p-5 sm:p-6 space-y-5 sm:overflow-y-auto sm:w-80 border-t sm:border-t-0 ${isDark ? 'border-white/10 bg-white/[0.02]' : 'border-slate-200 bg-white'}`}>
               <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Task details</h3>
               {dueDateField}
               {categoryField}

@@ -31,6 +31,7 @@ import { useFeed } from '../context/FeedContext';
 import { useGamification } from '../context/GamificationContext';
 import { useTheme } from '../context/ThemeContext';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
+import { formatAIText } from '../lib/formatAIText';
 
 interface WeeklyInsight {
   achievements: string[];
@@ -675,11 +676,10 @@ Respond ONLY with valid JSON matching this exact schema:
         ) : aiInsight && typeof aiInsight === 'string' ? (
           <div className={cardClass + ' p-5'}>
             <div className="space-y-3">
-              <div className={`text-sm leading-relaxed whitespace-pre-line ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                {aiInsight.split(/\*\*(.*?)\*\*/g).map((part, i) =>
-                  i % 2 === 1 ? <strong key={i} className={isDark ? 'text-violet-400' : 'text-violet-600'}>{part}</strong> : <span key={i}>{part}</span>
-                )}
-              </div>
+              <div
+                className={`text-sm leading-relaxed space-y-1 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
+                dangerouslySetInnerHTML={{ __html: formatAIText(aiInsight) }}
+              />
               <button
                 onClick={generateInsight}
                 disabled={aiLoading}
