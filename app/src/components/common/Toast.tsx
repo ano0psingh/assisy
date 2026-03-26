@@ -73,12 +73,13 @@ function ToastCard({ item, onDismiss, isDark }: { item: ToastItem; onDismiss: (i
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-elevated transition-all ${
+      className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all backdrop-blur-2xl ${
         exiting ? 'opacity-0 translate-y-2 scale-95' : 'opacity-100'
       } ${isDark
-        ? 'bg-[#1a1a2e] border border-white/10 text-gray-200'
-        : 'bg-white border border-slate-200 text-slate-700 shadow-lg'
+        ? 'bg-[#1a1a2e]/80 border border-white/[0.1] text-gray-200'
+        : 'bg-white/75 border border-white/60 text-slate-700'
       }`}
+      style={{ boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 0.5px rgba(255,255,255,0.06)' : '0 8px 32px rgba(0,0,0,0.1), inset 0 0 0 0.5px rgba(255,255,255,0.8)' }}
       style={{
         transform: `translateX(${dragX}px)${exiting ? ' translateY(8px) scale(0.95)' : ''}`,
         opacity: Math.max(0, 1 - Math.abs(dragX) / 150),

@@ -233,10 +233,9 @@ export function TaskCard({
   };
 
   return (
-    <div className="relative rounded-xl">
-      {/* Swipe action backgrounds */}
+    <div className="relative rounded-2xl">
       {swipeOffset !== 0 && (
-        <div className="absolute inset-0 flex rounded-xl overflow-hidden">
+        <div className="absolute inset-0 flex rounded-2xl overflow-hidden">
           <div className={`flex-1 flex items-center justify-end pr-4 ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity ${isDark ? 'bg-red-500/20' : 'bg-red-50'}`}>
             <Trash2 size={24} className={isDark ? 'text-red-400' : 'text-red-500'} />
           </div>
@@ -250,13 +249,13 @@ export function TaskCard({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={() => setSwipeOffset(0)}
-        style={{ transform: `translateX(${swipeOffset}px)` }}
-        className={`group rounded-xl px-4 py-3 transition-shadow duration-200 ease-spring ${
+        style={{ transform: `translateX(${swipeOffset}px)`, boxShadow: isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7)' }}
+        className={`group rounded-2xl px-4 py-3.5 transition-shadow duration-200 ease-spring backdrop-blur-xl ${
           swipeOffset !== 0 ? 'shadow-lg' : ''
         } ${
       isDark
-        ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${isCompleted ? 'opacity-60' : ''}`
-        : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${isCompleted ? 'opacity-60 bg-neutral-50' : ''}`
+        ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted ? 'opacity-60' : ''}`
+        : `bg-white/65 border border-white/70 hover:bg-white/80 ${isCompleted ? 'opacity-60' : ''}`
     }`}
       >
       <div className="flex items-center justify-between gap-3">

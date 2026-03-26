@@ -62,20 +62,20 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: Habit
   };
 
   return (
-    <div className={`rounded-xl p-3 transition-all duration-200 ${
+    <div className={`rounded-2xl p-3.5 transition-all duration-200 backdrop-blur-xl ${
       isDark
-        ? `bg-white/[0.03] border border-white/[0.07] ${isCompleted ? 'border-emerald-500/30' : ''}`
-        : `bg-white border border-neutral-200 ${isCompleted ? 'border-emerald-300 bg-emerald-50/30' : ''}`
-    }`}>
+        ? `bg-white/[0.04] border border-white/[0.08] ${isCompleted ? 'border-emerald-500/30 bg-emerald-500/[0.06]' : ''}`
+        : `bg-white/65 border border-white/70 ${isCompleted ? 'border-emerald-400/40 bg-emerald-50/40' : ''}`
+    }`} style={{ boxShadow: isCompleted ? (isDark ? '0 0 16px rgba(52,211,153,0.08), inset 0 0 0 0.5px rgba(52,211,153,0.1)' : '0 0 16px rgba(52,211,153,0.06), inset 0 0 0 0.5px rgba(52,211,153,0.1)') : (isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7)') }}>
       <div className="flex items-center gap-3">
         {/* Left: status + info */}
         <button
           type="button"
           onClick={habit.trackingType === 'boolean' ? handleBooleanToggle : undefined}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+          className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
             isCompleted
-              ? 'bg-emerald-500 text-white'
-              : isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-100 text-slate-400'
+              ? 'bg-emerald-500 text-white shadow-[0_0_12px_rgba(52,211,153,0.3)]'
+              : isDark ? 'bg-white/[0.06] text-gray-600 border border-white/[0.08]' : 'bg-black/[0.03] text-slate-400 border border-black/[0.04]'
           } ${habit.trackingType === 'boolean' ? 'cursor-pointer' : 'cursor-default'}`}
         >
           {isCompleted ? <Check size={16} strokeWidth={2.5} /> : <div className="w-2 h-2 rounded-full bg-current" />}
@@ -88,7 +88,7 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: Habit
               {habit.name}
             </h3>
             {habit.streakCount > 0 && (
-              <span className="inline-flex items-center gap-0.5 text-orange-500 text-[11px] font-bold">
+              <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`} style={habit.streakCount >= 7 ? { filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' } : undefined}>
                 <Flame size={11} />{habit.streakCount}d
               </span>
             )}

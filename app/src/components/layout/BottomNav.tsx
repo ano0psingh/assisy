@@ -125,7 +125,7 @@ export function BottomNav() {
     <>
       <nav
         className={`bottom-nav-bar md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t ${
-          isDark ? 'bg-[#0a0a0f]/95 backdrop-blur border-white/10' : 'bg-white/95 backdrop-blur border-slate-200'
+          isDark ? 'bg-[#0c0c10]/70 backdrop-blur-2xl border-white/[0.06]' : 'bg-white/60 backdrop-blur-2xl border-black/[0.04]'
         }`}
       >
         <div className="flex items-stretch">

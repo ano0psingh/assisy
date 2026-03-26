@@ -157,9 +157,9 @@ export function ExpandableModal({
   if (isFullScreen) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col">
-        <div className={`absolute inset-0 ${isDark ? 'bg-[#0a0a12]' : 'bg-slate-50'}`} />
+        <div className={`absolute inset-0 ${isDark ? 'bg-[#0c0c10]' : 'bg-[#f8f8fa]'}`} />
         <div className={`relative flex flex-col h-full w-full animate-fade-in ${
-          isDark ? 'bg-[#0a0a12]' : 'bg-slate-50'
+          isDark ? 'bg-[#0c0c10]' : 'bg-[#f8f8fa]'
         }`}>
           {header}
           <div className="flex-1 overflow-y-auto">
@@ -176,17 +176,20 @@ export function ExpandableModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 animate-fade-in">
       <div
-        className={`absolute inset-0 backdrop-blur-md ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
+        className={`absolute inset-0 backdrop-blur-xl ${isDark ? 'bg-black/50' : 'bg-slate-900/15'}`}
         style={{ opacity: backdropOpacity }}
         onClick={onClose}
       />
       <div
-        className={`relative rounded-t-2xl sm:rounded-2xl shadow-elevated w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden ${
+        className={`relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden ${
           dismissing ? '' : 'animate-slide-up'
-        } ${isDark ? 'bg-[#141418] border border-white/[0.08]' : 'bg-white'}`}
+        } ${isDark ? 'bg-[#141418]/90 border border-white/[0.1] backdrop-blur-2xl' : 'bg-white/85 border border-white/60 backdrop-blur-2xl'}`}
         style={{
           transform: `translateY(${dragY}px)`,
           transition: dragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          boxShadow: isDark
+            ? '0 -4px 40px rgba(0,0,0,0.4), inset 0 0 0 0.5px rgba(255,255,255,0.08)'
+            : '0 -4px 40px rgba(0,0,0,0.08), inset 0 0 0 0.5px rgba(255,255,255,0.8)',
         }}
       >
         {dragHandle}

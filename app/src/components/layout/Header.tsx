@@ -69,8 +69,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
     <>
       <header className={`sticky top-0 z-40 border-b transition-colors duration-300 safe-area-pt ${
         isDark
-          ? 'bg-[#0a0a0f]/80 backdrop-blur-xl border-white/10'
-          : 'bg-white/80 backdrop-blur-xl border-slate-200'
+          ? 'bg-[#0c0c10]/70 backdrop-blur-2xl border-white/[0.06]'
+          : 'bg-white/60 backdrop-blur-2xl border-black/[0.04]'
       }`}>
         <div className="px-4 md:px-6 py-0 flex items-center justify-between h-14">
           {/* Left: Logo + hamburger on mobile */}

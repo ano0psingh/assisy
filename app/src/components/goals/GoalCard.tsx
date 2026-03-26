@@ -57,18 +57,18 @@ export function GoalCard({
 
   return (
     <div 
-      className={`group rounded-xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.99] ${
+      className={`group rounded-2xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.985] backdrop-blur-xl ${
         isDark
-          ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${isCompleted || isArchived ? 'opacity-60' : ''}`
-          : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${isCompleted || isArchived ? 'opacity-60 bg-neutral-50' : ''}`
+          ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted || isArchived ? 'opacity-60' : ''}`
+          : `bg-white/65 border border-white/70 hover:bg-white/80 hover:shadow-medium ${isCompleted || isArchived ? 'opacity-60' : ''}`
       }`}
+      style={{ boxShadow: isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05), 0 2px 12px rgba(0,0,0,0.2)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 2px 12px rgba(0,0,0,0.04)' }}
       onClick={() => onClick(goal)}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start space-x-4 flex-1 min-w-0">
-          {/* Icon */}
           <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-            isDark ? 'bg-violet-500/20' : 'bg-violet-100'
+            isDark ? 'bg-violet-500/20 shadow-[0_0_12px_rgba(139,92,246,0.15)]' : 'bg-violet-100/80'
           }`}>
             <Target className={`w-6 h-6 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
           </div>
@@ -114,14 +114,14 @@ export function GoalCard({
                   {progress}%
                 </span>
               </div>
-              <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
+              <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/[0.08]' : 'bg-black/[0.04]'}`}>
                 <div 
                   className={`h-full rounded-full transition-all duration-500 ${
                     progress === 100 
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-500' 
-                      : 'bg-gradient-to-r from-violet-500 to-purple-500'
+                      ? 'bg-gradient-to-r from-emerald-400 to-green-400' 
+                      : 'bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500'
                   }`}
-                  style={{ width: `${progress}%` }}
+                  style={{ width: `${progress}%`, boxShadow: progress > 0 ? (progress === 100 ? '0 0 8px rgba(52,211,153,0.3)' : '0 0 8px rgba(139,92,246,0.25)') : 'none' }}
                 />
               </div>
             </div>

@@ -629,15 +629,15 @@ export function Dashboard() {
       })()}
 
       {/* ── HERO BANNER: greeting + quote + actions ──── */}
-      <div className={`relative overflow-hidden rounded-2xl ${
+      <div className={`relative overflow-hidden rounded-2xl backdrop-blur-xl ${
         isDark
-          ? 'bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-indigo-500/10 border border-violet-500/15'
-          : 'bg-gradient-to-br from-violet-50 via-purple-50/50 to-indigo-50 border border-violet-100'
-      }`}>
+          ? 'bg-gradient-to-br from-violet-500/[0.12] via-purple-500/[0.06] to-indigo-500/[0.12] border border-violet-500/20'
+          : 'bg-gradient-to-br from-violet-100/60 via-white/70 to-indigo-50/60 border border-white/80'
+      }`} style={{ boxShadow: isDark ? '0 4px 24px rgba(139, 92, 246, 0.08), inset 0 0 0 0.5px rgba(255,255,255,0.06)' : '0 4px 24px rgba(139, 92, 246, 0.06), inset 0 0 0 0.5px rgba(255,255,255,0.8)' }}>
         {/* Decorative blurs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className={`absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl ${isDark ? 'bg-violet-500/10' : 'bg-violet-200/40'}`} />
-          <div className={`absolute -bottom-12 -left-12 w-36 h-36 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-200/30'}`} />
+          <div className={`absolute -top-16 -right-16 w-56 h-56 rounded-full blur-3xl ${isDark ? 'bg-violet-500/15' : 'bg-violet-300/30'}`} />
+          <div className={`absolute -bottom-12 -left-12 w-40 h-40 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/12' : 'bg-indigo-300/25'}`} />
         </div>
 
         <div className="relative px-4 py-4 sm:px-6 sm:py-5">
@@ -729,11 +729,11 @@ export function Dashboard() {
       </div>
 
       {/* ── MOBILE HERO CARD: at-a-glance summary ── */}
-      <div className={`md:hidden rounded-xl p-4 ${
+      <div className={`md:hidden rounded-2xl p-4 backdrop-blur-xl ${
         isDark
-          ? 'bg-gradient-to-br from-violet-500/10 via-purple-500/8 to-indigo-500/10 border border-violet-500/15'
-          : 'bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 border border-violet-100'
-      }`}>
+          ? 'bg-gradient-to-br from-violet-500/[0.12] via-purple-500/[0.08] to-indigo-500/[0.12] border border-violet-500/20'
+          : 'bg-gradient-to-br from-violet-100/50 via-white/60 to-indigo-50/50 border border-white/70'
+      }`} style={{ boxShadow: isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.06)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.8)' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Flame className={`w-6 h-6 ${userStats.currentStreak > 7 ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]' : isDark ? 'text-orange-400' : 'text-orange-500'}`} />
@@ -778,9 +778,10 @@ export function Dashboard() {
         tabIndex={0}
         onClick={() => setStatsExpanded(prev => !prev)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setStatsExpanded(prev => !prev); }}
-        className={`md:hidden ${statsExpanded ? 'hidden' : ''} grid grid-cols-4 gap-2 rounded-xl border p-2 transition-colors ${
-          isDark ? 'bg-white/[0.04] border-white/10' : 'bg-slate-50 border-slate-200'
+        className={`md:hidden ${statsExpanded ? 'hidden' : ''} grid grid-cols-4 gap-2 rounded-2xl border p-2.5 transition-colors backdrop-blur-xl ${
+          isDark ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-white/60 border-white/70'
         }`}
+        style={{ boxShadow: isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7)' }}
       >
         <div className="flex flex-col items-center gap-0.5 py-1">
           <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
