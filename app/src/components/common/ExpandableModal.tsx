@@ -76,7 +76,6 @@ export function ExpandableModal({
   const handleDragEnd = useCallback(() => {
     if (!dragging.current || !dragStart.current) return;
     dragging.current = false;
-    const elapsed = Date.now() - dragStart.current.y;
     const velocity = dragY / Math.max(1, Date.now() - dragStart.current.time);
 
     if (dragY > DISMISS_THRESHOLD || velocity > VELOCITY_THRESHOLD) {
