@@ -1,7 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Flame, Plus, BookOpen, Zap, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useHabitContext } from '../context/HabitContext';
+import { useDataVersion } from '../context/DataVersionContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { useDailyLogContext } from '../context/DailyLogContext';
 import { HabitCard } from '../components/habits/HabitCard';
 import { HabitForm } from '../components/habits/HabitForm';
@@ -42,6 +45,9 @@ export function Habits() {
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState<string | null>(null);
+  const { refresh } = useDataVersion();
+  const onRefresh = useCallback(async () => { refresh(); }, [refresh]);
+  const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({ onRefresh });
 
   const todaysDailyLog = getTodaysDailyLog();
   const checkedInToday = hasCheckedInToday();
@@ -157,7 +163,8 @@ export function Habits() {
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>

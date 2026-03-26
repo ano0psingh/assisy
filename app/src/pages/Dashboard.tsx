@@ -19,8 +19,9 @@ import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndica
 import { subscribeToPush } from '../lib/pushSubscription';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 import { ExpandableModal } from '../components/common/ExpandableModal';
-import { hapticLight } from '../lib/haptics';
+import { hapticLight, hapticMedium } from '../lib/haptics';
 import { useUndo } from '../components/common/UndoToast';
+import { useToast } from '../components/common/Toast';
 import { DashboardSkeleton } from '../components/common/Skeleton';
 import { getQuoteOfTheDay } from '../data/quotes';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
@@ -139,8 +140,9 @@ export function Dashboard() {
   } = useProjectContext();
   const { theme } = useTheme();
   const { pushUndo } = useUndo();
-  const { 
-    recordTaskCompletion, 
+  const { toast } = useToast();
+  const {
+    recordTaskCompletion,
     updateStreak, 
     checkAndUnlockAchievements,
     recentUnlocks,
@@ -309,7 +311,7 @@ export function Dashboard() {
       uncompleteTask(taskId);
       return;
     }
-    // Show XP animation for non-Professional tasks
+    hapticMedium();
     if (task && task.category !== 'Professional' && task.xpValue > 0) {
       setXpAnimation({ show: true, xp: task.xpValue });
     }
@@ -321,11 +323,14 @@ export function Dashboard() {
       if (task.goalId && !task.isRecurring) {
         addXPToGoal(task.goalId, task.xpValue || 10);
       }
+      if (task.xpValue > 0 && task.category !== 'Professional') {
+        toast({ message: `Task done! +${task.xpValue} XP`, type: 'success', duration: 2000 });
+      }
       setTimeout(() => {
         checkAndUnlockAchievements();
       }, 100);
     }
-  }, [tasks, completeTask, uncompleteTask, recordTaskCompletion, updateStreak, checkAndUnlockAchievements, addXPToGoal]);
+  }, [tasks, completeTask, uncompleteTask, recordTaskCompletion, updateStreak, checkAndUnlockAchievements, addXPToGoal, toast]);
 
   // Get week boundaries for weekly review
   const getWeekBounds = useCallback(() => {

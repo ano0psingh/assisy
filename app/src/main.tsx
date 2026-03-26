@@ -13,6 +13,7 @@ import { ProjectProvider } from './context/ProjectContext.tsx'
 import { GamificationProvider } from './context/GamificationContext.tsx'
 import { FeedProvider } from './context/FeedContext.tsx'
 import { UndoProvider } from './components/common/UndoToast.tsx'
+import { ToastProvider } from './components/common/Toast.tsx'
 import { CloudSyncEffect } from './components/auth/CloudSyncEffect.tsx'
 import { MigrationModalTrigger } from './components/auth/MigrationModalTrigger.tsx'
 
@@ -31,7 +32,9 @@ createRoot(document.getElementById('root')!).render(
                     <ProjectProvider>
                       <FeedProvider>
                         <UndoProvider>
-                          <App />
+                          <ToastProvider>
+                            <App />
+                          </ToastProvider>
                         </UndoProvider>
                       </FeedProvider>
                     </ProjectProvider>

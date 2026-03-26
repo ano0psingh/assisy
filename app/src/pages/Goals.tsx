@@ -1,9 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Target, Plus, Filter, LayoutGrid, List, Pencil, CheckCircle, Archive, RotateCcw, Trash2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useTaskContext } from '../context/TaskContext';
 import { useGamification } from '../context/GamificationContext';
+import { useDataVersion } from '../context/DataVersionContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { GoalCard } from '../components/goals/GoalCard';
 import { GoalForm } from '../components/goals/GoalForm';
 import { GoalDetail } from '../components/goals/GoalDetail';
@@ -48,6 +51,9 @@ export function Goals() {
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'garden' | 'list'>('garden');
+  const { refresh } = useDataVersion();
+  const onRefresh = useCallback(async () => { refresh(); }, [refresh]);
+  const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({ onRefresh });
 
   // Always get fresh goal data from goals array (fixes stale state issues)
   const selectedGoal = selectedGoalId ? goals.find(g => g.id === selectedGoalId) || null : null;
@@ -246,7 +252,8 @@ export function Goals() {
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>

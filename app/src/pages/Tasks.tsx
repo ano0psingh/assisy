@@ -1,12 +1,17 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
+import { useDataVersion } from '../context/DataVersionContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { useUndo } from '../components/common/UndoToast';
+import { useToast } from '../components/common/Toast';
+import { hapticMedium } from '../lib/haptics';
 import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 
@@ -26,6 +31,10 @@ export function Tasks() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const { pushUndo } = useUndo();
+  const { toast } = useToast();
+  const { refresh } = useDataVersion();
+  const onRefresh = useCallback(async () => { refresh(); }, [refresh]);
+  const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({ onRefresh });
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
@@ -341,6 +350,7 @@ export function Tasks() {
     if (task?.status === 'Completed') {
       uncompleteTask(taskId);
     } else {
+      hapticMedium();
       completeTask(taskId);
       if (task) {
         recordTaskCompletion(task.category, task.xpValue);
@@ -348,13 +358,17 @@ export function Tasks() {
         if (task.goalId && !task.isRecurring) {
           addXPToGoal(task.goalId, task.xpValue || 10);
         }
+        if (task.xpValue > 0 && task.category !== 'Professional') {
+          toast({ message: `Task done! +${task.xpValue} XP`, type: 'success', duration: 2000 });
+        }
         setTimeout(() => checkAndUnlockAchievements(), 100);
       }
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>All Tasks</h1>

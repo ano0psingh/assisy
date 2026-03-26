@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { X, Maximize2, Minimize2 } from 'lucide-react';
 
@@ -8,11 +8,12 @@ interface ExpandableModalProps {
   title: string;
   icon?: ReactNode;
   maxWidth?: string;
-  /** Popup mode content */
   children: (isFullScreen: boolean) => ReactNode;
-  /** Optional footer (action buttons) — rendered pinned at bottom */
   footer?: ReactNode;
 }
+
+const DISMISS_THRESHOLD = 100;
+const VELOCITY_THRESHOLD = 0.5;
 
 export function ExpandableModal({
   isOpen,
@@ -26,12 +27,17 @@ export function ExpandableModal({
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [dismissing, setDismissing] = useState(false);
+  const dragStart = useRef<{ y: number; time: number } | null>(null);
+  const dragging = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
       setIsFullScreen(false);
+      setDragY(0);
+      setDismissing(false);
     }
-    // Hide bottom nav when modal is open
     if (isOpen) {
       document.documentElement.setAttribute('data-modal-open', 'true');
     } else {
@@ -55,7 +61,46 @@ export function ExpandableModal({
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, isFullScreen, onClose]);
 
+  const handleDragStart = useCallback((e: React.TouchEvent) => {
+    if (isFullScreen) return;
+    dragStart.current = { y: e.touches[0].clientY, time: Date.now() };
+    dragging.current = true;
+  }, [isFullScreen]);
+
+  const handleDragMove = useCallback((e: React.TouchEvent) => {
+    if (!dragging.current || !dragStart.current || isFullScreen) return;
+    const dy = e.touches[0].clientY - dragStart.current.y;
+    if (dy > 0) setDragY(dy);
+  }, [isFullScreen]);
+
+  const handleDragEnd = useCallback(() => {
+    if (!dragging.current || !dragStart.current) return;
+    dragging.current = false;
+    const elapsed = Date.now() - dragStart.current.y;
+    const velocity = dragY / Math.max(1, Date.now() - dragStart.current.time);
+
+    if (dragY > DISMISS_THRESHOLD || velocity > VELOCITY_THRESHOLD) {
+      setDismissing(true);
+      setDragY(window.innerHeight);
+      setTimeout(onClose, 200);
+    } else {
+      setDragY(0);
+    }
+    dragStart.current = null;
+  }, [dragY, onClose]);
+
   if (!isOpen) return null;
+
+  const dragHandle = (
+    <div
+      className="flex justify-center pt-3 pb-1 cursor-grab sm:hidden"
+      onTouchStart={handleDragStart}
+      onTouchMove={handleDragMove}
+      onTouchEnd={handleDragEnd}
+    >
+      <div className={`w-9 h-1 rounded-full ${isDark ? 'bg-white/20' : 'bg-slate-300'}`} />
+    </div>
+  );
 
   const header = (
     <div className={`flex items-center justify-between p-5 border-b flex-shrink-0 ${
@@ -126,17 +171,25 @@ export function ExpandableModal({
     );
   }
 
+  const backdropOpacity = Math.max(0, 1 - dragY / 400);
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 animate-fade-in">
       <div
         className={`absolute inset-0 backdrop-blur-md ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`}
+        style={{ opacity: backdropOpacity }}
         onClick={onClose}
       />
-      <div className={`relative rounded-t-2xl sm:rounded-2xl shadow-elevated w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col animate-slide-up overflow-hidden ${
-        isDark
-          ? 'bg-[#141418] border border-white/[0.08]'
-          : 'bg-white'
-      }`}>
+      <div
+        className={`relative rounded-t-2xl sm:rounded-2xl shadow-elevated w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden ${
+          dismissing ? '' : 'animate-slide-up'
+        } ${isDark ? 'bg-[#141418] border border-white/[0.08]' : 'bg-white'}`}
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: dragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        {dragHandle}
         {header}
         <div className="flex-1 overflow-y-auto">
           {children(false)}

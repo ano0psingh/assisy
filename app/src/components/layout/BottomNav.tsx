@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { hapticLight } from '../../lib/haptics';
 
 const STORAGE_KEY = 'assisy_bottom_nav_config';
 const DEFAULT_CONFIG: string[] = ['/tasks', '/calendar', '/feed'];
@@ -130,6 +131,7 @@ export function BottomNav() {
         <div className="flex items-stretch">
           <NavLink
             to="/"
+            onClick={hapticLight}
             className={({ isActive }) => linkCls(isActive)}
           >
             <Home size={22} strokeWidth={2} />
@@ -139,6 +141,7 @@ export function BottomNav() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={hapticLight}
               className={({ isActive }) => linkCls(isActive)}
             >
               <item.icon size={22} strokeWidth={2} />
@@ -147,7 +150,7 @@ export function BottomNav() {
           ))}
           <button
             type="button"
-            onClick={() => setMoreOpen(true)}
+            onClick={() => { hapticLight(); setMoreOpen(true); }}
             className={linkCls(false)}
           >
             <MoreHorizontal size={22} strokeWidth={2} />
