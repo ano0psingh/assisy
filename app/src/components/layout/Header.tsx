@@ -67,7 +67,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
   return (
     <>
-      <header className={`sticky top-0 z-40 border-b transition-colors duration-300 ${
+      <header className={`sticky top-0 z-40 border-b transition-colors duration-300 safe-area-pt ${
         isDark
           ? 'bg-[#0a0a0f]/80 backdrop-blur-xl border-white/10'
           : 'bg-white/80 backdrop-blur-xl border-slate-200'

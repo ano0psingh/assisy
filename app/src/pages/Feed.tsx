@@ -3,6 +3,7 @@ import { useFeed, type FeedFilter, type FeedSort } from '../context/FeedContext'
 import { useTheme } from '../context/ThemeContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
+import { FeedPageSkeleton } from '../components/common/Skeleton';
 import {
   Newspaper, Plus, Link, RefreshCw, Bookmark, BookmarkCheck,
   Eye, EyeOff, Trash2, ChevronDown, ChevronUp, ExternalLink,
@@ -260,11 +261,7 @@ export function Feed() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <FeedPageSkeleton />;
   }
 
   return (

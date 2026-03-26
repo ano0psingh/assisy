@@ -21,6 +21,7 @@ import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { hapticLight } from '../lib/haptics';
 import { useUndo } from '../components/common/UndoToast';
+import { DashboardSkeleton } from '../components/common/Skeleton';
 import { getQuoteOfTheDay } from '../data/quotes';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import { WeeklyChallenges } from '../components/gamification/WeeklyChallenges';
@@ -431,13 +432,8 @@ export function Dashboard() {
     ].filter(g => g.tasks.length > 0);
   }, [tasks, todayTaskIds, activeGoalIds, getSuggestedTasks]);
   
-  // Early return AFTER all hooks
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const todaysTasks = getTodaysTasks();
