@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Crown, Sparkles, X } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Crown, Sparkles, Star, X } from 'lucide-react';
 import { useGoalContext, type LevelUpEvent } from '../../context/GoalContext';
+import { useGamification, type GlobalLevelUpEvent } from '../../context/GamificationContext';
 import { GoalTree } from '../goals/GoalTree';
 import { useTheme } from '../../context/ThemeContext';
 import { hapticHeavy } from '../../lib/haptics';
@@ -34,28 +35,55 @@ function ConfettiParticle({ index }: { index: number }) {
   );
 }
 
+type CelebrationData = {
+  kind: 'goal';
+  event: LevelUpEvent;
+} | {
+  kind: 'global';
+  event: GlobalLevelUpEvent;
+};
+
 export function LevelUpCelebration() {
   const { levelUpEvent, clearLevelUp } = useGoalContext();
+  const { globalLevelUp, clearGlobalLevelUp } = useGamification();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [visible, setVisible] = useState(false);
-  const [event, setEvent] = useState<LevelUpEvent | null>(null);
+  const [data, setData] = useState<CelebrationData | null>(null);
+  const queue = useRef<CelebrationData[]>([]);
 
-  useEffect(() => {
-    if (levelUpEvent) {
-      setEvent(levelUpEvent);
+  const showNext = useCallback(() => {
+    if (queue.current.length > 0) {
+      const next = queue.current.shift()!;
+      setData(next);
       setVisible(true);
       hapticHeavy();
     }
-  }, [levelUpEvent]);
+  }, []);
+
+  useEffect(() => {
+    if (levelUpEvent) {
+      queue.current.push({ kind: 'goal', event: levelUpEvent });
+      if (!visible) showNext();
+    }
+  }, [levelUpEvent, visible, showNext]);
+
+  useEffect(() => {
+    if (globalLevelUp) {
+      queue.current.push({ kind: 'global', event: globalLevelUp });
+      if (!visible) showNext();
+    }
+  }, [globalLevelUp, visible, showNext]);
 
   const handleDismiss = useCallback(() => {
     setVisible(false);
     setTimeout(() => {
-      clearLevelUp();
-      setEvent(null);
+      if (data?.kind === 'goal') clearLevelUp();
+      if (data?.kind === 'global') clearGlobalLevelUp();
+      setData(null);
+      showNext();
     }, 400);
-  }, [clearLevelUp]);
+  }, [data, clearLevelUp, clearGlobalLevelUp, showNext]);
 
   useEffect(() => {
     if (!visible) return;
@@ -63,7 +91,13 @@ export function LevelUpCelebration() {
     return () => clearTimeout(timer);
   }, [visible, handleDismiss]);
 
-  if (!event) return null;
+  if (!data) return null;
+
+  const isGoal = data.kind === 'goal';
+  const newLevel = data.event.newLevel;
+  const totalXP = data.event.totalXP;
+  const heading = isGoal ? 'Goal Level Up!' : 'Level Up!';
+  const subtitle = isGoal ? (data.event as LevelUpEvent).goalTitle : (data.event as GlobalLevelUpEvent).title;
 
   return (
     <div
@@ -72,17 +106,14 @@ export function LevelUpCelebration() {
       }`}
       onClick={handleDismiss}
     >
-      {/* Backdrop */}
       <div className={`absolute inset-0 ${isDark ? 'bg-black/70' : 'bg-black/50'} backdrop-blur-sm`} />
 
-      {/* Confetti */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 40 }).map((_, i) => (
           <ConfettiParticle key={i} index={i} />
         ))}
       </div>
 
-      {/* Main card */}
       <div
         className={`relative levelup-card rounded-3xl p-6 sm:p-8 max-w-sm w-[90vw] mx-4 text-center shadow-2xl ${
           isDark
@@ -91,7 +122,6 @@ export function LevelUpCelebration() {
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
         <button
           onClick={handleDismiss}
           className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors ${
@@ -101,29 +131,32 @@ export function LevelUpCelebration() {
           <X size={18} />
         </button>
 
-        {/* Glow ring */}
         <div className="levelup-glow absolute -inset-1 rounded-3xl opacity-50 blur-xl pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%)' }}
         />
 
-        {/* Crown icon */}
         <div className="levelup-crown mb-2">
           <Crown className="w-8 h-8 mx-auto text-amber-400 drop-shadow-lg" />
         </div>
 
-        {/* Title */}
         <h2 className={`text-sm font-semibold uppercase tracking-widest mb-1 ${
           isDark ? 'text-violet-400' : 'text-violet-600'
         }`}>
-          Level Up!
+          {heading}
         </h2>
 
-        {/* Tree visualization */}
         <div className="levelup-tree my-4 flex justify-center">
-          <GoalTree level={event.newLevel} theme={event.goalTheme || 'forest'} size="lg" animate />
+          {isGoal ? (
+            <GoalTree level={newLevel} theme={(data.event as LevelUpEvent).goalTheme || 'forest'} size="lg" animate />
+          ) : (
+            <div className={`w-24 h-24 rounded-3xl flex items-center justify-center ${
+              isDark ? 'bg-gradient-to-br from-violet-500/30 to-amber-500/20' : 'bg-gradient-to-br from-violet-100 to-amber-50'
+            }`}>
+              <Star className={`w-12 h-12 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} fill="currentColor" />
+            </div>
+          )}
         </div>
 
-        {/* Level badge */}
         <div className="levelup-badge inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl mb-3"
           style={{
             background: isDark
@@ -134,21 +167,18 @@ export function LevelUpCelebration() {
         >
           <Sparkles className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
           <span className={`text-3xl font-black tabular-nums ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            {event.newLevel}
+            {newLevel}
           </span>
         </div>
 
-        {/* Goal name */}
         <p className={`text-base font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          {event.goalTitle}
+          {subtitle}
         </p>
 
-        {/* Sub text */}
         <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-          {event.totalXP.toLocaleString()} XP earned
+          {totalXP.toLocaleString()} XP earned
         </p>
 
-        {/* Tap to dismiss */}
         <p className={`mt-4 text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
           Tap anywhere to continue
         </p>

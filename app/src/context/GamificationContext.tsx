@@ -679,12 +679,21 @@ interface DailyBonusResult {
   rewards: DailyReward[];
 }
 
+export interface GlobalLevelUpEvent {
+  oldLevel: number;
+  newLevel: number;
+  totalXP: number;
+  title: string;
+}
+
 interface GamificationContextType {
   skillTrees: SkillTree[];
   achievements: Achievement[];
   userStats: UserStats;
   recentUnlocks: Achievement[];
   dailyRewards: DailyReward[];
+  globalLevelUp: GlobalLevelUpEvent | null;
+  clearGlobalLevelUp: () => void;
   
   // Actions
   addXPToSkill: (category: SkillCategory, xp: number) => void;
@@ -748,6 +757,8 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   const [achievements, setAchievements] = useState<Achievement[]>(loadAchievements);
   const [userStats, setUserStats] = useState<UserStats>(loadUserStats);
   const [recentUnlocks, setRecentUnlocks] = useState<Achievement[]>([]);
+  const [globalLevelUp, setGlobalLevelUp] = useState<GlobalLevelUpEvent | null>(null);
+  const clearGlobalLevelUp = useCallback(() => setGlobalLevelUp(null), []);
 
   useEffect(() => {
     setSkillTrees(loadSkillTrees());
@@ -779,19 +790,41 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Add XP to a skill
   const addXPToSkill = useCallback((category: SkillCategory, xp: number) => {
-    setSkillTrees(prev => prev.map(skill => {
-      if (skill.id === category) {
-        const newXP = skill.currentXP + xp;
-        return {
-          ...skill,
-          currentXP: newXP,
-          level: calculateLevel(newXP),
+    setSkillTrees(prev => {
+      const oldTotalXP = prev.reduce((sum, s) => sum + s.currentXP, 0);
+      const oldGlobalLevel = calculateLevel(oldTotalXP);
+
+      const updated = prev.map(skill => {
+        if (skill.id === category) {
+          const newXP = skill.currentXP + xp;
+          return { ...skill, currentXP: newXP, level: calculateLevel(newXP) };
+        }
+        return skill;
+      });
+
+      const newTotalXP = updated.reduce((sum, s) => sum + s.currentXP, 0);
+      const newGlobalLevel = calculateLevel(newTotalXP);
+
+      if (newGlobalLevel > oldGlobalLevel) {
+        const titleForLevel = (lvl: number) => {
+          if (lvl >= 51) return 'Legendary Achiever';
+          if (lvl >= 31) return 'Grand Taskmaster';
+          if (lvl >= 21) return 'Taskmaster';
+          if (lvl >= 11) return 'Task Warrior';
+          if (lvl >= 6) return 'Task Apprentice';
+          return 'Task Initiate';
         };
+        setGlobalLevelUp({
+          oldLevel: oldGlobalLevel,
+          newLevel: newGlobalLevel,
+          totalXP: newTotalXP,
+          title: titleForLevel(newGlobalLevel),
+        });
       }
-      return skill;
-    }));
+
+      return updated;
+    });
   }, []);
 
   // Get current streak multiplier
@@ -1240,6 +1273,8 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
         userStats,
         recentUnlocks,
         dailyRewards: DAILY_REWARDS,
+        globalLevelUp,
+        clearGlobalLevelUp,
         addXPToSkill,
         recordTaskCompletion,
         recordGoalCompletion,
