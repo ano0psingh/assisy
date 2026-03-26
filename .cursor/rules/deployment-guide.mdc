@@ -1,0 +1,32 @@
+---
+description: How to build and deploy Assisy
+alwaysApply: false
+---
+
+# Deployment Guide
+
+## Build
+```bash
+cd app && npm run build   # tsc -b && vite build
+```
+
+## Deploy to Production
+```bash
+cd app && npx vercel --prod
+```
+Vercel's Git auto-deploy has been unreliable (disconnects). Always verify on the Vercel dashboard that a new deployment appeared after `git push`. If not, deploy manually with the command above.
+
+## Common Build Failures
+- TypeScript strict mode: unused variables (`TS6133`) and duplicate JSX attributes (`TS17001`) will fail the build
+- Always run `npm run build` locally before deploying to catch errors
+
+## Post-Deploy: Supabase Migrations
+If schema changes were made, run ALTER TABLE statements in the Supabase SQL Editor manually. Example:
+```sql
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS last_sent jsonb DEFAULT '{}'::jsonb;
+```
+
+## Push Notifications
+- cron-job.org pings `/api/push/cron` every 5 minutes with `Authorization: Bearer <CRON_SECRET>`
+- `CRON_SECRET` must match between cron-job.org header and Vercel env var
+- Vercel cron (`vercel.json`) runs daily at 3 AM UTC as fallback only

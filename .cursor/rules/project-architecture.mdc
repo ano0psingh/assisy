@@ -1,0 +1,30 @@
+---
+description: Assisy project architecture, tech stack, and key patterns
+alwaysApply: true
+---
+
+# Assisy Architecture
+
+## Tech Stack
+- **Frontend:** React 19, Vite 7, TypeScript 5.9, Tailwind CSS, vite-plugin-pwa (Workbox)
+- **Backend:** Vercel serverless functions (`@vercel/node`), web-push
+- **Database:** Supabase (`@supabase/supabase-js`)
+- **State:** React Context (TaskContext, GoalContext, GamificationContext, HabitContext, etc.)
+- **Storage:** localStorage + Supabase `user_data` table (debounced cloud sync)
+
+## Two Separate XP Systems
+1. **Global skill XP** (`GamificationContext`) — `skillTrees[]` with categories (health, learning, productivity, financial, mindfulness). `addXPToSkill()` updates skill XP. `getTotalLevel()` / `getTotalXP()` aggregate across all skills + achievement XP.
+2. **Goal tree XP** (`GoalContext`) — per-goal `totalXP` with `LEVEL_THRESHOLDS`. `addXPToGoal()` updates goal XP. `GoalTree` SVG renders growth stages from level.
+
+Both fire `levelUpEvent` independently; `LevelUpCelebration` in `Layout.tsx` handles both.
+
+## Cloud Sync Architecture
+- `unifiedStore.ts` — debounced 500ms saves to both localStorage and Supabase
+- `cloudStore.ts` — `applyCloudToLocal()` merges cloud data, preserving local gamification if local has higher `totalXPEarned`
+- `CloudSyncEffect.tsx` — runs on login, loads cloud data via `loadAll(userId)`
+- `flushPendingSaves()` fires on `beforeunload` and `visibilitychange` to prevent data loss
+
+## Deployment
+- **Hosting:** Vercel (Hobby plan) — auto-deploy from `main` may disconnect; use `cd app && npx vercel --prod` to deploy manually
+- **Push notifications:** cron-job.org hits `/api/push/cron` every 5 minutes; Vercel cron is daily fallback only
+- **App URL:** https://app-seven-lilac-81.vercel.app

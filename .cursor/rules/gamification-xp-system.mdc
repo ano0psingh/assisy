@@ -1,0 +1,33 @@
+---
+description: How the gamification and XP systems work, known pitfalls
+globs: "**/{GamificationContext,GoalContext,RecurringXPEffect,LevelUpCelebration,Tasks,Dashboard,Goals}.tsx"
+alwaysApply: false
+---
+
+# Gamification & XP System
+
+## Task Completion → XP Flow
+When a task is completed, ALL of these must happen:
+1. `completeTask(taskId)` — marks task done in TaskContext
+2. `recordTaskCompletion(category, xpValue)` — adds global skill XP in GamificationContext
+3. `updateStreak()` — updates streak stats
+4. `addXPToGoal(goalId, xpValue)` — if task has `goalId` and is NOT recurring, adds goal tree XP
+5. `checkAndUnlockAchievements()` — after 100ms delay
+
+**Every page that completes tasks must do all 5 steps.** Currently wired in: `Dashboard.tsx`, `Tasks.tsx`, `Goals.tsx`.
+
+## Recurring Task XP
+- `RecurringXPEffect` (in `Layout.tsx`) watches `completionLog.length` changes
+- On mount, it snapshots current state WITHOUT awarding XP (prevents duplicate awards)
+- Only new completions within the session trigger `addXPToGoal(goalId, count * 10)`
+
+## Level-Up Detection
+- **Global level:** `addXPToSkill()` in GamificationContext compares `calculateLevel(oldTotal)` vs `calculateLevel(newTotal)`, fires `globalLevelUp` event
+- **Goal level:** `addXPToGoal()` in GoalContext compares levels, fires `levelUpEvent`
+- Both consumed by `LevelUpCelebration.tsx` with a queue for simultaneous events
+
+## Known Pitfalls (previously fixed)
+- `RecurringXPEffect` must NOT start `lastSeenCompletions` at `{}` — use `null` and snapshot on first render
+- Cloud sync must NOT blindly overwrite local gamification if local has higher `totalXPEarned`
+- Professional category tasks give 0 skill XP (by design)
+- `uncompleteTask` does NOT reverse XP (toggle abuse possible but accepted)

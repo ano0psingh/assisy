@@ -1,0 +1,26 @@
+---
+description: Push notification architecture and timezone handling
+globs: "**/{cron,subscribe,unsubscribe,notifications,pushSubscription}.ts"
+alwaysApply: false
+---
+
+# Notification System
+
+## Two Notification Paths
+1. **Local (in-browser)** — `notifications.ts` polls every 60 seconds using device clock. Only works when app tab is open.
+2. **Web Push (background)** — `api/push/cron.ts` sends via `web-push`. Triggered by cron-job.org every 5 minutes.
+
+## Push Flow
+1. Client subscribes via `pushSubscription.ts` → POST `/api/push/subscribe` with subscription, userId, habitReminders, timezone
+2. cron-job.org hits `/api/push/cron` every 5 min with `Authorization: Bearer <CRON_SECRET>`
+3. Cron handler loads all `push_subscriptions`, computes user's local time via `Intl.DateTimeFormat` with stored timezone
+4. If within 7-minute window of a reminder time AND not already sent today (`last_sent` jsonb), sends push
+5. `last_sent` is updated per-reminder per-day to prevent duplicates
+
+## Timezone Handling
+- Client sends `Intl.DateTimeFormat().resolvedOptions().timeZone` (e.g. `Asia/Kolkata`)
+- Server fallback is `Asia/Kolkata` (NOT server's timezone)
+- Cron uses `getMinutesInTimezone(tz)` and `getDateInTimezone(tz)` for TZ-aware checks
+
+## Database
+Table `push_subscriptions`: endpoint (unique), subscription (jsonb), habit_reminders (jsonb), daily_planning_hour (int, default 9), timezone (text, default 'Asia/Kolkata'), last_sent (jsonb, default '{}')

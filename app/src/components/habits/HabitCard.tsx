@@ -72,10 +72,10 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: Habit
         <button
           type="button"
           onClick={habit.trackingType === 'boolean' ? handleBooleanToggle : undefined}
-          className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+          className={`w-8 h-8 min-h-0 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
             isCompleted
               ? 'bg-emerald-500 text-white shadow-[0_0_12px_rgba(52,211,153,0.3)]'
-              : isDark ? 'bg-white/[0.06] text-gray-600 border border-white/[0.08]' : 'bg-black/[0.03] text-slate-400 border border-black/[0.04]'
+              : isDark ? 'bg-white/[0.08] text-gray-600 border border-white/[0.1]' : 'bg-black/[0.04] text-slate-400 border border-black/[0.06]'
           } ${habit.trackingType === 'boolean' ? 'cursor-pointer' : 'cursor-default'}`}
         >
           {isCompleted ? <Check size={16} strokeWidth={2.5} /> : <div className="w-2 h-2 rounded-full bg-current" />}

@@ -1,0 +1,41 @@
+---
+description: Mobile UI patterns, glassmorphism design system, and component conventions
+globs: "**/*.{tsx,css}"
+alwaysApply: false
+---
+
+# Mobile UI Patterns
+
+## Glassmorphism Design System
+The app uses a glassmorphism visual language. CSS variables in `index.css`:
+- `--bg-glass` — semi-transparent card backgrounds (light: `rgba(255,255,255,0.65)`, dark: `rgba(255,255,255,0.04)`)
+- `--border-glass` — translucent borders
+- `--blur-glass` — backdrop blur amount (16px light, 20px dark)
+- `--shadow-soft/medium/elevated` — include `inset 0 0 0 0.5px` inner glow
+
+### Card Pattern
+All cards use the `.card` CSS class which provides glass bg + blur + border + shadow. Do NOT use `bg-white` or `bg-[#141418]` on cards — use the `.card` class or the glass pattern inline.
+
+### Component Glass Overrides
+When components need custom glass beyond `.card`, use this pattern:
+```
+className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08]"
+style={{ boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.05)' }}
+```
+
+## Key Mobile Components
+- `ExpandableModal` — bottom sheet on mobile (rounded-3xl), centered on desktop. Has drag-to-dismiss with drag handle pill.
+- `BottomNav` — customizable 5-tab bar, glass bg. Items stored in localStorage `assisy_bottom_nav_config`.
+- `Toast` (ToastProvider) — swipe-to-dismiss, auto-dismiss 3s, stacks max 3. Use `useToast().toast({ message, type })`.
+- `PullToRefreshIndicator` + `usePullToRefresh` — used on Dashboard, Feed, Tasks, Goals, Habits.
+- `Skeleton.tsx` — shimmer skeletons for loading states (Dashboard, Feed).
+
+## PWA
+- `viewport-fit=cover` enabled for safe area insets
+- `.safe-area-pt` / `.safe-area-pb` utilities for notch/home indicator
+- Header uses `safe-area-pt`; BottomNav uses `safe-area-pb`
+- `overscroll-behavior-y: none` on body prevents native bounce
+- Touch targets minimum 44px via `@media (pointer: coarse)`
+
+## Haptics
+`lib/haptics.ts` — `hapticLight()` for nav taps, `hapticMedium()` for task completion, `hapticHeavy()` for level-up celebrations.
