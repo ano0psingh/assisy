@@ -35,9 +35,10 @@ export function Goals() {
     unlinkTaskFromGoal,
     calculateGoalProgress,
     getSubGoals,
+    addXPToGoal,
   } = useGoalContext();
   const { tasks, deleteTask, completeTask, uncompleteTask, updateTask } = useTaskContext();
-  const { recordGoalCompletion, checkAndUnlockAchievements } = useGamification();
+  const { recordGoalCompletion, recordTaskCompletion, updateStreak, checkAndUnlockAchievements } = useGamification();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -633,6 +634,14 @@ export function Goals() {
               uncompleteTask(taskId);
             } else {
               completeTask(taskId);
+              if (task) {
+                recordTaskCompletion(task.category, task.xpValue);
+                updateStreak();
+                if (task.goalId && !task.isRecurring) {
+                  addXPToGoal(task.goalId, task.xpValue || 10);
+                }
+                setTimeout(() => checkAndUnlockAchievements(), 100);
+              }
             }
           }}
         />

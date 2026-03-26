@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   habit_reminders jsonb DEFAULT '[]'::jsonb,
   daily_planning_hour int DEFAULT 9,
   timezone text DEFAULT 'Asia/Kolkata',
+  last_sent jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );

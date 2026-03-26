@@ -16,7 +16,7 @@ type SmartFilter = 'none' | 'overdue' | 'due_today' | 'due_week' | 'high_priorit
 
 export function Tasks() {
   const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, removeFromToday, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
-  const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
+  const { goals, linkTaskToGoal, unlinkTaskFromGoal, addXPToGoal } = useGoalContext();
   const { projects, createProjectTask, getSubProjectsByProject } = useProjectContext();
   const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements, recordTaskCreated } = useGamification();
   
@@ -342,10 +342,12 @@ export function Tasks() {
       uncompleteTask(taskId);
     } else {
       completeTask(taskId);
-      // Record in gamification system
       if (task) {
         recordTaskCompletion(task.category, task.xpValue);
         updateStreak();
+        if (task.goalId && !task.isRecurring) {
+          addXPToGoal(task.goalId, task.xpValue || 10);
+        }
         setTimeout(() => checkAndUnlockAchievements(), 100);
       }
     }

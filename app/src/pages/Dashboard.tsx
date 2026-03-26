@@ -122,7 +122,7 @@ export function Dashboard() {
     hasSeenPlanYourDay,
     markPlanYourDaySeen,
   } = useTaskContext();
-  const { goals, linkTaskToGoal, unlinkTaskFromGoal } = useGoalContext();
+  const { goals, linkTaskToGoal, unlinkTaskFromGoal, addXPToGoal } = useGoalContext();
   const { habits, logHabit, getTodaysLog: getTodaysHabitLog } = useHabitContext();
   const { getTodaysLog: getTodaysDailyLog, createOrUpdateLog, hasCheckedInToday, getRecentLogs } = useDailyLogContext();
   const { 
@@ -314,16 +314,17 @@ export function Dashboard() {
     }
     completeTask(taskId);
     
-    // Record in gamification system
     if (task) {
       recordTaskCompletion(task.category, task.xpValue);
       updateStreak();
-      // Check for new achievements after a small delay
+      if (task.goalId && !task.isRecurring) {
+        addXPToGoal(task.goalId, task.xpValue || 10);
+      }
       setTimeout(() => {
         checkAndUnlockAchievements();
       }, 100);
     }
-  }, [tasks, completeTask, uncompleteTask, recordTaskCompletion, updateStreak, checkAndUnlockAchievements]);
+  }, [tasks, completeTask, uncompleteTask, recordTaskCompletion, updateStreak, checkAndUnlockAchievements, addXPToGoal]);
 
   // Get week boundaries for weekly review
   const getWeekBounds = useCallback(() => {

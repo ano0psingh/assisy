@@ -74,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let sent = 0;
     const staleEndpoints: string[] = [];
 
-    const WINDOW_MINUTES = 5;
+    const WINDOW_MINUTES = 7;
 
     for (const sub of subs) {
       const tz = sub.timezone || 'Asia/Kolkata';

@@ -9,6 +9,7 @@ import {
 export type StoreSource = 'local' | 'cloud';
 
 let saveDebounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+let pendingSaveFns: Record<string, () => void> = {};
 const DEBOUNCE_MS = 500;
 
 function debouncedSave(
@@ -18,10 +19,30 @@ function debouncedSave(
 ): void {
   const timerKey = `${userId ?? 'local'}-${key}`;
   if (saveDebounceTimers[timerKey]) clearTimeout(saveDebounceTimers[timerKey]);
+  pendingSaveFns[timerKey] = saveFn;
   saveDebounceTimers[timerKey] = setTimeout(() => {
     saveFn();
     delete saveDebounceTimers[timerKey];
+    delete pendingSaveFns[timerKey];
   }, DEBOUNCE_MS);
+}
+
+export function flushPendingSaves(): void {
+  for (const timerKey of Object.keys(saveDebounceTimers)) {
+    clearTimeout(saveDebounceTimers[timerKey]);
+  }
+  for (const fn of Object.values(pendingSaveFns)) {
+    try { fn(); } catch {}
+  }
+  saveDebounceTimers = {};
+  pendingSaveFns = {};
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', flushPendingSaves);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushPendingSaves();
+  });
 }
 
 export async function loadAll(userId: string | null): Promise<UserDataPayload> {

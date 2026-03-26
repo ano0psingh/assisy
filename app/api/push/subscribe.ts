@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           endpoint: subscription.endpoint,
           subscription,
           habit_reminders: habitReminders || [],
-          timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone: timezone || 'Asia/Kolkata',
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'endpoint' },

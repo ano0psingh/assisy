@@ -180,5 +180,16 @@ export async function downloadCloudData(userId: string): Promise<UserDataPayload
 }
 
 export function applyCloudToLocal(payload: UserDataPayload): void {
-  payloadToLocalStorage(payload);
+  const localGam = safeParse(localStorage.getItem('assisy_user_stats'), {} as Record<string, number>);
+  const cloudGam = (payload.gamification as Record<string, unknown> | undefined)?.userStats as Record<string, number> | undefined;
+
+  const localXP = (localGam as Record<string, number>)?.totalXPEarned ?? 0;
+  const cloudXP = (cloudGam as Record<string, number>)?.totalXPEarned ?? 0;
+
+  if (localXP > cloudXP && payload.gamification) {
+    const preserved = { ...payload, gamification: undefined };
+    payloadToLocalStorage(preserved as UserDataPayload);
+  } else {
+    payloadToLocalStorage(payload);
+  }
 }
