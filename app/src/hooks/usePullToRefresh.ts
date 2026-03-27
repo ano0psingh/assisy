@@ -22,14 +22,10 @@ export function usePullToRefresh({
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
       if (disabled || isRefreshing) return;
-      const el = containerRef.current;
-      if (!el) return;
+      if (!containerRef.current) return;
 
-      const scrollTop =
-        el.scrollTop ||
-        document.documentElement.scrollTop ||
-        document.body.scrollTop;
-      if (scrollTop > 0) return;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
+      if (scrollTop > 5) return;
 
       startY.current = e.touches[0].clientY;
       pulling.current = true;

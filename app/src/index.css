@@ -68,14 +68,11 @@
 
   html {
     scroll-behavior: smooth;
-    overflow: hidden;
-    height: 100%;
   }
 
   body {
     margin: 0;
-    height: 100%;
-    overflow: auto;
+    min-height: 100vh;
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
     background:
