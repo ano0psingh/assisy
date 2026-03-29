@@ -89,6 +89,7 @@ export interface Habit {
   name: string;
   trackingType: TrackingType;
   category: string;
+  goalId?: string;
   streakCount: number;
   lastCompletedDate?: Date;
   xpPerUnit: number;

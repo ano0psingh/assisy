@@ -27,6 +27,7 @@ interface HabitContextType {
     xpPerUnit?: number,
     dailyTarget?: number,
     reminderTime?: string,
+    goalId?: string,
   ) => HabitWithLogs;
   updateHabit: (habitId: string, updates: Partial<Habit>) => void;
   deleteHabit: (habitId: string) => void;
@@ -164,12 +165,14 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     xpPerUnit: number = 1,
     dailyTarget?: number,
     reminderTime?: string,
+    goalId?: string,
   ): HabitWithLogs => {
     const newHabit: HabitWithLogs = {
       id: uuidv4(),
       name,
       trackingType,
       category,
+      goalId,
       streakCount: 0,
       xpPerUnit,
       dailyTarget,

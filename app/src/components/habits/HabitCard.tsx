@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Habit } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { useHabitContext } from '../../context/HabitContext';
-import { Flame, Trash2, Plus, Minus, Check, Pencil, Trophy } from 'lucide-react';
+import { Flame, Trash2, Plus, Minus, Check, Pencil, MoreHorizontal } from 'lucide-react';
 import { hapticLight } from '../../lib/haptics';
 
 interface HabitLog {
@@ -20,18 +19,32 @@ interface HabitCardProps {
   onLog: (habitId: string, value: number) => void;
   onDelete: (habitId: string) => void;
   onEdit: (habit: HabitWithLogs) => void;
+  compact?: boolean;
 }
 
-export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: HabitCardProps) {
+export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit, compact }: HabitCardProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const { getLongestStreak } = useHabitContext();
   const [inputValue, setInputValue] = useState(todaysValue.toString());
-  const longestStreak = getLongestStreak(habit.id);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const target = habit.dailyTarget;
   const isCompleted = target ? todaysValue >= target : todaysValue > 0;
   const progressPct = target ? Math.min(100, Math.round((todaysValue / target) * 100)) : (todaysValue > 0 ? 100 : 0);
+
+  useEffect(() => {
+    setInputValue(todaysValue.toString());
+  }, [todaysValue]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
 
   const handleIncrement = () => {
     hapticLight();
@@ -61,104 +74,192 @@ export function HabitCard({ habit, todaysValue, onLog, onDelete, onEdit }: Habit
     onLog(habit.id, todaysValue > 0 ? 0 : 1);
   };
 
+  if (compact && habit.trackingType === 'boolean') {
+    const [chipMenuOpen, setChipMenuOpen] = useState(false);
+    const chipRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!chipMenuOpen) return;
+      const handleClick = (e: MouseEvent) => {
+        if (chipRef.current && !chipRef.current.contains(e.target as Node)) setChipMenuOpen(false);
+      };
+      document.addEventListener('mousedown', handleClick);
+      return () => document.removeEventListener('mousedown', handleClick);
+    }, [chipMenuOpen]);
+
+    return (
+      <div className="relative inline-flex items-center" ref={chipRef}>
+        <button
+          type="button"
+          onClick={handleBooleanToggle}
+          className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-l-full text-sm font-medium transition-all duration-200 select-none border-r-0 ${
+            isCompleted
+              ? isDark
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+              : isDark
+                ? 'bg-white/[0.06] text-gray-400 border border-white/[0.1] hover:bg-white/[0.1]'
+                : 'bg-white/60 text-slate-600 border border-slate-200 hover:bg-white/80'
+          }`}
+        >
+          <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+            isCompleted
+              ? 'bg-emerald-500 text-white'
+              : isDark ? 'bg-white/10' : 'bg-slate-200'
+          }`}>
+            {isCompleted && <Check size={10} strokeWidth={3} />}
+          </span>
+          {habit.name}
+          {habit.streakCount > 0 && (
+            <span className={`text-[10px] font-bold ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
+              <Flame size={10} className="inline" />{habit.streakCount}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setChipMenuOpen(!chipMenuOpen)}
+          className={`inline-flex items-center px-1 py-1.5 rounded-r-full text-sm transition-all border-l-0 ${
+            isCompleted
+              ? isDark
+                ? 'bg-emerald-500/20 text-emerald-500/50 border border-emerald-500/30 hover:text-emerald-300'
+                : 'bg-emerald-50 text-emerald-400 border border-emerald-300 hover:text-emerald-600'
+              : isDark
+                ? 'bg-white/[0.06] text-gray-600 border border-white/[0.1] hover:text-gray-400'
+                : 'bg-white/60 text-slate-300 border border-slate-200 hover:text-slate-500'
+          }`}
+        >
+          <MoreHorizontal size={14} />
+        </button>
+        {chipMenuOpen && (
+          <div className={`absolute left-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-xl min-w-[120px] ${
+            isDark ? 'bg-gray-800 border border-white/10' : 'bg-white border border-slate-200'
+          }`}>
+            <button
+              onClick={() => { onEdit(habit); setChipMenuOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                isDark ? 'text-gray-300 hover:bg-white/10' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Pencil size={14} /> Edit
+            </button>
+            <button
+              onClick={() => { onDelete(habit.id); setChipMenuOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-600 hover:bg-red-50'
+              }`}
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className={`rounded-2xl p-3.5 transition-all duration-200 backdrop-blur-xl ${
+    <div className={`rounded-xl p-3 transition-all duration-200 ${
       isDark
         ? `bg-white/[0.04] border border-white/[0.08] ${isCompleted ? 'border-emerald-500/30 bg-emerald-500/[0.06]' : ''}`
         : `bg-white/65 border border-white/70 ${isCompleted ? 'border-emerald-400/40 bg-emerald-50/40' : ''}`
-    }`} style={{ boxShadow: isCompleted ? (isDark ? '0 0 16px rgba(52,211,153,0.08), inset 0 0 0 0.5px rgba(52,211,153,0.1)' : '0 0 16px rgba(52,211,153,0.06), inset 0 0 0 0.5px rgba(52,211,153,0.1)') : (isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7)') }}>
-      <div className="flex items-center gap-3">
-        {/* Left: status + info */}
+    }`}>
+      <div className="flex items-center gap-2.5">
         <button
           type="button"
           onClick={habit.trackingType === 'boolean' ? handleBooleanToggle : undefined}
-          className={`w-8 h-8 min-h-0 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+          className={`w-7 h-7 min-h-0 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
             isCompleted
-              ? 'bg-emerald-500 text-white shadow-[0_0_12px_rgba(52,211,153,0.3)]'
+              ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(52,211,153,0.25)]'
               : isDark ? 'bg-white/[0.08] text-gray-600 border border-white/[0.1]' : 'bg-black/[0.04] text-slate-400 border border-black/[0.06]'
           } ${habit.trackingType === 'boolean' ? 'cursor-pointer' : 'cursor-default'}`}
         >
-          {isCompleted ? <Check size={16} strokeWidth={2.5} /> : <div className="w-2 h-2 rounded-full bg-current" />}
+          {isCompleted ? <Check size={14} strokeWidth={2.5} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
         </button>
 
-        {/* Name + meta */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h3 className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <div className="flex items-center gap-1.5">
+            <h3 className={`font-medium text-sm truncate ${isCompleted ? (isDark ? 'text-gray-400 line-through' : 'text-slate-400 line-through') : (isDark ? 'text-white' : 'text-slate-800')}`}>
               {habit.name}
             </h3>
             {habit.streakCount > 0 && (
-              <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`} style={habit.streakCount >= 7 ? { filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' } : undefined}>
+              <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold flex-shrink-0 ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`} style={habit.streakCount >= 7 ? { filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' } : undefined}>
                 <Flame size={11} />{habit.streakCount}d
               </span>
             )}
-            {longestStreak > 1 && (
-              <span className={`inline-flex items-center gap-0.5 text-[10px] ${isDark ? 'text-amber-400/50' : 'text-amber-500/50'}`}>
-                <Trophy size={10} />{longestStreak}d
-              </span>
-            )}
           </div>
-          {/* Compact meta row */}
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-              isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-500'
-            }`}>{habit.category}</span>
-            {target && habit.trackingType !== 'boolean' && (
-              <span className={`text-[11px] font-medium tabular-nums ${
+          {target && habit.trackingType !== 'boolean' && (
+            <div className="flex items-center gap-2 mt-1">
+              <div className={`flex-1 h-1 rounded-full overflow-hidden ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-violet-500'}`}
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <span className={`text-[10px] font-medium tabular-nums flex-shrink-0 ${
                 isCompleted ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-gray-500' : 'text-slate-500')
               }`}>
                 {todaysValue}/{target}{habit.trackingType === 'duration' ? 'm' : ''}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Target progress bar (thin, inline) */}
-        {target && habit.trackingType !== 'boolean' && (
-          <div className="w-12 flex-shrink-0 hidden sm:block">
-            <div className={`h-1 rounded-full overflow-hidden ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-violet-500'}`}
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Controls */}
         {habit.trackingType !== 'boolean' && (
           <div className="flex items-center gap-0.5 flex-shrink-0">
             <button onClick={handleDecrement} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
               isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}><Minus size={14} /></button>
+            }`}><Minus size={13} /></button>
             <div className="relative">
               <input
                 type="number"
                 value={inputValue}
                 onChange={handleInputChange}
-                className={`w-12 h-7 text-center rounded-lg text-sm font-medium ${
+                className={`w-10 h-7 text-center rounded-lg text-sm font-medium ${
                   isDark ? 'bg-white/10 text-white border border-white/10' : 'bg-slate-100 text-slate-800 border border-slate-200'
                 } outline-none`}
                 min="0"
               />
               {habit.trackingType === 'duration' && (
-                <span className={`absolute right-1 top-1/2 -translate-y-1/2 text-[9px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
+                <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-[9px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
               )}
             </div>
             <button onClick={handleIncrement} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
               isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}><Plus size={14} /></button>
+            }`}><Plus size={13} /></button>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-0.5 flex-shrink-0">
-          <button onClick={() => onEdit(habit)} className={`p-1.5 rounded-lg transition-all ${
-            isDark ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/20' : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
-          }`} title="Edit"><Pencil size={15} /></button>
-          <button onClick={() => onDelete(habit.id)} className={`p-1.5 rounded-lg transition-all ${
-            isDark ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'
-          }`} title="Delete"><Trash2 size={15} /></button>
+        <div className="relative flex-shrink-0" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className={`p-1 rounded-lg transition-all ${
+              isDark ? 'text-gray-600 hover:text-gray-400 hover:bg-white/10' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'
+            }`}
+          >
+            <MoreHorizontal size={16} />
+          </button>
+          {menuOpen && (
+            <div className={`absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-xl min-w-[120px] ${
+              isDark ? 'bg-gray-800 border border-white/10' : 'bg-white border border-slate-200'
+            }`}>
+              <button
+                onClick={() => { onEdit(habit); setMenuOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                  isDark ? 'text-gray-300 hover:bg-white/10' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Pencil size={14} /> Edit
+              </button>
+              <button
+                onClick={() => { onDelete(habit.id); setMenuOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                  isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-600 hover:bg-red-50'
+                }`}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

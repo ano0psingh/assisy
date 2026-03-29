@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import type { Goal, Task, GoalTheme } from '../../types';
+import type { Goal, Task, GoalTheme, Habit } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useGoalContext } from '../../context/GoalContext';
 import { askAI, isAIConfigured } from '../../lib/ai';
 import { GoalTree } from './GoalTree';
 import {
   Target, Plus, Link2, Unlink, Check, BookOpen, ExternalLink,
-  X, Sparkles, Loader2, Trophy,
+  X, Sparkles, Loader2, Trophy, Flame,
 } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { TiptapEditor } from '../common/TiptapEditor';
@@ -19,11 +19,16 @@ const THEME_OPTIONS: { value: GoalTheme; color: string; label: string }[] = [
   { value: 'garden', color: '#F472B6', label: 'Garden' },
 ];
 
+interface HabitWithLogs extends Habit {
+  logs: { date: string; value: number }[];
+}
+
 interface GoalDetailProps {
   goal: Goal;
   progress: number;
   allTasks: Task[];
   linkedTasks: Task[];
+  linkedHabits?: HabitWithLogs[];
   onClose: () => void;
   onLinkTask: (goalId: string, taskId: string) => void;
   onUnlinkTask: (goalId: string, taskId: string) => void;
@@ -37,6 +42,7 @@ export function GoalDetail({
   progress,
   allTasks,
   linkedTasks,
+  linkedHabits = [],
   onClose,
   onLinkTask,
   onUnlinkTask,
@@ -374,6 +380,12 @@ export function GoalDetail({
     </div>
   ) : null;
 
+  const nonRecurringTasks = linkedTasks.filter(t => !t.isRecurring);
+  const completedNonRecurring = nonRecurringTasks.filter(t => t.status === 'Completed').length;
+  const completedMilestones = (goal.milestones || []).filter(m => m.isCompleted).length;
+  const totalMilestones = (goal.milestones || []).length;
+  const recurringCount = linkedTasks.length - nonRecurringTasks.length;
+
   const progressBar = (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -390,9 +402,20 @@ export function GoalDetail({
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className={`text-sm mt-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-        {completedLinkedTasks.length} of {linkedTasks.length} linked tasks completed
-      </p>
+      <div className={`text-xs mt-2 space-y-0.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+        {nonRecurringTasks.length > 0 && (
+          <p>{completedNonRecurring} of {nonRecurringTasks.length} tasks completed</p>
+        )}
+        {totalMilestones > 0 && (
+          <p>{completedMilestones} of {totalMilestones} milestones completed</p>
+        )}
+        {recurringCount > 0 && (
+          <p className={isDark ? 'text-gray-600' : 'text-slate-400'}>{recurringCount} recurring task{recurringCount > 1 ? 's' : ''} (ongoing, earn XP daily)</p>
+        )}
+        {linkedHabits.length > 0 && (
+          <p className={isDark ? 'text-gray-600' : 'text-slate-400'}>{linkedHabits.length} habit{linkedHabits.length > 1 ? 's' : ''} linked (earn XP daily)</p>
+        )}
+      </div>
     </div>
   );
 
@@ -497,6 +520,53 @@ export function GoalDetail({
       )}
     </div>
   );
+
+  const linkedHabitsSection = linkedHabits.length > 0 ? (
+    <div>
+      <label className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+        <Flame size={14} /> Linked Habits ({linkedHabits.length})
+      </label>
+      <div className="space-y-2">
+        {linkedHabits.map(h => {
+          const todayLog = h.logs.find(l => l.date === new Date().toISOString().slice(0, 10));
+          const todayVal = todayLog?.value ?? 0;
+          const done = h.dailyTarget ? todayVal >= h.dailyTarget : todayVal > 0;
+          return (
+            <div
+              key={h.id}
+              className={`flex items-center gap-3 p-3 rounded-xl ${
+                isDark ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-200'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
+                done ? 'bg-emerald-500 text-white' : isDark ? 'bg-white/10 text-gray-600' : 'bg-slate-200 text-slate-400'
+              }`}>
+                {done && <Check size={12} strokeWidth={3} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className={`text-sm ${done ? (isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through') : (isDark ? 'text-gray-300' : 'text-slate-700')}`}>
+                  {h.name}
+                </span>
+                {h.dailyTarget && h.trackingType !== 'boolean' && (
+                  <span className={`ml-2 text-[10px] tabular-nums ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                    {todayVal}/{h.dailyTarget}{h.trackingType === 'duration' ? 'm' : ''}
+                  </span>
+                )}
+              </div>
+              {h.streakCount > 0 && (
+                <span className={`text-[11px] font-bold flex items-center gap-0.5 ${h.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
+                  <Flame size={11} />{h.streakCount}d
+                </span>
+              )}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                +{h.xpPerUnit} XP
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  ) : null;
 
   const recommendedReadingSection = (
     <div>
@@ -638,6 +708,7 @@ export function GoalDetail({
             {/* Right: progress + linked tasks */}
             <div className={`w-96 flex-shrink-0 p-6 space-y-6 overflow-y-auto ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
               {progressBar}
+              {linkedHabitsSection}
               {linkedTasksSection}
               {recommendedReadingSection}
               {relatedArticlesSection}
@@ -679,6 +750,7 @@ export function GoalDetail({
             </div>
             {progressBar}
             {milestonesSection}
+            {linkedHabitsSection}
             {linkedTasksSection}
             {recommendedReadingSection}
             {relatedArticlesSection}

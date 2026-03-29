@@ -990,14 +990,14 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
 
   // Record habit completion
   const recordHabitCompletion = useCallback((habitCategory: string, xp: number) => {
-    let skillCategory: SkillCategory = 'mindfulness';
-    if (habitCategory.toLowerCase().includes('exercise') || habitCategory.toLowerCase().includes('health')) {
-      skillCategory = 'health';
-    } else if (habitCategory.toLowerCase().includes('read') || habitCategory.toLowerCase().includes('learn')) {
-      skillCategory = 'learning';
-    } else if (habitCategory.toLowerCase().includes('meditat') || habitCategory.toLowerCase().includes('mindful')) {
-      skillCategory = 'mindfulness';
-    }
+    const CATEGORY_TO_SKILL: Record<string, SkillCategory> = {
+      health: 'health',
+      mindfulness: 'mindfulness',
+      learning: 'learning',
+      productivity: 'productivity',
+      financial: 'financial',
+    };
+    const skillCategory = CATEGORY_TO_SKILL[habitCategory.toLowerCase()] ?? 'productivity';
 
     addXPToSkill(skillCategory, xp);
     setUserStats(prev => ({

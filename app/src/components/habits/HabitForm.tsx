@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useHabitContext } from '../../context/HabitContext';
-import { Zap, Pencil, Heart, Target, Bell, Sparkles, Loader2 } from 'lucide-react';
+import { useGoalContext } from '../../context/GoalContext';
+import { Zap, Pencil, Heart, Target, Bell, Sparkles, Loader2, Link2 } from 'lucide-react';
 import type { TrackingType, Habit } from '../../types';
 import { ExpandableModal } from '../common/ExpandableModal';
+import { GoalTreeThumbnail } from '../goals/GoalTree';
 import { askAIJson, isAIConfigured } from '../../lib/ai';
 
 interface HabitWithLogs extends Habit {
@@ -19,6 +21,7 @@ interface HabitFormProps {
     xpPerUnit: number;
     dailyTarget?: number;
     reminderTime?: string;
+    goalId?: string;
   }) => void;
   onCancel: () => void;
   editingHabit?: HabitWithLogs | null;
@@ -41,22 +44,27 @@ const TRACKING_TYPES: { value: TrackingType; label: string; description: string 
 export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFormProps) {
   const { theme } = useTheme();
   const { getHabitLogs } = useHabitContext();
+  const { goals, getActiveGoals } = useGoalContext();
   const isDark = theme === 'dark';
 
   const [name, setName] = useState('');
   const [trackingType, setTrackingType] = useState<TrackingType>('duration');
   const [category, setCategory] = useState('Health');
+  const [goalId, setGoalId] = useState<string>('');
   const [xpPerUnit, setXpPerUnit] = useState(1);
   const [dailyTarget, setDailyTarget] = useState<string>('');
   const [reminderTime, setReminderTime] = useState('');
   const [aiSuggesting, setAiSuggesting] = useState(false);
   const [aiReason, setAiReason] = useState<string | null>(null);
 
+  const activeGoals = getActiveGoals();
+
   useEffect(() => {
     if (editingHabit) {
       setName(editingHabit.name);
       setTrackingType(editingHabit.trackingType);
       setCategory(editingHabit.category);
+      setGoalId(editingHabit.goalId ?? '');
       setXpPerUnit(editingHabit.xpPerUnit);
       setDailyTarget(editingHabit.dailyTarget ? String(editingHabit.dailyTarget) : '');
       setReminderTime(editingHabit.reminderTime ?? '');
@@ -69,6 +77,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
     setName('');
     setTrackingType('duration');
     setCategory('Health');
+    setGoalId('');
     setXpPerUnit(1);
     setDailyTarget('');
     setReminderTime('');
@@ -104,13 +113,16 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
   const handleSubmit = () => {
     if (!name.trim()) return;
     const target = parseInt(dailyTarget) || undefined;
+    const linkedGoal = goalId ? goals.find(g => g.id === goalId) : undefined;
+    const resolvedCategory = linkedGoal ? linkedGoal.category : category;
     onSubmit({
       name: name.trim(),
       trackingType,
-      category,
+      category: resolvedCategory,
       xpPerUnit,
       dailyTarget: trackingType === 'boolean' ? undefined : target,
       reminderTime: reminderTime || undefined,
+      goalId: goalId || undefined,
     });
     resetForm();
   };
@@ -173,7 +185,61 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
     </div>
   );
 
-  const categoryField = (
+  const goalField = (
+    <div>
+      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <div className="flex items-center gap-2">
+          <Link2 size={16} className="text-violet-500" />
+          Linked Goal
+        </div>
+      </label>
+      {activeGoals.length > 0 ? (
+        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+          {activeGoals.map(g => (
+            <label
+              key={g.id}
+              className={`flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer transition-all ${
+                goalId === g.id
+                  ? isDark ? 'bg-violet-500/20 border border-violet-500/50' : 'bg-violet-50 border border-violet-300'
+                  : isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10' : 'bg-slate-50 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <input
+                type="radio"
+                name="goalId"
+                value={g.id}
+                checked={goalId === g.id}
+                onChange={() => setGoalId(g.id)}
+                className="sr-only"
+              />
+              <div className="flex-shrink-0 w-8 h-8">
+                <GoalTreeThumbnail level={g.level} theme={g.theme} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{g.title}</div>
+                <div className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Lv.{g.level} · {g.category}</div>
+              </div>
+            </label>
+          ))}
+          {goalId && (
+            <button
+              type="button"
+              onClick={() => setGoalId('')}
+              className={`text-xs px-2 py-1 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-gray-400' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Clear selection
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className={`text-sm p-3 rounded-xl ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-50 text-slate-500'}`}>
+          No active goals yet. Create a goal first to link habits to it.
+        </p>
+      )}
+    </div>
+  );
+
+  const categoryField = !goalId ? (
     <div>
       <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Category</label>
       <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
@@ -181,8 +247,11 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
           <option key={cat.value} value={cat.value}>{cat.label}</option>
         ))}
       </select>
+      <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+        Used for grouping when no goal is linked.
+      </p>
     </div>
-  );
+  ) : null;
 
   const targetField = trackingType !== 'boolean' ? (
     <div>
@@ -314,6 +383,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
             </div>
             <div className={`w-80 flex-shrink-0 p-6 space-y-5 overflow-y-auto ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
               <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Settings</h3>
+              {goalField}
               {categoryField}
               {targetField}
               {xpField}
@@ -323,6 +393,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
         ) : (
           <div className="p-5 space-y-5">
             {nameField}
+            {goalField}
             {trackingTypeField}
             {categoryField}
             {targetField}

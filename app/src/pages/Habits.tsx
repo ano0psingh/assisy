@@ -1,7 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Flame, Plus, BookOpen, Zap, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
+import { Flame, Plus, BookOpen, Zap, Sparkles, Loader2, AlertTriangle, ChevronDown, CheckCircle2, Layers, TrendingUp, Calendar, Trophy } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useHabitContext } from '../context/HabitContext';
+import { useGoalContext } from '../context/GoalContext';
+import { useGamification } from '../context/GamificationContext';
 import { useDataVersion } from '../context/DataVersionContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
@@ -11,12 +13,60 @@ import { HabitForm } from '../components/habits/HabitForm';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import { ContributionGraph } from '../components/habits/ContributionGraph';
 import { BodyMetrics } from '../components/habits/BodyMetrics';
+import { GoalTreeThumbnail } from '../components/goals/GoalTree';
 import { askAI, isAIConfigured } from '../lib/ai';
 import { formatAIText } from '../lib/formatAIText';
-import type { TrackingType, Habit } from '../types';
+import type { TrackingType, Habit, Goal } from '../types';
 
 interface HabitWithLogs extends Habit {
   logs: { date: string; value: number }[];
+}
+
+function ProgressRing({ completed, total, size = 76, strokeWidth = 6 }: { completed: number; total: number; size?: number; strokeWidth?: number }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const pct = total > 0 ? completed / total : 0;
+  const offset = circumference * (1 - pct);
+  const isDark = document.documentElement.classList.contains('dark');
+  const gradId = 'ring-grad';
+
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <defs>
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={pct >= 1 ? '#10b981' : '#8b5cf6'} />
+            <stop offset="100%" stopColor={pct >= 1 ? '#34d399' : '#c084fc'} />
+          </linearGradient>
+        </defs>
+        <circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none"
+          stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none"
+          stroke={`url(#${gradId})`}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="transition-all duration-700 ease-out"
+          style={pct > 0 ? { filter: `drop-shadow(0 0 6px ${pct >= 1 ? 'rgba(16,185,129,0.3)' : 'rgba(139,92,246,0.3)'})` } : undefined}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`text-xl font-black leading-none tabular-nums ${pct >= 1 ? 'text-emerald-500' : isDark ? 'text-white' : 'text-slate-800'}`}>
+          {completed}
+        </span>
+        <span className={`text-[10px] leading-tight font-medium ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+          /{total}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export function Habits() {
@@ -30,6 +80,8 @@ export function Habits() {
     logHabit, 
     getTodaysLog,
   } = useHabitContext();
+  const { getGoalById, addXPToGoal } = useGoalContext();
+  const { recordHabitCompletion } = useGamification();
   const { 
     getTodaysLog: getTodaysDailyLog, 
     createOrUpdateLog,
@@ -40,7 +92,9 @@ export function Habits() {
   const [isHabitFormOpen, setIsHabitFormOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<HabitWithLogs | null>(null);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
-  const [selectedHabitForGraph, setSelectedHabitForGraph] = useState<string | null>(null);
+  const [activityFilter, setActivityFilter] = useState<string>('');
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
@@ -53,33 +107,86 @@ export function Habits() {
   const checkedInToday = hasCheckedInToday();
   const recentLogs = getRecentLogs(7);
   const recentLogs30 = getRecentLogs(30);
-  const stats = useMemo(() => {
-    const todayCompletedCount = habits.filter(h => getTodaysLog(h.id) > 0).length;
-    
-    return {
-      todayCompletedCount,
-      totalHabits: habits.length,
-    };
-  }, [habits, getTodaysLog]);
 
-  // Combine all habit logs for the main graph
-  const allHabitLogs = useMemo(() => {
-    if (selectedHabitForGraph) {
-      const habit = habits.find(h => h.id === selectedHabitForGraph);
-      return habit?.logs || [];
+  const isHabitCompleted = useCallback((h: HabitWithLogs) => {
+    const val = getTodaysLog(h.id);
+    return h.dailyTarget ? val >= h.dailyTarget : val > 0;
+  }, [getTodaysLog]);
+
+  const { todayCompletedCount, totalHabits, pendingByGoal, unlinkedPending, completedHabits } = useMemo(() => {
+    const completed: HabitWithLogs[] = [];
+    const pending: HabitWithLogs[] = [];
+
+    for (const h of habits) {
+      if (isHabitCompleted(h)) completed.push(h);
+      else pending.push(h);
     }
-    
-    // Combine all logs by date
+
+    const byGoal = new Map<string, { goal: Goal; habits: HabitWithLogs[] }>();
+    const unlinked: HabitWithLogs[] = [];
+
+    for (const h of pending) {
+      if (h.goalId) {
+        const goal = getGoalById(h.goalId);
+        if (goal) {
+          if (!byGoal.has(h.goalId)) byGoal.set(h.goalId, { goal, habits: [] });
+          byGoal.get(h.goalId)!.habits.push(h);
+        } else {
+          unlinked.push(h);
+        }
+      } else {
+        unlinked.push(h);
+      }
+    }
+
+    const sorted = [...byGoal.values()].sort((a, b) => a.goal.title.localeCompare(b.goal.title));
+
+    return {
+      todayCompletedCount: completed.length,
+      totalHabits: habits.length,
+      pendingByGoal: sorted,
+      unlinkedPending: unlinked,
+      completedHabits: completed,
+    };
+  }, [habits, isHabitCompleted, getGoalById]);
+
+  const filteredHabitsForGraph = useMemo(() => {
+    if (!activityFilter) return habits;
+    if (activityFilter.startsWith('goal:')) {
+      const goalId = activityFilter.slice(5);
+      return habits.filter(h => h.goalId === goalId);
+    }
+    return habits.filter(h => h.id === activityFilter);
+  }, [habits, activityFilter]);
+
+  const allHabitLogs = useMemo(() => {
+    const source = filteredHabitsForGraph;
+    if (source.length === 1) return source[0].logs;
     const logMap = new Map<string, number>();
-    habits.forEach(habit => {
+    source.forEach(habit => {
       habit.logs.forEach(log => {
         const existing = logMap.get(log.date) || 0;
         logMap.set(log.date, existing + (log.value > 0 ? 1 : 0));
       });
     });
-    
     return Array.from(logMap.entries()).map(([date, value]) => ({ date, value }));
-  }, [habits, selectedHabitForGraph]);
+  }, [filteredHabitsForGraph]);
+
+  const goalGroupsForFilter = useMemo(() => {
+    const groups = new Map<string, { title: string; count: number }>();
+    for (const h of habits) {
+      if (h.goalId) {
+        const goal = getGoalById(h.goalId);
+        if (goal && !groups.has(h.goalId)) {
+          groups.set(h.goalId, { title: goal.title, count: 0 });
+        }
+        if (groups.has(h.goalId)) {
+          groups.get(h.goalId)!.count++;
+        }
+      }
+    }
+    return [...groups.entries()];
+  }, [habits, getGoalById]);
 
   const moodScores = useMemo(() => {
     return recentLogs30
@@ -121,8 +228,9 @@ export function Habits() {
     xpPerUnit: number;
     dailyTarget?: number;
     reminderTime?: string;
+    goalId?: string;
   }) => {
-    createHabit(data.name, data.trackingType, data.category, data.xpPerUnit, data.dailyTarget, data.reminderTime);
+    createHabit(data.name, data.trackingType, data.category, data.xpPerUnit, data.dailyTarget, data.reminderTime, data.goalId);
     setIsHabitFormOpen(false);
   };
 
@@ -133,6 +241,7 @@ export function Habits() {
     xpPerUnit: number;
     dailyTarget?: number;
     reminderTime?: string;
+    goalId?: string;
   }) => {
     if (!editingHabit) return;
     updateHabit(editingHabit.id, {
@@ -142,10 +251,27 @@ export function Habits() {
       xpPerUnit: data.xpPerUnit,
       dailyTarget: data.dailyTarget,
       reminderTime: data.reminderTime,
+      goalId: data.goalId,
     });
     setEditingHabit(null);
     setIsHabitFormOpen(false);
   };
+
+  const handleLogWithXP = useCallback((habitId: string, value: number) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return;
+
+    const oldValue = getTodaysLog(habitId);
+    logHabit(habitId, value);
+
+    if (value > oldValue) {
+      const xpDelta = (value - oldValue) * habit.xpPerUnit;
+      if (xpDelta > 0) {
+        if (habit.goalId) addXPToGoal(habit.goalId, xpDelta);
+        recordHabitCompletion(habit.category, xpDelta);
+      }
+    }
+  }, [habits, getTodaysLog, logHabit, addXPToGoal, recordHabitCompletion]);
 
   const handleEdit = (habit: HabitWithLogs) => {
     setEditingHabit(habit);
@@ -162,114 +288,397 @@ export function Habits() {
     setIsCheckInOpen(false);
   };
 
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div ref={containerRef} className="space-y-5">
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Habits</h1>
-          <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-            {stats.todayCompletedCount}/{stats.totalHabits} completed today
-          </p>
+
+      {/* Hero header with progress ring */}
+      <div className={`rounded-2xl p-5 relative overflow-hidden ${
+        isDark
+          ? 'bg-gradient-to-br from-violet-500/[0.08] via-transparent to-emerald-500/[0.05] border border-white/[0.08]'
+          : 'bg-gradient-to-br from-violet-50/80 via-white to-emerald-50/50 border border-violet-100/60'
+      }`} style={{ boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div className="flex items-center gap-5">
+          <ProgressRing completed={todayCompletedCount} total={totalHabits} />
+          <div className="flex-1 min-w-0">
+            <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {todayCompletedCount === totalHabits && totalHabits > 0
+                ? 'All done today!'
+                : todayCompletedCount === 0
+                  ? "Let's get started"
+                  : 'Keep it up!'}
+            </h1>
+            <p className={`text-sm mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              {todayCompletedCount}/{totalHabits} habits completed
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => setIsCheckInOpen(true)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${
+                  checkedInToday
+                    ? isDark
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                    : 'btn-secondary'
+                }`}
+              >
+                <BookOpen size={14} />
+                {checkedInToday ? 'Update Check-In' : 'Daily Check-In'}
+              </button>
+              <button
+                onClick={() => setIsHabitFormOpen(true)}
+                className="btn-primary px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+              >
+                <Plus size={14} />
+                New Habit
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsCheckInOpen(true)}
-            className={`px-4 py-2.5 rounded-xl flex items-center space-x-2 transition-all ${
-              checkedInToday
-                ? isDark 
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                  : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                : 'btn-secondary'
-            }`}
-          >
-            <BookOpen size={18} />
-            <span>
-              {checkedInToday ? 'Update Check-In' : 'Daily Check-In'}
-              {stats.totalHabits > 0 && (
-                <span className="ml-1 opacity-90">({stats.todayCompletedCount}/{stats.totalHabits})</span>
-              )}
-            </span>
-          </button>
+      </div>
+
+      {/* Habits grouped by goal */}
+      {habits.length === 0 ? (
+        <div className="card rounded-2xl p-6 sm:p-12 text-center">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
+            <Flame className={`w-8 h-8 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+          </div>
+          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            No habits yet
+          </h3>
+          <p className={`mb-4 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+            Link habits to your goals and watch your trees grow!
+          </p>
           <button
             onClick={() => setIsHabitFormOpen(true)}
-            className="btn-primary px-5 py-2.5 rounded-xl flex items-center space-x-2"
+            className="text-violet-500 hover:text-violet-400 font-medium"
           >
-            <Plus size={18} />
-            <span>New Habit</span>
+            + Create your first habit
           </button>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Goal-grouped sections */}
+          {pendingByGoal.map(({ goal, habits: goalHabits }) => {
+            const isCollapsed = collapsedGroups.has(goal.id);
+            const booleanHabits = goalHabits.filter(h => h.trackingType === 'boolean');
+            const trackedHabits = goalHabits.filter(h => h.trackingType !== 'boolean');
 
-      {/* Today's Habits */}
-      <div>
-        <h2 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          Today's Habits
-        </h2>
-        
-        {habits.length === 0 ? (
-          <div className="card rounded-2xl p-6 sm:p-12 text-center">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-              <Flame className={`w-8 h-8 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-            </div>
-            <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              No habits yet
-            </h3>
-            <p className={`mb-4 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-              Create your first habit to start building consistency!
-            </p>
-            <button
-              onClick={() => setIsHabitFormOpen(true)}
-              className="text-violet-500 hover:text-violet-400 font-medium"
-            >
-              + Create your first habit
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {habits.map((habit, index) => (
-              <div 
-                key={habit.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <HabitCard
-                  habit={habit}
-                  todaysValue={getTodaysLog(habit.id)}
-                  onLog={logHabit}
-                  onDelete={deleteHabit}
-                  onEdit={handleEdit}
-                />
+            return (
+              <div key={goal.id} className="space-y-2">
+                <button
+                  onClick={() => toggleGroup(goal.id)}
+                  className="w-full flex items-center gap-2.5 px-1 py-1"
+                >
+                  <div className="w-8 h-8 flex-shrink-0">
+                    <GoalTreeThumbnail level={goal.level} theme={goal.theme} />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <span className={`text-sm font-semibold block truncate ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>
+                      {goal.title}
+                    </span>
+                    <span className={`text-[10px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                      Lv.{goal.level} · {goalHabits.length} remaining
+                    </span>
+                  </div>
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-200 ${isDark ? 'text-gray-600' : 'text-slate-400'} ${isCollapsed ? '-rotate-90' : ''}`}
+                  />
+                </button>
+
+                {!isCollapsed && (
+                  <div className="space-y-1.5 pl-1">
+                    {booleanHabits.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-1">
+                        {booleanHabits.map(habit => (
+                          <HabitCard
+                            key={habit.id}
+                            habit={habit}
+                            todaysValue={getTodaysLog(habit.id)}
+                            onLog={handleLogWithXP}
+                            onDelete={deleteHabit}
+                            onEdit={handleEdit}
+                            compact
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {trackedHabits.map(habit => (
+                      <HabitCard
+                        key={habit.id}
+                        habit={habit}
+                        todaysValue={getTodaysLog(habit.id)}
+                        onLog={handleLogWithXP}
+                        onDelete={deleteHabit}
+                        onEdit={handleEdit}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
 
-      {/* Contribution Graph */}
+          {/* Unlinked habits (no goal) */}
+          {unlinkedPending.length > 0 && (
+            <div className="space-y-2">
+              <button
+                onClick={() => toggleGroup('__unlinked')}
+                className="w-full flex items-center gap-2.5 px-1 py-1"
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
+                  <Layers size={14} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <span className={`text-sm font-semibold block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                    General Habits
+                  </span>
+                  <span className={`text-[10px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                    Not linked to a goal · {unlinkedPending.length} remaining
+                  </span>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-200 ${isDark ? 'text-gray-600' : 'text-slate-400'} ${collapsedGroups.has('__unlinked') ? '-rotate-90' : ''}`}
+                />
+              </button>
+
+              {!collapsedGroups.has('__unlinked') && (
+                <div className="space-y-1.5 pl-1">
+                  {unlinkedPending.filter(h => h.trackingType === 'boolean').length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-1">
+                      {unlinkedPending.filter(h => h.trackingType === 'boolean').map(habit => (
+                        <HabitCard
+                          key={habit.id}
+                          habit={habit}
+                          todaysValue={getTodaysLog(habit.id)}
+                          onLog={handleLogWithXP}
+                          onDelete={deleteHabit}
+                          onEdit={handleEdit}
+                          compact
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {unlinkedPending.filter(h => h.trackingType !== 'boolean').map(habit => (
+                    <HabitCard
+                      key={habit.id}
+                      habit={habit}
+                      todaysValue={getTodaysLog(habit.id)}
+                      onLog={handleLogWithXP}
+                      onDelete={deleteHabit}
+                      onEdit={handleEdit}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Completed section */}
+          {completedHabits.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="w-full flex items-center gap-2.5 px-1 py-1"
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-emerald-500/15' : 'bg-emerald-50'}`}>
+                  <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
+                </div>
+                <span className={`text-sm font-semibold flex-1 text-left ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                  Done
+                </span>
+                <span className={`text-xs tabular-nums ${isDark ? 'text-emerald-500/60' : 'text-emerald-600/60'}`}>
+                  {completedHabits.length} completed
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-200 ${isDark ? 'text-emerald-500/40' : 'text-emerald-400'} ${!showCompleted ? '-rotate-90' : ''}`}
+                />
+              </button>
+
+              {showCompleted && (
+                <div className="space-y-1.5 pl-1 mt-2">
+                  {completedHabits.filter(h => h.trackingType === 'boolean').length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-1">
+                      {completedHabits.filter(h => h.trackingType === 'boolean').map(habit => (
+                        <HabitCard
+                          key={habit.id}
+                          habit={habit}
+                          todaysValue={getTodaysLog(habit.id)}
+                          onLog={handleLogWithXP}
+                          onDelete={deleteHabit}
+                          onEdit={handleEdit}
+                          compact
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {completedHabits.filter(h => h.trackingType !== 'boolean').map(habit => (
+                    <HabitCard
+                      key={habit.id}
+                      habit={habit}
+                      todaysValue={getTodaysLog(habit.id)}
+                      onLog={handleLogWithXP}
+                      onDelete={deleteHabit}
+                      onEdit={handleEdit}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* All-done celebration */}
+          {pendingByGoal.length === 0 && unlinkedPending.length === 0 && completedHabits.length > 0 && (
+            <div className={`rounded-2xl p-6 text-center ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'}`}>
+              <div className="text-3xl mb-2">&#127881;</div>
+              <p className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                All habits done for today!
+              </p>
+              <p className={`text-sm mt-1 ${isDark ? 'text-emerald-500/60' : 'text-emerald-600/70'}`}>
+                Great job staying consistent.
+              </p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Stats cards */}
+      {habits.length > 0 && (() => {
+        const today = new Date();
+        const getDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const makeDates = (n: number) => Array.from({length: n}, (_, i) => { const d = new Date(today); d.setDate(d.getDate() - i); return getDateStr(d); });
+        const last7 = makeDates(7);
+        const last30 = makeDates(30);
+
+        const completionsByDate = (dates: string[]) => {
+          let total = 0, done = 0;
+          for (const date of dates) {
+            for (const h of habits) {
+              const val = h.logs.find(l => l.date === date)?.value ?? 0;
+              total++;
+              if (h.dailyTarget ? val >= h.dailyTarget : val > 0) done++;
+            }
+          }
+          return total > 0 ? Math.round((done / total) * 100) : 0;
+        };
+        const rate7 = completionsByDate(last7);
+        const rate30 = completionsByDate(last30);
+
+        let currentStreak = 0;
+        for (let i = 0; i < 365; i++) {
+          const d = new Date(today); d.setDate(d.getDate() - i);
+          const ds = getDateStr(d);
+          if (habits.every(h => { const v = h.logs.find(l => l.date === ds)?.value ?? 0; return h.dailyTarget ? v >= h.dailyTarget : v > 0; })) currentStreak++;
+          else break;
+        }
+
+        return (
+          <div className="grid grid-cols-3 gap-3">
+            <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20' : 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60'}`}>
+              <Trophy size={14} className={`mb-2 ${currentStreak > 0 ? 'text-amber-500' : isDark ? 'text-amber-500/30' : 'text-amber-300'}`} />
+              <div className={`text-xl font-black tabular-nums ${currentStreak > 0 ? 'text-amber-500' : isDark ? 'text-gray-600' : 'text-slate-300'}`}>
+                {currentStreak}<span className="text-xs font-semibold ml-0.5">d</span>
+              </div>
+              <div className={`text-[10px] mt-0.5 font-medium ${isDark ? 'text-amber-500/50' : 'text-amber-600/50'}`}>Perfect streak</div>
+            </div>
+            <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-violet-500/10 to-blue-500/5 border border-violet-500/20' : 'bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-200/60'}`}>
+              <Calendar size={14} className={`mb-2 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+              <div className={`text-xl font-black tabular-nums ${rate7 >= 80 ? 'text-emerald-500' : rate7 >= 50 ? (isDark ? 'text-violet-400' : 'text-violet-600') : (isDark ? 'text-gray-500' : 'text-slate-400')}`}>
+                {rate7}<span className="text-xs font-semibold ml-0.5">%</span>
+              </div>
+              <div className={`text-[10px] mt-0.5 font-medium ${isDark ? 'text-violet-400/50' : 'text-violet-600/50'}`}>Last 7 days</div>
+            </div>
+            <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20' : 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60'}`}>
+              <TrendingUp size={14} className={`mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+              <div className={`text-xl font-black tabular-nums ${rate30 >= 80 ? 'text-emerald-500' : rate30 >= 50 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-gray-500' : 'text-slate-400')}`}>
+                {rate30}<span className="text-xs font-semibold ml-0.5">%</span>
+              </div>
+              <div className={`text-[10px] mt-0.5 font-medium ${isDark ? 'text-emerald-400/50' : 'text-emerald-600/50'}`}>Last 30 days</div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Activity heatmap */}
       {habits.length > 0 && (
-        <div className="card rounded-2xl p-5">
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between mb-4">
+        <div className="card rounded-2xl p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               Activity
             </h2>
             <select
-              value={selectedHabitForGraph || ''}
-              onChange={(e) => setSelectedHabitForGraph(e.target.value || null)}
+              value={activityFilter}
+              onChange={(e) => setActivityFilter(e.target.value)}
               className="px-3 py-1.5 text-sm input rounded-lg"
             >
               <option value="">All Habits</option>
-              {habits.map(h => (
-                <option key={h.id} value={h.id}>{h.name}</option>
-              ))}
+              {goalGroupsForFilter.length > 0 && (
+                <optgroup label="By Goal">
+                  {goalGroupsForFilter.map(([goalId, { title, count }]) => (
+                    <option key={goalId} value={`goal:${goalId}`}>{title} ({count})</option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="Individual Habits">
+                {habits.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </optgroup>
             </select>
           </div>
           <ContributionGraph 
             logs={allHabitLogs} 
             weeks={12}
-            maxValue={selectedHabitForGraph ? undefined : habits.length}
+            maxValue={filteredHabitsForGraph.length === 1 ? undefined : filteredHabitsForGraph.length}
           />
+        </div>
+      )}
+
+      {/* Per-habit 30-day completion bars */}
+      {habits.length > 0 && (
+        <div className="card rounded-2xl p-5">
+          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+            30-day consistency
+          </h3>
+          <div className="space-y-2.5">
+            {[...habits]
+              .map(h => {
+                const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+                const last30 = h.logs.filter(l => new Date(l.date) >= cutoff);
+                const threshold = h.dailyTarget || 1;
+                const completedDays = last30.filter(l => l.value >= threshold).length;
+                return { h, pct: Math.round((completedDays / 30) * 100), completedDays };
+              })
+              .sort((a, b) => b.pct - a.pct)
+              .map(({ h, pct, completedDays }) => (
+                <div key={h.id} className="flex items-center gap-2.5">
+                  <span className={`text-xs w-28 truncate flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>{h.name}</span>
+                  <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        pct >= 80 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : pct >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' : pct >= 20 ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-red-500/60 to-red-400/40'
+                      }`}
+                      style={{ width: `${Math.max(pct, 2)}%` }}
+                    />
+                  </div>
+                  <span className={`text-[11px] font-semibold tabular-nums w-12 text-right flex-shrink-0 ${
+                    pct >= 80 ? 'text-emerald-500' : pct >= 50 ? (isDark ? 'text-amber-400' : 'text-amber-500') : (isDark ? 'text-gray-500' : 'text-slate-400')
+                  }`}>{completedDays}/30</span>
+                </div>
+              ))}
+          </div>
         </div>
       )}
 

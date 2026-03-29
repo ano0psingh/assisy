@@ -80,7 +80,7 @@ interface GoalContextType {
   getActiveGoals: () => Goal[];
   getTopLevelGoals: () => Goal[];
   getSubGoals: (parentGoalId: string) => Goal[];
-  calculateGoalProgress: (goal: Goal, completedTaskIds: string[], allGoals: Goal[]) => number;
+  calculateGoalProgress: (goal: Goal, completedTaskIds: string[], allGoals: Goal[], allTasks?: { id: string; isRecurring?: boolean }[]) => number;
   addXPToGoal: (goalId: string, xp: number) => void;
   addMilestone: (goalId: string, milestone: Omit<GoalMilestone, 'id' | 'isCompleted' | 'completedAt'>) => void;
   completeMilestone: (goalId: string, milestoneId: string) => void;
@@ -395,29 +395,38 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     });
   }, [userId]);
 
-  const calculateGoalProgress = useCallback((goal: Goal, completedTaskIds: string[], allGoals: Goal[]): number => {
-    // Collect ALL linked task IDs (from this goal and all descendant sub-goals)
+  const calculateGoalProgress = useCallback((
+    goal: Goal,
+    completedTaskIds: string[],
+    allGoals: Goal[],
+    allTasks?: { id: string; isRecurring?: boolean }[],
+  ): number => {
     const allLinkedTaskIds: string[] = [...goal.linkedTaskIds];
-    
-    // Recursively collect task IDs from all sub-goals
+
     const collectSubGoalTasks = (parentId: string) => {
       allGoals
         .filter(g => g.parentGoalId === parentId)
         .forEach(subGoal => {
           allLinkedTaskIds.push(...subGoal.linkedTaskIds);
-          collectSubGoalTasks(subGoal.id); // Recurse for nested sub-goals
+          collectSubGoalTasks(subGoal.id);
         });
     };
     collectSubGoalTasks(goal.id);
-    
-    // Calculate progress based on ALL collected tasks
-    if (allLinkedTaskIds.length === 0) return 0;
-    
-    const completedLinkedTasks = allLinkedTaskIds.filter(taskId => 
-      completedTaskIds.includes(taskId)
+
+    const recurringIds = new Set(
+      (allTasks ?? []).filter(t => t.isRecurring).map(t => t.id),
     );
-    
-    return Math.round((completedLinkedTasks.length / allLinkedTaskIds.length) * 100);
+    const oneOffIds = allLinkedTaskIds.filter(id => !recurringIds.has(id));
+
+    const milestones = goal.milestones ?? [];
+    const totalMilestones = milestones.length;
+    const completedMilestones = milestones.filter(m => m.isCompleted).length;
+
+    const totalItems = oneOffIds.length + totalMilestones;
+    if (totalItems === 0) return 0;
+
+    const completedOneOff = oneOffIds.filter(id => completedTaskIds.includes(id)).length;
+    return Math.round(((completedOneOff + completedMilestones) / totalItems) * 100);
   }, []);
 
   return (

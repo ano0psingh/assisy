@@ -3,6 +3,7 @@ import { Target, Plus, Filter, LayoutGrid, List, Pencil, CheckCircle, Archive, R
 import { useTheme } from '../context/ThemeContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useTaskContext } from '../context/TaskContext';
+import { useHabitContext } from '../context/HabitContext';
 import { useGamification } from '../context/GamificationContext';
 import { useDataVersion } from '../context/DataVersionContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -41,6 +42,7 @@ export function Goals() {
     addXPToGoal,
   } = useGoalContext();
   const { tasks, deleteTask, completeTask, uncompleteTask, updateTask } = useTaskContext();
+  const { habits } = useHabitContext();
   const { recordGoalCompletion, recordTaskCompletion, updateStreak, checkAndUnlockAchievements } = useGamification();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -148,7 +150,7 @@ export function Goals() {
   // Calculate progress on-the-fly for display
   const getGoalProgress = (goal: Goal) => {
     if (goal.status === 'Completed') return 100;
-    return calculateGoalProgress(goal, completedTaskIds, goals);
+    return calculateGoalProgress(goal, completedTaskIds, goals, tasks);
   };
 
   // Delete goal and all linked tasks (including sub-goals' tasks)
@@ -631,6 +633,7 @@ export function Goals() {
           progress={getGoalProgress(selectedGoal)}
           allTasks={tasks}
           linkedTasks={getLinkedTasks(selectedGoal)}
+          linkedHabits={habits.filter(h => h.goalId === selectedGoal.id)}
           onClose={() => setSelectedGoalId(null)}
           onLinkTask={handleLinkTask}
           onUnlinkTask={handleUnlinkTask}

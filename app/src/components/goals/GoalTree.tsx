@@ -159,5 +159,11 @@ export function GoalTree({ level, theme = 'forest', size = 'md', animate = true 
 }
 
 export function GoalTreeThumbnail({ level, theme = 'forest' }: { level: number; theme?: GoalTheme }) {
-  return <GoalTree level={level} theme={theme} size="sm" animate={false} />;
+  const colors = THEME_COLORS[theme];
+  const clampedLevel = Math.max(1, Math.min(10, level));
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 100 100">
+      {getStagePaths(clampedLevel, colors)}
+    </svg>
+  );
 }
