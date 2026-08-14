@@ -1048,24 +1048,19 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     });
   }, [userStats.lastActiveDate, getTodayStr]);
 
-  // Get total level (includes skill tree XP + achievement XP)
+  // Get total level from skill tree XP.
+  // Achievement xpReward is deposited into the productivity skill tree on unlock
+  // (see checkAndUnlockAchievements), so it is already part of skillTreeXP —
+  // adding it again here would count every unlocked badge twice.
   const getTotalLevel = useCallback(() => {
     const skillTreeXP = skillTrees.reduce((sum, skill) => sum + skill.currentXP, 0);
-    const achievementXP = achievements
-      .filter(a => a.isUnlocked)
-      .reduce((sum, a) => sum + a.xpReward, 0);
-    return calculateLevel(skillTreeXP + achievementXP);
-  }, [skillTrees, achievements]);
+    return calculateLevel(skillTreeXP);
+  }, [skillTrees]);
 
-  // Get total XP (skill trees + achievement rewards)
+  // Get total XP. Achievement XP already lives in the skill trees — do not add it again.
   const getTotalXP = useCallback(() => {
-    const skillTreeXP = skillTrees.reduce((sum, skill) => sum + skill.currentXP, 0);
-    // Include XP from unlocked achievements
-    const achievementXP = achievements
-      .filter(a => a.isUnlocked)
-      .reduce((sum, a) => sum + a.xpReward, 0);
-    return skillTreeXP + achievementXP;
-  }, [skillTrees, achievements]);
+    return skillTrees.reduce((sum, skill) => sum + skill.currentXP, 0);
+  }, [skillTrees]);
 
   const getLevelProgress = useCallback(() => {
     const xpIntoLevel = getTotalXP() % XP_PER_LEVEL;
@@ -1245,7 +1240,8 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     if (newUnlocks.length > 0) {
       setTimeout(() => {
         setRecentUnlocks(prev => [...prev, ...newUnlocks]);
-        // Add achievement XP rewards to skill tree
+        // Add achievement XP rewards to skill tree. This is the ONLY place achievement
+        // XP enters the global total — getTotalXP/getTotalLevel must not add it again.
         newUnlocks.forEach(achievement => {
           addXPToSkill('productivity', achievement.xpReward);
         });
