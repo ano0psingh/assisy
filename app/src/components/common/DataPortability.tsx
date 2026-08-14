@@ -1,21 +1,13 @@
 import { useState, useRef } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { Download, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Download, Upload, AlertCircle, CheckCircle2, History } from 'lucide-react';
+import { ALL_DATA_KEYS } from '../../store/storageKeys';
+import { listSnapshots, restoreSnapshot, takeSnapshot } from '../../store/syncMeta';
+import { getLocalDateString } from '../../lib/dateUtils';
 
-const ALL_KEYS = [
-  'life-rpg-tasks',
-  'life-rpg-goals',
-  'life-rpg-daily-logs',
-  'life-rpg-habits',
-  'life-rpg-habit-logs',
-  'assisy_projects',
-  'assisy_subprojects',
-  'assisy_project_tasks',
-  'life-rpg-gamification',
-  'life-rpg-user-stats',
-  'equippedTitle',
-  'achievement_sounds_enabled',
-];
+// Sourced from the store so an export can never again silently omit a key. The
+// hardcoded list here had drifted and was excluding all gamification data.
+const ALL_KEYS = ALL_DATA_KEYS;
 
 export function DataExportImport({ onClose: _onClose }: { onClose: () => void }) {
   const { theme } = useTheme();
@@ -23,6 +15,7 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [snapshots, setSnapshots] = useState(() => listSnapshots());
 
   const handleExport = () => {
     const data: Record<string, unknown> = {};
@@ -37,7 +30,7 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `assisy-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `assisy-backup-${getLocalDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setStatus('success');
@@ -54,6 +47,8 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
         const data = JSON.parse(ev.target?.result as string);
         if (typeof data !== 'object' || data === null) throw new Error('Invalid format');
 
+        takeSnapshot('Before importing a backup');
+
         let restored = 0;
         Object.entries(data).forEach(([key, value]) => {
           if (ALL_KEYS.includes(key)) {
@@ -66,12 +61,24 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
 
         setStatus('success');
         setMessage(`Restored ${restored} data sets. Reload the page to see changes.`);
+        setSnapshots(listSnapshots());
       } catch (err: any) {
         setStatus('error');
         setMessage(err.message || 'Failed to import data');
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleRestoreSnapshot = (takenAt: string) => {
+    if (restoreSnapshot(takenAt)) {
+      setStatus('success');
+      setMessage('Restored that snapshot. Reload the page to see changes.');
+      setSnapshots(listSnapshots());
+    } else {
+      setStatus('error');
+      setMessage('That snapshot is no longer available.');
+    }
   };
 
   return (
@@ -112,6 +119,46 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
           Import Data
         </button>
       </div>
+
+      {snapshots.length > 0 && (
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+          <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            Automatic Snapshots
+          </h3>
+          <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+            Taken automatically before your data is merged with the cloud or overwritten by an
+            import, so a bad sync can be undone.
+          </p>
+          <div className="space-y-2">
+            {snapshots.map(snapshot => (
+              <div
+                key={snapshot.takenAt}
+                className={`flex items-center gap-3 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-white'}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                    {snapshot.reason}
+                  </p>
+                  <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                    {new Date(snapshot.takenAt).toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleRestoreSnapshot(snapshot.takenAt)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium flex-shrink-0 transition-colors ${
+                    isDark
+                      ? 'bg-white/10 text-gray-300 hover:bg-white/15'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                  }`}
+                >
+                  <History size={13} />
+                  Restore
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {status !== 'idle' && (
         <div className={`flex items-start gap-2 p-3 rounded-xl text-sm ${
