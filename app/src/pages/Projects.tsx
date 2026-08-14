@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useProjectContext, PROJECT_COLORS, type ProjectSnapshot } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
@@ -6,7 +6,7 @@ import {
   Pencil, Trash2, Play, CheckCircle2, Circle,
   X, ListTodo, Layers,
   CalendarPlus, CalendarCheck, ChevronLeft,
-  LayoutGrid, Table2, Sparkles, Loader2, Check,
+  LayoutGrid, Table2, Sparkles, Loader2, Check, Search,
 } from 'lucide-react';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
 import { TiptapEditor } from '../components/common/TiptapEditor';
@@ -17,6 +17,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { SelectButton, SelectionCheckbox } from '../components/common/SelectionControls';
+import { usePersistentState } from '../hooks/usePersistentState';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { askAIJson, isAIConfigured } from '../lib/ai';
 
@@ -94,11 +95,12 @@ export function Projects() {
   const isDark = theme === 'dark';
   const { pushUndo } = useUndo();
 
-  // View state
-  const [pageView, setPageView] = useState<PageView>('cards');
-  const [detailView, setDetailView] = useState<DetailView>('none');
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string | null>(null);
+  // View state — the drill-down position persists too, so leaving the page and
+  // coming back no longer dumps you at the top level.
+  const [pageView, setPageView] = usePersistentState<PageView>('assisy_projects_pageview', 'cards');
+  const [detailView, setDetailView] = usePersistentState<DetailView>('assisy_projects_detailview', 'none');
+  const [selectedProjectId, setSelectedProjectId] = usePersistentState<string | null>('assisy_projects_selected', null);
+  const [selectedSubProjectId, setSelectedSubProjectId] = usePersistentState<string | null>('assisy_projects_selected_sub', null);
 
   // Derive selected project/subproject from context to stay in sync
   const selectedProject = useMemo(() => 
@@ -111,6 +113,20 @@ export function Projects() {
     [selectedSubProjectId, subProjects]
   );
 
+  // A persisted drill-down can outlive what it pointed at, if the project was
+  // deleted here or on another device. Without this the page renders an empty
+  // detail shell you can only escape with the back button.
+  useEffect(() => {
+    if (loading) return;
+    if (detailView === 'project' && !selectedProject) {
+      setDetailView('none');
+      setSelectedProjectId(null);
+    } else if (detailView === 'subproject' && !selectedSubProject) {
+      setDetailView(selectedProject ? 'project' : 'none');
+      setSelectedSubProjectId(null);
+    }
+  }, [loading, detailView, selectedProject, selectedSubProject, setDetailView, setSelectedProjectId, setSelectedSubProjectId]);
+
   // Form states
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isSubProjectFormOpen, setIsSubProjectFormOpen] = useState(false);
@@ -119,9 +135,10 @@ export function Projects() {
   const [editingSubProject, setEditingSubProject] = useState<SubProject | null>(null);
   
   // Filter states
-  const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatus | 'All'>('All');
-  const [subProjectStatusFilter, setSubProjectStatusFilter] = useState<WorkItemStatus | 'All'>('All');
-  const [taskStatusFilter, setTaskStatusFilter] = useState<WorkItemStatus | 'All'>('All');
+  const [projectStatusFilter, setProjectStatusFilter] = usePersistentState<ProjectStatus | 'All'>('assisy_projects_status', 'All');
+  const [subProjectStatusFilter, setSubProjectStatusFilter] = usePersistentState<WorkItemStatus | 'All'>('assisy_subprojects_status', 'All');
+  const [taskStatusFilter, setTaskStatusFilter] = usePersistentState<WorkItemStatus | 'All'>('assisy_projecttasks_status', 'All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
 
   // Form data
@@ -207,14 +224,22 @@ export function Projects() {
 
   // Filter projects by status
   const filteredProjects = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
     let filtered = projects;
     if (projectStatusFilter !== 'All') {
-      filtered = projects.filter(p => p.status === projectStatusFilter);
+      filtered = filtered.filter(p => p.status === projectStatusFilter);
     }
-    return filtered.sort((a, b) => 
+    if (query) {
+      filtered = filtered.filter(p =>
+        p.title.toLowerCase().includes(query) ||
+        (p.description?.toLowerCase().includes(query) ?? false) ||
+        p.tags.some(tag => tag.toLowerCase().includes(query)),
+      );
+    }
+    return [...filtered].sort((a, b) => 
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
-  }, [projects, projectStatusFilter]);
+  }, [projects, projectStatusFilter, searchQuery]);
 
   const visibleProjectIds = useMemo(() => filteredProjects.map(p => p.id), [filteredProjects]);
 
@@ -689,6 +714,37 @@ export function Projects() {
       <div className="flex gap-6">
         {/* Main Content - Project List or Detail View */}
         <div className={`flex-1 ${detailView !== 'none' ? 'hidden md:block md:w-1/3' : ''}`}>
+          {/* Search — status filters alone meant scrolling to find a project. */}
+          <div className="relative mb-3">
+            <Search
+              size={16}
+              className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? 'text-gray-500' : 'text-slate-400'}`}
+            />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search projects by name or tag"
+              aria-label="Search projects"
+              className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm outline-none transition-colors ${
+                isDark
+                  ? 'bg-white/5 text-white placeholder-gray-500 border border-white/10 focus:border-violet-500/50'
+                  : 'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400'
+              }`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                  isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
           {/* Project Status Filter */}
           <div className="mb-4">
             <div className={`flex items-center space-x-2`}>

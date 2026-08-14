@@ -15,9 +15,11 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { SelectButton } from '../components/common/SelectionControls';
+import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
+import { staggerDelay } from '../lib/animation';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { hapticMedium } from '../lib/haptics';
-import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X } from 'lucide-react';
+import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, Search, X } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 
 const TASK_BULK_FIELDS: BulkEditField[] = [
@@ -74,11 +76,14 @@ export function Tasks() {
   const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({ onRefresh });
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
-  const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
-  const [smartFilter, setSmartFilter] = useState<SmartFilter>('none');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set(['unlinked']));
+  // Filters and view mode persist: losing them on every navigation (or stray
+  // swipe between pages) was a constant tax on daily use.
+  const [statusFilter, setStatusFilter] = usePersistentState<FilterStatus>('assisy_tasks_status', 'all');
+  const [categoryFilter, setCategoryFilter] = usePersistentState<TaskCategory | 'all'>('assisy_tasks_category', 'all');
+  const [smartFilter, setSmartFilter] = usePersistentState<SmartFilter>('assisy_tasks_smart', 'none');
+  const [viewMode, setViewMode] = usePersistentState<ViewMode>('assisy_tasks_view', 'list');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedGoals, setExpandedGoals] = usePersistentSet('assisy_tasks_expanded', ['unlinked']);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   
@@ -141,7 +146,16 @@ export function Tasks() {
   const nowDate = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
   const weekEnd = (() => { const d = new Date(nowDate); d.setDate(d.getDate() + 7); return d; })();
 
+  const normalisedQuery = searchQuery.trim().toLowerCase();
+
   const filteredTasks = tasks
+    .filter(task => {
+      if (!normalisedQuery) return true;
+      return (
+        task.title.toLowerCase().includes(normalisedQuery) ||
+        (task.description?.toLowerCase().includes(normalisedQuery) ?? false)
+      );
+    })
     .filter(task => {
       if (statusFilter === 'pending') {
         if (task.status === 'Completed') return false;
@@ -463,6 +477,38 @@ export function Tasks() {
         </div>
       </div>
 
+      {/* Search — the page had only structured filters, so finding a known
+          task among hundreds meant scrolling. */}
+      <div className="relative">
+        <Search
+          size={16}
+          className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? 'text-gray-500' : 'text-slate-400'}`}
+        />
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search tasks by title or description"
+          aria-label="Search tasks"
+          className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm outline-none transition-colors ${
+            isDark
+              ? 'bg-white/5 text-white placeholder-gray-500 border border-white/10 focus:border-violet-500/50'
+              : 'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400'
+          }`}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            aria-label="Clear search"
+            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
+              isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       {/* Filter bar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
@@ -591,15 +637,39 @@ export function Tasks() {
       )}
 
       {filteredTasks.length === 0 ? (
-        <div className="card rounded-2xl p-12 text-center">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
-            <ListFilter className={`w-8 h-8 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+        tasks.length === 0 ? (
+          /* Genuinely no data — offer to create, not to clear filters that
+             were never set. */
+          <div className="card rounded-2xl p-12 text-center">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+              <LayoutList className={`w-8 h-8 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+            </div>
+            <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>No tasks yet</p>
+            <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              Add your first task and it will show up here.
+            </p>
+            <button onClick={() => setIsTaskFormOpen(true)} className="mt-4 text-violet-500 hover:text-violet-400 text-sm font-medium">
+              + Create your first task
+            </button>
           </div>
-          <p className={isDark ? 'text-gray-500' : 'text-slate-500'}>No tasks found matching your filters.</p>
-          <button onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }} className="mt-3 text-violet-500 hover:text-violet-400 text-sm font-medium">
-            Clear filters
-          </button>
-        </div>
+        ) : (
+          <div className="card rounded-2xl p-12 text-center">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+              <ListFilter className={`w-8 h-8 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+            </div>
+            <p className={isDark ? 'text-gray-500' : 'text-slate-500'}>
+              {normalisedQuery
+                ? `No tasks match "${searchQuery.trim()}".`
+                : 'No tasks found matching your filters.'}
+            </p>
+            <button
+              onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); setSmartFilter('none'); setSearchQuery(''); }}
+              className="mt-3 text-violet-500 hover:text-violet-400 text-sm font-medium"
+            >
+              Clear filters
+            </button>
+          </div>
+        )
       ) : viewMode === 'list' ? (
         /* List View - Separate pending and completed */
         (() => {
@@ -612,7 +682,7 @@ export function Tasks() {
               {pendingTasks.length > 0 ? (
                 <div className="space-y-3">
                   {pendingTasks.map((task, index) => (
-                    <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 30}ms` }}>
+                    <div key={task.id} className="animate-fade-in" style={{ animationDelay: staggerDelay(index) }}>
                       <TaskCard
                         task={task}
                         onToggleComplete={handleToggleComplete}
@@ -682,7 +752,7 @@ export function Tasks() {
                           <div 
                             key={task.id} 
                             className="animate-fade-in"
-                            style={{ animationDelay: `${index * 20}ms` }}
+                            style={{ animationDelay: staggerDelay(index, 20) }}
                           >
                             <TaskCard 
                               task={task} 

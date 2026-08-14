@@ -19,6 +19,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { SelectButton } from '../components/common/SelectionControls';
+import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
 import { pluralise } from '../lib/bulkUpdate';
 import { askAI, isAIConfigured } from '../lib/ai';
 import { formatAIText } from '../lib/formatAIText';
@@ -119,9 +120,9 @@ export function Habits() {
   const [isHabitFormOpen, setIsHabitFormOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<HabitWithLogs | null>(null);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
-  const [activityFilter, setActivityFilter] = useState<string>('');
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [activityFilter, setActivityFilter] = usePersistentState<string>('assisy_habits_activity', '');
+  const [collapsedGroups, setCollapsedGroups] = usePersistentSet('assisy_habits_collapsed');
+  const [showCompleted, setShowCompleted] = usePersistentState('assisy_habits_show_completed', false);
 
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);

@@ -133,7 +133,10 @@ export function HabitCard({
         <button
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
-          className={`inline-flex items-center px-1 py-1.5 rounded-r-full text-sm transition-all border-l-0 ${
+          aria-label={`More actions for ${habit.name}`}
+          aria-expanded={menuOpen}
+          aria-haspopup="true"
+          className={`inline-flex items-center px-2 py-1.5 rounded-r-full text-sm transition-all border-l-0 ${
             isCompleted
               ? isDark
                 ? 'bg-emerald-500/20 text-emerald-500/50 border border-emerald-500/30 hover:text-emerald-300'
@@ -236,33 +239,45 @@ export function HabitCard({
 
         {habit.trackingType !== 'boolean' && !selectionMode && (
           <div className="flex items-center gap-0.5 flex-shrink-0">
-            <button onClick={handleDecrement} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-              isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}><Minus size={13} /></button>
+            <button
+              onClick={handleDecrement}
+              aria-label={`Decrease ${habit.name}`}
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+            ><Minus size={13} /></button>
             <div className="relative">
               <input
                 type="number"
                 value={inputValue}
                 onChange={handleInputChange}
-                className={`w-10 h-7 text-center rounded-lg text-sm font-medium ${
+                aria-label={`${habit.name} progress today`}
+                className={`w-11 h-9 text-center rounded-lg text-sm font-medium ${
                   isDark ? 'bg-white/10 text-white border border-white/10' : 'bg-slate-100 text-slate-800 border border-slate-200'
                 } outline-none`}
                 min="0"
               />
               {habit.trackingType === 'duration' && (
-                <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-[9px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
+                <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
               )}
             </div>
-            <button onClick={handleIncrement} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-              isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}><Plus size={13} /></button>
+            <button
+              onClick={handleIncrement}
+              aria-label={`Increase ${habit.name}`}
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+            ><Plus size={13} /></button>
           </div>
         )}
 
         <div className={`relative flex-shrink-0 ${selectionMode ? 'hidden' : ''}`} ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className={`p-1 rounded-lg transition-all ${
+            aria-label={`More actions for ${habit.name}`}
+            aria-expanded={menuOpen}
+            aria-haspopup="true"
+            className={`p-2.5 rounded-lg transition-all ${
               isDark ? 'text-gray-600 hover:text-gray-400 hover:bg-white/10' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'
             }`}
           >

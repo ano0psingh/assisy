@@ -16,6 +16,8 @@ import { useUndo } from '../components/common/UndoToast';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
+import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
+import { staggerDelay } from '../lib/animation';
 import { pluralise } from '../lib/bulkUpdate';
 
 const GOAL_BULK_FIELDS: BulkEditField[] = [
@@ -84,11 +86,11 @@ export function Goals() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
-  const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
-  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
+  const [statusFilter, setStatusFilter] = usePersistentState<FilterStatus>('assisy_goals_status', 'all');
+  const [categoryFilter, setCategoryFilter] = usePersistentState<TaskCategory | 'all'>('assisy_goals_category', 'all');
+  const [expandedGoals, setExpandedGoals] = usePersistentSet('assisy_goals_expanded');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'garden' | 'list'>('garden');
+  const [viewMode, setViewMode] = usePersistentState<'garden' | 'list'>('assisy_goals_view', 'garden');
   const { refresh } = useDataVersion();
   const onRefresh = useCallback(async () => { refresh(); }, [refresh]);
   const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({ onRefresh });
@@ -512,7 +514,7 @@ export function Goals() {
                       : 'border border-neutral-200 hover:shadow-medium hover:border-neutral-300'}
                   ${goal.status !== 'Active' && !isSelected ? 'opacity-60' : ''}
                 `}
-                style={{ animationDelay: `${index * 40}ms` }}
+                style={{ animationDelay: staggerDelay(index, 40) }}
               >
                 {selection.active && (
                   <span className="absolute top-2 right-2 z-10">
@@ -575,7 +577,7 @@ export function Goals() {
               <div 
                 key={goal.id}
                 className="animate-fade-in"
-                style={{ animationDelay: `${index * 50}ms` }}
+                style={{ animationDelay: staggerDelay(index, 50) }}
               >
                 {/* Augmented Goal Card wrapper */}
                 <div
