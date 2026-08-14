@@ -29,10 +29,13 @@ const DEFAULT_CONFIG: string[] = ['/tasks', '/habits', '/goals'];
 
 const PAGE_REGISTRY: Record<string, { icon: LucideIcon; label: string }> = {
   '/tasks': { icon: CheckSquare, label: 'Tasks' },
+  '/habits': { icon: Calendar, label: 'Habits' },
+  // The grouped destinations, which cover five of the individual entries below.
+  '/plan': { icon: Target, label: 'Plan' },
+  '/progress': { icon: BarChart3, label: 'Progress' },
   '/calendar': { icon: CalendarDays, label: 'Calendar' },
   '/feed': { icon: Newspaper, label: 'Feed' },
   '/goals': { icon: Target, label: 'Goals' },
-  '/habits': { icon: Calendar, label: 'Habits' },
   '/projects': { icon: FolderKanban, label: 'Projects' },
   '/stats': { icon: BarChart3, label: 'Stats' },
   '/achievements': { icon: Trophy, label: 'Achievements' },

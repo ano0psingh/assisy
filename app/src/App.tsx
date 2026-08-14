@@ -15,6 +15,9 @@ const namedRoute = <T extends Record<string, unknown>>(
   exportName: keyof T,
 ) => lazy(() => loader().then(module => ({ default: module[exportName] as ComponentType })));
 
+const Plan = namedRoute(() => import('./pages/Plan'), 'Plan');
+const Progress = namedRoute(() => import('./pages/Progress'), 'Progress');
+
 const Tasks = namedRoute(() => import('./pages/Tasks'), 'Tasks');
 const Goals = namedRoute(() => import('./pages/Goals'), 'Goals');
 const Habits = namedRoute(() => import('./pages/Habits'), 'Habits');
@@ -46,6 +49,12 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />
+
+            {/* Grouped destinations. The individual routes below them are kept
+                so existing links and search results still resolve. */}
+            <Route path="/plan" element={<Plan />} />
+            <Route path="/progress" element={<Progress />} />
+
             <Route path="/goals" element={<Goals />} />
             <Route path="/habits" element={<Habits />} />
             <Route path="/projects" element={<Projects />} />

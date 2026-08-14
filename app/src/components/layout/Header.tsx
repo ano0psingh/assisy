@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, CalendarDays, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper, Menu, X, ClipboardList } from 'lucide-react';
+import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, CalendarDays, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper, Menu, X, ClipboardList, MoreHorizontal } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
 import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -30,6 +30,26 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setMoreMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMoreMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [moreMenuOpen]);
   const { user, signOut, isConfigured } = useAuth();
 
   const { addToToday: addTaskToToday } = useTaskContext();
@@ -51,18 +71,32 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
   };
 
-  const navItems = [
-    { icon: Home, label: 'Dashboard', to: '/' },
+  /**
+   * Five destinations rather than ten. Plan groups Goals and Projects; Progress
+   * groups Stats, Achievements and the weekly review — all three answered the
+   * same question from three separate places in the nav.
+   */
+  const primaryNavItems = [
+    { icon: Home, label: 'Today', to: '/' },
     { icon: CheckSquare, label: 'Tasks', to: '/tasks' },
-    { icon: Target, label: 'Goals', to: '/goals' },
     { icon: Calendar, label: 'Habits', to: '/habits' },
-    { icon: CalendarDays, label: 'Calendar', to: '/calendar' },
-    { icon: FolderKanban, label: 'Projects', to: '/projects' },
-    { icon: Trophy, label: 'Achievements', to: '/achievements' },
-    { icon: BarChart3, label: 'Stats', to: '/stats' },
-    { icon: ClipboardList, label: 'Review', to: '/review' },
-    { icon: Newspaper, label: 'Feed', to: '/feed' },
+    { icon: Target, label: 'Plan', to: '/plan' },
+    { icon: BarChart3, label: 'Progress', to: '/progress' },
   ];
+
+  const overflowNavItems = [
+    { icon: CalendarDays, label: 'Calendar', to: '/calendar' },
+    { icon: Newspaper, label: 'Feed', to: '/feed' },
+    { icon: Target, label: 'Goals', to: '/goals' },
+    { icon: FolderKanban, label: 'Projects', to: '/projects' },
+    { icon: BarChart3, label: 'Stats', to: '/stats' },
+    { icon: Trophy, label: 'Achievements', to: '/achievements' },
+    { icon: ClipboardList, label: 'Review', to: '/review' },
+  ];
+
+  // The mobile drawer lists everything: there is room to scroll, and hiding
+  // destinations behind two layers on the smaller screen helps nobody.
+  const navItems = [...primaryNavItems, ...overflowNavItems];
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -95,7 +129,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
           {/* Desktop Navigation - hidden on mobile */}
           <nav className="hidden md:flex items-center space-x-0.5 mx-4">
-            {navItems.map((item) => (
+            {primaryNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -111,6 +145,51 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 <span className="hidden lg:inline">{item.label}</span>
               </NavLink>
             ))}
+
+            <div className="relative" ref={moreMenuRef}>
+              <button
+                onClick={() => setMoreMenuOpen(open => !open)}
+                aria-label="More destinations"
+                aria-expanded={moreMenuOpen}
+                aria-haspopup="menu"
+                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <MoreHorizontal size={15} />
+                <span className="hidden lg:inline">More</span>
+              </button>
+
+              {moreMenuOpen && (
+                <div
+                  role="menu"
+                  className={`absolute right-0 mt-1 w-48 rounded-xl border overflow-hidden z-50 ${
+                    isDark ? 'bg-[#14141a] border-white/10' : 'bg-white border-slate-200'
+                  }`}
+                >
+                  <div className="p-1.5 space-y-0.5">
+                    {overflowNavItems.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        role="menuitem"
+                        onClick={() => setMoreMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
+                            isActive
+                              ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                          }`
+                        }
+                      >
+                        <item.icon size={14} />
+                        {item.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Right actions */}
