@@ -531,6 +531,7 @@ export function Calendar() {
         <div className="card rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4">
             <button
+              aria-label="Previous period"
               onClick={() => viewMode === 'month' ? navigateMonth(-1) : navigateWeek(-1)}
               className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
             >
@@ -589,6 +590,7 @@ export function Calendar() {
             </div>
 
             <button
+              aria-label="Next period"
               onClick={() => viewMode === 'month' ? navigateMonth(1) : navigateWeek(1)}
               className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
             >
@@ -789,6 +791,7 @@ export function Calendar() {
                 </h2>
               </div>
               <button
+                aria-label="Close"
                 onClick={() => setAiPanelOpen(false)}
                 className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
                   isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
@@ -835,6 +838,7 @@ export function Calendar() {
                               : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                           }`}
                           title="Accept suggestion"
+                          aria-label="Accept suggestion"
                         >
                           <Check className="w-3.5 h-3.5" />
                         </button>
@@ -847,6 +851,7 @@ export function Calendar() {
                             : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
                         }`}
                         title="Dismiss suggestion"
+                        aria-label="Dismiss suggestion"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -870,6 +875,7 @@ export function Calendar() {
                 isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
               }`}
               title="Add task"
+              aria-label="Add task"
             >
               <Plus className="w-4 h-4" />
             </button>

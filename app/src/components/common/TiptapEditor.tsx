@@ -66,13 +66,16 @@ export function TiptapEditor({
       <div className={`flex items-center gap-0.5 px-2 py-1.5 border-b flex-wrap ${
         isDark ? 'border-white/10' : 'border-slate-100'
       }`}>
-        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btnCls(editor.isActive('bold'))} title="Bold">
+        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btnCls(editor.isActive('bold'))} title="Bold"
+ aria-label="Bold">
           <Bold size={iconSize} />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={btnCls(editor.isActive('italic'))} title="Italic">
+        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={btnCls(editor.isActive('italic'))} title="Italic"
+ aria-label="Italic">
           <Italic size={iconSize} />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={btnCls(editor.isActive('underline'))} title="Underline">
+        <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={btnCls(editor.isActive('underline'))} title="Underline"
+ aria-label="Underline">
           <UnderlineIcon size={iconSize} />
         </button>
 
@@ -81,31 +84,38 @@ export function TiptapEditor({
         <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={btnCls(editor.isActive('heading', { level: 2 }))} title="Heading">
           <Heading2 size={iconSize} />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={btnCls(editor.isActive('bulletList'))} title="Bullet List">
+        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={btnCls(editor.isActive('bulletList'))} title="Bullet List"
+ aria-label="Bullet List">
           <List size={iconSize} />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btnCls(editor.isActive('orderedList'))} title="Numbered List">
+        <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btnCls(editor.isActive('orderedList'))} title="Numbered List"
+ aria-label="Numbered List">
           <ListOrdered size={iconSize} />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleTaskList().run()} className={btnCls(editor.isActive('taskList'))} title="Checklist">
+        <button type="button" onClick={() => editor.chain().focus().toggleTaskList().run()} className={btnCls(editor.isActive('taskList'))} title="Checklist"
+ aria-label="Checklist">
           <CheckSquare size={iconSize} />
         </button>
 
         <div className={`w-px h-4 mx-1 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
 
-        <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={btnCls(editor.isActive('codeBlock'))} title="Code Block">
+        <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={btnCls(editor.isActive('codeBlock'))} title="Code Block"
+ aria-label="Code Block">
           <Code size={iconSize} />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().setHorizontalRule().run()} className={btnCls(false)} title="Divider">
+        <button type="button" onClick={() => editor.chain().focus().setHorizontalRule().run()} className={btnCls(false)} title="Divider"
+ aria-label="Divider">
           <Minus size={iconSize} />
         </button>
 
         <div className="flex-1" />
 
-        <button type="button" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} className={`${btnCls(false)} disabled:opacity-30`} title="Undo">
+        <button type="button" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} className={`${btnCls(false)} disabled:opacity-30`} title="Undo"
+ aria-label="Undo">
           <Undo size={iconSize} />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} className={`${btnCls(false)} disabled:opacity-30`} title="Redo">
+        <button type="button" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} className={`${btnCls(false)} disabled:opacity-30`} title="Redo"
+ aria-label="Redo">
           <Redo size={iconSize} />
         </button>
       </div>

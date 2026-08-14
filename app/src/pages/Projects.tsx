@@ -628,17 +628,20 @@ export function Projects() {
                   isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
                 }`}
                 title="Added to Today (click to remove)"
+                aria-label="Added to Today (click to remove)"
               >
                 <CalendarCheck size={14} />
               </button>
             )}
-            {/* Other actions - hover only */}
-            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Revealed on hover on desktop, but always present on touch, where
+                there is no hover to reveal them with. */}
+            <div className="flex items-center space-x-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
               {task.status !== 'Done' && !isAddedToToday && (
                 <button
                   onClick={() => addTaskToToday(task.id)}
                   className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'}`}
                   title="Add to Today"
+                  aria-label="Add to Today"
                 >
                   <CalendarPlus size={14} />
                 </button>
@@ -647,6 +650,7 @@ export function Projects() {
                 onClick={() => openCreateSubTask(task)}
                 className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
                 title="Add sub-task"
+                aria-label="Add sub-task"
               >
                 <Plus size={14} />
               </button>
@@ -654,6 +658,7 @@ export function Projects() {
                 onClick={() => openEditTask(task)}
                 className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
                 title="Edit"
+                aria-label="Edit"
               >
                 <Pencil size={14} />
               </button>
@@ -661,6 +666,7 @@ export function Projects() {
                 onClick={() => deleteProjectTask(task.id)}
                 className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}
                 title="Delete"
+                aria-label="Delete"
               >
                 <Trash2 size={14} />
               </button>
@@ -924,6 +930,7 @@ export function Projects() {
                   <div className="flex items-center space-x-3 min-w-0 flex-1">
                     {/* Back button - always show on mobile, only for subproject on desktop */}
                     <button
+                      aria-label="Back"
                       onClick={detailView === 'subproject' ? goBackToProject : () => setDetailView('none')}
                       className={`p-2 rounded-lg transition-colors ${detailView === 'project' ? 'md:hidden' : ''} ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
                     >
@@ -968,6 +975,7 @@ export function Projects() {
                     {detailView === 'project' && selectedProject && (
                       <>
                         <button
+                          aria-label="Edit project"
                           onClick={() => openEditProject(selectedProject)}
                           className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500'}`}
                         >
@@ -989,6 +997,7 @@ export function Projects() {
                     {detailView === 'subproject' && selectedSubProject && (
                       <>
                         <button
+                          aria-label="Edit sub-project"
                           onClick={() => openEditSubProject(selectedSubProject)}
                           className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500'}`}
                         >
@@ -1008,6 +1017,7 @@ export function Projects() {
                       </>
                     )}
                     <button
+                      aria-label="Close"
                       onClick={closeDetailView}
                       className={`p-2 rounded-lg transition-colors lg:hidden ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
                     >

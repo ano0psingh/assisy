@@ -148,6 +148,7 @@ export function Dashboard() {
     recentUnlocks,
     clearRecentUnlocks,
     getTotalLevel,
+    getLevelProgress,
     getTitle,
     userStats,
     getUnlockedAchievements,
@@ -156,6 +157,7 @@ export function Dashboard() {
     hasClaimedDailyLogin,
   } = useGamification();
   const isDark = theme === 'dark';
+  const levelProgress = getLevelProgress();
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [hasCarriedForward, setHasCarriedForward] = useState(false);
@@ -836,13 +838,34 @@ RULES:
         </button>
       )}
       <div className={`gap-3 ${statsExpanded ? 'grid' : 'hidden md:grid'} grid-cols-2 sm:grid-cols-4`}>
-        <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-violet-500/10 border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}>
+        {/* The level number meant nothing on its own: nothing said where XP
+            comes from or how close the next level was. */}
+        <div
+          className={`rounded-xl px-4 py-3 ${isDark ? 'bg-violet-500/10 border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}
+          title={`You earn XP by completing tasks, logging habits and progressing goals. Every ${levelProgress.xpPerLevel} XP is one level.`}
+        >
           <div className="flex items-center gap-2 mb-1">
             <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
             <span className={`text-xs ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>Level</span>
           </div>
           <div className={`text-xl font-bold ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{getTotalLevel()}</div>
           <p className={`text-[10px] mt-0.5 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>{getTitle()}</p>
+          <div
+            className={`mt-2 h-1 rounded-full overflow-hidden ${isDark ? 'bg-violet-500/20' : 'bg-violet-200'}`}
+            role="progressbar"
+            aria-valuenow={Math.round(levelProgress.percent)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${levelProgress.xpToNextLevel} XP to level ${getTotalLevel() + 1}`}
+          >
+            <div
+              className={`h-full rounded-full transition-[width] duration-500 ${isDark ? 'bg-violet-400' : 'bg-violet-500'}`}
+              style={{ width: `${levelProgress.percent}%` }}
+            />
+          </div>
+          <p className={`text-[10px] mt-1 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>
+            {levelProgress.xpToNextLevel} XP to level {getTotalLevel() + 1}
+          </p>
         </div>
         <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-blue-500/10 border border-blue-500/15' : 'bg-blue-50 border border-blue-100'}`}>
           <div className="flex items-center gap-2 mb-1">
@@ -1003,12 +1026,13 @@ RULES:
                   {task.priority === 'High' && <Flame size={14} className="flex-shrink-0 text-red-500" />}
                   <button
                     onClick={(e) => { e.stopPropagation(); removeProjectTaskFromToday(task.id); }}
-                    className={`p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 ${
+                    className={`p-2.5 rounded-lg transition-all flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
                       isDark
                         ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20'
                         : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
                     }`}
                     title="Remove from Today"
+                    aria-label={`Remove "${task.title}" from Today`}
                   >
                     <CalendarMinus size={14} />
                   </button>

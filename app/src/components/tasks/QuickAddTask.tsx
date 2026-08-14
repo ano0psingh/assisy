@@ -60,6 +60,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
           <div className="flex items-center justify-between">
             <h3 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>Quick Add</h3>
             <button
+              aria-label="Close"
               type="button"
               onClick={handleCancel}
               className={`p-1.5 rounded-lg transition-colors ${

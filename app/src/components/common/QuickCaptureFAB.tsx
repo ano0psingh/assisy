@@ -131,6 +131,7 @@ export function QuickCaptureFAB() {
               }`}
             />
             <button
+              aria-label="Save task"
               onClick={handleSubmit}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-violet-500 text-white shrink-0 active:scale-95 transition-transform"
             >
@@ -156,6 +157,7 @@ export function QuickCaptureFAB() {
         </div>
       ) : (
         <button
+          aria-label="Quick add a task"
           onClick={() => setExpanded(true)}
           className="w-12 h-12 rounded-full bg-violet-500 text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
         >

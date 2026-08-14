@@ -14,6 +14,7 @@ import { useToast } from '../components/common/Toast';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
+import { GestureHint } from '../components/common/GestureHint';
 import { SelectButton } from '../components/common/SelectionControls';
 import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
@@ -648,6 +649,12 @@ export function Tasks() {
         </div>
       )}
 
+      {filteredTasks.length > 0 && (
+        <GestureHint id="task_swipe">
+          Swipe a task right to complete it, or left to delete it.
+        </GestureHint>
+      )}
+
       {filteredTasks.length === 0 ? (
         tasks.length === 0 ? (
           /* Genuinely no data — offer to create, not to clear filters that
@@ -1123,6 +1130,7 @@ export function Tasks() {
                 Move to Project
               </h2>
               <button
+                aria-label="Close"
                 onClick={() => setIsMoveToProjectOpen(false)}
                 className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
               >

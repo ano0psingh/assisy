@@ -42,7 +42,7 @@ export function MigrationModal({ isOpen, onClose, userId, onMigrated }: Migratio
               <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>You have data on this device</p>
             </div>
           </div>
-          <button onClick={handleSkip} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+          <button aria-label="Close" onClick={handleSkip} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}>
             <X size={18} />
           </button>
         </div>

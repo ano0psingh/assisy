@@ -114,16 +114,19 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
           {/* Right actions */}
           <div className="flex items-center space-x-1.5 flex-shrink-0">
-            {/* Search trigger - desktop only */}
+            {/* Search trigger. Shown on mobile too: search was reachable only
+                by ⌘K, which a phone has no way to press. */}
             <button
               onClick={triggerSearch}
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+              className={`flex items-center gap-1.5 p-2 md:px-2.5 md:py-1.5 rounded-lg text-xs transition-colors ${
                 isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
               title="Search (⌘K)"
+              aria-label="Search"
             >
-              <Search size={14} />
-              <kbd className={`text-[9px] px-1 py-0.5 rounded hidden sm:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
+              <Search size={18} className="md:hidden" />
+              <Search size={14} className="hidden md:block" />
+              <kbd className={`text-[9px] px-1 py-0.5 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
             </button>
 
             {/* Focus timer - desktop only */}
@@ -134,6 +137,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                   isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
                 }`}
                 title="Focus Timer"
+                aria-label="Focus Timer"
               >
                 <Timer size={16} />
               </button>
@@ -161,6 +165,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
               title="Backup & Restore"
+              aria-label="Backup & Restore"
             >
               <Download size={16} />
             </button>

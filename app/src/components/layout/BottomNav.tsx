@@ -21,7 +21,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { hapticLight } from '../../lib/haptics';
 
 const STORAGE_KEY = 'assisy_bottom_nav_config';
-const DEFAULT_CONFIG: string[] = ['/tasks', '/calendar', '/feed'];
+// Matches what the onboarding tour teaches: tasks, one-tap habits and goal
+// trees. The old default surfaced Calendar and Feed instead, so two of the
+// three features a new user had just been shown were hidden behind More.
+// Only affects people who never customised the bar; a saved config wins.
+const DEFAULT_CONFIG: string[] = ['/tasks', '/habits', '/goals'];
 
 const PAGE_REGISTRY: Record<string, { icon: LucideIcon; label: string }> = {
   '/tasks': { icon: CheckSquare, label: 'Tasks' },
@@ -178,6 +182,7 @@ export function BottomNav() {
               <div className="flex items-center gap-1">
                 {customizing ? (
                   <button
+                    aria-label="Stop customising"
                     type="button"
                     onClick={() => setCustomizing(false)}
                     className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
@@ -186,6 +191,7 @@ export function BottomNav() {
                   </button>
                 ) : (
                   <button
+                    aria-label="Close menu"
                     type="button"
                     onClick={closeMore}
                     className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}

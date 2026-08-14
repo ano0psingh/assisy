@@ -246,7 +246,8 @@ export function HabitCard({
               className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
                 isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
-            ><Minus size={13} /></button>
+            ><Minus size={13} />
+            </button>
             <div className="relative">
               <input
                 type="number"
@@ -268,7 +269,8 @@ export function HabitCard({
               className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
                 isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
-            ><Plus size={13} /></button>
+            ><Plus size={13} />
+            </button>
           </div>
         )}
 

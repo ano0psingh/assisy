@@ -188,6 +188,7 @@ export function GoalCard({
                   : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
               }`}
               title="Edit"
+              aria-label="Edit"
             >
               <Pencil size={18} />
             </button>
@@ -201,6 +202,7 @@ export function GoalCard({
                       : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'
                   }`}
                   title="Mark as complete"
+                  aria-label="Mark as complete"
                 >
                   <CheckCircle size={18} />
                 </button>
@@ -212,6 +214,7 @@ export function GoalCard({
                       : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'
                   }`}
                   title="Archive"
+                  aria-label="Archive"
                 >
                   <Archive size={18} />
                 </button>
@@ -226,6 +229,7 @@ export function GoalCard({
                     : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
                 }`}
                 title="Reactivate"
+                aria-label="Reactivate"
               >
                 <RotateCcw size={18} />
               </button>
@@ -238,6 +242,7 @@ export function GoalCard({
                   : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
               }`}
               title="Delete"
+              aria-label="Delete"
             >
               <Trash2 size={18} />
             </button>

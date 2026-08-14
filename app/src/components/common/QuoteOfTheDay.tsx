@@ -44,6 +44,7 @@ export function QuoteOfTheDay() {
 
         {/* Close button */}
         <button
+          aria-label="Dismiss quote"
           onClick={handleClose}
           className={`absolute top-4 right-4 p-2 rounded-full transition-colors z-10 ${
             isDark 

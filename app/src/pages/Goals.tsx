@@ -700,25 +700,30 @@ export function Goals() {
                       className={`flex items-center space-x-1 flex-shrink-0 ${selection.active ? 'hidden' : ''}`}
                       onClick={e => e.stopPropagation()}
                     >
-                      <button onClick={() => handleEdit(goal)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'}`} title="Edit">
+                      <button onClick={() => handleEdit(goal)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'}`} title="Edit"
+ aria-label="Edit">
                         <Pencil size={16} />
                       </button>
                       {goal.status === 'Active' && (
                         <>
-                          <button onClick={() => handleCompleteGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'}`} title="Complete">
+                          <button onClick={() => handleCompleteGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'}`} title="Complete"
+ aria-label="Complete">
                             <CheckCircle size={16} />
                           </button>
-                          <button onClick={() => archiveGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/20' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`} title="Archive">
+                          <button onClick={() => archiveGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/20' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`} title="Archive"
+ aria-label="Archive">
                             <Archive size={16} />
                           </button>
                         </>
                       )}
                       {(goal.status === 'Completed' || goal.status === 'Archived') && (
-                        <button onClick={() => reactivateGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/20' : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'}`} title="Reactivate">
+                        <button onClick={() => reactivateGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/20' : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'}`} title="Reactivate"
+ aria-label="Reactivate">
                           <RotateCcw size={16} />
                         </button>
                       )}
-                      <button onClick={() => handleDeleteGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' : 'text-slate-500 hover:text-red-600 hover:bg-red-50'}`} title="Delete">
+                      <button onClick={() => handleDeleteGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' : 'text-slate-500 hover:text-red-600 hover:bg-red-50'}`} title="Delete"
+ aria-label="Delete">
                         <Trash2 size={16} />
                       </button>
                     </div>

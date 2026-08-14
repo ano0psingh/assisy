@@ -104,6 +104,7 @@ function ToastCard({ item, onDismiss, isDark }: { item: ToastItem; onDismiss: (i
         </button>
       )}
       <button
+        aria-label="Dismiss notification"
         onClick={handleDismiss}
         className={`flex-shrink-0 p-1 rounded-lg transition-colors ${
           isDark ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'

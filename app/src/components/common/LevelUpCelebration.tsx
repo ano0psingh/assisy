@@ -123,6 +123,7 @@ export function LevelUpCelebration() {
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          aria-label="Dismiss"
           onClick={handleDismiss}
           className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors ${
             isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'

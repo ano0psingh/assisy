@@ -285,6 +285,7 @@ export function NotesEditor({
               type="button"
               onClick={() => handleFormat(action)}
               title={label}
+              aria-label={label}
               className={`p-2.5 sm:p-1.5 rounded-lg transition-colors ${
                 isDark
                   ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/10 active:bg-violet-500/20'

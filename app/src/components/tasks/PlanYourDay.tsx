@@ -58,7 +58,7 @@ export function PlanYourDay({
               {' · '}{todaysTasks.length + todaysProjectTasks.length} tasks today
             </p>
           </div>
-          <button onClick={onClose} className={`p-2 rounded-lg ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
+          <button aria-label="Close" onClick={onClose} className={`p-2 rounded-lg ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
             <X size={18} />
           </button>
         </div>
@@ -77,7 +77,7 @@ export function PlanYourDay({
                     <FolderKanban size={12} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
                     <span className={`text-sm flex-1 truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{task.title}</span>
                     {onRemoveProjectTaskFromToday && (
-                      <button onClick={() => onRemoveProjectTaskFromToday(task.id)} className={`p-1.5 rounded -mr-0.5 ${isDark ? 'text-gray-600 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}>
+                      <button aria-label="Remove from Today" onClick={() => onRemoveProjectTaskFromToday(task.id)} className={`p-1.5 rounded -mr-0.5 ${isDark ? 'text-gray-600 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}>
                         <Minus size={14} />
                       </button>
                     )}
@@ -98,7 +98,7 @@ export function PlanYourDay({
                   <div key={task.id} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${isDark ? 'bg-violet-500/5' : 'bg-violet-50/50'}`}>
                     <Plus size={12} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
                     <span className={`text-sm flex-1 truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{task.title}</span>
-                    <button onClick={() => onRemoveFromToday(task.id)} className={`p-1.5 rounded -mr-0.5 ${isDark ? 'text-gray-600 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}>
+                    <button aria-label="Remove from Today" onClick={() => onRemoveFromToday(task.id)} className={`p-1.5 rounded -mr-0.5 ${isDark ? 'text-gray-600 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}>
                       <Minus size={14} />
                     </button>
                   </div>

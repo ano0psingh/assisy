@@ -94,7 +94,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Sync your data across devices</p>
             </div>
           </div>
-          <button onClick={onClose} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+          <button aria-label="Close sign in" onClick={onClose} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}>
             <X size={18} />
           </button>
         </div>

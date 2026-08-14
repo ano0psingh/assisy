@@ -715,6 +715,8 @@ interface GamificationContextType {
   // Getters
   getTotalLevel: () => number;
   getTotalXP: () => number;
+  /** Progress through the current level, for explaining what the number means. */
+  getLevelProgress: () => { xpIntoLevel: number; xpPerLevel: number; xpToNextLevel: number; percent: number };
   getTitle: () => string;
   getSkillTree: (category: SkillCategory) => SkillTree | undefined;
   getUnlockedAchievements: () => Achievement[];
@@ -1065,6 +1067,16 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     return skillTreeXP + achievementXP;
   }, [skillTrees, achievements]);
 
+  const getLevelProgress = useCallback(() => {
+    const xpIntoLevel = getTotalXP() % XP_PER_LEVEL;
+    return {
+      xpIntoLevel,
+      xpPerLevel: XP_PER_LEVEL,
+      xpToNextLevel: XP_PER_LEVEL - xpIntoLevel,
+      percent: (xpIntoLevel / XP_PER_LEVEL) * 100,
+    };
+  }, [getTotalXP]);
+
   // Get user title based on level
   const getTitle = useCallback(() => {
     const level = getTotalLevel();
@@ -1290,6 +1302,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
         getStreakMultiplier: getCurrentStreakMultiplier,
         getTotalLevel,
         getTotalXP,
+        getLevelProgress,
         getTitle,
         getSkillTree,
         getUnlockedAchievements,

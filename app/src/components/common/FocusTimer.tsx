@@ -249,7 +249,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
         <div className={`relative w-full max-w-sm rounded-2xl overflow-hidden ${isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white'} shadow-2xl`}>
           <div className={`flex items-center justify-between px-5 py-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Pomodoro Settings</h2>
-            <button onClick={() => setShowSettings(false)} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
+            <button aria-label="Close focus timer" onClick={() => setShowSettings(false)} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
               <X size={18} />
             </button>
           </div>
@@ -311,10 +311,11 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Pomodoro</h2>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => setShowSettings(true)} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`} title="Settings">
+            <button onClick={() => setShowSettings(true)} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`} title="Settings"
+ aria-label="Settings">
               <Settings2 size={16} />
             </button>
-            <button onClick={onClose} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
+            <button aria-label="Close settings" onClick={onClose} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
               <X size={18} />
             </button>
           </div>

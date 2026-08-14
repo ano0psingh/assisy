@@ -71,6 +71,7 @@ export function UndoProvider({ children }: { children: ReactNode }) {
               Undo
             </button>
             <button
+              aria-label="Dismiss"
               onClick={dismiss}
               className={`p-1 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
             >

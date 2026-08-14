@@ -265,6 +265,7 @@ export function GoalDetail({
                     : 'text-slate-300 hover:text-red-500 hover:bg-red-50'
                 }`}
                 title="Remove milestone"
+                aria-label="Remove milestone"
               >
                 <X size={14} />
               </button>
@@ -511,6 +512,7 @@ export function GoalDetail({
                     : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
                 }`}
                 title="Unlink task"
+                aria-label="Unlink task"
               >
                 <Unlink size={14} />
               </button>
@@ -605,7 +607,7 @@ export function GoalDetail({
                   )}
                 </div>
               </div>
-              <ExternalLink size={14} className={`flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+              <ExternalLink size={14} className={`flex-shrink-0 transition-opacity opacity-60 md:opacity-0 md:group-hover:opacity-100 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
             </a>
           ))}
         </div>
@@ -640,7 +642,7 @@ export function GoalDetail({
                 )}
               </div>
             </div>
-            <ExternalLink size={14} className={`flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+            <ExternalLink size={14} className={`flex-shrink-0 transition-opacity opacity-60 md:opacity-0 md:group-hover:opacity-100 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
           </a>
         ))}
       </div>

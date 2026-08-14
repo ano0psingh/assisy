@@ -5,7 +5,7 @@ import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { FeedPageSkeleton } from '../components/common/Skeleton';
 import { BulkActionBar } from '../components/common/BulkActionBar';
-import { SelectionCheckbox } from '../components/common/SelectionControls';
+import { SelectButton, SelectionCheckbox } from '../components/common/SelectionControls';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import {
@@ -317,6 +317,11 @@ export function Feed() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <SelectButton
+                active={selection.active}
+                onClick={() => selection.active ? selection.clear() : selection.start()}
+                disabled={filteredArticles.length === 0}
+              />
               <button
                 onClick={() => { setShowAddFeed(!showAddFeed); setShowSaveURL(false); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
@@ -371,6 +376,7 @@ export function Feed() {
                   </button>
                 )}
                 <button
+                  aria-label="Subscriptions"
                   onClick={() => setShowSidebar(!showSidebar)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                     showSidebar
@@ -463,7 +469,7 @@ export function Feed() {
                 {addingFeed ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Add
               </button>
-              <button onClick={() => setShowAddFeed(false)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
+              <button aria-label="Cancel adding a feed" onClick={() => setShowAddFeed(false)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
                 <X size={14} />
               </button>
             </div>
@@ -494,7 +500,7 @@ export function Feed() {
                 {savingUrl ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Save
               </button>
-              <button onClick={() => setShowSaveURL(false)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
+              <button aria-label="Cancel saving a URL" onClick={() => setShowSaveURL(false)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
                 <X size={14} />
               </button>
             </div>
@@ -803,12 +809,17 @@ export function Feed() {
                   <div className="px-3 py-3 sm:px-5 sm:py-4">
                     {/* Title + checkbox row — full width on mobile */}
                     <div className="flex items-start gap-2">
-                      <SelectionCheckbox
-                        selected={isSelected}
-                        onToggle={() => selection.toggle(article.id)}
-                        label={`Select "${article.title}"`}
-                        className="mt-0.5"
-                      />
+                      {/* Only while selecting, matching the other pages. A
+                          permanent checkbox on every row read as the primary
+                          action here. */}
+                      {selection.active && (
+                        <SelectionCheckbox
+                          selected={isSelected}
+                          onToggle={() => selection.toggle(article.id)}
+                          label={`Select "${article.title}"`}
+                          className="mt-0.5"
+                        />
+                      )}
 
                       <div className="flex-1 min-w-0">
                         <a
@@ -900,6 +911,7 @@ export function Feed() {
                       <button
                         onClick={() => removeArticle(article.id)}
                         title="Delete"
+                        aria-label="Delete"
                         className={`p-1.5 rounded-lg transition-colors ${
                           isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
                         }`}
@@ -1083,6 +1095,7 @@ export function Feed() {
                           )}
                         </div>
                         <button
+                          aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
                           className={`p-1 rounded-lg opacity-0 group-hover/sub:opacity-100 transition-all ${
                             isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
@@ -1129,6 +1142,7 @@ export function Feed() {
                           <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
                         ) : (
                           <button
+                            aria-label="Subscribe to feed"
                             onClick={() => addFeed(sf.url)}
                             className={`p-1 rounded-md transition-colors ${
                               isDark
@@ -1177,6 +1191,7 @@ export function Feed() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Subscriptions</h2>
                 <button
+                  aria-label="Close"
                   onClick={() => setMobileSidebarOpen(false)}
                   className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
                 >
@@ -1219,6 +1234,7 @@ export function Feed() {
                           )}
                         </div>
                         <button
+                          aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
                           className={`p-1.5 rounded-lg transition-colors ${
                             isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
@@ -1265,6 +1281,7 @@ export function Feed() {
                           <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
                         ) : (
                           <button
+                            aria-label="Subscribe to feed"
                             onClick={() => addFeed(sf.url)}
                             className={`p-1 rounded-md transition-colors ${
                               isDark
