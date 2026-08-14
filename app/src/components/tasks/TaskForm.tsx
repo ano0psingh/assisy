@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { Sparkles, Target, Pencil, Calendar, Loader2, Check, Square, CheckSquare } from 'lucide-react';
@@ -53,6 +53,8 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const [subtasks, setSubtasks] = useState<SuggestedSubtask[]>([]);
   const [decomposing, setDecomposing] = useState(false);
   const [decomposeError, setDecomposeError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editingTask) {
@@ -86,6 +88,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     setDueDate('');
     setSubtasks([]);
     setDecomposeError(null);
+    setTitleError(null);
   };
 
   const availableGoals = goals.filter(g => g.status === 'Active' && g.category === category);
@@ -118,7 +121,14 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   };
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
+    // Previously this returned silently, so pressing Create appeared to do
+    // nothing at all.
+    if (!title.trim()) {
+      setTitleError('Give the task a title so you can recognise it later.');
+      titleInputRef.current?.focus();
+      return;
+    }
+    setTitleError(null);
     onSubmit({
       title: title.trim(),
       description: description.trim(),
@@ -207,17 +217,30 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     </div>
   ) : null;
 
-  const titleField = (isFS: boolean) => (
+  const titleField = (isFS: boolean) => {
+    // Both variants can be mounted by the modal, so the ids must differ.
+    const fieldId = isFS ? 'task-title-fullscreen' : 'task-title';
+    const errorId = `${fieldId}-error`;
+    return (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Title *</label>
+      <label htmlFor={fieldId} className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Title *</label>
       <input
+        id={fieldId}
+        ref={titleInputRef}
         type="text"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className={`${inputCls} ${isFS ? 'py-3.5 text-lg' : ''}`}
+        onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}
+        aria-invalid={titleError ? true : undefined}
+        aria-describedby={titleError ? errorId : undefined}
+        className={`${inputCls} ${isFS ? 'py-3.5 text-lg' : ''} ${
+          titleError ? '!border-red-500 focus:!border-red-500' : ''
+        }`}
         placeholder="What needs to be done?"
         autoFocus
       />
+      {titleError && (
+        <p id={errorId} role="alert" className="mt-1.5 text-xs text-red-500">{titleError}</p>
+      )}
       {showDecomposeButton && subtasks.length === 0 && (
         <button
           type="button"
@@ -238,7 +261,8 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       )}
       {subtaskSection}
     </div>
-  );
+    );
+  };
 
   const notesField = (isFS: boolean) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>

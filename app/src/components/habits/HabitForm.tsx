@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useHabitContext } from '../../context/HabitContext';
 import { useGoalContext } from '../../context/GoalContext';
@@ -56,6 +56,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
   const [reminderTime, setReminderTime] = useState('');
   const [aiSuggesting, setAiSuggesting] = useState(false);
   const [aiReason, setAiReason] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const activeGoals = getActiveGoals();
 
@@ -82,6 +84,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
     setDailyTarget('');
     setReminderTime('');
     setAiReason(null);
+    setNameError(null);
   };
 
   const handleAISuggestTime = async () => {
@@ -111,7 +114,14 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
   const showAISuggest = isAIConfigured() && !!editingHabit && (editingHabit.logs?.length ?? 0) >= 5;
 
   const handleSubmit = () => {
-    if (!name.trim()) return;
+    // Previously this returned silently, so pressing Create appeared to do
+    // nothing at all.
+    if (!name.trim()) {
+      setNameError('Give the habit a name so you can recognise it later.');
+      nameInputRef.current?.focus();
+      return;
+    }
+    setNameError(null);
     const target = parseInt(dailyTarget) || undefined;
     const linkedGoal = goalId ? goals.find(g => g.id === goalId) : undefined;
     const resolvedCategory = linkedGoal ? linkedGoal.category : category;
@@ -142,15 +152,22 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
 
   const nameField = (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Habit Name *</label>
+      <label htmlFor="habit-name" className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Habit Name *</label>
       <input
+        id="habit-name"
+        ref={nameInputRef}
         type="text"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
+        aria-invalid={nameError ? true : undefined}
+        aria-describedby={nameError ? 'habit-name-error' : undefined}
         placeholder="e.g., Morning Meditation"
-        className={inputCls}
+        className={`${inputCls} ${nameError ? '!border-red-500 focus:!border-red-500' : ''}`}
         autoFocus
       />
+      {nameError && (
+        <p id="habit-name-error" role="alert" className="mt-1.5 text-xs text-red-500">{nameError}</p>
+      )}
     </div>
   );
 

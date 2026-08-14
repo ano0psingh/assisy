@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, CheckSquare, Target, FolderKanban, Calendar, ArrowRight, Newspaper, ListTodo } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { useTaskContext } from '../../context/TaskContext';
 import { useGoalContext } from '../../context/GoalContext';
 import { useHabitContext } from '../../context/HabitContext';
@@ -27,6 +28,7 @@ export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useDialogFocus<HTMLDivElement>(open);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const { tasks } = useTaskContext();
@@ -203,9 +205,16 @@ export function GlobalSearch() {
     <div className="fixed inset-0 z-[60]">
       <div className={`absolute inset-0 ${isDark ? 'bg-black/60' : 'bg-slate-900/20'} backdrop-blur-sm`} onClick={() => setOpen(false)} />
       <div className="relative flex justify-center pt-[15vh]">
-        <div className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-slide-down ${
-          isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white border border-slate-200'
-        }`}>
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search everything"
+          tabIndex={-1}
+          className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-slide-down outline-none ${
+            isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white border border-slate-200'
+          }`}
+        >
           {/* Search input */}
           <div className={`flex items-center gap-3 px-4 py-3.5 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
             <Search size={18} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
@@ -215,13 +224,28 @@ export function GlobalSearch() {
               onChange={e => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search tasks, goals, habits, projects, feed..."
+              aria-label="Search everything"
+              role="combobox"
+              aria-expanded={results.length > 0}
+              aria-controls="global-search-results"
+              aria-activedescendant={results[selectedIndex] ? `global-search-option-${selectedIndex}` : undefined}
+              autoComplete="off"
               className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-gray-500' : 'text-slate-800 placeholder-slate-400'}`}
             />
             <kbd className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>ESC</kbd>
           </div>
 
+          {/* Screen readers get no signal from a list that silently repopulates. */}
+          <p aria-live="polite" className="sr-only">
+            {query
+              ? results.length === 0
+                ? `No results for ${query}`
+                : `${results.length} result${results.length === 1 ? '' : 's'} for ${query}`
+              : ''}
+          </p>
+
           {/* Results */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto" id="global-search-results" role="listbox" aria-label="Search results">
             {query && results.length === 0 && (
               <div className={`px-4 py-8 text-center text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
                 No results for "{query}"
@@ -230,6 +254,9 @@ export function GlobalSearch() {
             {results.map((result, idx) => (
               <button
                 key={`${result.type}-${result.id}`}
+                id={`global-search-option-${idx}`}
+                role="option"
+                aria-selected={idx === selectedIndex}
                 onClick={() => handleSelect(result)}
                 onMouseEnter={() => setSelectedIndex(idx)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${

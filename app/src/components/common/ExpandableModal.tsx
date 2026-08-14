@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, useId, type ReactNode } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { X, Maximize2, Minimize2 } from 'lucide-react';
 
 interface ExpandableModalProps {
@@ -26,6 +27,8 @@ export function ExpandableModal({
 }: ExpandableModalProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const dialogRef = useDialogFocus<HTMLDivElement>(isOpen);
+  const titleId = `dialog-title-${useId()}`;
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dismissing, setDismissing] = useState(false);
@@ -113,7 +116,7 @@ export function ExpandableModal({
             {icon}
           </div>
         )}
-        <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+        <h2 id={titleId} className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
           {title}
         </h2>
       </div>
@@ -122,6 +125,7 @@ export function ExpandableModal({
           type="button"
           onClick={() => setIsFullScreen(!isFullScreen)}
           title={isFullScreen ? 'Exit full screen (Esc)' : 'Full screen'}
+          aria-label={isFullScreen ? 'Exit full screen' : 'Expand to full screen'}
           className={`p-2 rounded-lg transition-colors ${
             isDark
               ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -133,6 +137,7 @@ export function ExpandableModal({
         <button
           type="button"
           onClick={onClose}
+          aria-label={`Close ${title}`}
           className={`p-2 rounded-lg transition-colors ${
             isDark
               ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -157,9 +162,16 @@ export function ExpandableModal({
     return (
       <div className="fixed inset-0 z-[60] flex flex-col">
         <div className={`absolute inset-0 ${isDark ? 'bg-[#0c0c10]' : 'bg-[#f8f8fa]'}`} />
-        <div className={`relative flex flex-col h-full w-full animate-fade-in ${
-          isDark ? 'bg-[#0c0c10]' : 'bg-[#f8f8fa]'
-        }`}>
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className={`relative flex flex-col h-full w-full animate-fade-in outline-none ${
+            isDark ? 'bg-[#0c0c10]' : 'bg-[#f8f8fa]'
+          }`}
+        >
           {header}
           <div className="flex-1 overflow-y-auto">
             {children(true)}
@@ -180,7 +192,12 @@ export function ExpandableModal({
         onClick={onClose}
       />
       <div
-        className={`relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden ${
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={`relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden outline-none ${
           dismissing ? '' : 'animate-slide-up'
         } ${isDark ? 'bg-[#141418]/90 border border-white/[0.1] backdrop-blur-2xl' : 'bg-white/85 border border-white/60 backdrop-blur-2xl'}`}
         style={{

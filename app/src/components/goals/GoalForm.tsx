@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { TaskCategory, Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { Target, Pencil, GitBranch } from 'lucide-react';
@@ -25,6 +25,8 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<TaskCategory>('Personal');
   const [parentGoalId, setParentGoalId] = useState<string>('');
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editingGoal) {
@@ -42,6 +44,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
     setDescription('');
     setCategory('Personal');
     setParentGoalId('');
+    setTitleError(null);
   };
 
   const parentOptions = availableParentGoals.filter(g =>
@@ -51,7 +54,14 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
   );
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
+    // Previously this returned silently, so pressing Create appeared to do
+    // nothing at all.
+    if (!title.trim()) {
+      setTitleError('Give the goal a title so you can recognise it later.');
+      titleInputRef.current?.focus();
+      return;
+    }
+    setTitleError(null);
     onSubmit({
       title: title.trim(),
       description: description.trim(),
@@ -76,15 +86,22 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
 
   const titleField = (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Goal Title *</label>
+      <label htmlFor="goal-title" className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Goal Title *</label>
       <input
+        id="goal-title"
+        ref={titleInputRef}
         type="text"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className={inputCls}
+        onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}
+        aria-invalid={titleError ? true : undefined}
+        aria-describedby={titleError ? 'goal-title-error' : undefined}
+        className={`${inputCls} ${titleError ? '!border-red-500 focus:!border-red-500' : ''}`}
         placeholder="What do you want to achieve?"
         autoFocus
       />
+      {titleError && (
+        <p id="goal-title-error" role="alert" className="mt-1.5 text-xs text-red-500">{titleError}</p>
+      )}
     </div>
   );
 
