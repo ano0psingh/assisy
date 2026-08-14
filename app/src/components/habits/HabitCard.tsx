@@ -125,7 +125,7 @@ export function HabitCard({
           )}
           {habit.name}
           {habit.streakCount > 0 && (
-            <span className={`text-[10px] font-bold ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
+            <span className={`text-[11px] font-bold ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
               <Flame size={10} className="inline" />{habit.streakCount}
             </span>
           )}
@@ -229,7 +229,7 @@ export function HabitCard({
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              <span className={`text-[10px] font-medium tabular-nums flex-shrink-0 ${
+              <span className={`text-[11px] font-medium tabular-nums flex-shrink-0 ${
                 isCompleted ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-gray-500' : 'text-slate-500')
               }`}>
                 {todaysValue}/{target}{habit.trackingType === 'duration' ? 'm' : ''}
@@ -260,7 +260,7 @@ export function HabitCard({
                 min="0"
               />
               {habit.trackingType === 'duration' && (
-                <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
+                <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
               )}
             </div>
             <button

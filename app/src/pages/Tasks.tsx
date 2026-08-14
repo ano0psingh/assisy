@@ -536,7 +536,7 @@ export function Tasks() {
             <ListFilter size={15} />
             <span>Filters</span>
             {(statusFilter !== 'all' || categoryFilter !== 'all' || smartFilter !== 'none') && (
-              <span className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center bg-violet-500 text-white`}>
+              <span className={`w-4 h-4 rounded-full text-[11px] flex items-center justify-center bg-violet-500 text-white`}>
                 {(statusFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0) + (smartFilter !== 'none' ? 1 : 0)}
               </span>
             )}

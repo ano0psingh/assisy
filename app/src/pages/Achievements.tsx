@@ -890,7 +890,7 @@ function QuestLogRoadmap({
                   return (
                     <div key={milestone.value} className="flex-1 flex items-center">
                       <div 
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
                           isComplete 
                             ? `bg-gradient-to-br ${colors.progress} text-white shadow-sm` 
                             : isCurrent
@@ -953,7 +953,7 @@ function SeasonTeaser({ isDark }: { isDark: boolean }) {
             <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-purple-300' : 'text-purple-600'}`}>
               Active Season
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isDark ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'bg-fuchsia-200 text-fuchsia-700'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isDark ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'bg-fuchsia-200 text-fuchsia-700'}`}>
               {daysRemaining} days left
             </span>
           </div>
@@ -1178,12 +1178,12 @@ function AchievementCard({
       <div className="relative z-10 h-full p-2 flex flex-col">
         {/* Top meta row */}
         <div className="flex items-center justify-between gap-2">
-          <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
+          <span className={`text-[11px] px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
             isUnlocked ? tierStyles.badge : (isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600')
           }`}>
             {tier}
           </span>
-          <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
+          <span className={`text-[11px] px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
             isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
           }`}>
             {achievement.type}
@@ -1228,7 +1228,7 @@ function AchievementCard({
                 {progress}%
               </div>
             )}
-            <div className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+            <div className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
               {isUnlocked ? 'Earned' : showAsSecret ? 'Hidden' : 'Locked'}
             </div>
           </div>
@@ -1242,7 +1242,7 @@ function AchievementCard({
                 />
               </div>
               {prediction && (
-                <p className={`mt-1 text-[9px] truncate ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                <p className={`mt-1 text-[11px] truncate ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
                   {prediction}
                 </p>
               )}
@@ -1748,7 +1748,7 @@ export function Achievements() {
                     {tier === 'bronze' && <Shield size={20} className={unlocked > 0 ? tierStyles.icon : isDark ? 'text-gray-600' : 'text-slate-400'} />}
                   </div>
                   <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{unlocked}/{total}</p>
-                  <p className={`text-[10px] capitalize ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{tier}</p>
+                  <p className={`text-[11px] capitalize ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{tier}</p>
                 </div>
               );
             })}

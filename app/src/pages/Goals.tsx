@@ -429,7 +429,7 @@ export function Goals() {
             <Filter size={15} />
             <span>Filters</span>
             {(statusFilter !== 'all' || categoryFilter !== 'all') && (
-              <span className="w-4 h-4 rounded-full text-[10px] flex items-center justify-center bg-violet-500 text-white">
+              <span className="w-4 h-4 rounded-full text-[11px] flex items-center justify-center bg-violet-500 text-white">
                 {(statusFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0)}
               </span>
             )}
@@ -546,7 +546,7 @@ export function Goals() {
                 </h3>
 
                 {/* Level badge */}
-                <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full mb-2 ${
+                <span className={`inline-block text-[11px] font-bold px-1.5 py-0.5 rounded-full mb-2 ${
                   isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600'
                 }`}>
                   Lv.&nbsp;{goal.level || 1}
@@ -559,13 +559,13 @@ export function Goals() {
                     style={{ width: `${xpPct}%` }}
                   />
                 </div>
-                <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                   {goal.currentLevelXP}/{goal.xpToNextLevel} XP
                 </p>
 
                 {/* Milestones */}
                 {ms.total > 0 && (
-                  <p className={`text-[10px] mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <p className={`text-[11px] mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                     {ms.completed}/{ms.total} milestones
                   </p>
                 )}
@@ -628,7 +628,7 @@ export function Goals() {
                         }`}>
                           {goal.title}
                         </h3>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
                           isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600'
                         }`}>
                           Lv.&nbsp;{goal.level || 1}

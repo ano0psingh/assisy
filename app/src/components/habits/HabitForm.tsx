@@ -234,7 +234,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
               </div>
               <div className="flex-1 min-w-0">
                 <div className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{g.title}</div>
-                <div className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Lv.{g.level} · {g.category}</div>
+                <div className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Lv.{g.level} · {g.category}</div>
               </div>
             </label>
           ))}

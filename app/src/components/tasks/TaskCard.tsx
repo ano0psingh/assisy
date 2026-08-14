@@ -327,12 +327,12 @@ export function TaskCard({
             {!isCompleted && (
               <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                 {isCarriedForward && (
-                  <span className={`text-[10px] ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>
+                  <span className={`text-[11px] ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>
                     <RotateCcw size={11} className="inline -mt-0.5" /> {daysAgoText}
                   </span>
                 )}
                 {task.isRecurring && (
-                  <span className={`text-[10px] whitespace-nowrap ${
+                  <span className={`text-[11px] whitespace-nowrap ${
                     task.pausedUntil && new Date().toISOString().split('T')[0] <= task.pausedUntil
                       ? isDark ? 'text-amber-400' : 'text-amber-500'
                       : isDark ? 'text-violet-400' : 'text-violet-500'
@@ -345,7 +345,7 @@ export function TaskCard({
                   </span>
                 )}
                 {task.isRecurring && task.completedAt && (
-                  <span className={`text-[10px] whitespace-nowrap ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                  <span className={`text-[11px] whitespace-nowrap ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                     Last: {(() => {
                       const days = Math.floor((Date.now() - new Date(task.completedAt).getTime()) / 86400000);
                       if (days === 0) return 'today';
@@ -355,7 +355,7 @@ export function TaskCard({
                   </span>
                 )}
                 {task.isRecurring && (task.streakCount ?? 0) > 0 && (
-                  <span className="text-[10px] whitespace-nowrap text-orange-500">
+                  <span className="text-[11px] whitespace-nowrap text-orange-500">
                     <Flame size={10} className="inline -mt-0.5" /> {task.streakCount}d streak
                   </span>
                 )}
@@ -369,7 +369,7 @@ export function TaskCard({
                       ? isDark ? 'text-amber-400' : 'text-amber-500'
                       : isDark ? 'text-gray-500' : 'text-slate-400';
                   return (
-                    <span className={`text-[10px] whitespace-nowrap ${color}`}>
+                    <span className={`text-[11px] whitespace-nowrap ${color}`}>
                       {rate.completed}/{rate.expected} ({pct}%)
                     </span>
                   );
@@ -377,7 +377,7 @@ export function TaskCard({
                 {task.dueDate && (() => {
                   const { text, isOverdue: overdue } = formatDueDate(task.dueDate);
                   return (
-                    <span className={`text-[10px] whitespace-nowrap ${
+                    <span className={`text-[11px] whitespace-nowrap ${
                       overdue ? 'text-red-500 font-medium' : isDark ? 'text-gray-500' : 'text-slate-400'
                     }`}>
                       <CalendarDays size={10} className="inline -mt-0.5 mr-0.5" />{text}
@@ -385,7 +385,7 @@ export function TaskCard({
                   );
                 })()}
                 {goalName && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
+                  <span className={`text-[11px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
                     {goalName}
                   </span>
                 )}

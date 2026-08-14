@@ -520,7 +520,7 @@ export function TaskSheet() {
                             {task.tags.slice(0, 3).map(tag => (
                               <span
                                 key={tag}
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${
                                   isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
                                 }`}
                               >
@@ -528,7 +528,7 @@ export function TaskSheet() {
                               </span>
                             ))}
                             {task.tags.length > 3 && (
-                              <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                                 +{task.tags.length - 3}
                               </span>
                             )}

@@ -139,7 +139,7 @@ export function BottomNav() {
             className={({ isActive }) => linkCls(isActive)}
           >
             <Home size={22} strokeWidth={2} />
-            <span className="text-[10px] font-medium truncate max-w-full px-0.5">Home</span>
+            <span className="text-[11px] font-medium truncate max-w-full px-0.5">Home</span>
           </NavLink>
           {middleItems.map((item) => (
             <NavLink
@@ -149,7 +149,7 @@ export function BottomNav() {
               className={({ isActive }) => linkCls(isActive)}
             >
               <item.icon size={22} strokeWidth={2} />
-              <span className="text-[10px] font-medium truncate max-w-full px-0.5">{item.label}</span>
+              <span className="text-[11px] font-medium truncate max-w-full px-0.5">{item.label}</span>
             </NavLink>
           ))}
           <button
@@ -158,7 +158,7 @@ export function BottomNav() {
             className={linkCls(false)}
           >
             <MoreHorizontal size={22} strokeWidth={2} />
-            <span className="text-[10px] font-medium">More</span>
+            <span className="text-[11px] font-medium">More</span>
           </button>
         </div>
       </nav>

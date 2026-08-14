@@ -126,7 +126,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             >
               <Search size={18} className="md:hidden" />
               <Search size={14} className="hidden md:block" />
-              <kbd className={`text-[9px] px-1 py-0.5 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
+              <kbd className={`text-[11px] px-1 py-0.5 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
             </button>
 
             {/* Focus timer - desktop only */}
@@ -334,7 +334,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             >
               <Search size={18} />
               <span>Search</span>
-              <kbd className={`ml-auto text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
+              <kbd className={`ml-auto text-[11px] px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
             </button>
 
             {onOpenFocusTimer && (

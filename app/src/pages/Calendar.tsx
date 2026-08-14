@@ -682,7 +682,7 @@ export function Calendar() {
                           {[...new Set(allTasksForDay.map(t => t.category))].slice(0, 3).map(cat => (
                             <span key={cat} className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`} />
                           ))}
-                          <span className={`text-[10px] font-medium ${
+                          <span className={`text-[11px] font-medium ${
                             allTasksForDay.some(t => t.status === 'Completed')
                               ? isDark ? 'text-emerald-400' : 'text-emerald-600'
                               : isDark ? 'text-gray-500' : 'text-slate-400'
@@ -730,7 +730,7 @@ export function Calendar() {
                     {/* Day header */}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-medium uppercase ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                        <span className={`text-[11px] font-medium uppercase ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                           {WEEKDAYS[weekDays.indexOf(day)]}
                         </span>
                         <span
@@ -770,7 +770,7 @@ export function Calendar() {
                         </div>
                       ))}
                       {allUnique.length === 0 && (
-                        <p className={`text-[10px] ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>No tasks</p>
+                        <p className={`text-[11px] ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>No tasks</p>
                       )}
                     </div>
                   </div>
@@ -1015,7 +1015,7 @@ export function Calendar() {
                       if (lines.length === 0) return null;
                       return (
                         <div key={section.label}>
-                          <p className={`text-[10px] font-medium mb-0.5 ${section.color}`}>{section.label}</p>
+                          <p className={`text-[11px] font-medium mb-0.5 ${section.color}`}>{section.label}</p>
                           {lines.map((line, i) => (
                             <p key={i} className={`text-xs pl-3 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
                               <span className={section.color}>•</span> {line}

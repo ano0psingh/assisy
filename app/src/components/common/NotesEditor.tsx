@@ -298,7 +298,7 @@ export function NotesEditor({
 
           <div className={`mx-1 sm:mx-2 w-px h-4 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
 
-          <span className={`text-[10px] tracking-wider uppercase font-medium hidden sm:inline ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+          <span className={`text-[11px] tracking-wider uppercase font-medium hidden sm:inline ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
             Markdown
           </span>
         </div>
@@ -338,15 +338,15 @@ export function NotesEditor({
       {showWordCount && (
         <div className={`flex items-center justify-between px-3 py-1.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
           <div className="flex items-center gap-3">
-            <span className="text-[10px]">
+            <span className="text-[11px]">
               {wordCount} {wordCount === 1 ? 'word' : 'words'} · {charCount} chars
             </span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
-            <kbd className={`text-[9px] px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>Tab</kbd>
-            <span className="text-[9px]">indent</span>
-            <kbd className={`text-[9px] px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘↵</kbd>
-            <span className="text-[9px]">toggle check</span>
+            <kbd className={`text-[11px] px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>Tab</kbd>
+            <span className="text-[11px]">indent</span>
+            <kbd className={`text-[11px] px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘↵</kbd>
+            <span className="text-[11px]">toggle check</span>
           </div>
         </div>
       )}

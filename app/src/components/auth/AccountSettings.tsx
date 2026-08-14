@@ -298,7 +298,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
       {/* Security */}
       {provider !== 'google' && (
         <div>
-          <p className={`text-[10px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Security</p>
+          <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Security</p>
           <button onClick={() => go('password')} className={itemCls}>
             <Lock size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
             Change Password
@@ -308,7 +308,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       {/* Data */}
       <div>
-        <p className={`text-[10px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Data</p>
+        <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Data</p>
         <div className="space-y-0.5">
           <button onClick={handleDownloadCloudData} disabled={loading} className={itemCls}>
             <Download size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
@@ -327,7 +327,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       {/* Danger zone */}
       <div>
-        <p className={`text-[10px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-red-500/60' : 'text-red-400'}`}>Danger Zone</p>
+        <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-red-500/60' : 'text-red-400'}`}>Danger Zone</p>
         <button onClick={() => go('delete')} className={`${itemCls} ${isDark ? '!text-red-400' : '!text-red-500'}`}>
           <Trash2 size={16} />
           Delete Account

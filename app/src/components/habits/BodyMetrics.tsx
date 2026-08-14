@@ -135,7 +135,7 @@ export function BodyMetrics() {
         <div className={`mb-4 p-3 rounded-xl border space-y-2 ${isDark ? 'bg-white/[0.03] border-white/10' : 'bg-slate-50 border-slate-200'}`}>
           <div className="flex flex-wrap gap-2">
             <div className="flex-1 min-w-[120px]">
-              <label className={`text-[10px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Metric</label>
+              <label className={`text-[11px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Metric</label>
               <select value={selectedType} onChange={e => setSelectedType(e.target.value)} className={inputCls}>
                 {PRESET_METRICS.map(p => <option key={p.type} value={p.type}>{p.type} ({p.unit})</option>)}
                 <option value="__custom">+ Custom...</option>
@@ -144,11 +144,11 @@ export function BodyMetrics() {
             {isCustom && (
               <>
                 <div className="flex-1 min-w-[80px]">
-                  <label className={`text-[10px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Name</label>
+                  <label className={`text-[11px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Name</label>
                   <input type="text" value={customType} onChange={e => setCustomType(e.target.value)} placeholder="e.g. Resting HR" className={inputCls} />
                 </div>
                 <div className="w-20">
-                  <label className={`text-[10px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Unit</label>
+                  <label className={`text-[11px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Unit</label>
                   <input type="text" value={customUnit} onChange={e => setCustomUnit(e.target.value)} placeholder="bpm" className={inputCls} />
                 </div>
               </>
@@ -156,15 +156,15 @@ export function BodyMetrics() {
           </div>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="flex-1 min-w-[90px]">
-              <label className={`text-[10px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Date</label>
+              <label className={`text-[11px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Date</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} />
             </div>
             <div className="flex-1 min-w-[80px]">
-              <label className={`text-[10px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Value ({resolvedUnit})</label>
+              <label className={`text-[11px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Value ({resolvedUnit})</label>
               <input type="number" step="0.1" value={value} onChange={e => setValue(e.target.value)} placeholder={placeholder} className={inputCls} />
             </div>
             <div className="flex-1 min-w-[90px]">
-              <label className={`text-[10px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Note</label>
+              <label className={`text-[11px] font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Note</label>
               <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="optional" className={inputCls} />
             </div>
             <button type="button" onClick={handleAdd} className="btn-primary px-4 py-2 rounded-lg text-sm flex-shrink-0">Save</button>
@@ -197,12 +197,12 @@ export function BodyMetrics() {
       {metricEntries.length > 0 && (
         <div className="flex flex-wrap gap-4 mb-3">
           <div>
-            <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Latest</p>
+            <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Latest</p>
             <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{latest?.value} {unit}</p>
           </div>
           {change !== null && (
             <div>
-              <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Change</p>
+              <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Change</p>
               <p className={`text-base font-bold flex items-center gap-1 ${
                 change < 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : change > 0 ? (isDark ? 'text-red-400' : 'text-red-600') : (isDark ? 'text-gray-400' : 'text-slate-500')
               }`}>
@@ -212,7 +212,7 @@ export function BodyMetrics() {
             </div>
           )}
           <div>
-            <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Entries</p>
+            <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Entries</p>
             <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{metricEntries.length}</p>
           </div>
         </div>
