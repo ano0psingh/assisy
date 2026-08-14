@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { TiptapViewer } from '../common/TiptapViewer';
+import { SelectionCheckbox } from '../common/SelectionControls';
 import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
 import { hapticLight, hapticMedium } from '../../lib/haptics';
 import { getRecurringCompletionRate } from '../../context/TaskContext';
@@ -20,6 +21,10 @@ interface TaskCardProps {
   onSkipOccurrence?: (taskId: string) => void;
   onPauseRecurring?: (taskId: string, days: number) => void;
   onResumeRecurring?: (taskId: string) => void;
+  /** When true the card selects instead of completing/editing. */
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onSelectToggle?: (taskId: string) => void;
 }
 
 function isFromPreviousDay(createdAt: Date): boolean {
@@ -101,6 +106,9 @@ export function TaskCard({
   onSkipOccurrence,
   onPauseRecurring,
   onResumeRecurring,
+  selectionMode = false,
+  isSelected = false,
+  onSelectToggle,
 }: TaskCardProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -189,6 +197,7 @@ export function TaskCard({
   }, [quickAction]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (selectionMode) return;
     const touch = e.touches[0];
     touchStartX.current = touch.clientX;
     longPressTouchStart.current = { x: touch.clientX, y: touch.clientY };
@@ -203,6 +212,7 @@ export function TaskCard({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (selectionMode) return;
     const touch = e.touches[0];
     const dx = touch.clientX - longPressTouchStart.current.x;
     const dy = touch.clientY - longPressTouchStart.current.y;
@@ -216,6 +226,7 @@ export function TaskCard({
   };
 
   const handleTouchEnd = () => {
+    if (selectionMode) return;
     clearLongPress();
     if (quickAction) return;
 
@@ -253,32 +264,45 @@ export function TaskCard({
         className={`group rounded-2xl px-4 py-3.5 transition-shadow duration-200 ease-spring backdrop-blur-xl ${
           swipeOffset !== 0 ? 'shadow-lg' : ''
         } ${
-      isDark
-        ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted ? 'opacity-60' : ''}`
-        : `bg-white/65 border border-white/70 hover:bg-white/80 ${isCompleted ? 'opacity-60' : ''}`
+      isSelected
+        ? isDark
+          ? 'bg-violet-500/10 border border-violet-500/30'
+          : 'bg-violet-50/60 border border-violet-200'
+        : isDark
+          ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted ? 'opacity-60' : ''}`
+          : `bg-white/65 border border-white/70 hover:bg-white/80 ${isCompleted ? 'opacity-60' : ''}`
     }`}
       >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {/* Checkbox */}
-          <button
-            onClick={() => { hapticLight(); onToggleComplete(task.id); }}
-            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-              isCompleted
-                ? 'bg-emerald-500 border-emerald-500'
-                : isDark
-                  ? 'border-gray-600 hover:border-violet-500 hover:bg-violet-500/20'
-                  : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50'
-            }`}
-          >
-            {isCompleted && <Check size={12} className="text-white" strokeWidth={3} />}
-          </button>
+          {/* Checkbox — selects rows while in selection mode, completes otherwise */}
+          {selectionMode ? (
+            <SelectionCheckbox
+              selected={isSelected}
+              onToggle={() => onSelectToggle?.(task.id)}
+              label={`Select "${task.title}"`}
+              className="w-5 h-5 flex items-center justify-center"
+            />
+          ) : (
+            <button
+              onClick={() => { hapticLight(); onToggleComplete(task.id); }}
+              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+                isCompleted
+                  ? 'bg-emerald-500 border-emerald-500'
+                  : isDark
+                    ? 'border-gray-600 hover:border-violet-500 hover:bg-violet-500/20'
+                    : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50'
+              }`}
+            >
+              {isCompleted && <Check size={12} className="text-white" strokeWidth={3} />}
+            </button>
+          )}
 
           {/* Title + inline indicators */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <h3
-                onClick={() => onEdit(task)}
+                onClick={() => selectionMode ? onSelectToggle?.(task.id) : onEdit(task)}
                 className={`font-medium cursor-pointer hover:opacity-80 truncate ${
                   isCompleted
                     ? isDark ? 'line-through text-gray-500' : 'line-through text-slate-400'
@@ -362,8 +386,8 @@ export function TaskCard({
           </div>
         </div>
 
-        {/* Actions — edit always visible, rest in menu */}
-        <div className="flex items-center space-x-0.5 flex-shrink-0">
+        {/* Actions — edit always visible, rest in menu. Hidden while selecting. */}
+        <div className={`flex items-center space-x-0.5 flex-shrink-0 ${selectionMode ? 'hidden' : ''}`}>
           {/* Focused today — always visible green indicator, click to remove */}
           {isFocusedToday && !isCompleted && onRemoveFromToday && (
             <button

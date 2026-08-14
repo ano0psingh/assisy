@@ -1,6 +1,7 @@
 import type { Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { Target, Trash2, CheckCircle, Archive, RotateCcw, ChevronRight, Pencil, GitBranch } from 'lucide-react';
+import { SelectionCheckbox } from '../common/SelectionControls';
 
 interface GoalCardProps {
   goal: Goal;
@@ -16,6 +17,10 @@ interface GoalCardProps {
   onEdit: (goal: Goal) => void;
   onToggleExpand?: () => void;
   isExpanded?: boolean;
+  /** When true the card selects instead of opening the goal. */
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onSelectToggle?: (goalId: string) => void;
 }
 
 export function GoalCard({ 
@@ -32,6 +37,9 @@ export function GoalCard({
   onEdit,
   onToggleExpand,
   isExpanded,
+  selectionMode = false,
+  isSelected = false,
+  onSelectToggle,
 }: GoalCardProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -58,20 +66,33 @@ export function GoalCard({
   return (
     <div 
       className={`group rounded-2xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.985] backdrop-blur-xl ${
-        isDark
-          ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted || isArchived ? 'opacity-60' : ''}`
-          : `bg-white/65 border border-white/70 hover:bg-white/80 hover:shadow-medium ${isCompleted || isArchived ? 'opacity-60' : ''}`
+        isSelected
+          ? isDark
+            ? 'bg-violet-500/10 border border-violet-500/30'
+            : 'bg-violet-50/60 border border-violet-200'
+          : isDark
+            ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted || isArchived ? 'opacity-60' : ''}`
+            : `bg-white/65 border border-white/70 hover:bg-white/80 hover:shadow-medium ${isCompleted || isArchived ? 'opacity-60' : ''}`
       }`}
       style={{ boxShadow: isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05), 0 2px 12px rgba(0,0,0,0.2)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 2px 12px rgba(0,0,0,0.04)' }}
-      onClick={() => onClick(goal)}
+      onClick={() => selectionMode ? onSelectToggle?.(goal.id) : onClick(goal)}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start space-x-4 flex-1 min-w-0">
-          <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-            isDark ? 'bg-violet-500/20 shadow-[0_0_12px_rgba(139,92,246,0.15)]' : 'bg-violet-100/80'
-          }`}>
-            <Target className={`w-6 h-6 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-          </div>
+          {selectionMode ? (
+            <SelectionCheckbox
+              selected={isSelected}
+              onToggle={() => onSelectToggle?.(goal.id)}
+              label={`Select "${goal.title}"`}
+              className="flex-shrink-0 w-12 h-12 flex items-center justify-center"
+            />
+          ) : (
+            <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+              isDark ? 'bg-violet-500/20 shadow-[0_0_12px_rgba(139,92,246,0.15)]' : 'bg-violet-100/80'
+            }`}>
+              <Target className={`w-6 h-6 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            </div>
+          )}
           
           <div className="flex-1 min-w-0">
             {/* Title with sub-goals badge */}
@@ -141,8 +162,8 @@ export function GoalCard({
           </div>
         </div>
         
-        {/* Actions & Arrow */}
-        <div className="flex items-center space-x-2">
+        {/* Actions & Arrow — hidden while selecting */}
+        <div className={`flex items-center space-x-2 ${selectionMode ? 'hidden' : ''}`}>
           {/* Action buttons - always visible */}
           <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
             <button

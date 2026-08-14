@@ -1,3 +1,12 @@
+/**
+ * The values a bulk update replaced, captured per row so the change can be
+ * reverted from an undo toast the same way a bulk delete restores a snapshot.
+ */
+export interface BulkPatch<T> {
+  id: string;
+  previous: Partial<T>;
+}
+
 export type TaskCategory = 'Personal' | 'Financial' | 'Professional';
 export type Priority = 'High' | 'Low';
 export type Effort = 'High' | 'Low';

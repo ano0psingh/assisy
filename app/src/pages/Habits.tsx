@@ -14,9 +14,31 @@ import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import { ContributionGraph } from '../components/habits/ContributionGraph';
 import { BodyMetrics } from '../components/habits/BodyMetrics';
 import { GoalTreeThumbnail } from '../components/goals/GoalTree';
+import { useUndo } from '../components/common/UndoToast';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import { BulkActionBar } from '../components/common/BulkActionBar';
+import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
+import { SelectButton } from '../components/common/SelectionControls';
+import { pluralise } from '../lib/bulkUpdate';
 import { askAI, isAIConfigured } from '../lib/ai';
 import { formatAIText } from '../lib/formatAIText';
 import type { TrackingType, Habit, Goal } from '../types';
+
+const HABIT_BULK_FIELDS: BulkEditField[] = [
+  {
+    key: 'category',
+    label: 'Category',
+    kind: 'choice',
+    options: [
+      { label: 'Health', value: 'Health' },
+      { label: 'Mindfulness', value: 'Mindfulness' },
+      { label: 'Learning', value: 'Learning' },
+      { label: 'Productivity', value: 'Productivity' },
+      { label: 'Financial', value: 'Financial' },
+    ],
+  },
+  { key: 'reminderTime', label: 'Reminder', kind: 'time' },
+];
 
 interface HabitWithLogs extends Habit {
   logs: { date: string; value: number }[];
@@ -76,12 +98,17 @@ export function Habits() {
     habits, 
     createHabit, 
     updateHabit,
+    updateHabits,
+    revertHabits,
     deleteHabit, 
+    deleteHabits,
+    restoreHabits,
     logHabit, 
     getTodaysLog,
   } = useHabitContext();
   const { getGoalById, addXPToGoal } = useGoalContext();
   const { recordHabitCompletion } = useGamification();
+  const { pushUndo } = useUndo();
   const { 
     getTodaysLog: getTodaysDailyLog, 
     createOrUpdateLog,
@@ -112,6 +139,46 @@ export function Habits() {
     const val = getTodaysLog(h.id);
     return h.dailyTarget ? val >= h.dailyTarget : val > 0;
   }, [getTodaysLog]);
+
+  const visibleHabitIds = useMemo(() => habits.map(h => h.id), [habits]);
+  const selection = useBulkSelection(visibleHabitIds);
+
+  const selectionProps = (habitId: string) => ({
+    selectionMode: selection.active,
+    isSelected: selection.isSelected(habitId),
+    onSelectToggle: selection.toggle,
+  });
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+    const removed = deleteHabits(ids);
+    selection.clear();
+    pushUndo(
+      `${pluralise(removed.length, 'habit')} deleted`,
+      () => restoreHabits(removed),
+    );
+  };
+
+  const handleBulkEdit = (key: string, value: string | number | null) => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+
+    // Clearing the reminder time has to remove the field, not store an empty
+    // string, or the reminder scheduler would try to parse "".
+    const updates: Partial<Habit> =
+      key === 'reminderTime'
+        ? { reminderTime: value === null ? undefined : String(value) }
+        : ({ [key]: value } as Partial<Habit>);
+
+    const patches = updateHabits(ids, updates);
+    if (patches.length === 0) return;
+    // Selection stays so several fields can be applied in a row.
+    pushUndo(
+      `${pluralise(patches.length, 'habit')} updated`,
+      () => revertHabits(patches),
+    );
+  };
 
   const { todayCompletedCount, totalHabits, pendingByGoal, unlinkedPending, completedHabits } = useMemo(() => {
     const completed: HabitWithLogs[] = [];
@@ -341,6 +408,12 @@ export function Habits() {
                 <Plus size={14} />
                 New Habit
               </button>
+              {habits.length > 0 && (
+                <SelectButton
+                  active={selection.active}
+                  onClick={() => selection.active ? selection.clear() : selection.start()}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -405,7 +478,7 @@ export function Habits() {
                             key={habit.id}
                             habit={habit}
                             todaysValue={getTodaysLog(habit.id)}
-                            onLog={handleLogWithXP}
+                            onLog={handleLogWithXP} {...selectionProps(habit.id)}
                             onDelete={deleteHabit}
                             onEdit={handleEdit}
                             compact
@@ -418,7 +491,7 @@ export function Habits() {
                         key={habit.id}
                         habit={habit}
                         todaysValue={getTodaysLog(habit.id)}
-                        onLog={handleLogWithXP}
+                        onLog={handleLogWithXP} {...selectionProps(habit.id)}
                         onDelete={deleteHabit}
                         onEdit={handleEdit}
                       />
@@ -462,7 +535,7 @@ export function Habits() {
                           key={habit.id}
                           habit={habit}
                           todaysValue={getTodaysLog(habit.id)}
-                          onLog={handleLogWithXP}
+                          onLog={handleLogWithXP} {...selectionProps(habit.id)}
                           onDelete={deleteHabit}
                           onEdit={handleEdit}
                           compact
@@ -475,7 +548,7 @@ export function Habits() {
                       key={habit.id}
                       habit={habit}
                       todaysValue={getTodaysLog(habit.id)}
-                      onLog={handleLogWithXP}
+                      onLog={handleLogWithXP} {...selectionProps(habit.id)}
                       onDelete={deleteHabit}
                       onEdit={handleEdit}
                     />
@@ -516,7 +589,7 @@ export function Habits() {
                           key={habit.id}
                           habit={habit}
                           todaysValue={getTodaysLog(habit.id)}
-                          onLog={handleLogWithXP}
+                          onLog={handleLogWithXP} {...selectionProps(habit.id)}
                           onDelete={deleteHabit}
                           onEdit={handleEdit}
                           compact
@@ -529,7 +602,7 @@ export function Habits() {
                       key={habit.id}
                       habit={habit}
                       todaysValue={getTodaysLog(habit.id)}
-                      onLog={handleLogWithXP}
+                      onLog={handleLogWithXP} {...selectionProps(habit.id)}
                       onDelete={deleteHabit}
                       onEdit={handleEdit}
                     />
@@ -837,6 +910,17 @@ export function Habits() {
         onSubmit={handleCheckIn}
         onCancel={() => setIsCheckInOpen(false)}
       />
+
+      <BulkActionBar
+        count={selection.count}
+        itemLabel="habit"
+        allSelected={selection.allSelected}
+        onSelectAll={selection.selectAll}
+        onDelete={handleBulkDelete}
+        onClear={selection.clear}
+      >
+        <BulkEditMenu fields={HABIT_BULK_FIELDS} onApply={handleBulkEdit} />
+      </BulkActionBar>
     </div>
   );
 }

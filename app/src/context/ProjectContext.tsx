@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
+import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus, BulkPatch } from '../types';
 import { saveProjects, saveSubProjects, saveProjectTasks } from '../store/unifiedStore';
+import { collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
 
@@ -25,6 +26,16 @@ export const PROJECT_COLORS = [
 // Default tags
 export const DEFAULT_TAGS = ['bug', 'feature', 'urgent', 'research', 'documentation', 'refactor', 'testing'];
 
+/**
+ * Everything removed by a bulk delete. Projects cascade into sub-projects and
+ * sub-projects into tasks, so an undo has to put all three levels back.
+ */
+export interface ProjectSnapshot {
+  projects: Project[];
+  subProjects: SubProject[];
+  projectTasks: ProjectTask[];
+}
+
 interface ProjectContextType {
   // Data
   projects: Project[];
@@ -36,7 +47,13 @@ interface ProjectContextType {
   createProject: (title: string, description?: string, color?: string, deadline?: Date) => Project;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
+  deleteProjects: (ids: string[]) => ProjectSnapshot;
   getProject: (id: string) => Project | undefined;
+
+  // Bulk delete / restore
+  deleteSubProjects: (ids: string[]) => ProjectSnapshot;
+  deleteProjectTasks: (ids: string[]) => ProjectSnapshot;
+  restoreProjectData: (snapshot: ProjectSnapshot) => void;
 
   // Sub-Project CRUD
   createSubProject: (projectId: string, title: string, description?: string, deadline?: Date) => SubProject;
@@ -56,6 +73,10 @@ interface ProjectContextType {
     deadline?: Date
   ) => ProjectTask;
   updateProjectTask: (id: string, updates: Partial<ProjectTask>) => void;
+  /** Applies the same updates to many project tasks, returning patches for undo. */
+  updateProjectTasks: (ids: string[], updates: Partial<ProjectTask>) => BulkPatch<ProjectTask>[];
+  /** Puts back the field values captured by {@link updateProjectTasks}. */
+  revertProjectTasks: (patches: BulkPatch<ProjectTask>[]) => void;
   deleteProjectTask: (id: string) => void;
   getProjectTask: (id: string) => ProjectTask | undefined;
   getTasksBySubProject: (subProjectId: string) => ProjectTask[];
@@ -323,6 +344,23 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     ));
   }, []);
 
+  const updateProjectTasks = useCallback((ids: string[], updates: Partial<ProjectTask>): BulkPatch<ProjectTask>[] => {
+    // updatedAt is stamped alongside the edit, so capture it or undo would
+    // leave the row looking freshly touched.
+    const patches = collectBulkPatches(projectTasks, ids, updates, ['updatedAt']);
+    if (patches.length === 0) return [];
+    const targets = new Set(ids);
+    setProjectTasks(prev => prev.map(t =>
+      targets.has(t.id) ? { ...t, ...updates, updatedAt: new Date() } : t
+    ));
+    return patches;
+  }, [projectTasks]);
+
+  const revertProjectTasks = useCallback((patches: BulkPatch<ProjectTask>[]) => {
+    if (patches.length === 0) return;
+    setProjectTasks(prev => revertBulkUpdate(prev, patches));
+  }, []);
+
   const deleteProjectTask = useCallback((id: string) => {
     const task = projectTasks.find(t => t.id === id);
     if (!task) return;
@@ -355,6 +393,150 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     // Delete the task
     setProjectTasks(prev => prev.filter(t => t.id !== id));
   }, [projectTasks]);
+
+  // ============ Bulk delete / restore ============
+
+  /** Expands task ids to include every nested sub-task. */
+  const collectTaskIds = useCallback((rootIds: string[]): Set<string> => {
+    const doomed = new Set<string>();
+    const walk = (taskId: string) => {
+      if (doomed.has(taskId)) return;
+      doomed.add(taskId);
+      projectTasks.forEach(t => { if (t.parentTaskId === taskId) walk(t.id); });
+    };
+    rootIds.forEach(walk);
+    return doomed;
+  }, [projectTasks]);
+
+  /**
+   * Removes the given rows in one pass and strips the ids from any surviving
+   * parent's link arrays.
+   */
+  const applyBulkDelete = useCallback((
+    projectIds: Set<string>,
+    subProjectIds: Set<string>,
+    taskIds: Set<string>,
+  ) => {
+    if (projectIds.size > 0) {
+      setProjects(prev => prev.filter(p => !projectIds.has(p.id)));
+    }
+    if (subProjectIds.size > 0) {
+      setProjects(prev => prev.map(p =>
+        p.subProjectIds.some(id => subProjectIds.has(id))
+          ? { ...p, subProjectIds: p.subProjectIds.filter(id => !subProjectIds.has(id)), updatedAt: new Date() }
+          : p
+      ));
+      setSubProjects(prev => prev.filter(sp => !subProjectIds.has(sp.id)));
+    }
+    if (taskIds.size > 0) {
+      setSubProjects(prev => prev.map(sp =>
+        sp.taskIds.some(id => taskIds.has(id))
+          ? { ...sp, taskIds: sp.taskIds.filter(id => !taskIds.has(id)), updatedAt: new Date() }
+          : sp
+      ));
+      setProjectTasks(prev => prev
+        .filter(t => !taskIds.has(t.id))
+        .map(t => t.subTaskIds.some(id => taskIds.has(id))
+          ? { ...t, subTaskIds: t.subTaskIds.filter(id => !taskIds.has(id)), updatedAt: new Date() }
+          : t
+        )
+      );
+    }
+  }, []);
+
+  const deleteProjects = useCallback((ids: string[]): ProjectSnapshot => {
+    const projectIds = new Set(ids);
+    const doomedSubProjects = subProjects.filter(sp => projectIds.has(sp.projectId));
+    const subProjectIds = new Set(doomedSubProjects.map(sp => sp.id));
+    const doomedTasks = projectTasks.filter(t => subProjectIds.has(t.subProjectId));
+    const taskIds = new Set(doomedTasks.map(t => t.id));
+
+    const snapshot: ProjectSnapshot = {
+      projects: projects.filter(p => projectIds.has(p.id)),
+      subProjects: doomedSubProjects,
+      projectTasks: doomedTasks,
+    };
+    if (snapshot.projects.length === 0) return snapshot;
+
+    applyBulkDelete(projectIds, subProjectIds, taskIds);
+    return snapshot;
+  }, [projects, subProjects, projectTasks, applyBulkDelete]);
+
+  const deleteSubProjects = useCallback((ids: string[]): ProjectSnapshot => {
+    const subProjectIds = new Set(ids);
+    const doomedTasks = projectTasks.filter(t => subProjectIds.has(t.subProjectId));
+    const snapshot: ProjectSnapshot = {
+      projects: [],
+      subProjects: subProjects.filter(sp => subProjectIds.has(sp.id)),
+      projectTasks: doomedTasks,
+    };
+    if (snapshot.subProjects.length === 0) return snapshot;
+
+    applyBulkDelete(new Set(), subProjectIds, new Set(doomedTasks.map(t => t.id)));
+    return snapshot;
+  }, [subProjects, projectTasks, applyBulkDelete]);
+
+  const deleteProjectTasks = useCallback((ids: string[]): ProjectSnapshot => {
+    const taskIds = collectTaskIds(ids);
+    const snapshot: ProjectSnapshot = {
+      projects: [],
+      subProjects: [],
+      projectTasks: projectTasks.filter(t => taskIds.has(t.id)),
+    };
+    if (snapshot.projectTasks.length === 0) return snapshot;
+
+    applyBulkDelete(new Set(), new Set(), taskIds);
+    return snapshot;
+  }, [projectTasks, collectTaskIds, applyBulkDelete]);
+
+  const restoreProjectData = useCallback((snapshot: ProjectSnapshot) => {
+    const { projects: p, subProjects: sp, projectTasks: pt } = snapshot;
+    if (p.length === 0 && sp.length === 0 && pt.length === 0) return;
+
+    if (p.length > 0) {
+      setProjects(prev => {
+        const existing = new Set(prev.map(x => x.id));
+        return [...prev, ...p.filter(x => !existing.has(x.id))];
+      });
+    }
+    if (sp.length > 0) {
+      setSubProjects(prev => {
+        const existing = new Set(prev.map(x => x.id));
+        return [...prev, ...sp.filter(x => !existing.has(x.id))];
+      });
+    }
+    if (pt.length > 0) {
+      setProjectTasks(prev => {
+        const existing = new Set(prev.map(x => x.id));
+        return [...prev, ...pt.filter(x => !existing.has(x.id))];
+      });
+    }
+
+    // Re-attach the restored rows to their parents' link arrays, derived from
+    // the children's own foreign keys rather than a stale copy of the parent.
+    if (sp.length > 0) {
+      setProjects(prev => prev.map(project => {
+        const children = sp.filter(x => x.projectId === project.id).map(x => x.id);
+        if (children.length === 0) return project;
+        return { ...project, subProjectIds: Array.from(new Set([...project.subProjectIds, ...children])) };
+      }));
+    }
+    if (pt.length > 0) {
+      const topLevel = pt.filter(t => !t.parentTaskId);
+      if (topLevel.length > 0) {
+        setSubProjects(prev => prev.map(subProject => {
+          const children = topLevel.filter(t => t.subProjectId === subProject.id).map(t => t.id);
+          if (children.length === 0) return subProject;
+          return { ...subProject, taskIds: Array.from(new Set([...subProject.taskIds, ...children])) };
+        }));
+      }
+      setProjectTasks(prev => prev.map(task => {
+        const children = pt.filter(t => t.parentTaskId === task.id).map(t => t.id);
+        if (children.length === 0) return task;
+        return { ...task, subTaskIds: Array.from(new Set([...task.subTaskIds, ...children])) };
+      }));
+    }
+  }, []);
 
   const getProjectTask = useCallback((id: string) => {
     return projectTasks.find(t => t.id === id);
@@ -509,7 +691,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     createProject,
     updateProject,
     deleteProject,
+    deleteProjects,
     getProject,
+    deleteSubProjects,
+    deleteProjectTasks,
+    restoreProjectData,
     createSubProject,
     updateSubProject,
     deleteSubProject,
@@ -517,6 +703,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     getSubProjectsByProject,
     createProjectTask,
     updateProjectTask,
+    updateProjectTasks,
+    revertProjectTasks,
     deleteProjectTask,
     getProjectTask,
     getTasksBySubProject,

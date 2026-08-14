@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Goal, GoalStatus, TaskCategory, GoalMilestone, GoalTheme } from '../types';
+import type { Goal, GoalStatus, TaskCategory, GoalMilestone, GoalTheme, BulkPatch } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { saveGoals as saveGoalsToStore } from '../store/unifiedStore';
+import { applyBulkUpdate, collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
@@ -68,7 +69,18 @@ interface GoalContextType {
     theme?: GoalTheme
   ) => Goal;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
+  /** Applies the same updates to many goals, returning patches for undo. */
+  updateGoals: (goalIds: string[], updates: Partial<Goal>) => BulkPatch<Goal>[];
+  /** Puts back the field values captured by {@link updateGoals}. */
+  revertGoals: (patches: BulkPatch<Goal>[]) => void;
   deleteGoal: (goalId: string) => void;
+  /**
+   * Deletes many goals at once, cascading to every descendant sub-goal, and
+   * returns all removed rows so they can be restored.
+   */
+  deleteGoals: (goalIds: string[]) => Goal[];
+  /** Re-inserts goals exactly as they were, preserving ids, XP and milestones. */
+  restoreGoals: (goalsToRestore: Goal[]) => void;
   completeGoal: (goalId: string) => void;
   archiveGoal: (goalId: string) => void;
   reactivateGoal: (goalId: string) => void;
@@ -220,6 +232,73 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       // Delete this goal and all descendants
       updated = updated.filter(goal => goal.id !== goalId && !allSubGoalIds.has(goal.id));
       
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const updateGoals = useCallback((goalIds: string[], updates: Partial<Goal>): BulkPatch<Goal>[] => {
+    const patches = collectBulkPatches(goals, goalIds, updates);
+    if (patches.length === 0) return [];
+    setGoals(prev => {
+      const updated = applyBulkUpdate(prev, goalIds, updates);
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+    return patches;
+  }, [goals, userId]);
+
+  const revertGoals = useCallback((patches: BulkPatch<Goal>[]) => {
+    if (patches.length === 0) return;
+    setGoals(prev => {
+      const updated = revertBulkUpdate(prev, patches);
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const deleteGoals = useCallback((goalIds: string[]): Goal[] => {
+    // Expand the selection to include every descendant, so deleting a parent
+    // also removes the sub-goals that would otherwise be orphaned.
+    const doomed = new Set<string>();
+    const collect = (id: string) => {
+      if (doomed.has(id)) return;
+      doomed.add(id);
+      goals.forEach(g => { if (g.parentGoalId === id) collect(g.id); });
+    };
+    goalIds.forEach(collect);
+
+    const removed = goals.filter(g => doomed.has(g.id));
+    if (removed.length === 0) return [];
+
+    setGoals(prev => {
+      const updated = prev
+        .filter(goal => !doomed.has(goal.id))
+        // Surviving parents must drop references to the goals just removed.
+        .map(goal => {
+          if (!goal.subGoalIds?.some(id => doomed.has(id))) return goal;
+          return { ...goal, subGoalIds: goal.subGoalIds.filter(id => !doomed.has(id)) };
+        });
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+
+    return removed;
+  }, [goals, userId]);
+
+  const restoreGoals = useCallback((goalsToRestore: Goal[]) => {
+    if (goalsToRestore.length === 0) return;
+    const restoredIds = new Set(goalsToRestore.map(g => g.id));
+    setGoals(prev => {
+      const existing = new Set(prev.map(g => g.id));
+      const reinserted = goalsToRestore.filter(g => !existing.has(g.id));
+      const updated = [...prev, ...reinserted].map(goal => {
+        // Re-attach restored goals to their parent's subGoalIds.
+        const children = goalsToRestore.filter(g => g.parentGoalId === goal.id && !restoredIds.has(goal.id));
+        if (children.length === 0) return goal;
+        const merged = new Set([...(goal.subGoalIds || []), ...children.map(c => c.id)]);
+        return { ...goal, subGoalIds: Array.from(merged) };
+      });
       saveGoalsToStore(updated, userId);
       return updated;
     });
@@ -438,6 +517,10 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       createGoal,
       updateGoal,
       deleteGoal,
+      updateGoals,
+      revertGoals,
+      deleteGoals,
+      restoreGoals,
       completeGoal,
       archiveGoal,
       reactivateGoal,

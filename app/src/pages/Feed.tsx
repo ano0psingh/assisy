@@ -1,14 +1,17 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useFeed, type FeedFilter, type FeedSort } from '../context/FeedContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { FeedPageSkeleton } from '../components/common/Skeleton';
+import { BulkActionBar } from '../components/common/BulkActionBar';
+import { SelectionCheckbox } from '../components/common/SelectionControls';
+import { useBulkSelection } from '../hooks/useBulkSelection';
 import {
   Newspaper, Plus, Link, RefreshCw, Bookmark, BookmarkCheck,
   Eye, EyeOff, Trash2, ChevronDown, ChevronUp, ExternalLink,
   Rss, Clock, Star, Sparkles, X, Settings2, Loader2,
-  CheckCircle2, Square, CheckSquare2, ArrowLeft, MoreHorizontal, Filter,
+  CheckCircle2, ArrowLeft, MoreHorizontal, Filter,
 } from 'lucide-react';
 
 const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
@@ -155,8 +158,16 @@ export function Feed() {
   const [expandedTakeaways, setExpandedTakeaways] = useState<Set<string>>(new Set());
   const [sortOpen, setSortOpen] = useState(false);
   const [showAllTags, setShowAllTags] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [clearingOld, setClearingOld] = useState(false);
+
+  // Shared hook so a selection never outlives the filter it was made under —
+  // hidden articles must not be swept up by a bulk action.
+  const visibleArticleIds = useMemo(() => filteredArticles.map(a => a.id), [filteredArticles]);
+  const selection = useBulkSelection(visibleArticleIds);
+
+  const bulkButtonClass = `px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+    isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+  }`;
 
   const bookmarkedCount = useMemo(() => articles.filter(a => a.bookmarked).length, [articles]);
 
@@ -185,25 +196,13 @@ export function Feed() {
     return Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
   }, [tagCounts]);
 
-  // Escape key clears selection
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedIds.size > 0) {
-        setSelectedIds(new Set());
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [selectedIds.size]);
-
-  const toggleSelection = useCallback((id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  /** Runs a bulk action against the current selection, then exits select mode. */
+  const runBulk = (action: (ids: string[]) => void) => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+    action(ids);
+    selection.clear();
+  };
 
   const handleAddFeed = async () => {
     if (!feedUrl.trim()) return;
@@ -777,7 +776,7 @@ export function Feed() {
             filteredArticles.map(article => {
               const sub = subscriptions.find(s => s.id === article.subscription_id);
               const takeawaysExpanded = expandedTakeaways.has(article.id);
-              const isSelected = selectedIds.has(article.id);
+              const isSelected = selection.isSelected(article.id);
 
               return (
                 <div
@@ -793,16 +792,12 @@ export function Feed() {
                   <div className="px-3 py-3 sm:px-5 sm:py-4">
                     {/* Title + checkbox row — full width on mobile */}
                     <div className="flex items-start gap-2">
-                      <button
-                        onClick={() => toggleSelection(article.id)}
-                        className={`mt-0.5 flex-shrink-0 transition-colors ${
-                          isSelected
-                            ? isDark ? 'text-violet-400' : 'text-violet-600'
-                            : isDark ? 'text-gray-600 hover:text-gray-400' : 'text-slate-300 hover:text-slate-500'
-                        }`}
-                      >
-                        {isSelected ? <CheckSquare2 size={16} /> : <Square size={16} />}
-                      </button>
+                      <SelectionCheckbox
+                        selected={isSelected}
+                        onToggle={() => selection.toggle(article.id)}
+                        label={`Select "${article.title}"`}
+                        className="mt-0.5"
+                      />
 
                       <div className="flex-1 min-w-0">
                         <a
@@ -1297,72 +1292,27 @@ export function Feed() {
       )}
 
       {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
-        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[60] max-w-xl w-full px-4">
-          <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-xl ${
-            isDark
-              ? 'bg-gray-900/90 border border-white/10'
-              : 'bg-white/90 border border-slate-200 shadow-slate-200/50'
-          }`}>
-            <span className={`text-sm font-medium mr-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {selectedIds.size} selected
-            </span>
-
-            <button
-              onClick={() => setSelectedIds(new Set(filteredArticles.map(a => a.id)))}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Select All
-            </button>
-
-            <div className={`w-px h-5 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-            <button
-              onClick={() => { bulkMarkRead(Array.from(selectedIds), true); setSelectedIds(new Set()); }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Mark Read
-            </button>
-            <button
-              onClick={() => { bulkMarkRead(Array.from(selectedIds), false); setSelectedIds(new Set()); }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Mark Unread
-            </button>
-            <button
-              onClick={() => { bulkBookmark(Array.from(selectedIds), true); setSelectedIds(new Set()); }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Bookmark
-            </button>
-            <button
-              onClick={() => { bulkDelete(Array.from(selectedIds)); setSelectedIds(new Set()); }}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors"
-            >
-              Delete
-            </button>
-
-            <div className={`w-px h-5 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className={`p-1.5 rounded-lg transition-colors ${
-                isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'
-              }`}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      )}
+      <BulkActionBar
+        count={selection.count}
+        itemLabel="article"
+        allSelected={selection.allSelected}
+        onSelectAll={selection.selectAll}
+        onDelete={() => runBulk(ids => { void bulkDelete(ids); })}
+        onClear={selection.clear}
+      >
+        <button onClick={() => runBulk(ids => bulkMarkRead(ids, true))} className={bulkButtonClass}>
+          Mark Read
+        </button>
+        <button onClick={() => runBulk(ids => bulkMarkRead(ids, false))} className={bulkButtonClass}>
+          Mark Unread
+        </button>
+        <button onClick={() => runBulk(ids => bulkBookmark(ids, true))} className={bulkButtonClass}>
+          Bookmark
+        </button>
+        <button onClick={() => runBulk(ids => bulkBookmark(ids, false))} className={bulkButtonClass}>
+          Unbookmark
+        </button>
+      </BulkActionBar>
     </div>
   );
 }

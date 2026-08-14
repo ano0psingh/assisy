@@ -12,6 +12,37 @@ import { GoalCard } from '../components/goals/GoalCard';
 import { GoalForm } from '../components/goals/GoalForm';
 import { GoalDetail } from '../components/goals/GoalDetail';
 import { GoalTree, GoalTreeThumbnail } from '../components/goals/GoalTree';
+import { useUndo } from '../components/common/UndoToast';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import { BulkActionBar } from '../components/common/BulkActionBar';
+import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
+import { pluralise } from '../lib/bulkUpdate';
+
+const GOAL_BULK_FIELDS: BulkEditField[] = [
+  {
+    key: 'category',
+    label: 'Category',
+    kind: 'choice',
+    options: [
+      { label: 'Personal', value: 'Personal' },
+      { label: 'Financial', value: 'Financial' },
+      { label: 'Professional', value: 'Professional' },
+    ],
+  },
+  {
+    key: 'theme',
+    label: 'Tree theme',
+    kind: 'choice',
+    options: [
+      { label: 'Forest', value: 'forest' },
+      { label: 'Mountain', value: 'mountain' },
+      { label: 'Ocean', value: 'ocean' },
+      { label: 'Space', value: 'space' },
+      { label: 'Garden', value: 'garden' },
+    ],
+  },
+];
+import { SelectButton, SelectionCheckbox, SelectionIndicator } from '../components/common/SelectionControls';
 import type { Goal, TaskCategory, GoalStatus, GoalTheme } from '../types';
 
 type FilterStatus = 'all' | 'Active' | 'Completed' | 'Archived';
@@ -31,7 +62,11 @@ export function Goals() {
     goals, 
     createGoal, 
     updateGoal,
+    updateGoals,
+    revertGoals,
     deleteGoal, 
+    deleteGoals,
+    restoreGoals,
     completeGoal, 
     archiveGoal, 
     reactivateGoal,
@@ -41,9 +76,10 @@ export function Goals() {
     getSubGoals,
     addXPToGoal,
   } = useGoalContext();
-  const { tasks, deleteTask, completeTask, uncompleteTask, updateTask } = useTaskContext();
-  const { habits } = useHabitContext();
+  const { tasks, deleteTask, completeTask, uncompleteTask, updateTask, updateTasks, revertTasks } = useTaskContext();
+  const { habits, updateHabits, revertHabits } = useHabitContext();
   const { recordGoalCompletion, recordTaskCompletion, updateStreak, checkAndUnlockAchievements } = useGamification();
+  const { pushUndo } = useUndo();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -97,6 +133,65 @@ export function Goals() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
   }, [goals, statusFilter, categoryFilter]);
+
+  // Sub-goals are only on screen in list view under an expanded parent, but
+  // they are selectable there, so they have to count as visible.
+  const visibleGoalIds = useMemo(() => {
+    const ids = filteredGoals.map(g => g.id);
+    if (viewMode === 'list') {
+      filteredGoals.forEach(g => {
+        if (expandedGoals.has(g.id)) getSubGoals(g.id).forEach(sg => ids.push(sg.id));
+      });
+    }
+    return ids;
+  }, [filteredGoals, viewMode, expandedGoals, getSubGoals]);
+  const selection = useBulkSelection(visibleGoalIds);
+
+  const selectionProps = (goalId: string) => ({
+    selectionMode: selection.active,
+    isSelected: selection.isSelected(goalId),
+    onSelectToggle: selection.toggle,
+  });
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+    const removed = deleteGoals(ids);
+    if (removed.length === 0) return;
+    selection.clear();
+
+    // Tasks and habits keep a goalId, so unlink them rather than leaving
+    // references to goals that no longer exist. The tasks themselves survive.
+    const goneIds = new Set(removed.map(g => g.id));
+    const orphanedTaskIds = tasks.filter(t => t.goalId && goneIds.has(t.goalId)).map(t => t.id);
+    const orphanedHabitIds = habits.filter(h => h.goalId && goneIds.has(h.goalId)).map(h => h.id);
+    const taskPatches = updateTasks(orphanedTaskIds, { goalId: undefined });
+    const habitPatches = updateHabits(orphanedHabitIds, { goalId: undefined });
+
+    // `removed` can exceed the selection, since deleting a goal takes its
+    // sub-goals with it — report what actually went.
+    const extra = removed.length - ids.length;
+    const label = extra > 0
+      ? `${pluralise(ids.length, 'goal')} + ${pluralise(extra, 'sub-goal')} deleted`
+      : `${pluralise(removed.length, 'goal')} deleted`;
+    pushUndo(label, () => {
+      restoreGoals(removed);
+      revertTasks(taskPatches);
+      revertHabits(habitPatches);
+    });
+  };
+
+  const handleBulkEdit = (key: string, value: string | number | null) => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+    const patches = updateGoals(ids, { [key]: value } as Partial<Goal>);
+    if (patches.length === 0) return;
+    // Selection stays so several fields can be applied in a row.
+    pushUndo(
+      `${pluralise(patches.length, 'goal')} updated`,
+      () => revertGoals(patches),
+    );
+  };
 
   const toggleGoalExpanded = (goalId: string) => {
     setExpandedGoals(prev => {
@@ -299,6 +394,11 @@ export function Goals() {
             <Plus size={18} />
             <span>New Goal</span>
           </button>
+          <SelectButton
+            active={selection.active}
+            onClick={() => selection.active ? selection.clear() : selection.start()}
+            disabled={filteredGoals.length === 0}
+          />
         </div>
       </div>
 
@@ -392,21 +492,34 @@ export function Goals() {
               ? Math.round((goal.currentLevelXP / goal.xpToNextLevel) * 100)
               : 100;
 
+            const isSelected = selection.isSelected(goal.id);
+
             return (
               <button
                 key={goal.id}
                 type="button"
-                onClick={() => setSelectedGoalId(goal.id)}
+                onClick={() => selection.active ? selection.toggle(goal.id) : setSelectedGoalId(goal.id)}
+                {...(selection.active
+                  ? { role: 'checkbox' as const, 'aria-checked': isSelected, 'aria-label': `Select "${goal.title}"` }
+                  : {})}
                 className={`relative rounded-2xl p-4 text-left transition-all duration-200 cursor-pointer
                   hover:scale-[1.02] active:scale-[0.98] animate-fade-in
                   ${getThemeBg(goal.theme)}
-                  ${isDark
-                    ? 'border border-white/[0.07] hover:border-white/[0.14]'
-                    : 'border border-neutral-200 hover:shadow-medium hover:border-neutral-300'}
-                  ${goal.status !== 'Active' ? 'opacity-60' : ''}
+                  ${isSelected
+                    ? 'border-2 border-violet-500'
+                    : isDark
+                      ? 'border border-white/[0.07] hover:border-white/[0.14]'
+                      : 'border border-neutral-200 hover:shadow-medium hover:border-neutral-300'}
+                  ${goal.status !== 'Active' && !isSelected ? 'opacity-60' : ''}
                 `}
                 style={{ animationDelay: `${index * 40}ms` }}
               >
+                {selection.active && (
+                  <span className="absolute top-2 right-2 z-10">
+                    <SelectionIndicator selected={isSelected} />
+                  </span>
+                )}
+
                 {/* Tree */}
                 <div className="flex justify-center mb-2">
                   <GoalTree level={goal.level || 1} theme={goal.theme} size="md" animate />
@@ -467,16 +580,29 @@ export function Goals() {
                 {/* Augmented Goal Card wrapper */}
                 <div
                   className={`group rounded-xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.99] ${
-                    isDark
-                      ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${goal.status !== 'Active' ? 'opacity-60' : ''}`
-                      : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${goal.status !== 'Active' ? 'opacity-60 bg-neutral-50' : ''}`
+                    selection.isSelected(goal.id)
+                      ? isDark
+                        ? 'bg-violet-500/10 border border-violet-500/30'
+                        : 'bg-violet-50/60 border border-violet-200'
+                      : isDark
+                        ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${goal.status !== 'Active' ? 'opacity-60' : ''}`
+                        : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${goal.status !== 'Active' ? 'opacity-60 bg-neutral-50' : ''}`
                   }`}
-                  onClick={() => setSelectedGoalId(goal.id)}
+                  onClick={() => selection.active ? selection.toggle(goal.id) : setSelectedGoalId(goal.id)}
                 >
                   <div className="flex items-start gap-4">
-                    {/* Tree thumbnail */}
+                    {/* Tree thumbnail — replaced by a checkbox while selecting */}
                     <div className="flex-shrink-0">
-                      <GoalTreeThumbnail level={goal.level || 1} theme={goal.theme} />
+                      {selection.active ? (
+                        <SelectionCheckbox
+                          selected={selection.isSelected(goal.id)}
+                          onToggle={() => selection.toggle(goal.id)}
+                          label={`Select "${goal.title}"`}
+                          className="w-12 h-12 flex items-center justify-center"
+                        />
+                      ) : (
+                        <GoalTreeThumbnail level={goal.level || 1} theme={goal.theme} />
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -556,8 +682,11 @@ export function Goals() {
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center space-x-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    {/* Actions — hidden while selecting */}
+                    <div
+                      className={`flex items-center space-x-1 flex-shrink-0 ${selection.active ? 'hidden' : ''}`}
+                      onClick={e => e.stopPropagation()}
+                    >
                       <button onClick={() => handleEdit(goal)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'}`} title="Edit">
                         <Pencil size={16} />
                       </button>
@@ -605,6 +734,7 @@ export function Goals() {
                           onDelete={handleDeleteGoal}
                           onClick={(g) => setSelectedGoalId(g.id)}
                           onEdit={handleEdit}
+                          {...selectionProps(subGoal.id)}
                         />
                       </div>
                     ))}
@@ -656,6 +786,17 @@ export function Goals() {
           }}
         />
       )}
+
+      <BulkActionBar
+        count={selection.count}
+        itemLabel="goal"
+        allSelected={selection.allSelected}
+        onSelectAll={selection.selectAll}
+        onDelete={handleBulkDelete}
+        onClear={selection.clear}
+      >
+        <BulkEditMenu fields={GOAL_BULK_FIELDS} onApply={handleBulkEdit} />
+      </BulkActionBar>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Task, TaskCategory, Priority, Effort, RecurrencePattern } from '../types';
+import type { Task, TaskCategory, Priority, Effort, RecurrencePattern, BulkPatch } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { saveTasks as saveTasksToStore } from '../store/unifiedStore';
+import { collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import { getTaskXPValue } from '../utils/xpCalculator';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
@@ -27,7 +28,15 @@ interface TaskContextType {
   unlinkTaskFromGoal: (taskId: string) => void;
   getTasksByGoal: (goalId: string) => Task[];
   updateTask: (taskId: string, updates: Partial<Task>) => void;
+  /** Applies the same updates to many tasks, returning patches for undo. */
+  updateTasks: (taskIds: string[], updates: Partial<Task>) => BulkPatch<Task>[];
+  /** Puts back the field values captured by {@link updateTasks}. */
+  revertTasks: (patches: BulkPatch<Task>[]) => void;
   deleteTask: (taskId: string) => void;
+  /** Deletes many tasks at once and returns the removed rows so they can be restored. */
+  deleteTasks: (taskIds: string[]) => Task[];
+  /** Re-inserts tasks exactly as they were, preserving ids, streaks and completion state. */
+  restoreTasks: (tasksToRestore: Task[]) => void;
   completeTask: (taskId: string) => void;
   uncompleteTask: (taskId: string) => void;
   getTodaysTasks: () => Task[];
@@ -201,6 +210,37 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     });
   }, [userId]);
 
+  const updateTasks = useCallback((taskIds: string[], updates: Partial<Task>): BulkPatch<Task>[] => {
+    // Changing these recalculates xpValue, so capture it too or undo would
+    // restore the old priority against the new XP.
+    const affectsXP = 'priority' in updates || 'effort' in updates || 'category' in updates;
+    const patches = collectBulkPatches(tasks, taskIds, updates, affectsXP ? ['xpValue'] : []);
+    if (patches.length === 0) return [];
+
+    const targets = new Set(taskIds);
+    setTasks(prev => {
+      const updated = prev.map(task => {
+        if (!targets.has(task.id)) return task;
+        const next = { ...task, ...updates };
+        if (affectsXP) next.xpValue = getTaskXPValue(next);
+        return next;
+      });
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+
+    return patches;
+  }, [tasks, userId]);
+
+  const revertTasks = useCallback((patches: BulkPatch<Task>[]) => {
+    if (patches.length === 0) return;
+    setTasks(prev => {
+      const updated = revertBulkUpdate(prev, patches);
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
   const linkTaskToGoal = useCallback((taskId: string, goalId: string) => {
     setTasks(prev => {
       const updated = updateTaskInArray(prev, taskId, { goalId });
@@ -224,6 +264,28 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const deleteTask = useCallback((taskId: string) => {
     setTasks(prev => {
       const updated = prev.filter(task => task.id !== taskId);
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const deleteTasks = useCallback((taskIds: string[]): Task[] => {
+    const idSet = new Set(taskIds);
+    const removed = tasks.filter(task => idSet.has(task.id));
+    if (removed.length === 0) return [];
+    setTasks(prev => {
+      const updated = prev.filter(task => !idSet.has(task.id));
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+    return removed;
+  }, [tasks, userId]);
+
+  const restoreTasks = useCallback((tasksToRestore: Task[]) => {
+    if (tasksToRestore.length === 0) return;
+    setTasks(prev => {
+      const existing = new Set(prev.map(task => task.id));
+      const updated = [...prev, ...tasksToRestore.filter(task => !existing.has(task.id))];
       saveTasksToStore(updated, userId);
       return updated;
     });
@@ -521,7 +583,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       loading,
       createTask,
       updateTask,
+      updateTasks,
+      revertTasks,
       deleteTask,
+      deleteTasks,
+      restoreTasks,
       completeTask,
       uncompleteTask,
       getTodaysTasks,

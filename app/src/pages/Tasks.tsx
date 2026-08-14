@@ -11,16 +11,53 @@ import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { useUndo } from '../components/common/UndoToast';
 import { useToast } from '../components/common/Toast';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import { BulkActionBar } from '../components/common/BulkActionBar';
+import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
+import { SelectButton } from '../components/common/SelectionControls';
+import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { hapticMedium } from '../lib/haptics';
 import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, X } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
+
+const TASK_BULK_FIELDS: BulkEditField[] = [
+  {
+    key: 'category',
+    label: 'Category',
+    kind: 'choice',
+    options: [
+      { label: 'Personal', value: 'Personal' },
+      { label: 'Financial', value: 'Financial' },
+      { label: 'Professional', value: 'Professional' },
+    ],
+  },
+  {
+    key: 'priority',
+    label: 'Priority',
+    kind: 'choice',
+    options: [
+      { label: 'High', value: 'High' },
+      { label: 'Low', value: 'Low' },
+    ],
+  },
+  {
+    key: 'effort',
+    label: 'Effort',
+    kind: 'choice',
+    options: [
+      { label: 'High', value: 'High' },
+      { label: 'Low', value: 'Low' },
+    ],
+  },
+  { key: 'dueDate', label: 'Due date', kind: 'date' },
+];
 
 type FilterStatus = 'all' | 'pending' | 'completed';
 type ViewMode = 'list' | 'grouped' | 'matrix';
 type SmartFilter = 'none' | 'overdue' | 'due_today' | 'due_week' | 'high_priority' | 'quick_wins' | 'in_today' | 'recurring';
 
 export function Tasks() {
-  const { tasks, createTask, updateTask, completeTask, uncompleteTask, deleteTask, addToToday, removeFromToday, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
+  const { tasks, createTask, updateTask, updateTasks, revertTasks, completeTask, uncompleteTask, deleteTask, deleteTasks, restoreTasks, addToToday, removeFromToday, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal, addXPToGoal } = useGoalContext();
   const { projects, createProjectTask, getSubProjectsByProject } = useProjectContext();
   const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements, recordTaskCreated } = useGamification();
@@ -165,6 +202,45 @@ export function Tasks() {
       const effortOrder = { High: 0, Low: 1 };
       return effortOrder[a.effort] - effortOrder[b.effort];
     });
+
+  const visibleTaskIds = useMemo(() => filteredTasks.map(t => t.id), [filteredTasks]);
+  const selection = useBulkSelection(visibleTaskIds);
+
+  const selectionProps = (taskId: string) => ({
+    selectionMode: selection.active,
+    isSelected: selection.isSelected(taskId),
+    onSelectToggle: selection.toggle,
+  });
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+    const removed = deleteTasks(ids);
+    selection.clear();
+    pushUndo(
+      `${pluralise(removed.length, 'task')} deleted`,
+      () => restoreTasks(removed),
+    );
+  };
+
+  const handleBulkEdit = (key: string, value: string | number | null) => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+
+    const updates: Partial<Task> =
+      key === 'dueDate'
+        ? { dueDate: value === null ? undefined : parseDateInput(String(value)) }
+        : ({ [key]: value } as Partial<Task>);
+
+    const patches = updateTasks(ids, updates);
+    if (patches.length === 0) return;
+    // The selection stays so several fields can be applied in a row. Rows that
+    // the edit filters out of view drop out of it on their own.
+    pushUndo(
+      `${pluralise(patches.length, 'task')} updated`,
+      () => revertTasks(patches),
+    );
+  };
 
   // Group tasks by goal - with hierarchical structure for sub-goals
   const tasksGroupedByGoal = useMemo(() => {
@@ -374,10 +450,17 @@ export function Tasks() {
           <h1 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>All Tasks</h1>
           <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{tasks.length} total tasks</p>
         </div>
-        <button onClick={() => setIsTaskFormOpen(true)} className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base">
-          <Plus size={18} />
-          <span>Add Task</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <SelectButton
+            active={selection.active}
+            onClick={() => selection.active ? selection.clear() : selection.start()}
+            disabled={filteredTasks.length === 0}
+          />
+          <button onClick={() => setIsTaskFormOpen(true)} className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base">
+            <Plus size={18} />
+            <span>Add Task</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter bar */}
@@ -543,6 +626,7 @@ export function Tasks() {
                         onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined}
                         onPauseRecurring={task.isRecurring ? pauseRecurring : undefined}
                         onResumeRecurring={task.isRecurring ? resumeRecurring : undefined}
+                        {...selectionProps(task.id)}
                       />
                     </div>
                   ))}
@@ -606,6 +690,7 @@ export function Tasks() {
                               onDelete={handleDeleteWithUndo}
                               onEdit={handleEdit}
                               goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
+                              {...selectionProps(task.id)}
                             />
                           </div>
                         ))}
@@ -639,7 +724,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -664,7 +749,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -689,7 +774,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -714,7 +799,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -842,6 +927,7 @@ export function Tasks() {
                               onMoveToProject={handleOpenMoveToProject}
                               showTodayActions={!todayTaskIds.has(task.id)}
                               goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
+                              {...selectionProps(task.id)}
                             />
                           </div>
                         ))}
@@ -921,6 +1007,7 @@ export function Tasks() {
                                     onMoveToProject={handleOpenMoveToProject}
                                     goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
                                     showTodayActions={!todayTaskIds.has(task.id)}
+                                    {...selectionProps(task.id)}
                                   />
                                 </div>
                               ))}
@@ -1058,6 +1145,17 @@ export function Tasks() {
           </div>
         </div>
       )}
+
+      <BulkActionBar
+        count={selection.count}
+        itemLabel="task"
+        allSelected={selection.allSelected}
+        onSelectAll={selection.selectAll}
+        onDelete={handleBulkDelete}
+        onClear={selection.clear}
+      >
+        <BulkEditMenu fields={TASK_BULK_FIELDS} onApply={handleBulkEdit} />
+      </BulkActionBar>
     </div>
   );
 }

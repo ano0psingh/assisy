@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Habit, TrackingType } from '../types';
+import type { Habit, TrackingType, BulkPatch } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { saveHabits as saveHabitsToStore, saveHabitLogs as saveHabitLogsToStore } from '../store/unifiedStore';
+import { applyBulkUpdate, collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
@@ -13,7 +14,7 @@ interface HabitLog {
   value: number;
 }
 
-interface HabitWithLogs extends Habit {
+export interface HabitWithLogs extends Habit {
   logs: HabitLog[];
 }
 
@@ -30,7 +31,15 @@ interface HabitContextType {
     goalId?: string,
   ) => HabitWithLogs;
   updateHabit: (habitId: string, updates: Partial<Habit>) => void;
+  /** Applies the same updates to many habits, returning patches for undo. */
+  updateHabits: (habitIds: string[], updates: Partial<Habit>) => BulkPatch<HabitWithLogs>[];
+  /** Puts back the field values captured by {@link updateHabits}. */
+  revertHabits: (patches: BulkPatch<HabitWithLogs>[]) => void;
   deleteHabit: (habitId: string) => void;
+  /** Deletes many habits at once and returns the removed rows, logs included. */
+  deleteHabits: (habitIds: string[]) => HabitWithLogs[];
+  /** Re-inserts habits exactly as they were, including their logged history. */
+  restoreHabits: (habitsToRestore: HabitWithLogs[]) => void;
   logHabit: (habitId: string, value: number, date?: Date) => void;
   getHabitStreak: (habitId: string) => number;
   getLongestStreak: (habitId: string) => number;
@@ -203,9 +212,53 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     });
   }, [saveHabits]);
 
+  const updateHabits = useCallback((habitIds: string[], updates: Partial<Habit>): BulkPatch<HabitWithLogs>[] => {
+    const patches = collectBulkPatches(habits, habitIds, updates);
+    if (patches.length === 0) return [];
+    setHabits(prev => {
+      const updated = applyBulkUpdate<HabitWithLogs>(prev, habitIds, updates);
+      saveHabits(updated);
+      return updated;
+    });
+    return patches;
+  }, [habits, saveHabits]);
+
+  const revertHabits = useCallback((patches: BulkPatch<HabitWithLogs>[]) => {
+    if (patches.length === 0) return;
+    setHabits(prev => {
+      const updated = revertBulkUpdate(prev, patches);
+      saveHabits(updated);
+      return updated;
+    });
+  }, [saveHabits]);
+
   const deleteHabit = useCallback((habitId: string) => {
     setHabits(prev => {
       const updated = prev.filter(habit => habit.id !== habitId);
+      saveHabits(updated);
+      saveLogs(updated);
+      return updated;
+    });
+  }, [saveHabits, saveLogs]);
+
+  const deleteHabits = useCallback((habitIds: string[]): HabitWithLogs[] => {
+    const idSet = new Set(habitIds);
+    const removed = habits.filter(habit => idSet.has(habit.id));
+    if (removed.length === 0) return [];
+    setHabits(prev => {
+      const updated = prev.filter(habit => !idSet.has(habit.id));
+      saveHabits(updated);
+      saveLogs(updated);
+      return updated;
+    });
+    return removed;
+  }, [habits, saveHabits, saveLogs]);
+
+  const restoreHabits = useCallback((habitsToRestore: HabitWithLogs[]) => {
+    if (habitsToRestore.length === 0) return;
+    setHabits(prev => {
+      const existing = new Set(prev.map(habit => habit.id));
+      const updated = [...prev, ...habitsToRestore.filter(habit => !existing.has(habit.id))];
       saveHabits(updated);
       saveLogs(updated);
       return updated;
@@ -300,6 +353,10 @@ export function HabitProvider({ children }: { children: ReactNode }) {
       createHabit,
       updateHabit,
       deleteHabit,
+      updateHabits,
+      revertHabits,
+      deleteHabits,
+      restoreHabits,
       logHabit,
       getHabitStreak,
       getLongestStreak,

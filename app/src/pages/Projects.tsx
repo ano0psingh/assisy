@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useProjectContext, PROJECT_COLORS } from '../context/ProjectContext';
+import { useProjectContext, PROJECT_COLORS, type ProjectSnapshot } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Plus, FolderKanban, ChevronRight, 
@@ -12,7 +12,37 @@ import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } 
 import { TiptapEditor } from '../components/common/TiptapEditor';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { TaskSheet } from '../components/projects/TaskSheet';
+import { useUndo } from '../components/common/UndoToast';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import { BulkActionBar } from '../components/common/BulkActionBar';
+import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
+import { SelectButton, SelectionCheckbox } from '../components/common/SelectionControls';
+import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { askAIJson, isAIConfigured } from '../lib/ai';
+
+const PROJECT_TASK_BULK_FIELDS: BulkEditField[] = [
+  {
+    key: 'priority',
+    label: 'Priority',
+    kind: 'choice',
+    options: [
+      { label: 'High', value: 'High' },
+      { label: 'Medium', value: 'Medium' },
+      { label: 'Low', value: 'Low' },
+    ],
+  },
+  {
+    key: 'effort',
+    label: 'Effort',
+    kind: 'choice',
+    options: [
+      { label: 'High', value: 'High' },
+      { label: 'Medium', value: 'Medium' },
+      { label: 'Low', value: 'Low' },
+    ],
+  },
+  { key: 'deadline', label: 'Deadline', kind: 'date' },
+];
 
 interface AIPlanTask {
   title: string;
@@ -38,6 +68,10 @@ export function Projects() {
     createProject,
     updateProject,
     deleteProject,
+    deleteProjects,
+    deleteSubProjects,
+    deleteProjectTasks,
+    restoreProjectData,
     getProjectProgress,
     createSubProject,
     updateSubProject,
@@ -49,6 +83,8 @@ export function Projects() {
     deleteProjectTask,
     getTasksBySubProject,
     getSubTasks,
+    updateProjectTasks,
+    revertProjectTasks,
     updateTaskStatus,
     addTaskToToday,
     removeTaskFromToday,
@@ -56,6 +92,7 @@ export function Projects() {
 
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { pushUndo } = useUndo();
 
   // View state
   const [pageView, setPageView] = useState<PageView>('cards');
@@ -178,7 +215,94 @@ export function Projects() {
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
   }, [projects, projectStatusFilter]);
-  
+
+  const visibleProjectIds = useMemo(() => filteredProjects.map(p => p.id), [filteredProjects]);
+
+  // Sub-projects and tasks live in the detail pane, which is on screen next to
+  // the project list on desktop, so each level gets its own selection scope.
+  const visibleSubProjectIds = useMemo(() => {
+    if (detailView !== 'project' || !selectedProject) return [];
+    return getSubProjectsByProject(selectedProject.id)
+      .filter(sp => subProjectStatusFilter === 'All' || sp.status === subProjectStatusFilter)
+      .map(sp => sp.id);
+  }, [detailView, selectedProject, subProjectStatusFilter, getSubProjectsByProject]);
+
+  const visibleProjectTaskIds = useMemo(() => {
+    if (detailView !== 'subproject' || !selectedSubProject) return [];
+    return getTasksBySubProject(selectedSubProject.id)
+      .filter(t => taskStatusFilter === 'All' || t.status === taskStatusFilter)
+      .map(t => t.id);
+  }, [detailView, selectedSubProject, taskStatusFilter, getTasksBySubProject]);
+
+  const selection = useBulkSelection(visibleProjectIds);
+  const subProjectSelection = useBulkSelection(visibleSubProjectIds);
+  const taskSelection = useBulkSelection(visibleProjectTaskIds);
+
+  // Only one pane may be in selection mode, otherwise two action bars would
+  // stack on top of each other.
+  const startProjectSelection = () => { subProjectSelection.clear(); taskSelection.clear(); selection.start(); };
+  const startSubProjectSelection = () => { selection.clear(); taskSelection.clear(); subProjectSelection.start(); };
+  const startTaskSelection = () => { selection.clear(); subProjectSelection.clear(); taskSelection.start(); };
+
+  /** Turns a snapshot into an undo toast describing everything that went. */
+  const pushSnapshotUndo = (snapshot: ProjectSnapshot) => {
+    const parts: string[] = [];
+    if (snapshot.projects.length > 0) {
+      parts.push(`${snapshot.projects.length} project${snapshot.projects.length === 1 ? '' : 's'}`);
+    }
+    if (snapshot.subProjects.length > 0) {
+      parts.push(`${snapshot.subProjects.length} sub-project${snapshot.subProjects.length === 1 ? '' : 's'}`);
+    }
+    if (snapshot.projectTasks.length > 0) {
+      parts.push(`${snapshot.projectTasks.length} task${snapshot.projectTasks.length === 1 ? '' : 's'}`);
+    }
+    if (parts.length === 0) return;
+    pushUndo(`${parts.join(', ')} deleted`, () => restoreProjectData(snapshot));
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.length === 0) return;
+    const snapshot = deleteProjects(ids);
+    selection.clear();
+    // A deleted project takes its sub-projects and their tasks with it.
+    if (ids.includes(selectedProjectId ?? '')) setDetailView('none');
+    pushSnapshotUndo(snapshot);
+  };
+
+  const handleBulkDeleteSubProjects = () => {
+    const ids = Array.from(subProjectSelection.selectedIds);
+    if (ids.length === 0) return;
+    const snapshot = deleteSubProjects(ids);
+    subProjectSelection.clear();
+    pushSnapshotUndo(snapshot);
+  };
+
+  const handleBulkDeleteTasks = () => {
+    const ids = Array.from(taskSelection.selectedIds);
+    if (ids.length === 0) return;
+    const snapshot = deleteProjectTasks(ids);
+    taskSelection.clear();
+    pushSnapshotUndo(snapshot);
+  };
+
+  const handleBulkEditTasks = (key: string, value: string | number | null) => {
+    const ids = Array.from(taskSelection.selectedIds);
+    if (ids.length === 0) return;
+
+    const updates: Partial<ProjectTask> =
+      key === 'deadline'
+        ? { deadline: value === null ? undefined : parseDateInput(String(value)) }
+        : ({ [key]: value } as Partial<ProjectTask>);
+
+    const patches = updateProjectTasks(ids, updates);
+    if (patches.length === 0) return;
+    // Selection stays so several fields can be applied in a row.
+    pushUndo(
+      `${pluralise(patches.length, 'task')} updated`,
+      () => revertProjectTasks(patches),
+    );
+  };
 
   // Open project detail
   const openProjectDetail = (project: Project) => {
@@ -370,26 +494,44 @@ export function Projects() {
     const today = new Date().toISOString().split('T')[0];
     const isAddedToToday = task.isFocusedToday && task.focusedDate === today;
 
+    const isTaskSelected = taskSelection.isSelected(task.id);
+
     return (
       <div key={task.id} style={{ marginLeft: depth * 20 }}>
-        <div className={`group flex items-center justify-between gap-2 p-3 rounded-xl transition-all overflow-hidden ${
-          isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
-        } ${task.status === 'Done' ? 'opacity-60' : ''}`}>
+        <div
+          onClick={taskSelection.active ? () => taskSelection.toggle(task.id) : undefined}
+          className={`group flex items-center justify-between gap-2 p-3 rounded-xl transition-all overflow-hidden ${
+            taskSelection.active ? 'cursor-pointer' : ''
+          } ${
+            isTaskSelected
+              ? isDark ? 'bg-violet-500/10 ring-1 ring-violet-500/30' : 'bg-violet-50/60 ring-1 ring-violet-200'
+              : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+          } ${task.status === 'Done' && !isTaskSelected ? 'opacity-60' : ''}`}
+        >
           <div className="flex items-center space-x-3 flex-1 min-w-0 overflow-hidden">
-            {/* Status Toggle */}
-            <button
-              onClick={() => cycleTaskStatus(task)}
-              className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${getStatusColor(task.status)}`}
-              title={`Status: ${task.status}`}
-            >
-              {task.status === 'Done' ? (
-                <CheckCircle2 size={14} />
-              ) : task.status === 'In Progress' ? (
-                <Play size={10} fill="currentColor" />
-              ) : (
-                <Circle size={14} />
-              )}
-            </button>
+            {/* Status toggle — becomes the selection checkbox while selecting */}
+            {taskSelection.active ? (
+              <SelectionCheckbox
+                selected={isTaskSelected}
+                onToggle={() => taskSelection.toggle(task.id)}
+                label={`Select "${task.title}"`}
+                className="w-6 h-6 flex items-center justify-center"
+              />
+            ) : (
+              <button
+                onClick={() => cycleTaskStatus(task)}
+                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${getStatusColor(task.status)}`}
+                title={`Status: ${task.status}`}
+              >
+                {task.status === 'Done' ? (
+                  <CheckCircle2 size={14} />
+                ) : task.status === 'In Progress' ? (
+                  <Play size={10} fill="currentColor" />
+                ) : (
+                  <Circle size={14} />
+                )}
+              </button>
+            )}
 
             {/* Task Info */}
             <div className="flex-1 min-w-0 overflow-hidden">
@@ -422,8 +564,8 @@ export function Projects() {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center space-x-1">
+          {/* Actions — hidden while selecting */}
+          <div className={`flex items-center space-x-1 ${taskSelection.active ? 'hidden' : ''}`}>
             {/* Add to Today -- visible only when added, hover-only otherwise */}
             {task.status !== 'Done' && isAddedToToday && (
               <button
@@ -531,6 +673,13 @@ export function Projects() {
             <Plus size={18} />
             <span>New Project</span>
           </button>
+          {pageView === 'cards' && (
+            <SelectButton
+              active={selection.active}
+              onClick={() => selection.active ? selection.clear() : startProjectSelection()}
+              disabled={filteredProjects.length === 0}
+            />
+          )}
         </div>
       </div>
 
@@ -597,21 +746,41 @@ export function Projects() {
                 const projectSubProjects = getSubProjectsByProject(project.id);
                 const progress = getProjectProgress(project.id);
 
+                const isSelected = selection.isSelected(project.id);
+
                 return (
-                  <div key={project.id} className="card rounded-2xl overflow-hidden">
+                  <div
+                    key={project.id}
+                    className={`card rounded-2xl overflow-hidden ${
+                      isSelected ? (isDark ? 'ring-1 ring-violet-500/40' : 'ring-1 ring-violet-300') : ''
+                    }`}
+                  >
                     {/* Project Header */}
                     <div
-                      className={`p-4 cursor-pointer transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}
-                      onClick={() => openProjectDetail(project)}
+                      className={`p-4 cursor-pointer transition-colors ${
+                        isSelected
+                          ? isDark ? 'bg-violet-500/10' : 'bg-violet-50/60'
+                          : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                      }`}
+                      onClick={() => selection.active ? selection.toggle(project.id) : openProjectDetail(project)}
                     >
                       <div className="flex items-center justify-between gap-2 overflow-hidden">
                         <div className="flex items-center space-x-3 min-w-0 flex-1">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: `${project.color}20` }}
-                          >
-                            <FolderKanban size={20} style={{ color: project.color }} />
-                          </div>
+                          {selection.active ? (
+                            <SelectionCheckbox
+                              selected={isSelected}
+                              onToggle={() => selection.toggle(project.id)}
+                              label={`Select "${project.title}"`}
+                              className="w-10 h-10 flex items-center justify-center"
+                            />
+                          ) : (
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: `${project.color}20` }}
+                            >
+                              <FolderKanban size={20} style={{ color: project.color }} />
+                            </div>
+                          )}
                           <div className="min-w-0">
                             <h3 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
                               {project.title}
@@ -645,7 +814,9 @@ export function Projects() {
                             </span>
                           </div>
 
-                          <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                          {!selection.active && (
+                            <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -801,19 +972,27 @@ export function Projects() {
                     
                     <div className="flex items-center justify-between mb-4">
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Sub-Projects</h3>
-                      <button
-                        onClick={() => {
-                          setEditingSubProject(null);
-                          setSubProjectForm({ title: '', description: '', deadline: '', status: 'Backlog' });
-                          setIsSubProjectFormOpen(true);
-                        }}
-                        className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                          isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
-                        }`}
-                      >
-                        <Plus size={14} />
-                        <span>Add</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {visibleSubProjectIds.length > 0 && (
+                          <SelectButton
+                            active={subProjectSelection.active}
+                            onClick={() => subProjectSelection.active ? subProjectSelection.clear() : startSubProjectSelection()}
+                          />
+                        )}
+                        <button
+                          onClick={() => {
+                            setEditingSubProject(null);
+                            setSubProjectForm({ title: '', description: '', deadline: '', status: 'Backlog' });
+                            setIsSubProjectFormOpen(true);
+                          }}
+                          className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                            isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                          }`}
+                        >
+                          <Plus size={14} />
+                          <span>Add</span>
+                        </button>
+                      </div>
                     </div>
 
                     {(() => {
@@ -850,19 +1029,34 @@ export function Projects() {
                         const progress = getSubProjectProgress(subProject.id);
                         const tasks = getTasksBySubProject(subProject.id);
 
+                        const isSubSelected = subProjectSelection.isSelected(subProject.id);
+
                         return (
                           <div
                             key={subProject.id}
                             className={`p-4 rounded-xl cursor-pointer transition-all ${
-                              isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-50 hover:bg-slate-100'
+                              isSubSelected
+                                ? isDark ? 'bg-violet-500/10 ring-1 ring-violet-500/30' : 'bg-violet-50/60 ring-1 ring-violet-200'
+                                : isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-50 hover:bg-slate-100'
                             }`}
-                            onClick={() => openSubProjectDetail(subProject)}
+                            onClick={() => subProjectSelection.active
+                              ? subProjectSelection.toggle(subProject.id)
+                              : openSubProjectDetail(subProject)}
                           >
                             <div className="flex items-center justify-between gap-2 overflow-hidden">
                               <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-                                  <Layers size={16} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
-                                </div>
+                                {subProjectSelection.active ? (
+                                  <SelectionCheckbox
+                                    selected={isSubSelected}
+                                    onToggle={() => subProjectSelection.toggle(subProject.id)}
+                                    label={`Select "${subProject.title}"`}
+                                    className="w-8 h-8 flex items-center justify-center"
+                                  />
+                                ) : (
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
+                                    <Layers size={16} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+                                  </div>
+                                )}
                                 <div className="min-w-0">
                                   <h4 className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
                                     {subProject.title}
@@ -886,7 +1080,9 @@ export function Projects() {
                                   </div>
                                   <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{progress}%</span>
                                 </div>
-                                <ChevronRight size={16} className={`flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                                {!subProjectSelection.active && (
+                                  <ChevronRight size={16} className={`flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                                )}
                               </div>
                             </div>
                           </div>
@@ -923,19 +1119,27 @@ export function Projects() {
 
                     <div className="flex items-center justify-between mb-4">
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Tasks</h3>
-                      <button
-                        onClick={() => {
-                          setEditingTask(null);
-                          setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', parentTaskId: '' });
-                          setIsTaskFormOpen(true);
-                        }}
-                        className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                          isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
-                        }`}
-                      >
-                        <Plus size={14} />
-                        <span>Add Task</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {visibleProjectTaskIds.length > 0 && (
+                          <SelectButton
+                            active={taskSelection.active}
+                            onClick={() => taskSelection.active ? taskSelection.clear() : startTaskSelection()}
+                          />
+                        )}
+                        <button
+                          onClick={() => {
+                            setEditingTask(null);
+                            setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', parentTaskId: '' });
+                            setIsTaskFormOpen(true);
+                          }}
+                          className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                            isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                          }`}
+                        >
+                          <Plus size={14} />
+                          <span>Add Task</span>
+                        </button>
+                      </div>
                     </div>
 
                     {(() => {
@@ -1369,6 +1573,34 @@ export function Projects() {
           );
         }}
       </ExpandableModal>
+
+      {/* One bar at a time — starting a selection clears the other panes. */}
+      <BulkActionBar
+        count={selection.count}
+        itemLabel="project"
+        allSelected={selection.allSelected}
+        onSelectAll={selection.selectAll}
+        onDelete={handleBulkDelete}
+        onClear={selection.clear}
+      />
+      <BulkActionBar
+        count={subProjectSelection.count}
+        itemLabel="sub-project"
+        allSelected={subProjectSelection.allSelected}
+        onSelectAll={subProjectSelection.selectAll}
+        onDelete={handleBulkDeleteSubProjects}
+        onClear={subProjectSelection.clear}
+      />
+      <BulkActionBar
+        count={taskSelection.count}
+        itemLabel="task"
+        allSelected={taskSelection.allSelected}
+        onSelectAll={taskSelection.selectAll}
+        onDelete={handleBulkDeleteTasks}
+        onClear={taskSelection.clear}
+      >
+        <BulkEditMenu fields={PROJECT_TASK_BULK_FIELDS} onApply={handleBulkEditTasks} />
+      </BulkActionBar>
     </div>
   );
 }
