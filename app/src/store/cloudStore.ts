@@ -1,4 +1,15 @@
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey, getCachedAccessToken } from '../lib/supabase';
+import {
+  ALL_DATA_KEYS,
+  ENTITY_COLLECTIONS,
+  GAMIFICATION_KEYS,
+  HABIT_LOGS_KEY,
+  JSON_SETTINGS_KEYS,
+  SETTINGS_KEYS,
+  SYNC_COLLECTIONS,
+  safeParse,
+} from './storageKeys';
+import { markSynced } from './syncMeta';
 
 export interface UserDataPayload {
   tasks?: unknown[];
@@ -13,97 +24,68 @@ export interface UserDataPayload {
   settings?: Record<string, unknown>;
 }
 
-const LOCAL_KEYS = [
-  'life-rpg-tasks',
-  'life-rpg-goals',
-  'life-rpg-habits',
-  'life-rpg-habit-logs',
-  'life-rpg-daily-logs',
-  'assisy_projects',
-  'assisy_subprojects',
-  'assisy_project_tasks',
-  'assisy_skill_trees',
-  'assisy_achievements',
-  'assisy_user_stats',
-  'life-rpg-theme',
-  'equippedTitle',
-  'achievement_sounds_enabled',
-  'planYourDay_lastSeen',
-  'assisy_pomodoro_settings',
-  'assisy_pomodoro_today',
-] as const;
+/** Everything currently in localStorage, in sync payload shape. */
+export function readLocalPayload(): UserDataPayload {
+  const payload: UserDataPayload = {};
 
-function localStorageToPayload(): UserDataPayload {
-  const tasks = safeParse(localStorage.getItem('life-rpg-tasks'), []);
-  const goals = safeParse(localStorage.getItem('life-rpg-goals'), []);
-  const habits = safeParse(localStorage.getItem('life-rpg-habits'), []);
-  const habit_logs = safeParse(localStorage.getItem('life-rpg-habit-logs'), {});
-  const daily_logs = safeParse(localStorage.getItem('life-rpg-daily-logs'), []);
-  const projects = safeParse(localStorage.getItem('assisy_projects'), []);
-  const sub_projects = safeParse(localStorage.getItem('assisy_subprojects'), []);
-  const project_tasks = safeParse(localStorage.getItem('assisy_project_tasks'), []);
-  const skillTrees = safeParse(localStorage.getItem('assisy_skill_trees'), []);
-  const achievements = safeParse(localStorage.getItem('assisy_achievements'), []);
-  const userStats = safeParse(localStorage.getItem('assisy_user_stats'), {});
+  for (const spec of ENTITY_COLLECTIONS) {
+    const parsed = safeParse<unknown[]>(localStorage.getItem(spec.storageKey), []);
+    payload[spec.payloadKey] = Array.isArray(parsed) ? parsed : [];
+  }
+
+  payload.habit_logs = safeParse<Record<string, unknown>>(localStorage.getItem(HABIT_LOGS_KEY), {});
+
+  payload.gamification = {
+    skillTrees: safeParse<unknown[]>(localStorage.getItem(GAMIFICATION_KEYS.skillTrees), []),
+    achievements: safeParse<unknown[]>(localStorage.getItem(GAMIFICATION_KEYS.achievements), []),
+    userStats: safeParse<Record<string, unknown>>(localStorage.getItem(GAMIFICATION_KEYS.userStats), {}),
+  };
 
   const settings: Record<string, unknown> = {};
-  const theme = localStorage.getItem('life-rpg-theme');
-  if (theme) settings.theme = theme;
-  const equipped = localStorage.getItem('equippedTitle');
-  if (equipped) settings.equippedTitle = equipped;
-  const sounds = localStorage.getItem('achievement_sounds_enabled');
-  if (sounds !== null) settings.achievement_sounds_enabled = sounds;
-  const planSeen = localStorage.getItem('planYourDay_lastSeen');
-  if (planSeen) settings.planYourDay_lastSeen = planSeen;
-  const pomoSettings = localStorage.getItem('assisy_pomodoro_settings');
-  if (pomoSettings) settings.assisy_pomodoro_settings = JSON.parse(pomoSettings);
-  const pomoToday = localStorage.getItem('assisy_pomodoro_today');
-  if (pomoToday) settings.assisy_pomodoro_today = JSON.parse(pomoToday);
-
-  return {
-    tasks,
-    goals,
-    habits,
-    habit_logs,
-    daily_logs,
-    projects,
-    sub_projects,
-    project_tasks,
-    gamification: { skillTrees, achievements, userStats },
-    settings: Object.keys(settings).length > 0 ? settings : undefined,
-  };
-}
-
-function payloadToLocalStorage(payload: UserDataPayload): void {
-  if (payload.tasks) localStorage.setItem('life-rpg-tasks', JSON.stringify(payload.tasks));
-  if (payload.goals) localStorage.setItem('life-rpg-goals', JSON.stringify(payload.goals));
-  if (payload.habits) localStorage.setItem('life-rpg-habits', JSON.stringify(payload.habits));
-  if (payload.habit_logs) localStorage.setItem('life-rpg-habit-logs', JSON.stringify(payload.habit_logs));
-  if (payload.daily_logs) localStorage.setItem('life-rpg-daily-logs', JSON.stringify(payload.daily_logs));
-  if (payload.projects) localStorage.setItem('assisy_projects', JSON.stringify(payload.projects));
-  if (payload.sub_projects) localStorage.setItem('assisy_subprojects', JSON.stringify(payload.sub_projects));
-  if (payload.project_tasks) localStorage.setItem('assisy_project_tasks', JSON.stringify(payload.project_tasks));
-  const g = payload.gamification as Record<string, unknown> | undefined;
-  if (g?.skillTrees) localStorage.setItem('assisy_skill_trees', JSON.stringify(g.skillTrees));
-  if (g?.achievements) localStorage.setItem('assisy_achievements', JSON.stringify(g.achievements));
-  if (g?.userStats) localStorage.setItem('assisy_user_stats', JSON.stringify(g.userStats));
-  const s = payload.settings as Record<string, unknown> | undefined;
-  if (s) {
-    if (s.theme) localStorage.setItem('life-rpg-theme', String(s.theme));
-    if (s.equippedTitle) localStorage.setItem('equippedTitle', String(s.equippedTitle));
-    if (s.achievement_sounds_enabled !== undefined) localStorage.setItem('achievement_sounds_enabled', String(s.achievement_sounds_enabled));
-    if (s.planYourDay_lastSeen) localStorage.setItem('planYourDay_lastSeen', String(s.planYourDay_lastSeen));
-    if (s.assisy_pomodoro_settings) localStorage.setItem('assisy_pomodoro_settings', JSON.stringify(s.assisy_pomodoro_settings));
-    if (s.assisy_pomodoro_today) localStorage.setItem('assisy_pomodoro_today', JSON.stringify(s.assisy_pomodoro_today));
+  for (const [field, key] of Object.entries(SETTINGS_KEYS)) {
+    const value = localStorage.getItem(key);
+    if (value !== null) settings[field] = value;
   }
+  for (const [field, key] of Object.entries(JSON_SETTINGS_KEYS)) {
+    const value = localStorage.getItem(key);
+    if (value !== null) settings[field] = safeParse<unknown>(value, undefined);
+  }
+  payload.settings = settings;
+
+  return payload;
 }
 
-function safeParse<T>(val: string | null, fallback: T): T {
-  if (!val) return fallback;
-  try {
-    return JSON.parse(val) as T;
-  } catch {
-    return fallback;
+/** Write a payload over localStorage. Absent fields are left untouched. */
+export function writePayloadToLocalStorage(payload: UserDataPayload): void {
+  for (const spec of ENTITY_COLLECTIONS) {
+    const value = payload[spec.payloadKey];
+    if (value) localStorage.setItem(spec.storageKey, JSON.stringify(value));
+  }
+  if (payload.habit_logs) {
+    localStorage.setItem(HABIT_LOGS_KEY, JSON.stringify(payload.habit_logs));
+  }
+
+  const gamification = payload.gamification;
+  if (gamification?.skillTrees) {
+    localStorage.setItem(GAMIFICATION_KEYS.skillTrees, JSON.stringify(gamification.skillTrees));
+  }
+  if (gamification?.achievements) {
+    localStorage.setItem(GAMIFICATION_KEYS.achievements, JSON.stringify(gamification.achievements));
+  }
+  if (gamification?.userStats) {
+    localStorage.setItem(GAMIFICATION_KEYS.userStats, JSON.stringify(gamification.userStats));
+  }
+
+  const settings = payload.settings;
+  if (settings) {
+    for (const [field, key] of Object.entries(SETTINGS_KEYS)) {
+      const value = settings[field];
+      if (value !== undefined && value !== null) localStorage.setItem(key, String(value));
+    }
+    for (const [field, key] of Object.entries(JSON_SETTINGS_KEYS)) {
+      const value = settings[field];
+      if (value !== undefined && value !== null) localStorage.setItem(key, JSON.stringify(value));
+    }
   }
 }
 
@@ -129,8 +111,7 @@ export async function loadUserData(userId: string): Promise<UserDataPayload | nu
   };
 }
 
-export async function saveUserData(userId: string, payload: Partial<UserDataPayload>): Promise<{ error: Error | null }> {
-  if (!supabase) return { error: new Error('Supabase not configured') };
+function toRow(userId: string, payload: Partial<UserDataPayload>): Record<string, unknown> {
   const row: Record<string, unknown> = {
     user_id: userId,
     updated_at: new Date().toISOString(),
@@ -145,25 +126,75 @@ export async function saveUserData(userId: string, payload: Partial<UserDataPayl
   if (payload.project_tasks !== undefined) row.project_tasks = payload.project_tasks;
   if (payload.gamification !== undefined) row.gamification = payload.gamification;
   if (payload.settings !== undefined) row.settings = payload.settings;
+  return row;
+}
 
-  const { error } = await supabase.from('user_data').upsert(row, { onConflict: 'user_id' });
+export async function saveUserData(userId: string, payload: Partial<UserDataPayload>): Promise<{ error: Error | null }> {
+  if (!supabase) return { error: new Error('Supabase not configured') };
+  const { error } = await supabase
+    .from('user_data')
+    .upsert(toRow(userId, payload), { onConflict: 'user_id' });
   return { error: error ?? null };
 }
 
+/** Keepalive bodies are capped at 64KB by the spec; stay well under it. */
+const KEEPALIVE_MAX_BYTES = 60_000;
+
+/**
+ * Send a save from an unload or visibility handler.
+ *
+ * The Supabase client's request would be cancelled with the document, so this
+ * issues the REST call directly with `keepalive`, which the browser is permitted
+ * to complete after the page is gone. Returns whether the request was handed off
+ * at all — never whether the server accepted it, which is why callers must not
+ * treat a `true` here as a confirmed save.
+ */
+export function saveUserDataOnUnload(userId: string, payload: Partial<UserDataPayload>): boolean {
+  if (!supabaseUrl || !supabaseAnonKey) return false;
+  const token = getCachedAccessToken();
+  if (!token) return false;
+
+  let body: string;
+  try {
+    body = JSON.stringify(toRow(userId, payload));
+  } catch {
+    return false;
+  }
+  if (new Blob([body]).size > KEEPALIVE_MAX_BYTES) return false;
+
+  try {
+    void fetch(`${supabaseUrl}/rest/v1/user_data?on_conflict=user_id`, {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function hasLocalData(): boolean {
-  return LOCAL_KEYS.some(key => {
+  return ALL_DATA_KEYS.some(key => {
     const v = localStorage.getItem(key);
     return v !== null && v !== '[]' && v !== '{}' && v !== '';
   });
 }
 
 export async function migrateLocalToCloud(userId: string, clearLocal = false): Promise<{ error: Error | null }> {
-  const payload = localStorageToPayload();
-  const { error } = await saveUserData(userId, payload);
-  if (!error && clearLocal) {
-    LOCAL_KEYS.forEach(key => localStorage.removeItem(key));
+  const { error } = await saveUserData(userId, readLocalPayload());
+  if (error) return { error };
+  SYNC_COLLECTIONS.forEach(markSynced);
+  if (clearLocal) {
+    ALL_DATA_KEYS.forEach(key => localStorage.removeItem(key));
   }
-  return { error: error ?? null };
+  return { error: null };
 }
 
 export async function resetCloudData(userId: string): Promise<{ error: Error | null }> {
@@ -177,19 +208,4 @@ export async function resetCloudData(userId: string): Promise<{ error: Error | n
 
 export async function downloadCloudData(userId: string): Promise<UserDataPayload | null> {
   return loadUserData(userId);
-}
-
-export function applyCloudToLocal(payload: UserDataPayload): void {
-  const localGam = safeParse(localStorage.getItem('assisy_user_stats'), {} as Record<string, number>);
-  const cloudGam = (payload.gamification as Record<string, unknown> | undefined)?.userStats as Record<string, number> | undefined;
-
-  const localXP = (localGam as Record<string, number>)?.totalXPEarned ?? 0;
-  const cloudXP = (cloudGam as Record<string, number>)?.totalXPEarned ?? 0;
-
-  if (localXP > cloudXP && payload.gamification) {
-    const preserved = { ...payload, gamification: undefined };
-    payloadToLocalStorage(preserved as UserDataPayload);
-  } else {
-    payloadToLocalStorage(payload);
-  }
 }
