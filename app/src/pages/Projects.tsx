@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useProjectContext, PROJECT_COLORS, type ProjectSnapshot } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
@@ -17,6 +17,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { SelectButton, SelectionCheckbox } from '../components/common/SelectionControls';
+import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { askAIJson, isAIConfigured } from '../lib/ai';
@@ -65,6 +66,7 @@ export function Projects() {
   const {
     projects,
     subProjects,
+    projectTasks,
     loading,
     createProject,
     updateProject,
@@ -139,6 +141,33 @@ export function Projects() {
   const [subProjectStatusFilter, setSubProjectStatusFilter] = usePersistentState<WorkItemStatus | 'All'>('assisy_subprojects_status', 'All');
   const [taskStatusFilter, setTaskStatusFilter] = usePersistentState<WorkItemStatus | 'All'>('assisy_projecttasks_status', 'All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Arriving from global search. A project task lives two levels down, so the
+  // page has to open the right project and sub-project before the row exists
+  // for the highlight to find.
+  const handleSearchFocus = useCallback((id: string) => {
+    setPageView('cards');
+    setProjectStatusFilter('All');
+    setSearchQuery('');
+
+    const task = projectTasks.find(t => t.id === id);
+    if (task) {
+      setSelectedProjectId(task.projectId);
+      setSelectedSubProjectId(task.subProjectId);
+      setSubProjectStatusFilter('All');
+      setTaskStatusFilter('All');
+      setDetailView('subproject');
+      return;
+    }
+    // A project itself: show the top-level list rather than a detail pane.
+    if (projects.some(p => p.id === id)) {
+      setDetailView('none');
+      setSelectedProjectId(null);
+      setSelectedSubProjectId(null);
+    }
+  }, [projectTasks, projects, setPageView, setProjectStatusFilter, setSelectedProjectId,
+      setSelectedSubProjectId, setSubProjectStatusFilter, setTaskStatusFilter, setDetailView]);
+  useFocusHighlight(handleSearchFocus);
   const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
 
   // Form data
@@ -522,7 +551,7 @@ export function Projects() {
     const isTaskSelected = taskSelection.isSelected(task.id);
 
     return (
-      <div key={task.id} style={{ marginLeft: depth * 20 }}>
+      <div key={task.id} data-focus-id={task.id} style={{ marginLeft: depth * 20 }}>
         <div
           onClick={taskSelection.active ? () => taskSelection.toggle(task.id) : undefined}
           className={`group flex items-center justify-between gap-2 p-3 rounded-xl transition-all overflow-hidden ${
@@ -807,6 +836,7 @@ export function Projects() {
                 return (
                   <div
                     key={project.id}
+                    data-focus-id={project.id}
                     className={`card rounded-2xl overflow-hidden ${
                       isSelected ? (isDark ? 'ring-1 ring-violet-500/40' : 'ring-1 ring-violet-300') : ''
                     }`}

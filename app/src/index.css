@@ -309,6 +309,13 @@
   .animate-slide-down { animation: slideDown 0.25s ease-out; }
   .animate-scale-in { animation: scaleIn 0.2s ease-out; }
 
+  /* Applied by useFocusHighlight so an item arrived at from search is
+     identifiable once the page scrolls to it. */
+  .focus-flash {
+    animation: focusFlash 2s ease-out;
+    border-radius: 1rem;
+  }
+
   /* Safe area for notched devices */
   .safe-area-pt {
     padding-top: env(safe-area-inset-top, 0);
@@ -340,6 +347,11 @@
   @keyframes scaleIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes focusFlash {
+    0%, 55% { box-shadow: 0 0 0 2px rgb(139 92 246 / 0.9), 0 0 20px rgb(139 92 246 / 0.35); }
+    100% { box-shadow: 0 0 0 2px rgb(139 92 246 / 0); }
   }
 
   /* ── List Stagger ── */

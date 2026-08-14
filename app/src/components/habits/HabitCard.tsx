@@ -91,7 +91,7 @@ export function HabitCard({
 
   if (compact && habit.trackingType === 'boolean') {
     return (
-      <div className="relative inline-flex items-center" ref={menuRef}>
+      <div className="relative inline-flex items-center" ref={menuRef} data-focus-id={habit.id}>
         <button
           type="button"
           onClick={selectionMode ? () => onSelectToggle?.(habit.id) : handleBooleanToggle}
@@ -176,6 +176,7 @@ export function HabitCard({
 
   return (
     <div
+      data-focus-id={habit.id}
       onClick={selectionMode ? () => onSelectToggle?.(habit.id) : undefined}
       className={`rounded-xl p-3 transition-all duration-200 ${selectionMode ? 'cursor-pointer' : ''} ${
         isSelected

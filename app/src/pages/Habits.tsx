@@ -19,6 +19,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { SelectButton } from '../components/common/SelectionControls';
+import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
 import { pluralise } from '../lib/bulkUpdate';
 import { askAI, isAIConfigured } from '../lib/ai';
@@ -135,6 +136,15 @@ export function Habits() {
   const checkedInToday = hasCheckedInToday();
   const recentLogs = getRecentLogs(7);
   const recentLogs30 = getRecentLogs(30);
+
+  // Arriving from global search: drop the activity filter and reveal completed
+  // habits so the target is on screen.
+  const handleSearchFocus = useCallback(() => {
+    setActivityFilter('');
+    setShowCompleted(true);
+    setCollapsedGroups(new Set());
+  }, [setActivityFilter, setShowCompleted, setCollapsedGroups]);
+  useFocusHighlight(handleSearchFocus);
 
   const isHabitCompleted = useCallback((h: HabitWithLogs) => {
     const val = getTodaysLog(h.id);

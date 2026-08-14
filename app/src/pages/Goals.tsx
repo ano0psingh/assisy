@@ -16,6 +16,7 @@ import { useUndo } from '../components/common/UndoToast';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
+import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
 import { staggerDelay } from '../lib/animation';
 import { pluralise } from '../lib/bulkUpdate';
@@ -94,6 +95,16 @@ export function Goals() {
   const { refresh } = useDataVersion();
   const onRefresh = useCallback(async () => { refresh(); }, [refresh]);
   const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({ onRefresh });
+
+  // Arriving from global search: show the list view and drop filters, so the
+  // goal we are scrolling to is actually on screen.
+  const handleSearchFocus = useCallback(() => {
+    setStatusFilter('all');
+    setCategoryFilter('all');
+    setViewMode('list');
+    setSelectedGoalId(null);
+  }, [setStatusFilter, setCategoryFilter, setViewMode]);
+  useFocusHighlight(handleSearchFocus);
 
   // Always get fresh goal data from goals array (fixes stale state issues)
   const selectedGoal = selectedGoalId ? goals.find(g => g.id === selectedGoalId) || null : null;

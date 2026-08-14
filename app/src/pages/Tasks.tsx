@@ -15,6 +15,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { SelectButton } from '../components/common/SelectionControls';
+import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
 import { staggerDelay } from '../lib/animation';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
@@ -92,6 +93,17 @@ export function Tasks() {
   const [taskToMove, setTaskToMove] = useState<Task | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>('');
+
+  // Arriving from global search: clear the filters that could be hiding the
+  // task we are about to scroll to, then let the hook find it.
+  const handleSearchFocus = useCallback(() => {
+    setStatusFilter('all');
+    setCategoryFilter('all');
+    setSmartFilter('none');
+    setSearchQuery('');
+    setIsCompletedExpanded(true);
+  }, [setStatusFilter, setCategoryFilter, setSmartFilter]);
+  useFocusHighlight(handleSearchFocus);
 
   const goalMap = useMemo(() => {
     const m = new Map<string, string>();

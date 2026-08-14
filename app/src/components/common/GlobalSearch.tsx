@@ -15,6 +15,9 @@ type SearchResult = {
   subtitle?: string;
   status?: string;
   route: string;
+  /** Entity id the destination page should scroll to. Distinct from `id`,
+   *  which is namespaced to stay unique across result types. */
+  focusId: string;
 };
 
 export function GlobalSearch() {
@@ -69,6 +72,7 @@ export function GlobalSearch() {
           subtitle: `${t.category} · ${t.status}`,
           status: t.status,
           route: '/tasks',
+          focusId: t.id,
         });
       }
     });
@@ -82,6 +86,7 @@ export function GlobalSearch() {
           subtitle: `${g.category} · ${g.status}`,
           status: g.status,
           route: '/goals',
+          focusId: g.id,
         });
       }
     });
@@ -94,6 +99,7 @@ export function GlobalSearch() {
           title: h.name,
           subtitle: `${h.category} · ${h.streakCount}d streak`,
           route: '/habits',
+          focusId: h.id,
         });
       }
     });
@@ -107,6 +113,7 @@ export function GlobalSearch() {
           subtitle: p.status,
           status: p.status,
           route: '/projects',
+          focusId: p.id,
         });
       }
     });
@@ -123,6 +130,7 @@ export function GlobalSearch() {
           subtitle: subtitle || 'Project task',
           status: pt.status,
           route: '/projects',
+          focusId: pt.id,
         });
       }
     });
@@ -137,6 +145,7 @@ export function GlobalSearch() {
           title: title || 'Untitled article',
           subtitle: a.author ?? undefined,
           route: '/feed',
+          focusId: a.id,
         });
       }
     });
@@ -150,7 +159,8 @@ export function GlobalSearch() {
 
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
-    navigate(result.route);
+    // The destination page reads `focus` and scrolls the item into view.
+    navigate(`${result.route}?focus=${encodeURIComponent(result.focusId)}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

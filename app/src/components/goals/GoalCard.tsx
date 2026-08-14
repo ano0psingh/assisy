@@ -65,6 +65,7 @@ export function GoalCard({
 
   return (
     <div 
+      data-focus-id={goal.id}
       className={`group rounded-2xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.985] backdrop-blur-xl ${
         isSelected
           ? isDark
@@ -97,12 +98,25 @@ export function GoalCard({
           <div className="flex-1 min-w-0">
             {/* Title with sub-goals badge */}
             <div className="flex items-center gap-3 flex-wrap">
+              {/* The card is clickable for pointers, but the title is the real
+                  control, so the goal is reachable by keyboard. Making the
+                  whole card a button would nest the actions inside it. */}
               <h3 className={`font-semibold text-lg ${
                 isCompleted || isArchived
                   ? isDark ? 'text-gray-500' : 'text-slate-400'
                   : isDark ? 'text-white' : 'text-slate-800'
               }`}>
-                {goal.title}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectionMode) onSelectToggle?.(goal.id);
+                    else onClick(goal);
+                  }}
+                  className="text-left rounded hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                >
+                  {goal.title}
+                </button>
               </h3>
               {subGoalsCount > 0 && (
                 <button

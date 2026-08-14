@@ -244,7 +244,7 @@ export function TaskCard({
   };
 
   return (
-    <div className="relative rounded-2xl">
+    <div className="relative rounded-2xl" data-focus-id={task.id}>
       {swipeOffset !== 0 && (
         <div className="absolute inset-0 flex rounded-2xl overflow-hidden">
           <div className={`flex-1 flex items-center justify-end pr-4 ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity ${isDark ? 'bg-red-500/20' : 'bg-red-50'}`}>

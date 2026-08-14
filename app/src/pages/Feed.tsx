@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useFeed, type FeedFilter, type FeedSort } from '../context/FeedContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -7,6 +7,7 @@ import { FeedPageSkeleton } from '../components/common/Skeleton';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { SelectionCheckbox } from '../components/common/SelectionControls';
 import { useBulkSelection } from '../hooks/useBulkSelection';
+import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import {
   Newspaper, Plus, Link, RefreshCw, Bookmark, BookmarkCheck,
   Eye, EyeOff, Trash2, ChevronDown, ChevronUp, ExternalLink,
@@ -164,6 +165,15 @@ export function Feed() {
   // hidden articles must not be swept up by a bulk action.
   const visibleArticleIds = useMemo(() => filteredArticles.map(a => a.id), [filteredArticles]);
   const selection = useBulkSelection(visibleArticleIds);
+
+  // Arriving from global search: an article is easily hidden behind the unread
+  // or tag filters, so widen them before scrolling to it.
+  const handleSearchFocus = useCallback(() => {
+    setFilter('all');
+    setTagFilter(null);
+    setSubFilter(null);
+  }, [setFilter, setTagFilter, setSubFilter]);
+  useFocusHighlight(handleSearchFocus);
 
   const bulkButtonClass = `px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
     isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -781,6 +791,7 @@ export function Feed() {
               return (
                 <div
                   key={article.id}
+                  data-focus-id={article.id}
                   className={`group rounded-2xl transition-all ${
                     isSelected
                       ? isDark ? 'bg-violet-500/10 border border-violet-500/30' : 'bg-violet-50/60 border border-violet-200'
