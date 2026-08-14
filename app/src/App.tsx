@@ -1,32 +1,61 @@
+import { lazy, Suspense, type ComponentType } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
-import { Tasks } from './pages/Tasks';
-import { Goals } from './pages/Goals';
-import { Habits } from './pages/Habits';
-import { Projects } from './pages/Projects';
-import { Achievements } from './pages/Achievements';
-import { Stats } from './pages/Stats';
-import { WeeklyReview } from './pages/WeeklyReview';
-import { Calendar } from './pages/Calendar';
-import { Feed } from './pages/Feed';
+import { Skeleton } from './components/common/Skeleton';
+
+/**
+ * Dashboard is the landing route, so it stays in the main bundle — loading it
+ * on demand would add a round trip to the most common entry point. Every other
+ * route is split out, which keeps pages like Achievements and Feed off the
+ * critical path for someone opening the app to tick one thing off.
+ */
+const namedRoute = <T extends Record<string, unknown>>(
+  loader: () => Promise<T>,
+  exportName: keyof T,
+) => lazy(() => loader().then(module => ({ default: module[exportName] as ComponentType })));
+
+const Tasks = namedRoute(() => import('./pages/Tasks'), 'Tasks');
+const Goals = namedRoute(() => import('./pages/Goals'), 'Goals');
+const Habits = namedRoute(() => import('./pages/Habits'), 'Habits');
+const Projects = namedRoute(() => import('./pages/Projects'), 'Projects');
+const Achievements = namedRoute(() => import('./pages/Achievements'), 'Achievements');
+const Stats = namedRoute(() => import('./pages/Stats'), 'Stats');
+const WeeklyReview = namedRoute(() => import('./pages/WeeklyReview'), 'WeeklyReview');
+const Calendar = namedRoute(() => import('./pages/Calendar'), 'Calendar');
+const Feed = namedRoute(() => import('./pages/Feed'), 'Feed');
+
+function PageFallback() {
+  return (
+    <div className="space-y-4 animate-fade-in" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading page</span>
+      <Skeleton className="h-8 w-40 rounded-xl" />
+      <Skeleton className="h-24 w-full rounded-2xl" />
+      <Skeleton className="h-24 w-full rounded-2xl" />
+      <Skeleton className="h-24 w-full rounded-2xl" />
+    </div>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
       <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/habits" element={<Habits />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/achievements" element={<Achievements />} />
-          <Route path="/stats" element={<Stats />} />
-          <Route path="/review" element={<WeeklyReview />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/feed" element={<Feed />} />
-        </Routes>
+        {/* Inside Layout so the header and nav stay put while a route arrives. */}
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/habits" element={<Habits />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/achievements" element={<Achievements />} />
+            <Route path="/stats" element={<Stats />} />
+            <Route path="/review" element={<WeeklyReview />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/feed" element={<Feed />} />
+          </Routes>
+        </Suspense>
       </Layout>
     </BrowserRouter>
   );
