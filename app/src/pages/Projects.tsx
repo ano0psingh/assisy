@@ -21,6 +21,7 @@ import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { askAIJson, isAIConfigured } from '../lib/ai';
+import { getLocalDateString } from '../lib/dateUtils';
 
 const PROJECT_TASK_BULK_FIELDS: BulkEditField[] = [
   {
@@ -419,7 +420,7 @@ export function Projects() {
       title: project.title,
       description: project.description || '',
       color: project.color,
-      deadline: project.deadline ? new Date(project.deadline).toISOString().split('T')[0] : '',
+      deadline: project.deadline ? getLocalDateString(new Date(project.deadline)) : '',
       status: project.status,
     });
     setIsProjectFormOpen(true);
@@ -456,7 +457,7 @@ export function Projects() {
     setSubProjectForm({
       title: subProject.title,
       description: subProject.description || '',
-      deadline: subProject.deadline ? new Date(subProject.deadline).toISOString().split('T')[0] : '',
+      deadline: subProject.deadline ? getLocalDateString(new Date(subProject.deadline)) : '',
       status: subProject.status,
     });
     setIsSubProjectFormOpen(true);
@@ -499,7 +500,7 @@ export function Projects() {
       description: task.description || '',
       priority: task.priority,
       effort: task.effort,
-      deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
+      deadline: task.deadline ? getLocalDateString(new Date(task.deadline)) : '',
       parentTaskId: task.parentTaskId || '',
     });
     setIsTaskFormOpen(true);
@@ -545,7 +546,7 @@ export function Projects() {
   // Render task item with sub-tasks
   const renderTask = (task: ProjectTask, depth = 0) => {
     const subTasks = getSubTasks(task.id);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     const isAddedToToday = task.isFocusedToday && task.focusedDate === today;
 
     const isTaskSelected = taskSelection.isSelected(task.id);

@@ -8,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import { askAIJson, isAIConfigured } from '../lib/ai';
 import type { Task } from '../types';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
+import { getLocalDateString } from '../lib/dateUtils';
 
 type ViewMode = 'month' | 'week';
 
@@ -27,13 +28,6 @@ function getDaysInMonth(year: number, month: number): Date[] {
     date.setDate(date.getDate() + 1);
   }
   return days;
-}
-
-function getDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -84,7 +78,7 @@ export function Calendar() {
   const isDark = theme === 'dark';
 
   const today = new Date();
-  const todayStr = getDateString(today);
+  const todayStr = getLocalDateString(today);
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date>(today);
@@ -112,7 +106,7 @@ export function Calendar() {
           effort: t.effort,
           priority: t.priority,
           category: t.category,
-          dueDate: t.dueDate ? new Date(t.dueDate).toISOString().split('T')[0] : null,
+          dueDate: t.dueDate ? getLocalDateString(new Date(t.dueDate)) : null,
         }));
 
       const recentLogs = getRecentLogs(30);
@@ -133,11 +127,11 @@ export function Calendar() {
 
       const wkDays = getWeekDays(selectedDate);
       const weekDistribution = wkDays.map(d => {
-        const key = getDateString(d);
+        const key = getLocalDateString(d);
         const dayTasks = allTasks.filter(t => {
           if (t.focusedDate === key) return true;
-          if (t.completedAt && getDateString(new Date(t.completedAt)) === key) return true;
-          if (getDateString(new Date(t.createdAt)) === key) return true;
+          if (t.completedAt && getLocalDateString(new Date(t.completedAt)) === key) return true;
+          if (getLocalDateString(new Date(t.createdAt)) === key) return true;
           return false;
         });
         return { day: DAY_NAMES[d.getDay()], taskCount: dayTasks.length };
@@ -176,7 +170,7 @@ export function Calendar() {
     const targetDay = wkDays.find(d => d.getDay() === dayIndex);
     if (!targetDay) return;
 
-    const dateStr = getDateString(targetDay);
+    const dateStr = getLocalDateString(targetDay);
     if (dateStr === todayStr) {
       addToToday(suggestion.taskId);
     } else {
@@ -249,7 +243,7 @@ export function Calendar() {
     const map = new Map<string, Task[]>();
     for (const t of allTasks) {
       if (t.status === 'Completed' && t.completedAt) {
-        const key = getDateString(new Date(t.completedAt));
+        const key = getLocalDateString(new Date(t.completedAt));
         const arr = map.get(key) ?? [];
         arr.push(t);
         map.set(key, arr);
@@ -262,7 +256,7 @@ export function Calendar() {
     const map = new Map<string, Task[]>();
     for (const t of allTasks) {
       if (t.dueDate) {
-        const key = getDateString(new Date(t.dueDate));
+        const key = getLocalDateString(new Date(t.dueDate));
         const arr = map.get(key) ?? [];
         arr.push(t);
         map.set(key, arr);
@@ -287,7 +281,7 @@ export function Calendar() {
     const map = new Map<string, Task[]>();
     for (const t of allTasks) {
       if (t.createdAt) {
-        const key = getDateString(new Date(t.createdAt));
+        const key = getLocalDateString(new Date(t.createdAt));
         const arr = map.get(key) ?? [];
         arr.push(t);
         map.set(key, arr);
@@ -317,7 +311,7 @@ export function Calendar() {
     const map = new Map<string, (typeof dailyLogs)[number]>();
     for (const log of dailyLogs) {
       const d = log.date instanceof Date ? log.date : new Date(log.date);
-      const key = d.toISOString().split('T')[0];
+      const key = getLocalDateString(d);
       map.set(key, log);
     }
     return map;
@@ -332,7 +326,7 @@ export function Calendar() {
     let planned = 0;
 
     for (const day of daysInMonth) {
-      const key = getDateString(day);
+      const key = getLocalDateString(day);
       completed += tasksByCompletedDate.get(key)?.length ?? 0;
       habitsLogged += habitLogsByDate.get(key)?.length ?? 0;
       due += tasksByDueDate.get(key)?.length ?? 0;
@@ -353,7 +347,7 @@ export function Calendar() {
 
   // ── Selected day details ──
 
-  const selectedDateStr = getDateString(selectedDate);
+  const selectedDateStr = getLocalDateString(selectedDate);
   const selectedCompleted = tasksByCompletedDate.get(selectedDateStr) ?? [];
   const selectedDue = (tasksByDueDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
   const selectedFocused = (tasksByFocusedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
@@ -366,11 +360,11 @@ export function Calendar() {
 
   const todaysTasks = useMemo(() => {
     const regularToday = getTodaysTasks();
-    const todayKey = getDateString(today);
+    const todayKey = getLocalDateString(today);
     const projectToday = projectTasksToTasks(subProjects, projects, getTasksBySubProject)
       .filter(t => {
         if (t.focusedDate === todayKey) return true;
-        if (t.status === 'Completed' && t.completedAt && getDateString(new Date(t.completedAt)) === todayKey) return true;
+        if (t.status === 'Completed' && t.completedAt && getLocalDateString(new Date(t.completedAt)) === todayKey) return true;
         return false;
       });
     const seen = new Set(regularToday.map(t => t.id));
@@ -616,7 +610,7 @@ export function Calendar() {
               {/* Calendar grid */}
               <div className="grid grid-cols-7">
                 {allDays.map((day, idx) => {
-                  const dateStr = getDateString(day);
+                  const dateStr = getLocalDateString(day);
                   const isCurrentMonth = day.getMonth() === currentMonth;
                   const isToday = isSameDay(day, today);
                   const isSelected = isSameDay(day, selectedDate);
@@ -702,7 +696,7 @@ export function Calendar() {
           {viewMode === 'week' && (
             <div className="grid grid-cols-7 gap-2">
               {weekDays.map((day) => {
-                const dateStr = getDateString(day);
+                const dateStr = getLocalDateString(day);
                 const isToday = isSameDay(day, today);
                 const isSelected = isSameDay(day, selectedDate);
                 const allTasksForDay = getAllTasksForDate(dateStr);

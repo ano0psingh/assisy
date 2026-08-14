@@ -12,6 +12,7 @@ import { Plus, Activity, TrendingDown, TrendingUp, Minus, X } from 'lucide-react
 import { useTheme } from '../../context/ThemeContext';
 import type { MetricEntry } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
+import { getLocalDateString } from '../../lib/dateUtils';
 
 const STORAGE_KEY = 'assisy_metrics';
 
@@ -56,7 +57,7 @@ export function BodyMetrics() {
   const [customUnit, setCustomUnit] = useState('');
   const [value, setValue] = useState('');
   const [note, setNote] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => getLocalDateString());
   const [activeMetric, setActiveMetric] = useState<string | null>(null);
 
   const metricTypes = useMemo(() => {

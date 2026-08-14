@@ -6,6 +6,7 @@ import { SelectionCheckbox } from '../common/SelectionControls';
 import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
 import { hapticLight, hapticMedium } from '../../lib/haptics';
 import { getRecurringCompletionRate } from '../../context/TaskContext';
+import { getLocalDateString } from '../../lib/dateUtils';
 
 interface TaskCardProps {
   task: Task;
@@ -122,7 +123,7 @@ export function TaskCard({
   const isCarriedForward = task.status === 'Carried Forward' || (!task.isRecurring && isFromPreviousDay(task.createdAt) && !isCompleted);
   const daysAgoText = isCarriedForward && !task.isRecurring ? getDaysAgoText(task.createdAt) : '';
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
   const isFocusedToday = task.isFocusedToday && task.focusedDate === todayStr;
 
   const isDueToday = task.dueDate && (() => {
@@ -333,12 +334,12 @@ export function TaskCard({
                 )}
                 {task.isRecurring && (
                   <span className={`text-[11px] whitespace-nowrap ${
-                    task.pausedUntil && new Date().toISOString().split('T')[0] <= task.pausedUntil
+                    task.pausedUntil && getLocalDateString() <= task.pausedUntil
                       ? isDark ? 'text-amber-400' : 'text-amber-500'
                       : isDark ? 'text-violet-400' : 'text-violet-500'
                   }`}>
                     <Clock size={10} className="inline -mt-0.5 mr-0.5" />
-                    {task.pausedUntil && new Date().toISOString().split('T')[0] <= task.pausedUntil
+                    {task.pausedUntil && getLocalDateString() <= task.pausedUntil
                       ? `Paused until ${new Date(task.pausedUntil + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
                       : formatRecurrence(task)
                     }

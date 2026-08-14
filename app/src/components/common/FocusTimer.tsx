@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { saveSettings } from '../../store/unifiedStore';
 import { Play, Pause, RotateCcw, X, Zap, Timer, SkipForward, Coffee, Brain, Settings2 } from 'lucide-react';
 import { notifyPomodoroComplete } from '../../lib/notifications';
+import { getLocalDateString } from '../../lib/dateUtils';
 
 type Phase = 'work' | 'shortBreak' | 'longBreak';
 
@@ -40,10 +41,10 @@ function loadTodayStats(): { completed: number; totalMinutes: number; date: stri
   try {
     const data = localStorage.getItem(STORAGE_KEY + '_today');
     const parsed = data ? JSON.parse(data) : null;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     if (parsed?.date === today) return parsed;
     return { completed: 0, totalMinutes: 0, date: today };
-  } catch { return { completed: 0, totalMinutes: 0, date: new Date().toISOString().split('T')[0] }; }
+  } catch { return { completed: 0, totalMinutes: 0, date: getLocalDateString() }; }
 }
 
 function playNotificationSound() {
@@ -141,7 +142,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
         ...todayStats,
         completed: todayStats.completed + 1,
         totalMinutes: todayStats.totalMinutes + settings.workMinutes,
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateString(),
       };
       saveTodayStats(newStats);
 

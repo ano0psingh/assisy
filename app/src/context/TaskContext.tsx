@@ -4,6 +4,7 @@ import { LocalStorage } from '../store/localStorage';
 import { saveTasks as saveTasksToStore } from '../store/unifiedStore';
 import { collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import { getTaskXPValue } from '../utils/xpCalculator';
+import { getLocalDateString } from '../lib/dateUtils';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
@@ -345,7 +346,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       .filter(task => {
         // For recurring tasks: if completed on a PREVIOUS day, treat as available again
         if (task.isRecurring && task.status === 'Completed' && task.completedAt) {
-          const completedStr = new Date(task.completedAt).toISOString().split('T')[0];
+          const completedStr = getLocalDateString(new Date(task.completedAt));
           if (completedStr === todayStr) {
             return true; // completed today — show in completed section
           }
@@ -356,7 +357,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (task.status === 'Completed' && !task.isRecurring) return false;
         // Recurring completed today — already handled above
         if (task.status === 'Completed' && task.isRecurring) {
-          const completedStr = task.completedAt ? new Date(task.completedAt).toISOString().split('T')[0] : '';
+          const completedStr = task.completedAt ? getLocalDateString(new Date(task.completedAt)) : '';
           if (completedStr === todayStr) return true;
           // Fall through to recurring schedule check below
         }
@@ -415,7 +416,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       .map(task => {
         // Auto-reset recurring tasks completed on a previous day so they appear as pending
         if (task.isRecurring && task.status === 'Completed' && task.completedAt) {
-          const completedStr = new Date(task.completedAt).toISOString().split('T')[0];
+          const completedStr = getLocalDateString(new Date(task.completedAt));
           if (completedStr !== todayStr) {
             return { ...task, status: 'Pending' as const };
           }
@@ -561,7 +562,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const pauseRecurring = useCallback((taskId: string, days: number) => {
     const until = new Date();
     until.setDate(until.getDate() + days);
-    const untilStr = until.toISOString().split('T')[0];
+    const untilStr = getLocalDateString(until);
     setTasks(prev => {
       const updated = updateTaskInArray(prev, taskId, { pausedUntil: untilStr });
       saveTasksToStore(updated, userId);

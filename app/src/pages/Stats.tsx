@@ -21,6 +21,7 @@ import { useGamification } from '../context/GamificationContext';
 import { SkillTreeViz } from '../components/gamification/SkillTreeViz';
 import { askAIJson, isAIConfigured } from '../lib/ai';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
+import { getLocalDateString } from '../lib/dateUtils';
 
 export function Stats() {
   const { tasks } = useTaskContext();
@@ -93,7 +94,7 @@ export function Stats() {
       const d = new Date();
       d.setDate(d.getDate() - i);
       d.setHours(0, 0, 0, 0);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(d);
       const dayEnd = new Date(d);
       dayEnd.setHours(23, 59, 59, 999);
       const count = completedTasks.filter(t => {
@@ -136,7 +137,7 @@ export function Stats() {
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(weekStart.getDate() + i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(d);
       let done = 0;
       habits.forEach(h => {
         const logs = getHabitLogs(h.id, 14);
@@ -194,7 +195,7 @@ export function Stats() {
       const raw = localStorage.getItem(AI_CACHE_KEY);
       if (!raw) return null;
       const { date, data } = JSON.parse(raw);
-      if (date === new Date().toISOString().split('T')[0]) return data as AIAnalysis;
+      if (date === getLocalDateString()) return data as AIAnalysis;
     } catch { /* ignore */ }
     return null;
   }, []);
@@ -271,7 +272,7 @@ export function Stats() {
       );
 
       setAiAnalysis(result);
-      localStorage.setItem(AI_CACHE_KEY, JSON.stringify({ date: new Date().toISOString().split('T')[0], data: result }));
+      localStorage.setItem(AI_CACHE_KEY, JSON.stringify({ date: getLocalDateString(), data: result }));
     } catch (err) {
       setAiError(err instanceof Error ? err.message : 'Failed to generate analysis');
     } finally {

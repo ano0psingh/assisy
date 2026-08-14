@@ -5,6 +5,7 @@ import { Sparkles, Target, Pencil, Calendar, Loader2, Check, Square, CheckSquare
 import { TiptapEditor } from '../common/TiptapEditor';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { askAIJson, isAIConfigured } from '../../lib/ai';
+import { getLocalDateString } from '../../lib/dateUtils';
 
 interface SuggestedSubtask {
   title: string;
@@ -68,7 +69,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       setSpecificDays(editingTask.specificDays || []);
       setMonthDay(editingTask.monthDay ?? 1);
       setSelectedGoalId(editingTask.goalId || '');
-      setDueDate(editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : '');
+      setDueDate(editingTask.dueDate ? getLocalDateString(new Date(editingTask.dueDate)) : '');
     } else {
       resetForm();
     }
@@ -287,7 +288,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         type="date"
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        min={new Date().toISOString().split('T')[0]}
+        min={getLocalDateString()}
         className={inputCls}
       />
     </div>

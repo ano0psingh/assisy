@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { hasLocalData, resetCloudData, downloadCloudData } from '../../store/cloudStore';
+import { getLocalDateString } from '../../lib/dateUtils';
 import { User, Lock, Trash2, AlertTriangle, Check, Mail, Database, CloudOff, Download, RotateCcw } from 'lucide-react';
 
 const LOCAL_KEYS = [
@@ -120,7 +121,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `assisy-cloud-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `assisy-cloud-backup-${getLocalDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setMessage({ type: 'success', text: 'Cloud data downloaded.' });

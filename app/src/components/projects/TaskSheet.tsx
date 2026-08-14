@@ -16,6 +16,7 @@ import {
 import { useProjectContext } from '../../context/ProjectContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ProjectTask, WorkItemStatus } from '../../types';
+import { getLocalDateString } from '../../lib/dateUtils';
 
 type SortKey =
   | 'title'
@@ -284,7 +285,7 @@ export function TaskSheet() {
     updateTaskStatus(task.id, order[(idx + 1) % order.length]);
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
 
   const toggleToday = (task: ProjectTask) => {
     const isToday = task.isFocusedToday && task.focusedDate === todayStr;

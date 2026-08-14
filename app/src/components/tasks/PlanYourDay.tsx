@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Task, ProjectTask } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { X, Search, Plus, Check, Flame, CalendarDays, Minus, FolderKanban } from 'lucide-react';
+import { getLocalDateString } from '../../lib/dateUtils';
 
 interface PlanYourDayProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export function PlanYourDay({
 
   if (!isOpen) return null;
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
 
   const manualTasks = todaysTasks.filter(t => t.isFocusedToday && t.focusedDate === todayStr);
   const autoTasks = todaysTasks.filter(t => !(t.isFocusedToday && t.focusedDate === todayStr));

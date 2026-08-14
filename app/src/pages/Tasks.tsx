@@ -21,6 +21,7 @@ import { usePersistentSet, usePersistentState } from '../hooks/usePersistentStat
 import { staggerDelay } from '../lib/animation';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { hapticMedium } from '../lib/haptics';
+import { getLocalDateString } from '../lib/dateUtils';
 import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, Search, X } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 
@@ -155,7 +156,7 @@ export function Tasks() {
     setTaskToMove(null);
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
   const nowDate = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
   const weekEnd = (() => { const d = new Date(nowDate); d.setDate(d.getDate() + 7); return d; })();
 
