@@ -193,7 +193,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               : <Square size={15} className={isDark ? 'text-gray-600' : 'text-slate-300'} />
             }
             <span className="flex-1">{st.title}</span>
-            <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
               st.effort === 'High'
                 ? isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
                 : isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'

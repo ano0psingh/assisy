@@ -95,7 +95,7 @@ function BacklogPicker({ tasks, onAdd, isDark }: { tasks: Task[]; onAdd: (id: st
           >
             <Plus size={12} className="flex-shrink-0" />
             <span className="truncate flex-1">{task.title}</span>
-            <span className={`text-[11px] flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{task.category}</span>
+            <span className={`text-xs flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{task.category}</span>
           </button>
         ))}
         {expanded && filtered.length === 0 && search && (
@@ -689,7 +689,7 @@ RULES:
                 <ListPlus size={16} />
                 <span>Plan Day</span>
                 {getSuggestedTasks().length > 0 && (
-                  <span className={`ml-0.5 px-1.5 py-0.5 text-[11px] font-bold rounded-full ${
+                  <span className={`ml-0.5 px-1.5 py-0.5 text-xs font-bold rounded-full ${
                     isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-200 text-violet-700'
                   }`}>{getSuggestedTasks().length}</span>
                 )}
@@ -776,7 +776,7 @@ RULES:
                   strokeDasharray={`${totalTodayTasks > 0 ? (totalTodayDone / totalTodayTasks) * 113.1 : 0} 113.1`}
                 />
               </svg>
-              <span className={`absolute text-[11px] font-bold ${isDark ? 'text-violet-300' : 'text-violet-600'}`}>
+              <span className={`absolute text-xs font-bold ${isDark ? 'text-violet-300' : 'text-violet-600'}`}>
                 {totalTodayDone}/{totalTodayTasks}
               </span>
             </div>
@@ -785,7 +785,7 @@ RULES:
                 {totalTodayDone}/{totalTodayTasks} <span className={isDark ? 'text-gray-500' : 'text-slate-500'}>done</span>
               </p>
               {habitCheckInStats.totalHabits > 0 && (
-                <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
                   {habitCheckInStats.todayCompletedCount}/{habitCheckInStats.totalHabits} habits
                 </p>
               )}
@@ -809,22 +809,22 @@ RULES:
         <div className="flex flex-col items-center gap-0.5 py-1">
           <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
           <span className={`text-sm font-bold ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{getTotalLevel()}</span>
-          <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Level</span>
+          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Level</span>
         </div>
         <div className="flex flex-col items-center gap-0.5 py-1">
           <CheckSquare className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
           <span className={`text-sm font-bold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{totalTodayDone}/{totalTodayTasks}</span>
-          <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks</span>
+          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks</span>
         </div>
         <div className="flex flex-col items-center gap-0.5 py-1">
           <Flame className={`w-4 h-4 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
           <span className={`text-sm font-bold ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>{userStats.currentStreak}</span>
-          <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Streak</span>
+          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Streak</span>
         </div>
         <div className="flex flex-col items-center gap-0.5 py-1">
           <Trophy className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
           <span className={`text-sm font-bold ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{getUnlockedAchievements().length}</span>
-          <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Badges</span>
+          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Badges</span>
         </div>
       </div>
       {/* Desktop: always full cards. Mobile: full cards only when expanded */}
@@ -849,7 +849,7 @@ RULES:
             <span className={`text-xs ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>Level</span>
           </div>
           <div className={`text-xl font-bold ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{getTotalLevel()}</div>
-          <p className={`text-[11px] mt-0.5 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>{getTitle()}</p>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>{getTitle()}</p>
           <div
             className={`mt-2 h-1 rounded-full overflow-hidden ${isDark ? 'bg-violet-500/20' : 'bg-violet-200'}`}
             role="progressbar"
@@ -863,7 +863,7 @@ RULES:
               style={{ width: `${levelProgress.percent}%` }}
             />
           </div>
-          <p className={`text-[11px] mt-1 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>
+          <p className={`text-xs mt-1 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>
             {levelProgress.xpToNextLevel} XP to level {getTotalLevel() + 1}
           </p>
         </div>
@@ -873,7 +873,7 @@ RULES:
             <span className={`text-xs ${isDark ? 'text-blue-400/70' : 'text-blue-500/80'}`}>Tasks</span>
           </div>
           <div className={`text-xl font-bold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{totalTodayDone}/{totalTodayTasks}</div>
-          <p className={`text-[11px] mt-0.5 ${isDark ? 'text-blue-400/50' : 'text-blue-500/60'}`}>done today</p>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-blue-400/50' : 'text-blue-500/60'}`}>done today</p>
         </div>
         <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-orange-500/10 border border-orange-500/15' : 'bg-orange-50 border border-orange-100'}`}>
           <div className="flex items-center gap-2 mb-1">
@@ -881,7 +881,7 @@ RULES:
             <span className={`text-xs ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>Streak</span>
           </div>
           <div className={`text-xl font-bold ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>{userStats.currentStreak}</div>
-          <p className={`text-[11px] mt-0.5 ${isDark ? 'text-orange-400/50' : 'text-orange-500/60'}`}>days</p>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-orange-400/50' : 'text-orange-500/60'}`}>days</p>
         </div>
         <div className={`rounded-xl px-4 py-3 ${isDark ? 'bg-amber-500/10 border border-amber-500/15' : 'bg-amber-50 border border-amber-100'}`}>
           <div className="flex items-center gap-2 mb-1">
@@ -889,7 +889,7 @@ RULES:
             <span className={`text-xs ${isDark ? 'text-amber-400/70' : 'text-amber-500/80'}`}>Badges</span>
           </div>
           <div className={`text-xl font-bold ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{getUnlockedAchievements().length}</div>
-          <p className={`text-[11px] mt-0.5 ${isDark ? 'text-amber-400/50' : 'text-amber-500/60'}`}>unlocked</p>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-amber-400/50' : 'text-amber-500/60'}`}>unlocked</p>
         </div>
       </div>
 
@@ -957,7 +957,7 @@ RULES:
                     </div>
                   ))}
                   {group.tasks.length > 4 && (
-                    <p className={`text-[11px] pl-3 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>+{group.tasks.length - 4} more in backlog</p>
+                    <p className={`text-xs pl-3 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>+{group.tasks.length - 4} more in backlog</p>
                   )}
                 </div>
               </div>
@@ -1089,7 +1089,7 @@ RULES:
               </span>
             </div>
           </div>
-          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-200/70 text-slate-500'}`}>View full review →</span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-200/70 text-slate-500'}`}>View full review →</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-xs">
           <div className="flex items-center gap-1.5">
@@ -1179,7 +1179,7 @@ RULES:
                   🔥 {dailyBonusResult.streak} day streak
                 </span>
                 {dailyBonusResult.multiplier > 1 && (
-                  <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                     isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
                   }`}>
                     {dailyBonusResult.multiplier}x bonus

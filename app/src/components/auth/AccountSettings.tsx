@@ -287,7 +287,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
           {user?.user_metadata?.full_name && (
             <p className={`text-xs truncate ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
           )}
-          <div className={`flex items-center gap-3 mt-1 text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+          <div className={`flex items-center gap-3 mt-1 text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
             <span className="flex items-center gap-1">
               <Mail size={10} /> {provider === 'google' ? 'Google' : 'Email'}
             </span>
@@ -299,7 +299,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
       {/* Security */}
       {provider !== 'google' && (
         <div>
-          <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Security</p>
+          <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Security</p>
           <button onClick={() => go('password')} className={itemCls}>
             <Lock size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
             Change Password
@@ -309,7 +309,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       {/* Data */}
       <div>
-        <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Data</p>
+        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Data</p>
         <div className="space-y-0.5">
           <button onClick={handleDownloadCloudData} disabled={loading} className={itemCls}>
             <Download size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
@@ -328,7 +328,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       {/* Danger zone */}
       <div>
-        <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-red-500/60' : 'text-red-400'}`}>Danger Zone</p>
+        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-red-500/60' : 'text-red-400'}`}>Danger Zone</p>
         <button onClick={() => go('delete')} className={`${itemCls} ${isDark ? '!text-red-400' : '!text-red-500'}`}>
           <Trash2 size={16} />
           Delete Account

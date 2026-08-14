@@ -126,7 +126,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             >
               <Search size={18} className="md:hidden" />
               <Search size={14} className="hidden md:block" />
-              <kbd className={`text-[11px] px-1 py-0.5 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
+              <kbd className={`text-xs px-1 py-0.5 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
             </button>
 
             {/* Focus timer - desktop only */}
@@ -199,7 +199,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                         <div className={`px-3.5 py-3 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
                           <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{user.user_metadata?.full_name || user.email}</p>
                           {user.user_metadata?.full_name && (
-                            <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
+                            <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
                           )}
                         </div>
                         <div className="p-1.5 space-y-0.5">
@@ -334,7 +334,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             >
               <Search size={18} />
               <span>Search</span>
-              <kbd className={`ml-auto text-[11px] px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
+              <kbd className={`ml-auto text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
             </button>
 
             {onOpenFocusTimer && (

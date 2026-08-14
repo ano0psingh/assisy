@@ -310,7 +310,7 @@ export function TaskSheet() {
     return sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
   };
 
-  const thCls = `px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap transition-colors ${
+  const thCls = `px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap transition-colors ${
     isDark ? 'text-gray-400 hover:text-gray-200' : 'text-slate-500 hover:text-slate-800'
   }`;
 
@@ -521,7 +521,7 @@ export function TaskSheet() {
                             {task.tags.slice(0, 3).map(tag => (
                               <span
                                 key={tag}
-                                className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${
+                                className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                                   isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
                                 }`}
                               >
@@ -529,7 +529,7 @@ export function TaskSheet() {
                               </span>
                             ))}
                             {task.tags.length > 3 && (
-                              <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                              <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                                 +{task.tags.length - 3}
                               </span>
                             )}

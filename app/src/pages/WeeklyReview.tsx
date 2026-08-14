@@ -455,7 +455,7 @@ Respond ONLY with valid JSON matching this exact schema:
                       const done = dayDone.get(idx);
                       return (
                         <div key={dayLabel} className="flex flex-col items-center gap-0.5">
-                          <span className={`text-[11px] leading-none ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{dayLabel[0]}</span>
+                          <span className={`text-xs leading-none ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{dayLabel[0]}</span>
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                             done
                               ? isDark ? 'bg-emerald-500/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
@@ -490,7 +490,7 @@ Respond ONLY with valid JSON matching this exact schema:
               <div key={goal.id} className={cardClass + ' px-4 py-3'}>
                 <div className="flex items-center justify-between mb-2">
                   <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{goal.title}</p>
-                  <span className={`text-[11px] px-2 py-0.5 rounded-full ${
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
                     isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                   }`}>
                     {goal.category}

@@ -89,7 +89,7 @@ export function PlanYourDay({
                   <div key={task.id} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${isDark ? 'bg-white/[0.02]' : 'bg-slate-50/50'}`}>
                     <Check size={12} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
                     <span className={`text-sm flex-1 truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{task.title}</span>
-                    <span className={`text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                    <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                       {task.isRecurring ? 'recurring' : task.status === 'Carried Forward' ? 'carried' : 'due'}
                     </span>
                   </div>
@@ -147,12 +147,12 @@ export function PlanYourDay({
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     {task.priority === 'High' && <Flame size={11} className="text-red-500" />}
                     {task.dueDate && (
-                      <span className={`text-[11px] flex items-center gap-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                      <span className={`text-xs flex items-center gap-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                         <CalendarDays size={9} />
                         {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     )}
-                    <span className={`text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{task.category}</span>
+                    <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{task.category}</span>
                   </div>
                 </button>
               ))}

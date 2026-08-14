@@ -172,8 +172,8 @@ export function GoalDetail({
       {/* XP progress bar */}
       <div className="w-full max-w-xs">
         <div className="flex items-center justify-between mb-1">
-          <span className={`text-[11px] font-medium ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP to next level</span>
-          <span className={`text-[11px] font-semibold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+          <span className={`text-xs font-medium ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP to next level</span>
+          <span className={`text-xs font-semibold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
             {goal.currentLevelXP} / {goal.xpToNextLevel || '—'}
           </span>
         </div>
@@ -246,7 +246,7 @@ export function GoalDetail({
                   }`}>
                     {ms.title}
                   </span>
-                  <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
                     isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
                   }`}>
                     +{ms.xpReward} XP
@@ -550,17 +550,17 @@ export function GoalDetail({
                   {h.name}
                 </span>
                 {h.dailyTarget && h.trackingType !== 'boolean' && (
-                  <span className={`ml-2 text-[11px] tabular-nums ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                  <span className={`ml-2 text-xs tabular-nums ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                     {todayVal}/{h.dailyTarget}{h.trackingType === 'duration' ? 'm' : ''}
                   </span>
                 )}
               </div>
               {h.streakCount > 0 && (
-                <span className={`text-[11px] font-bold flex items-center gap-0.5 ${h.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
+                <span className={`text-xs font-bold flex items-center gap-0.5 ${h.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
                   <Flame size={11} />{h.streakCount}d
                 </span>
               )}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
                 +{h.xpPerUnit} XP
               </span>
             </div>
@@ -593,15 +593,15 @@ export function GoalDetail({
                 <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{article.title || 'Untitled'}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {article.source && (
-                    <span className={`text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.source}</span>
+                    <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.source}</span>
                   )}
                   {article.matched_goals?.some(g => g.toLowerCase() === goal.title.toLowerCase()) && (
-                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded ${
+                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
                       isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
                     }`}>AI match</span>
                   )}
                   {!article.matched_goals?.some(g => g.toLowerCase() === goal.title.toLowerCase()) && (
-                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded ${
+                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
                       isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
                     }`}>tag match</span>
                   )}
@@ -635,10 +635,10 @@ export function GoalDetail({
               <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{article.title || 'Untitled'}</p>
               <div className="flex items-center gap-2 mt-0.5">
                 {article.reading_time_minutes && (
-                  <span className={`text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.reading_time_minutes} min read</span>
+                  <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.reading_time_minutes} min read</span>
                 )}
                 {article.relevance_score && (
-                  <span className={`text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.relevance_score}/10</span>
+                  <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.relevance_score}/10</span>
                 )}
               </div>
             </div>

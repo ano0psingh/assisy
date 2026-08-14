@@ -232,7 +232,7 @@ export function GlobalSearch() {
               autoComplete="off"
               className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-gray-500' : 'text-slate-800 placeholder-slate-400'}`}
             />
-            <kbd className={`text-[11px] px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>ESC</kbd>
+            <kbd className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>ESC</kbd>
           </div>
 
           {/* Screen readers get no signal from a list that silently repopulates. */}
@@ -272,7 +272,7 @@ export function GlobalSearch() {
                     <p className={`text-xs truncate ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{result.subtitle}</p>
                   )}
                 </div>
-                <span className={`text-[11px] uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                <span className={`text-xs uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                   {result.type === 'project_task' ? 'Task' : result.type === 'feed' ? 'Article' : result.type}
                 </span>
                 {idx === selectedIndex && <ArrowRight size={12} className={isDark ? 'text-violet-400' : 'text-violet-500'} />}
@@ -282,7 +282,7 @@ export function GlobalSearch() {
 
           {/* Footer hint */}
           {!query && (
-            <div className={`px-4 py-3 border-t flex items-center gap-4 text-[11px] ${isDark ? 'border-white/10 text-gray-600' : 'border-slate-100 text-slate-400'}`}>
+            <div className={`px-4 py-3 border-t flex items-center gap-4 text-xs ${isDark ? 'border-white/10 text-gray-600' : 'border-slate-100 text-slate-400'}`}>
               <span><kbd className={`px-1 py-0.5 rounded ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>↑↓</kbd> navigate</span>
               <span><kbd className={`px-1 py-0.5 rounded ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>↵</kbd> select</span>
               <span><kbd className={`px-1 py-0.5 rounded ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>esc</kbd> close</span>

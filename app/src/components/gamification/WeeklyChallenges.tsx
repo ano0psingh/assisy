@@ -189,7 +189,7 @@ export function WeeklyChallenges() {
                   <span className={`text-sm font-medium ${done ? 'line-through' : ''} ${isDark ? 'text-white' : 'text-slate-800'}`}>
                     {challenge.title}
                   </span>
-                  <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
                     done
                       ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
                       : `${c.badgeBg} ${c.badgeText}`

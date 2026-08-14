@@ -139,7 +139,7 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
                   <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                     {snapshot.reason}
                   </p>
-                  <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                     {new Date(snapshot.takenAt).toLocaleString()}
                   </p>
                 </div>

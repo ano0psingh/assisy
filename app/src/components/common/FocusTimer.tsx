@@ -456,17 +456,17 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
           <div className={`mt-5 flex items-center gap-4 px-4 py-2.5 rounded-xl w-full ${phaseColor.bg}`}>
             <div className="flex-1 text-center">
               <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{todayStats.completed}</div>
-              <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>sessions</p>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>sessions</p>
             </div>
             <div className={`w-px h-8 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
             <div className="flex-1 text-center">
               <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{todayStats.totalMinutes}</div>
-              <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>minutes</p>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>minutes</p>
             </div>
             <div className={`w-px h-8 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
             <div className="flex-1 text-center">
               <div className={`text-lg font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{todayStats.completed * XP_PER_POMODORO}</div>
-              <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP earned</p>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP earned</p>
             </div>
           </div>
         </div>

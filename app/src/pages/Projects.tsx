@@ -599,7 +599,7 @@ export function Projects() {
                   {task.title}
                 </span>
                 {task.priority === 'High' && (
-                  <span className="px-1.5 py-0.5 text-[11px] font-semibold rounded bg-red-500/20 text-red-400 flex-shrink-0">HIGH</span>
+                  <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-red-500/20 text-red-400 flex-shrink-0">HIGH</span>
                 )}
                 {subTasks.length > 0 && (
                   <span className={`text-xs flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
@@ -610,7 +610,7 @@ export function Projects() {
               {task.tags.length > 0 && (
                 <div className="flex items-center gap-1 mt-1 flex-wrap">
                   {task.tags.map(tag => (
-                    <span key={tag} className={`text-[11px] px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                    <span key={tag} className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
                       {tag}
                     </span>
                   ))}
@@ -1456,7 +1456,7 @@ export function Projects() {
                               {task.selected && <Check size={10} />}
                             </div>
                             <span className={`text-xs flex-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{task.title}</span>
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded ${
+                            <span className={`text-xs px-1.5 py-0.5 rounded ${
                               task.priority === 'High'
                                 ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
                                 : task.priority === 'Medium'

@@ -85,7 +85,7 @@ function ProgressRing({ completed, total, size = 76, strokeWidth = 6 }: { comple
         <span className={`text-xl font-black leading-none tabular-nums ${pct >= 1 ? 'text-emerald-500' : isDark ? 'text-white' : 'text-slate-800'}`}>
           {completed}
         </span>
-        <span className={`text-[11px] leading-tight font-medium ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+        <span className={`text-xs leading-tight font-medium ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
           /{total}
         </span>
       </div>
@@ -470,7 +470,7 @@ export function Habits() {
                     <span className={`text-sm font-semibold block truncate ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>
                       {goal.title}
                     </span>
-                    <span className={`text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                    <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                       Lv.{goal.level} · {goalHabits.length} remaining
                     </span>
                   </div>
@@ -527,7 +527,7 @@ export function Habits() {
                   <span className={`text-sm font-semibold block ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
                     General Habits
                   </span>
-                  <span className={`text-[11px] ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                  <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                     Not linked to a goal · {unlinkedPending.length} remaining
                   </span>
                 </div>
@@ -675,21 +675,21 @@ export function Habits() {
               <div className={`text-xl font-black tabular-nums ${currentStreak > 0 ? 'text-amber-500' : isDark ? 'text-gray-600' : 'text-slate-300'}`}>
                 {currentStreak}<span className="text-xs font-semibold ml-0.5">d</span>
               </div>
-              <div className={`text-[11px] mt-0.5 font-medium ${isDark ? 'text-amber-500/50' : 'text-amber-600/50'}`}>Perfect streak</div>
+              <div className={`text-xs mt-0.5 font-medium ${isDark ? 'text-amber-500/50' : 'text-amber-600/50'}`}>Perfect streak</div>
             </div>
             <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-violet-500/10 to-blue-500/5 border border-violet-500/20' : 'bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-200/60'}`}>
               <Calendar size={14} className={`mb-2 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
               <div className={`text-xl font-black tabular-nums ${rate7 >= 80 ? 'text-emerald-500' : rate7 >= 50 ? (isDark ? 'text-violet-400' : 'text-violet-600') : (isDark ? 'text-gray-500' : 'text-slate-400')}`}>
                 {rate7}<span className="text-xs font-semibold ml-0.5">%</span>
               </div>
-              <div className={`text-[11px] mt-0.5 font-medium ${isDark ? 'text-violet-400/50' : 'text-violet-600/50'}`}>Last 7 days</div>
+              <div className={`text-xs mt-0.5 font-medium ${isDark ? 'text-violet-400/50' : 'text-violet-600/50'}`}>Last 7 days</div>
             </div>
             <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20' : 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60'}`}>
               <TrendingUp size={14} className={`mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
               <div className={`text-xl font-black tabular-nums ${rate30 >= 80 ? 'text-emerald-500' : rate30 >= 50 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-gray-500' : 'text-slate-400')}`}>
                 {rate30}<span className="text-xs font-semibold ml-0.5">%</span>
               </div>
-              <div className={`text-[11px] mt-0.5 font-medium ${isDark ? 'text-emerald-400/50' : 'text-emerald-600/50'}`}>Last 30 days</div>
+              <div className={`text-xs mt-0.5 font-medium ${isDark ? 'text-emerald-400/50' : 'text-emerald-600/50'}`}>Last 30 days</div>
             </div>
           </div>
         );
@@ -757,7 +757,7 @@ export function Habits() {
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />
                   </div>
-                  <span className={`text-[11px] font-semibold tabular-nums w-12 text-right flex-shrink-0 ${
+                  <span className={`text-xs font-semibold tabular-nums w-12 text-right flex-shrink-0 ${
                     pct >= 80 ? 'text-emerald-500' : pct >= 50 ? (isDark ? 'text-amber-400' : 'text-amber-500') : (isDark ? 'text-gray-500' : 'text-slate-400')
                   }`}>{completedDays}/30</span>
                 </div>
@@ -837,8 +837,8 @@ export function Habits() {
             </svg>
           </div>
           <div className="flex justify-between mt-1">
-            <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{moodScores[0]?.date}</span>
-            <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{moodScores[moodScores.length - 1]?.date}</span>
+            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{moodScores[0]?.date}</span>
+            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{moodScores[moodScores.length - 1]?.date}</span>
           </div>
         </div>
       )}
@@ -875,7 +875,7 @@ export function Habits() {
                       })}
                     </span>
                     {log.energyLevel && (
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                      <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
                         log.energyLevel <= 3 
                           ? 'bg-red-500/20 text-red-400'
                           : log.energyLevel <= 6

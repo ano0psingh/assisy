@@ -101,7 +101,7 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
           <div className="space-y-3">
             {fields.map(field => (
               <div key={field.key}>
-                <div className={`text-[11px] font-semibold uppercase tracking-wide mb-1.5 ${
+                <div className={`text-xs font-semibold uppercase tracking-wide mb-1.5 ${
                   isDark ? 'text-gray-500' : 'text-slate-400'
                 }`}>
                   {field.label}

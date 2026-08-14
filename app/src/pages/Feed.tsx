@@ -93,7 +93,7 @@ function RelevanceBadge({ score, isDark }: { score: number; isDark: boolean }) {
         : isDark ? 'bg-gray-500/15 text-gray-400 border-gray-500/20' : 'bg-slate-100 text-slate-500 border-slate-200';
 
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-md border ${color}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md border ${color}`}>
       <Star size={10} /> {score}/10
     </span>
   );
@@ -111,7 +111,7 @@ function ContentTypePill({ type, isDark }: { type: string; isDark: boolean }) {
         ? isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-50 text-slate-500'
         : isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600';
   return (
-    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${tierColor}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tierColor}`}>
       {label}
     </span>
   );
@@ -359,7 +359,7 @@ export function Feed() {
                     Check for new
                   </span>
                   {lastRefreshedAt && (
-                    <span className={`text-[11px] leading-tight ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                    <span className={`text-xs leading-tight ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                       Last checked {relativeTime(lastRefreshedAt)}
                     </span>
                   )}
@@ -567,7 +567,7 @@ export function Feed() {
             <div className="flex items-center gap-1.5 mt-3 flex-wrap">
               <button
                 onClick={() => setSubFilter(null)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   !subFilter
                     ? 'bg-violet-600 text-white'
                     : isDark
@@ -581,7 +581,7 @@ export function Feed() {
                 <button
                   key={sub.id}
                   onClick={() => setSubFilter(subFilter === sub.id ? null : sub.id)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                     subFilter === sub.id
                       ? 'bg-violet-600 text-white'
                       : isDark
@@ -594,7 +594,7 @@ export function Feed() {
               ))}
               <button
                 onClick={() => setSubFilter('saved')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   subFilter === 'saved'
                     ? 'bg-violet-600 text-white'
                     : isDark
@@ -615,7 +615,7 @@ export function Feed() {
                 {tagFilter && (
                   <button
                     onClick={() => setTagFilter(null)}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                       isDark ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-red-50 text-red-500 hover:bg-red-100'
                     }`}
                   >
@@ -626,7 +626,7 @@ export function Feed() {
                   <button
                     key={tag}
                     onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-                    className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                       tagFilter === tag
                         ? 'bg-violet-600 text-white'
                         : isDark
@@ -640,7 +640,7 @@ export function Feed() {
                 {allTags.length > 8 && (
                   <button
                     onClick={() => setShowAllTags(p => !p)}
-                    className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                       isDark ? 'bg-white/5 text-violet-400 hover:bg-white/10' : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
                     }`}
                   >
@@ -655,7 +655,7 @@ export function Feed() {
                   {tagFilter && (
                     <button
                       onClick={() => setTagFilter(null)}
-                      className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                      className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                         isDark ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-red-50 text-red-500 hover:bg-red-100'
                       }`}
                     >
@@ -666,7 +666,7 @@ export function Feed() {
                     <button
                       key={tag}
                       onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-                      className={`flex-shrink-0 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                      className={`flex-shrink-0 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                         tagFilter === tag
                           ? 'bg-violet-600 text-white'
                           : isDark
@@ -681,7 +681,7 @@ export function Feed() {
                     <div className="relative flex-shrink-0">
                       <button
                         onClick={() => setMobileTagsOpen(!mobileTagsOpen)}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                           isDark ? 'bg-white/5 text-violet-400 hover:bg-white/10' : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
                         }`}
                       >
@@ -838,7 +838,7 @@ export function Feed() {
                         </a>
 
                         {/* Meta row */}
-                        <div className={`flex items-center gap-1.5 mt-1 flex-wrap text-[11px] ${
+                        <div className={`flex items-center gap-1.5 mt-1 flex-wrap text-xs ${
                           isDark ? 'text-gray-500' : 'text-slate-400'
                         }`}>
                           {sub?.title && <span>{sub.title}</span>}
@@ -895,7 +895,7 @@ export function Feed() {
                           value={article.goalId ?? ''}
                           onChange={(e) => linkArticleToGoal(article.id, e.target.value || null)}
                           title="Link to Goal"
-                          className={`w-20 sm:w-24 text-[11px] py-0.5 pl-1.5 pr-5 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
+                          className={`w-20 sm:w-24 text-xs py-0.5 pl-1.5 pr-5 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
                             article.goalId
                               ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                               : isDark ? 'bg-white/5 text-gray-600 hover:text-gray-300' : 'bg-slate-50 text-slate-400 hover:text-slate-600'
@@ -928,7 +928,7 @@ export function Feed() {
                           {/* Tier badge + Surface claim */}
                           <div className="flex items-start gap-2">
                             {analysis.tier && (
-                              <span className={`flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                              <span className={`flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                                 analysis.tier === 3
                                   ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
                                   : analysis.tier === 2
@@ -945,7 +945,7 @@ export function Feed() {
 
                           {/* Source credibility */}
                           {analysis.source_credibility && (
-                            <span className={`inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider ${
+                            <span className={`inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider ${
                               analysis.source_credibility === 'high'
                                 ? isDark ? 'text-emerald-400' : 'text-emerald-600'
                                 : analysis.source_credibility === 'medium'
@@ -984,7 +984,7 @@ export function Feed() {
                                   {/* Implications */}
                                   {analysis.implications.length > 0 && (
                                     <div>
-                                      <p className={`text-[11px] font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>
+                                      <p className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>
                                         Implications
                                       </p>
                                       <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
@@ -1001,7 +1001,7 @@ export function Feed() {
                                   {/* Open Questions */}
                                   {analysis.open_questions.length > 0 && (
                                     <div>
-                                      <p className={`text-[11px] font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-cyan-400/70' : 'text-cyan-500/80'}`}>
+                                      <p className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-cyan-400/70' : 'text-cyan-500/80'}`}>
                                         Worth Watching
                                       </p>
                                       <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
@@ -1029,7 +1029,7 @@ export function Feed() {
                           <button
                             key={tag}
                             onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-                            className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors ${
+                            className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${
                               tagFilter === tag
                                 ? 'bg-violet-600 text-white'
                                 : isDark
@@ -1079,17 +1079,17 @@ export function Feed() {
                             <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                               {sub.title || 'Untitled Feed'}
                             </p>
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'
                             }`}>
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                          <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-[11px] mt-1 ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>
+                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
@@ -1131,7 +1131,7 @@ export function Feed() {
                             <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                               {sf.label}
                             </p>
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-200/70 text-slate-400'
                             }`}>
                               {sf.category}
@@ -1218,17 +1218,17 @@ export function Feed() {
                             <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                               {sub.title || 'Untitled Feed'}
                             </p>
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'
                             }`}>
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                          <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-[11px] mt-1 ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>
+                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
@@ -1270,7 +1270,7 @@ export function Feed() {
                             <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                               {sf.label}
                             </p>
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-200/70 text-slate-400'
                             }`}>
                               {sf.category}

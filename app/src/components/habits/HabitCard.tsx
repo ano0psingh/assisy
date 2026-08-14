@@ -125,7 +125,7 @@ export function HabitCard({
           )}
           {habit.name}
           {habit.streakCount > 0 && (
-            <span className={`text-[11px] font-bold ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
+            <span className={`text-xs font-bold ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
               <Flame size={10} className="inline" />{habit.streakCount}
             </span>
           )}
@@ -216,7 +216,7 @@ export function HabitCard({
               {habit.name}
             </h3>
             {habit.streakCount > 0 && (
-              <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold flex-shrink-0 ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`} style={habit.streakCount >= 7 ? { filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' } : undefined}>
+              <span className={`inline-flex items-center gap-0.5 text-xs font-bold flex-shrink-0 ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`} style={habit.streakCount >= 7 ? { filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' } : undefined}>
                 <Flame size={11} />{habit.streakCount}d
               </span>
             )}
@@ -229,7 +229,7 @@ export function HabitCard({
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              <span className={`text-[11px] font-medium tabular-nums flex-shrink-0 ${
+              <span className={`text-xs font-medium tabular-nums flex-shrink-0 ${
                 isCompleted ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-gray-500' : 'text-slate-500')
               }`}>
                 {todaysValue}/{target}{habit.trackingType === 'duration' ? 'm' : ''}
@@ -260,7 +260,7 @@ export function HabitCard({
                 min="0"
               />
               {habit.trackingType === 'duration' && (
-                <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-[11px] ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
+                <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
               )}
             </div>
             <button
