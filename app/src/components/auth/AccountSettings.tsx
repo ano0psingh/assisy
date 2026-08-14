@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { hasLocalData, resetCloudData, downloadCloudData } from '../../store/cloudStore';
+import { SyncStatusDetail } from '../common/SyncStatus';
 import { getLocalDateString } from '../../lib/dateUtils';
 import { User, Lock, Trash2, AlertTriangle, Check, Mail, Database, CloudOff, Download, RotateCcw } from 'lucide-react';
 
@@ -294,6 +295,10 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
             <span>Joined {joinedDate}</span>
           </div>
         </div>
+      </div>
+
+      <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+        <SyncStatusDetail />
       </div>
 
       {/* Security */}

@@ -45,6 +45,43 @@ function writeMeta(meta: SyncMeta): void {
     // Out of quota. Losing this bookkeeping degrades merge accuracy but the
     // union still protects the data itself, so carry on.
   }
+  notifyListeners();
+}
+
+/**
+ * Change notification, so the UI can report whether work is saved.
+ *
+ * Saving was previously silent, which left no way to tell whether today's edits
+ * had reached the cloud. The dirty flags already answer that; this just makes
+ * them observable.
+ */
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+function notifyListeners(): void {
+  for (const listener of listeners) {
+    try {
+      listener();
+    } catch {
+      // A broken subscriber must not break a save.
+    }
+  }
+}
+
+export function subscribeSyncMeta(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+/** A stable primitive, safe to use as a `useSyncExternalStore` snapshot. */
+export function getPendingSummary(): string {
+  const meta = readMeta();
+  const pending = Object.keys(meta.dirty).sort();
+  return `${pending.length}:${pending.join(',')}:${meta.lastSyncedAt ?? ''}`;
+}
+
+export function getPendingCollections(): string[] {
+  return Object.keys(readMeta().dirty).sort();
 }
 
 export function getTombstones(collection: string): TombstoneMap {

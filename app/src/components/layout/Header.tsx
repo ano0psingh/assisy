@@ -6,6 +6,7 @@ import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useGamification } from '../../context/GamificationContext';
 import { DataExportImport } from '../common/DataPortability';
+import { SyncStatus } from '../common/SyncStatus';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { LoginModal } from '../auth/LoginModal';
 import { AccountSettings } from '../auth/AccountSettings';
@@ -114,6 +115,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
           {/* Right actions */}
           <div className="flex items-center space-x-1.5 flex-shrink-0">
+            <SyncStatus />
+
             {/* Search trigger. Shown on mobile too: search was reachable only
                 by ⌘K, which a phone has no way to press. */}
             <button
