@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BarChart3, Trophy, ClipboardList } from 'lucide-react';
 import { PageTabs, type PageTab } from '../components/ui/PageTabs';
+import { WeeklyChallenges } from '../components/gamification/WeeklyChallenges';
 import { Stats } from './Stats';
 import { Achievements } from './Achievements';
 import { WeeklyReview } from './WeeklyReview';
@@ -40,7 +41,12 @@ export function Progress() {
       <PageTabs tabs={TABS} active={active} onChange={handleChange} label="Progress views" />
       {active === 'achievements' && <Achievements />}
       {active === 'review' && <WeeklyReview />}
-      {active === 'stats' && <Stats />}
+      {active === 'stats' && (
+        <>
+          <WeeklyChallenges />
+          <Stats />
+        </>
+      )}
     </div>
   );
 }
