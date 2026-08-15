@@ -23,7 +23,6 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
   const { getTotalXP, getTotalLevel } = useGamification();
   const totalXP = getTotalXP();
   const level = getTotalLevel();
-  const xpProgress = totalXP % 100;
   const isDark = theme === 'dark';
   const [dataModalOpen, setDataModalOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -227,17 +226,15 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
             <QuickAddTask onSubmit={handleQuickAdd} />
 
-            {/* XP/Level pill - desktop only */}
+            {/* XP/Level pill - desktop only. The bar lives on the Dashboard,
+                where there is room to say what it is progress toward. */}
             <div className={`hidden md:flex items-center space-x-2 rounded-lg px-3 py-2 text-xs ${
               isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
             }`}>
-              <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+              <Zap className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
               <span className={`font-semibold tabular-nums ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</span>
-              <div className={`w-px h-3.5 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
+              <div className={`w-px h-4 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
               <span className="text-violet-500 font-semibold">Lv {level}</span>
-              <div className={`w-10 h-1 rounded-full overflow-hidden ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`}>
-                <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
-              </div>
             </div>
 
             {/* Data export/import - desktop only */}
@@ -372,13 +369,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <div className={`flex items-center space-x-2 rounded-lg px-3 py-3 text-xs ${
               isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
             }`}>
-              <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+              <Zap className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
               <span className={`font-semibold tabular-nums ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</span>
-              <div className={`w-px h-3.5 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
+              <div className={`w-px h-4 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
               <span className="text-violet-500 font-semibold">Lv {level}</span>
-              <div className={`w-12 h-1 rounded-full overflow-hidden ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`}>
-                <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
-              </div>
             </div>
           </div>
 
