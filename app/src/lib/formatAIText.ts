@@ -23,7 +23,7 @@ export function formatAIText(text: string): string {
     if (bulletMatch) {
       if (!inUl) {
         if (inOl) { result.push('</ol>'); inOl = false; }
-        result.push('<ul class="list-disc pl-5 space-y-1">');
+        result.push('<ul class="list-disc pl-6 space-y-1">');
         inUl = true;
       }
       result.push(`<li>${bulletMatch[1]}</li>`);
@@ -34,7 +34,7 @@ export function formatAIText(text: string): string {
     if (numMatch) {
       if (!inOl) {
         if (inUl) { result.push('</ul>'); inUl = false; }
-        result.push('<ol class="list-decimal pl-5 space-y-1">');
+        result.push('<ol class="list-decimal pl-6 space-y-1">');
         inOl = true;
       }
       result.push(`<li>${numMatch[1]}</li>`);

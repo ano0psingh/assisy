@@ -587,18 +587,12 @@ function HeroBanner({
   const titleStyle = TITLE_RARITY_STYLES[currentTitle.rarity];
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl ${isDark ? 'bg-gradient-to-br from-slate-900 via-violet-900/20 to-slate-900 border border-violet-500/20' : 'bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 border border-violet-200'}`}>
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-30">
-        <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl ${isDark ? 'bg-violet-500/20' : 'bg-violet-300/30'}`} />
-        <div className={`absolute bottom-0 left-0 w-48 h-48 rounded-full blur-3xl ${isDark ? 'bg-amber-500/10' : 'bg-amber-200/30'}`} />
-      </div>
-      
+    <div className={`relative overflow-hidden rounded-3xl ${isDark ? 'bg-gradient-to-br from-slate-900 via-violet-900/20 to-slate-900 border border-violet-500/20' : 'bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50 border border-violet-200'}`}>
       <div className="relative p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Avatar with prestige ring */}
           <div className="relative">
-            <div className={`w-28 h-28 rounded-full flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-violet-600 to-purple-700' : 'bg-gradient-to-br from-violet-500 to-purple-600'} ring-4 ring-amber-400/50 shadow-lg shadow-violet-500/30`}>
+            <div className={`w-28 h-28 rounded-full flex items-center justify-center ${isDark ? 'bg-violet-600' : 'bg-violet-500'} ring-4 ring-amber-400/50`}>
               <span className="text-5xl">🥷</span>
             </div>
             {/* Level badge */}
@@ -615,28 +609,27 @@ function HeroBanner({
           <div className="flex-1 text-center md:text-left">
             {/* Name plate with decorative elements */}
             <div className="mb-3">
-              {/* Name with glow effect */}
+              {/* Name and equipped title */}
               <div className="flex flex-col md:flex-row md:items-center gap-3">
                 <div className="relative inline-block">
-                  <h2 className={`text-3xl md:text-4xl font-black tracking-tight ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-white via-violet-200 to-white' : 'text-slate-800'}`}>
+                  <h2 className={`text-3xl md:text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
                     Kage
                   </h2>
-                  {isDark && <div className="absolute inset-0 blur-lg bg-gradient-to-r from-violet-500/30 to-purple-500/30 -z-10" />}
                 </div>
                 
                 {/* Title badge - more prominent */}
                 <div className="relative">
                   <button
                     onClick={() => setShowTitleSelector(!showTitleSelector)}
-                    className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all shadow-lg ${
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${
                       currentTitle.rarity === 'legendary' 
-                        ? 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 border-amber-500/50 shadow-amber-500/20' 
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' 
                         : currentTitle.rarity === 'epic'
-                        ? 'bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 text-purple-300 border-purple-500/50 shadow-purple-500/20'
+                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/50'
                         : currentTitle.rarity === 'rare'
-                        ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border-blue-500/50 shadow-blue-500/20'
+                        ? 'bg-blue-500/20 text-blue-300 border-blue-500/50'
                         : `${titleStyle.bg} ${titleStyle.text} ${titleStyle.border}`
-                    } hover:scale-105 hover:shadow-xl`}
+                    } hover:scale-105`}
                   >
                     <Scroll size={16} className="opacity-80" />
                     <span className="tracking-wide">{currentTitle.title}</span>
@@ -705,17 +698,15 @@ function HeroBanner({
               </div>
               <div className={`h-3 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                 <div 
-                  className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 rounded-full transition-all duration-700 relative"
+                  className="h-full bg-violet-500 rounded-full transition-all duration-700"
                   style={{ width: `${xpProgress}%` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
-                </div>
+                />
               </div>
             </div>
             
             {/* Next reward preview */}
             {nextReward && (
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${isDark ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+              <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${isDark ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                 <Gift size={14} />
                 <span>Next Reward: <strong>{nextReward.name}</strong></span>
                 <span className="opacity-70">({nextReward.xpNeeded} XP away)</span>
@@ -724,7 +715,7 @@ function HeroBanner({
           </div>
           
           {/* Stats summary - Enhanced */}
-          <div className={`hidden md:flex flex-col gap-2 p-5 rounded-2xl ${isDark ? 'bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10' : 'bg-white/80 border border-slate-200'}`}>
+          <div className={`hidden md:flex flex-col gap-2 p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white/80 border border-slate-200'}`}>
             <div className="flex items-center gap-3 pb-2 border-b border-white/10">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
                 <Zap size={20} className="text-amber-400" />
@@ -826,7 +817,7 @@ function QuestLogRoadmap({
 
   return (
     <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-6">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
           <Compass size={20} className={isDark ? 'text-violet-400' : 'text-violet-600'} />
         </div>
@@ -892,7 +883,7 @@ function QuestLogRoadmap({
                       <div 
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                           isComplete 
-                            ? `bg-gradient-to-br ${colors.progress} text-white shadow-sm` 
+                            ? `bg-gradient-to-br ${colors.progress} text-white` 
                             : isCurrent
                               ? `${colors.bg} ${colors.text} ring-2 ring-current`
                               : isDark ? 'bg-white/10 text-gray-600' : 'bg-slate-200 text-slate-400'
@@ -902,7 +893,7 @@ function QuestLogRoadmap({
                         {isComplete ? '✓' : idx + 1}
                       </div>
                       {idx < path.milestones.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-0.5 ${isComplete ? `bg-gradient-to-r ${colors.progress}` : isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+                        <div className={`flex-1 h-0.5 mx-1 ${isComplete ? `bg-gradient-to-r ${colors.progress}` : isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
                       )}
                     </div>
                   );
@@ -934,26 +925,20 @@ function SeasonTeaser({ isDark }: { isDark: boolean }) {
   const daysRemaining = Math.ceil((CURRENT_SEASON.endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gradient-to-r from-indigo-900/50 via-purple-900/50 to-fuchsia-900/50 border border-purple-500/30' : 'bg-gradient-to-r from-indigo-100 via-purple-100 to-fuchsia-100 border border-purple-200'}`}>
-      {/* Animated background */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-fuchsia-500 rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
-      
-      <div className="relative p-5 flex items-center gap-4">
+    <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-violet-900/50 border border-violet-500/30' : 'bg-violet-100 border border-violet-200'}`}>
+      <div className="relative p-6 flex items-center gap-4">
         {/* Season icon */}
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-purple-200/50 border border-purple-300'}`}>
-          <Sparkles size={28} className={isDark ? 'text-purple-300' : 'text-purple-600'} />
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-violet-500/20 border border-violet-500/30' : 'bg-violet-200/50 border border-violet-300'}`}>
+          <Sparkles size={28} className={isDark ? 'text-violet-300' : 'text-violet-600'} />
         </div>
         
         {/* Season info */}
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-purple-300' : 'text-purple-600'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-violet-300' : 'text-violet-600'}`}>
               Active Season
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${isDark ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'bg-fuchsia-200 text-fuchsia-700'}`}>
+            <span className={`px-2 py-1 rounded-full text-xs font-bold ${isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-200 text-violet-700'}`}>
               {daysRemaining} days left
             </span>
           </div>
@@ -970,7 +955,7 @@ function SeasonTeaser({ isDark }: { isDark: boolean }) {
           {CURRENT_SEASON.exclusiveBadges.slice(0, 3).map((_, idx) => (
             <div 
               key={idx}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white/50 border border-purple-200'}`}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white/50 border border-violet-200'}`}
             >
               <Lock size={16} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
             </div>
@@ -996,22 +981,7 @@ function StreakBonusBanner({ isDark, streak }: { isDark: boolean; streak: number
   if (streak === 0) return null;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gradient-to-r from-orange-900/30 via-amber-900/20 to-yellow-900/30 border border-orange-500/30' : 'bg-gradient-to-r from-orange-100 via-amber-50 to-yellow-100 border border-orange-200'}`}>
-      {/* Animated fire particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-orange-400 rounded-full opacity-60 animate-float"
-            style={{
-              left: `${15 + i * 15}%`,
-              bottom: '10%',
-              animationDelay: `${i * 0.3}s`,
-            }}
-          />
-        ))}
-      </div>
-      
+    <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gradient-to-r from-orange-900/30 to-amber-900/20 border border-orange-500/30' : 'bg-gradient-to-r from-orange-100 to-amber-50 border border-orange-200'}`}>
       <div className="relative p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Fire icon with glow */}
@@ -1063,7 +1033,7 @@ function DailyChallenges({ isDark, userStats }: { isDark: boolean; userStats: Us
   };
 
   return (
-    <div className={`p-5 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
+    <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
@@ -1121,7 +1091,7 @@ function DailyChallenges({ isDark, userStats }: { isDark: boolean; userStats: Us
                   {!isComplete && (
                     <div className={`mt-2 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                       <div 
-                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -1165,25 +1135,19 @@ function AchievementCard({
       onClick={() => { onClick(); playSound('click'); }}
       className={`rarity-card rarity-${tier} ${isUnlocked ? 'rarity-unlocked' : 'rarity-locked'} relative w-4/5 mx-auto rounded-xl overflow-hidden cursor-pointer transition-all duration-300 aspect-square ${
         isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
-      } ${isUnlocked ? '' : 'opacity-80'} hover:-translate-y-1 hover:shadow-[0_24px_80px_-55px_rgba(0,0,0,0.85)] ${isNew ? 'animate-unlock-glow' : ''}`}
+      } ${isUnlocked ? '' : 'opacity-80'} hover:-translate-y-1 ${isNew ? 'animate-unlock-glow' : ''}`}
     >
-      {/* Rarity glow + rim light */}
-      {isUnlocked && (
-        <>
-          <div className={`absolute -inset-12 opacity-60 blur-3xl bg-gradient-to-br ${tierStyles.bg}`} />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(255,255,255,0.22),transparent_55%)] opacity-70" />
-        </>
-      )}
-      
+      {isUnlocked && <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${tierStyles.bg}`} />}
+
       <div className="relative z-10 h-full p-2 flex flex-col">
         {/* Top meta row */}
         <div className="flex items-center justify-between gap-2">
-          <span className={`text-xs px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
+          <span className={`text-xs px-2 py-1 rounded-full uppercase tracking-[0.14em] font-semibold ${
             isUnlocked ? tierStyles.badge : (isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600')
           }`}>
             {tier}
           </span>
-          <span className={`text-xs px-2 py-0.5 rounded-full uppercase tracking-[0.14em] font-semibold ${
+          <span className={`text-xs px-2 py-1 rounded-full uppercase tracking-[0.14em] font-semibold ${
             isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
           }`}>
             {achievement.type}
@@ -1195,15 +1159,13 @@ function AchievementCard({
           <div className={`relative w-[80px] h-[80px] rounded-[1.35rem] flex items-center justify-center border ${
             isDark ? 'bg-white/[0.04] border-white/10' : 'bg-slate-50 border-slate-200'
           } ${showAsSecret ? 'animate-pulse' : ''}`}>
-            {isUnlocked && <div className={`absolute inset-0 rounded-[1.35rem] opacity-50 bg-gradient-to-br ${tierStyles.bg}`} />}
             {showAsSecret ? (
-              <span className={`text-3xl font-bold ${isDark ? 'text-purple-400' : 'text-purple-500'}`}>?</span>
+              <span className={`text-3xl font-bold ${isDark ? 'text-violet-400' : 'text-violet-500'}`}>?</span>
             ) : isUnlocked ? (
-              <Icon size={46} className={`${tierStyles.icon} relative drop-shadow`} />
+              <Icon size={46} className={tierStyles.icon} />
             ) : (
               <Lock size={38} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
             )}
-            <div className="absolute inset-0 rounded-[1.35rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.14)]" />
           </div>
         </div>
 
@@ -1215,12 +1177,12 @@ function AchievementCard({
 
           <div className="mt-1 flex items-center justify-between">
             {isUnlocked ? (
-              <div className={`flex items-center gap-1.5 text-xs font-bold ${tierStyles.icon}`}>
+              <div className={`flex items-center gap-2 text-xs font-bold ${tierStyles.icon}`}>
                 <Zap size={11} className="opacity-90" />
                 +{achievement.xpReward}
               </div>
             ) : showAsSecret ? (
-              <div className={`text-xs font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              <div className={`text-xs font-bold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
                 ???
               </div>
             ) : (
@@ -1234,10 +1196,10 @@ function AchievementCard({
           </div>
 
           {!isUnlocked && !showAsSecret && (
-            <div className="mt-1.5">
+            <div className="mt-2">
               <div className={`h-1 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                 <div
-                  className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all duration-700"
+                  className="h-full bg-violet-500 transition-all duration-700"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -1320,7 +1282,7 @@ function AchievementModal({
               {lore}
             </p>
             {isUnlocked && (
-              <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold ${tierStyles.badge}`}>
+              <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${tierStyles.badge}`}>
                 <CheckCircle2 size={16} />
                 {tier.toUpperCase()} TIER
               </span>
@@ -1357,9 +1319,9 @@ function AchievementModal({
               <div className={`h-4 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                 <div 
                   className={`h-full rounded-full transition-all duration-700 ${
-                    progress >= 80 ? 'bg-gradient-to-r from-emerald-500 to-green-400' :
-                    progress >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' :
-                    'bg-gradient-to-r from-violet-500 to-purple-400'
+                    progress >= 80 ? 'bg-emerald-500' :
+                    progress >= 50 ? 'bg-amber-500' :
+                    'bg-violet-500'
                   }`}
                   style={{ width: `${progress}%` }}
                 />
@@ -1605,7 +1567,7 @@ export function Achievements() {
         </div>
         <button
           onClick={toggleSound}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all ${
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all ${
             isDark
               ? soundEnabled ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-gray-500'
               : soundEnabled ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-500'
@@ -1622,7 +1584,7 @@ export function Achievements() {
 
         {/* Active Missions */}
         {closestToUnlock.length > 0 && (
-          <div className={`p-5 rounded-2xl ${isDark ? 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20' : 'bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200'}`}>
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'}`}>
             <h2 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
               <MapPin className="w-4 h-4" /> Active Missions
             </h2>
@@ -1631,7 +1593,7 @@ export function Achievements() {
                 const Icon = getAchievementIcon(achievement);
                 return (
                   <div key={achievement.id} onClick={() => setSelectedAchievement(achievement)} className={`p-3 rounded-xl cursor-pointer transition-all hover:scale-[1.02] ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-white hover:bg-slate-50'}`}>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
                         <Icon size={16} className={isDark ? 'text-emerald-300' : 'text-emerald-600'} />
                       </div>
@@ -1639,7 +1601,7 @@ export function Achievements() {
                         <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{achievement.name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <div className={`flex-1 h-1.5 rounded-full ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
-                            <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" style={{ width: `${progress}%` }} />
+                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${progress}%` }} />
                           </div>
                           <span className={`text-xs font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{progress}%</span>
                         </div>
@@ -1654,7 +1616,7 @@ export function Achievements() {
 
         {/* Hall of Glory */}
         {unlockedAchievements.length > 0 && (
-          <div className={`p-5 rounded-2xl ${isDark ? 'bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-orange-500/10 border border-amber-500/20' : 'bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-amber-200'}`}>
+          <div className={`p-6 rounded-2xl ${isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'}`}>
             <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
               <Crown className="w-4 h-4" /> Hall of Glory
             </h2>
@@ -1719,7 +1681,7 @@ export function Achievements() {
                     <span className={`text-xs ml-auto font-bold ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{set.done}/{set.total}</span>
                   </div>
                   <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
-                    <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all duration-700" style={{ width: `${set.percent}%` }} />
+                    <div className="h-full bg-violet-500 transition-all duration-700" style={{ width: `${set.percent}%` }} />
                   </div>
                 </button>
               );
@@ -1731,7 +1693,7 @@ export function Achievements() {
       {/* ── ALL ACHIEVEMENTS TAB ────────────────────── */}
       {activeTab === 'all' && <>
         {/* Artifact Vault by Rarity */}
-        <div className={`p-5 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
+        <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
           <h2 className={`text-sm font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>By Rarity</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {(['legendary', 'platinum', 'gold', 'silver', 'bronze'] as const).map(tier => {
@@ -1759,14 +1721,14 @@ export function Achievements() {
         <div className="flex flex-wrap items-center gap-3">
           <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
             {(['all', 'unlocked', 'locked'] as const).map((status) => (
-              <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-1.5 text-xs font-medium capitalize transition-all ${statusFilter === status ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${statusFilter === status ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
                 {status}
               </button>
             ))}
           </div>
           <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
             {(['all', 'milestone', 'streak', 'mastery', 'special'] as const).map((type) => (
-              <button key={type} onClick={() => setTypeFilter(type)} className={`px-3 py-1.5 text-xs font-medium capitalize transition-all ${typeFilter === type ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <button key={type} onClick={() => setTypeFilter(type)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${typeFilter === type ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
                 {type}
               </button>
             ))}
