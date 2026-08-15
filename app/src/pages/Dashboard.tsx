@@ -9,6 +9,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
 import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, CheckCircle2, ListTodo, Circle, Play, Pencil, Trophy, Crown, AlertTriangle, CalendarMinus, Target, RefreshCw, Bot } from 'lucide-react';
 import { askAI, isAIConfigured } from '../lib/ai';
+import { formatAIText } from '../lib/formatAIText';
+import { isOnboardingComplete } from '../lib/onboarding';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { PlanYourDay } from '../components/tasks/PlanYourDay';
@@ -423,8 +425,9 @@ RULES:
         }
       }
       
-      // Show Plan Your Day modal if not seen today
-      if (!hasSeenPlanYourDay()) {
+      // Show Plan Your Day modal if not seen today. Not while the onboarding
+      // tour is still up, or a first-time user meets two modals at once.
+      if (!hasSeenPlanYourDay() && isOnboardingComplete()) {
         // Delay slightly so daily bonus shows first
         setTimeout(() => setIsPlanYourDayOpen(true), 500);
       }
@@ -996,9 +999,10 @@ RULES:
             </div>
           ) : morningBriefing ? (
             <>
-              <div className={`text-sm leading-relaxed whitespace-pre-line ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
-                {morningBriefing}
-              </div>
+              <div
+                className={`text-sm leading-relaxed space-y-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}
+                dangerouslySetInnerHTML={{ __html: formatAIText(morningBriefing) }}
+              />
               <div className="flex items-center gap-3 mt-2">
                 <p className={`text-xs ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>— AI Coach</p>
                 <button

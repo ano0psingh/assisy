@@ -19,7 +19,10 @@ export function formatAIText(text: string): string {
   for (const line of lines) {
     const trimmed = line.trim();
 
-    const bulletMatch = trimmed.match(/^[-•]\s+(.*)/);
+    // `*` is included because the model emits it far more often than `-`, and a
+    // leading `* ` cannot be emphasis: the italic rule above requires a
+    // non-space immediately after the asterisk, so it has already been skipped.
+    const bulletMatch = trimmed.match(/^[-•*]\s+(.*)/);
     if (bulletMatch) {
       if (!inUl) {
         if (inOl) { result.push('</ol>'); inOl = false; }
