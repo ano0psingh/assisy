@@ -1,8 +1,9 @@
 import { lazy, Suspense, type ComponentType } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Skeleton } from './components/common/Skeleton';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 /**
  * Dashboard is the landing route, so it stays in the main bundle — loading it
@@ -40,31 +41,46 @@ function PageFallback() {
   );
 }
 
+/**
+ * Keyed on the path so navigating away from a page that threw clears the error.
+ * An error boundary holds its failed state until it is remounted, so without the
+ * key a single bad page would keep showing the fallback everywhere.
+ */
+function RoutedPages() {
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary key={pathname} scope="This page">
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/tasks" element={<Tasks />} />
+
+          {/* Grouped destinations. The individual routes below them are kept
+              so existing links and search results still resolve. */}
+          <Route path="/plan" element={<Plan />} />
+          <Route path="/progress" element={<Progress />} />
+
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/habits" element={<Habits />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/achievements" element={<Achievements />} />
+          <Route path="/stats" element={<Stats />} />
+          <Route path="/review" element={<WeeklyReview />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/feed" element={<Feed />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Layout>
-        {/* Inside Layout so the header and nav stay put while a route arrives. */}
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/tasks" element={<Tasks />} />
-
-            {/* Grouped destinations. The individual routes below them are kept
-                so existing links and search results still resolve. */}
-            <Route path="/plan" element={<Plan />} />
-            <Route path="/progress" element={<Progress />} />
-
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/habits" element={<Habits />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/achievements" element={<Achievements />} />
-            <Route path="/stats" element={<Stats />} />
-            <Route path="/review" element={<WeeklyReview />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/feed" element={<Feed />} />
-          </Routes>
-        </Suspense>
+        {/* Inside Layout so the header and nav survive a page-level failure and
+            stay put while a route arrives. */}
+        <RoutedPages />
       </Layout>
     </BrowserRouter>
   );
