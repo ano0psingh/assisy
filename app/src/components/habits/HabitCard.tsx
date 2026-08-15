@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Flame, Trash2, Plus, Minus, Check, Pencil, MoreHorizontal } from 'lucide-react';
 import { hapticLight } from '../../lib/haptics';
 import { SelectionCheckbox, SelectionIndicator } from '../common/SelectionControls';
+import { IconButton } from '../ui';
 
 interface HabitLog {
   date: string;
@@ -98,7 +99,7 @@ export function HabitCard({
           {...(selectionMode
             ? { role: 'checkbox' as const, 'aria-checked': isSelected, 'aria-label': `Select "${habit.name}"` }
             : {})}
-          className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-l-full text-sm font-medium transition-all duration-200 select-none border-r-0 ${
+          className={`inline-flex items-center gap-2 pl-3 pr-2 py-2 rounded-l-full text-sm font-medium transition-all duration-200 select-none border-r-0 ${
             selectionMode && isSelected
               ? isDark
                 ? 'bg-violet-500/20 text-violet-300 border border-violet-500/40'
@@ -136,7 +137,7 @@ export function HabitCard({
           aria-label={`More actions for ${habit.name}`}
           aria-expanded={menuOpen}
           aria-haspopup="true"
-          className={`inline-flex items-center px-2 py-1.5 rounded-r-full text-sm transition-all border-l-0 ${
+          className={`inline-flex items-center px-2 py-2 rounded-r-full text-sm transition-all border-l-0 ${
             isCompleted
               ? isDark
                 ? 'bg-emerald-500/20 text-emerald-500/50 border border-emerald-500/30 hover:text-emerald-300'
@@ -188,7 +189,7 @@ export function HabitCard({
             : `bg-white/65 border border-white/70 ${isCompleted ? 'border-emerald-400/40 bg-emerald-50/40' : ''}`
       }`}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         {selectionMode ? (
           <SelectionCheckbox
             selected={isSelected}
@@ -211,12 +212,12 @@ export function HabitCard({
         )}
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <h3 className={`font-medium text-sm truncate ${isCompleted ? (isDark ? 'text-gray-400 line-through' : 'text-slate-400 line-through') : (isDark ? 'text-white' : 'text-slate-800')}`}>
               {habit.name}
             </h3>
             {habit.streakCount > 0 && (
-              <span className={`inline-flex items-center gap-0.5 text-xs font-bold flex-shrink-0 ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`} style={habit.streakCount >= 7 ? { filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' } : undefined}>
+              <span className={`inline-flex items-center gap-1 text-xs font-bold flex-shrink-0 ${habit.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`} style={habit.streakCount >= 7 ? { filter: 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' } : undefined}>
                 <Flame size={11} />{habit.streakCount}d
               </span>
             )}
@@ -239,15 +240,13 @@ export function HabitCard({
         </div>
 
         {habit.trackingType !== 'boolean' && !selectionMode && (
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <button
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <IconButton
+              icon={Minus}
               onClick={handleDecrement}
-              aria-label={`Decrease ${habit.name}`}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-                isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-            ><Minus size={13} />
-            </button>
+              label={`Decrease ${habit.name}`}
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20"
+            />
             <div className="relative">
               <input
                 type="number"
@@ -263,29 +262,23 @@ export function HabitCard({
                 <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>m</span>
               )}
             </div>
-            <button
+            <IconButton
+              icon={Plus}
               onClick={handleIncrement}
-              aria-label={`Increase ${habit.name}`}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-                isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-            ><Plus size={13} />
-            </button>
+              label={`Increase ${habit.name}`}
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20"
+            />
           </div>
         )}
 
         <div className={`relative flex-shrink-0 ${selectionMode ? 'hidden' : ''}`} ref={menuRef}>
-          <button
+          <IconButton
+            icon={MoreHorizontal}
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label={`More actions for ${habit.name}`}
+            label={`More actions for ${habit.name}`}
             aria-expanded={menuOpen}
             aria-haspopup="true"
-            className={`p-2.5 rounded-lg transition-all ${
-              isDark ? 'text-gray-600 hover:text-gray-400 hover:bg-white/10' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'
-            }`}
-          >
-            <MoreHorizontal size={16} />
-          </button>
+          />
           {menuOpen && (
             <div className={`absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-xl min-w-[120px] ${
               isDark ? 'bg-gray-800 border border-white/10' : 'bg-white border border-slate-200'

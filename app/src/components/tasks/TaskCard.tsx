@@ -3,6 +3,7 @@ import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { TiptapViewer } from '../common/TiptapViewer';
 import { SelectionCheckbox } from '../common/SelectionControls';
+import { IconButton } from '../ui';
 import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
 import { hapticLight, hapticMedium } from '../../lib/haptics';
 import { getRecurringCompletionRate } from '../../context/TaskContext';
@@ -262,7 +263,7 @@ export function TaskCard({
         onTouchEnd={handleTouchEnd}
         onTouchCancel={() => setSwipeOffset(0)}
         style={{ transform: `translateX(${swipeOffset}px)`, boxShadow: isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7)' }}
-        className={`group rounded-2xl px-4 py-3.5 transition-shadow duration-200 ease-spring backdrop-blur-xl ${
+        className={`group rounded-2xl px-4 py-4 transition-shadow duration-200 ease-spring backdrop-blur-xl ${
           swipeOffset !== 0 ? 'shadow-lg' : ''
         } ${
       isSelected
@@ -309,7 +310,7 @@ export function TaskCard({
 
           {/* Title + inline indicators */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <h3
                 onClick={() => selectionMode ? onSelectToggle?.(task.id) : onEdit(task)}
                 className={`font-medium cursor-pointer hover:opacity-80 truncate ${
@@ -326,10 +327,10 @@ export function TaskCard({
             </div>
             {/* Meta indicators — wrap below title */}
             {!isCompleted && (
-              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+              <div className="flex items-center gap-2 flex-wrap mt-1">
                 {isCarriedForward && (
                   <span className={`text-xs ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>
-                    <RotateCcw size={11} className="inline -mt-0.5" /> {daysAgoText}
+                    <RotateCcw size={11} className="inline -mt-1" /> {daysAgoText}
                   </span>
                 )}
                 {task.isRecurring && (
@@ -338,7 +339,7 @@ export function TaskCard({
                       ? isDark ? 'text-amber-400' : 'text-amber-500'
                       : isDark ? 'text-violet-400' : 'text-violet-500'
                   }`}>
-                    <Clock size={10} className="inline -mt-0.5 mr-0.5" />
+                    <Clock size={10} className="inline -mt-1 mr-1" />
                     {task.pausedUntil && getLocalDateString() <= task.pausedUntil
                       ? `Paused until ${new Date(task.pausedUntil + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
                       : formatRecurrence(task)
@@ -357,7 +358,7 @@ export function TaskCard({
                 )}
                 {task.isRecurring && (task.streakCount ?? 0) > 0 && (
                   <span className="text-xs whitespace-nowrap text-orange-500">
-                    <Flame size={10} className="inline -mt-0.5" /> {task.streakCount}d streak
+                    <Flame size={10} className="inline -mt-1" /> {task.streakCount}d streak
                   </span>
                 )}
                 {task.isRecurring && task.completionLog && (() => {
@@ -381,12 +382,12 @@ export function TaskCard({
                     <span className={`text-xs whitespace-nowrap ${
                       overdue ? 'text-red-500 font-medium' : isDark ? 'text-gray-500' : 'text-slate-400'
                     }`}>
-                      <CalendarDays size={10} className="inline -mt-0.5 mr-0.5" />{text}
+                      <CalendarDays size={10} className="inline -mt-1 mr-1" />{text}
                     </span>
                   );
                 })()}
                 {goalName && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
+                  <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
                     {goalName}
                   </span>
                 )}
@@ -396,68 +397,50 @@ export function TaskCard({
         </div>
 
         {/* Actions — edit always visible, rest in menu. Hidden while selecting. */}
-        <div className={`flex items-center space-x-0.5 flex-shrink-0 ${selectionMode ? 'hidden' : ''}`}>
+        <div className={`flex items-center space-x-1 flex-shrink-0 ${selectionMode ? 'hidden' : ''}`}>
           {/* Focused today — always visible green indicator, click to remove */}
           {isFocusedToday && !isCompleted && onRemoveFromToday && (
-            <button
+            <IconButton
+              icon={CalendarCheck}
               onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); }}
-              className={`p-2.5 rounded-lg transition-all ${
-                isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
-              }`}
+              className="ring-1 bg-emerald-100 text-emerald-600 ring-emerald-200 hover:bg-emerald-100 hover:text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 dark:ring-emerald-500/30 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400"
               title="Added to Today (click to remove)"
-              aria-label={`Remove "${task.title}" from Today`}
-            >
-              <CalendarCheck size={15} />
-            </button>
+              label={`Remove "${task.title}" from Today`}
+            />
           )}
           {/* Add to Today — hover only, when not already focused */}
           {showTodayActions && !isFocusedToday && !isInTodayView && onAddToToday && !isCompleted && (
-            <button
+            <IconButton
+              icon={CalendarPlus}
               onClick={(e) => { e.stopPropagation(); onAddToToday(task.id); }}
-              className={`p-2.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
-                isDark
-                  ? 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/20'
-                  : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
-              }`}
+              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/20"
               title="Add to Today"
-              aria-label={`Add "${task.title}" to Today`}
-            >
-              <CalendarPlus size={15} />
-            </button>
+              label={`Add "${task.title}" to Today`}
+            />
           )}
 
-<button
-              onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-              className={`p-2.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
-                isDark
-                  ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/20'
-                  : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
-              }`}
-              title="Edit"
-              aria-label={`Edit "${task.title}"`}
-            >
-              <Pencil size={15} />
-            </button>
+          <IconButton
+            icon={Pencil}
+            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 hover:text-violet-600 hover:bg-violet-50 dark:hover:text-violet-400 dark:hover:bg-violet-500/20"
+            title="Edit"
+            label={`Edit "${task.title}"`}
+          />
 
           {/* More menu */}
           <div className="relative" ref={menuRef}>
-            <button
+            <IconButton
               type="button"
+              icon={MoreHorizontal}
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setMenuOpen(!menuOpen); }}
-              className={`p-2.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
+              className={`opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
                 menuOpen ? 'opacity-100' : ''
-              } ${
-                isDark
-                  ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
               title="More actions"
-              aria-label={`More actions for "${task.title}"`}
+              label={`More actions for "${task.title}"`}
               aria-expanded={menuOpen}
               aria-haspopup="true"
-            >
-              <MoreHorizontal size={15} />
-            </button>
+            />
 
             {menuOpen && (
               <div className={`absolute right-0 top-full mt-1 w-44 rounded-xl shadow-lg border z-50 py-1 animate-fade-in ${
@@ -571,7 +554,7 @@ export function TaskCard({
           {!isCompleted && (
             <button
               onClick={() => { onToggleComplete(task.id); setQuickAction(null); }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
                 isDark ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-emerald-600 hover:bg-emerald-50'
               }`}
             >
@@ -581,7 +564,7 @@ export function TaskCard({
           {onAddToToday && !isCompleted && !isFocusedToday && (
             <button
               onClick={() => { onAddToToday(task.id); setQuickAction(null); }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
                 isDark ? 'text-blue-400 hover:bg-blue-500/10' : 'text-blue-600 hover:bg-blue-50'
               }`}
             >
@@ -590,7 +573,7 @@ export function TaskCard({
           )}
           <button
             onClick={() => { onEdit(task); setQuickAction(null); }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
               isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
             }`}
           >
@@ -599,7 +582,7 @@ export function TaskCard({
           <div className={`my-1 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
           <button
             onClick={() => { if (confirm('Delete this task?')) onDelete(task.id); setQuickAction(null); }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
               isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
             }`}
           >
