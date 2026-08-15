@@ -61,7 +61,7 @@ export function UndoProvider({ children }: { children: ReactNode }) {
             <span className="text-sm">{action.label}</span>
             <button
               onClick={handleUndo}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 isDark
                   ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
                   : 'bg-violet-50 text-violet-600 hover:bg-violet-100'

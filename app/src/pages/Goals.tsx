@@ -377,7 +377,7 @@ export function Goals() {
           <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
             <button
               onClick={() => setViewMode('garden')}
-              className={`px-3 py-2 flex items-center gap-1.5 text-sm font-medium transition-all ${
+              className={`px-3 py-2 flex items-center gap-2 text-sm font-medium transition-all ${
                 viewMode === 'garden'
                   ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                   : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -389,7 +389,7 @@ export function Goals() {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-2 flex items-center gap-1.5 text-sm font-medium transition-all ${
+              className={`px-3 py-2 flex items-center gap-2 text-sm font-medium transition-all ${
                 viewMode === 'list'
                   ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                   : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -402,7 +402,7 @@ export function Goals() {
           </div>
           <button
             onClick={() => setIsFormOpen(true)}
-            className="btn-primary px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl flex items-center space-x-2"
+            className="btn-primary px-4 py-2 sm:px-6 sm:py-3 rounded-xl flex items-center space-x-2"
           >
             <Plus size={18} />
             <span>New Goal</span>
@@ -420,7 +420,7 @@ export function Goals() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
               filtersOpen || statusFilter !== 'all' || categoryFilter !== 'all'
                 ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                 : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
@@ -453,7 +453,7 @@ export function Goals() {
             <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status</label>
             <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               {(['all', 'Active', 'Completed', 'Archived'] as const).map((status) => (
-                <button key={status} onClick={() => setStatusFilter(status)} className={`px-2.5 py-1 text-xs font-medium capitalize transition-all ${statusFilter === status ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+                <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-1 text-xs font-medium capitalize transition-all ${statusFilter === status ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
                   {status}
                 </button>
               ))}
@@ -463,7 +463,7 @@ export function Goals() {
             <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Category</label>
             <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               {(['all', 'Personal', 'Financial', 'Professional'] as const).map((cat) => (
-                <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-2.5 py-1 text-xs font-medium transition-all ${categoryFilter === cat ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+                <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-3 py-1 text-xs font-medium transition-all ${categoryFilter === cat ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
                   {cat === 'all' ? 'All' : cat}
                 </button>
               ))}
@@ -539,21 +539,21 @@ export function Goals() {
                 </div>
 
                 {/* Title */}
-                <h3 className={`font-semibold text-sm leading-tight line-clamp-2 mb-1.5 ${
+                <h3 className={`font-semibold text-sm leading-tight line-clamp-2 mb-2 ${
                   isDark ? 'text-white' : 'text-slate-800'
                 }`}>
                   {goal.title}
                 </h3>
 
                 {/* Level badge */}
-                <span className={`inline-block text-xs font-bold px-1.5 py-0.5 rounded-full mb-2 ${
+                <span className={`inline-block text-xs font-bold px-2 py-1 rounded-full mb-2 ${
                   isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600'
                 }`}>
                   Lv.&nbsp;{goal.level || 1}
                 </span>
 
                 {/* XP progress bar */}
-                <div className={`h-1.5 rounded-full overflow-hidden mb-1.5 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                <div className={`h-1.5 rounded-full overflow-hidden mb-2 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                   <div
                     className="h-full rounded-full bg-violet-500 transition-all duration-500"
                     style={{ width: `${xpPct}%` }}
@@ -592,7 +592,7 @@ export function Goals() {
               >
                 {/* Augmented Goal Card wrapper */}
                 <div
-                  className={`group rounded-xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.99] ${
+                  className={`group rounded-xl p-6 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.99] ${
                     selection.isSelected(goal.id)
                       ? isDark
                         ? 'bg-violet-500/10 border border-violet-500/30'
@@ -628,7 +628,7 @@ export function Goals() {
                         }`}>
                           {goal.title}
                         </h3>
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                           isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600'
                         }`}>
                           Lv.&nbsp;{goal.level || 1}
@@ -636,7 +636,7 @@ export function Goals() {
                         {hasChildren && (
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleGoalExpanded(goal.id); }}
-                            className={`px-2 py-0.5 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${
+                            className={`px-2 py-1 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${
                               isDark 
                                 ? 'bg-violet-500/25 text-violet-300 border border-violet-500/40 hover:bg-violet-500/35' 
                                 : 'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200'

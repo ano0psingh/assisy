@@ -376,16 +376,16 @@ export function Habits() {
   };
 
   return (
-    <div ref={containerRef} className="space-y-5">
+    <div ref={containerRef} className="space-y-6">
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
 
       {/* Hero header with progress ring */}
-      <div className={`rounded-2xl p-5 relative overflow-hidden ${
+      <div className={`rounded-2xl p-6 relative overflow-hidden ${
         isDark
           ? 'bg-gradient-to-br from-violet-500/[0.08] via-transparent to-emerald-500/[0.05] border border-white/[0.08]'
           : 'bg-gradient-to-br from-violet-50/80 via-white to-emerald-50/50 border border-violet-100/60'
       }`} style={{ boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : '0 1px 3px rgba(0,0,0,0.04)' }}>
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-6">
           <ProgressRing completed={todayCompletedCount} total={totalHabits} />
           <div className="flex-1 min-w-0">
             <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
@@ -395,13 +395,13 @@ export function Habits() {
                   ? "Let's get started"
                   : 'Keep it up!'}
             </h1>
-            <p className={`text-sm mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+            <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
               {todayCompletedCount}/{totalHabits} habits completed
             </p>
             <div className="flex items-center gap-2 mt-3">
               <button
                 onClick={() => setIsCheckInOpen(true)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${
+                className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-all ${
                   checkedInToday
                     ? isDark
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -414,7 +414,7 @@ export function Habits() {
               </button>
               <button
                 onClick={() => setIsHabitFormOpen(true)}
-                className="btn-primary px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                className="btn-primary px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2"
               >
                 <Plus size={14} />
                 New Habit
@@ -461,7 +461,7 @@ export function Habits() {
               <div key={goal.id} className="space-y-2">
                 <button
                   onClick={() => toggleGroup(goal.id)}
-                  className="w-full flex items-center gap-2.5 px-1 py-1"
+                  className="w-full flex items-center gap-3 px-1 py-1"
                 >
                   <div className="w-8 h-8 flex-shrink-0">
                     <GoalTreeThumbnail level={goal.level} theme={goal.theme} />
@@ -481,9 +481,9 @@ export function Habits() {
                 </button>
 
                 {!isCollapsed && (
-                  <div className="space-y-1.5 pl-1">
+                  <div className="space-y-2 pl-1">
                     {booleanHabits.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-1">
+                      <div className="flex flex-wrap gap-2 mb-1">
                         {booleanHabits.map(habit => (
                           <HabitCard
                             key={habit.id}
@@ -518,7 +518,7 @@ export function Habits() {
             <div className="space-y-2">
               <button
                 onClick={() => toggleGroup('__unlinked')}
-                className="w-full flex items-center gap-2.5 px-1 py-1"
+                className="w-full flex items-center gap-3 px-1 py-1"
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
                   <Layers size={14} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
@@ -538,9 +538,9 @@ export function Habits() {
               </button>
 
               {!collapsedGroups.has('__unlinked') && (
-                <div className="space-y-1.5 pl-1">
+                <div className="space-y-2 pl-1">
                   {unlinkedPending.filter(h => h.trackingType === 'boolean').length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-1">
+                    <div className="flex flex-wrap gap-2 mb-1">
                       {unlinkedPending.filter(h => h.trackingType === 'boolean').map(habit => (
                         <HabitCard
                           key={habit.id}
@@ -574,7 +574,7 @@ export function Habits() {
             <div>
               <button
                 onClick={() => setShowCompleted(!showCompleted)}
-                className="w-full flex items-center gap-2.5 px-1 py-1"
+                className="w-full flex items-center gap-3 px-1 py-1"
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-emerald-500/15' : 'bg-emerald-50'}`}>
                   <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
@@ -592,9 +592,9 @@ export function Habits() {
               </button>
 
               {showCompleted && (
-                <div className="space-y-1.5 pl-1 mt-2">
+                <div className="space-y-2 pl-1 mt-2">
                   {completedHabits.filter(h => h.trackingType === 'boolean').length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-1">
+                    <div className="flex flex-wrap gap-2 mb-1">
                       {completedHabits.filter(h => h.trackingType === 'boolean').map(habit => (
                         <HabitCard
                           key={habit.id}
@@ -673,23 +673,23 @@ export function Habits() {
             <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20' : 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60'}`}>
               <Trophy size={14} className={`mb-2 ${currentStreak > 0 ? 'text-amber-500' : isDark ? 'text-amber-500/30' : 'text-amber-300'}`} />
               <div className={`text-xl font-black tabular-nums ${currentStreak > 0 ? 'text-amber-500' : isDark ? 'text-gray-600' : 'text-slate-300'}`}>
-                {currentStreak}<span className="text-xs font-semibold ml-0.5">d</span>
+                {currentStreak}<span className="text-xs font-semibold ml-1">d</span>
               </div>
-              <div className={`text-xs mt-0.5 font-medium ${isDark ? 'text-amber-500/50' : 'text-amber-600/50'}`}>Perfect streak</div>
+              <div className={`text-xs mt-1 font-medium ${isDark ? 'text-amber-500/50' : 'text-amber-600/50'}`}>Perfect streak</div>
             </div>
             <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-violet-500/10 to-blue-500/5 border border-violet-500/20' : 'bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-200/60'}`}>
               <Calendar size={14} className={`mb-2 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
               <div className={`text-xl font-black tabular-nums ${rate7 >= 80 ? 'text-emerald-500' : rate7 >= 50 ? (isDark ? 'text-violet-400' : 'text-violet-600') : (isDark ? 'text-gray-500' : 'text-slate-400')}`}>
-                {rate7}<span className="text-xs font-semibold ml-0.5">%</span>
+                {rate7}<span className="text-xs font-semibold ml-1">%</span>
               </div>
-              <div className={`text-xs mt-0.5 font-medium ${isDark ? 'text-violet-400/50' : 'text-violet-600/50'}`}>Last 7 days</div>
+              <div className={`text-xs mt-1 font-medium ${isDark ? 'text-violet-400/50' : 'text-violet-600/50'}`}>Last 7 days</div>
             </div>
             <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200/60'}`}>
               <TrendingUp size={14} className={`mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
               <div className={`text-xl font-black tabular-nums ${rate30 >= 80 ? 'text-emerald-500' : rate30 >= 50 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-gray-500' : 'text-slate-400')}`}>
-                {rate30}<span className="text-xs font-semibold ml-0.5">%</span>
+                {rate30}<span className="text-xs font-semibold ml-1">%</span>
               </div>
-              <div className={`text-xs mt-0.5 font-medium ${isDark ? 'text-emerald-400/50' : 'text-emerald-600/50'}`}>Last 30 days</div>
+              <div className={`text-xs mt-1 font-medium ${isDark ? 'text-emerald-400/50' : 'text-emerald-600/50'}`}>Last 30 days</div>
             </div>
           </div>
         );
@@ -697,7 +697,7 @@ export function Habits() {
 
       {/* Activity heatmap */}
       {habits.length > 0 && (
-        <div className="card rounded-2xl p-5 space-y-4">
+        <div className="card rounded-2xl p-6 space-y-4">
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               Activity
@@ -705,7 +705,7 @@ export function Habits() {
             <select
               value={activityFilter}
               onChange={(e) => setActivityFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm input rounded-lg"
+              className="px-3 py-2 text-sm input rounded-lg"
             >
               <option value="">All Habits</option>
               {goalGroupsForFilter.length > 0 && (
@@ -732,11 +732,11 @@ export function Habits() {
 
       {/* Per-habit 30-day completion bars */}
       {habits.length > 0 && (
-        <div className="card rounded-2xl p-5">
+        <div className="card rounded-2xl p-6">
           <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
             30-day consistency
           </h3>
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {[...habits]
               .map(h => {
                 const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
@@ -747,7 +747,7 @@ export function Habits() {
               })
               .sort((a, b) => b.pct - a.pct)
               .map(({ h, pct, completedDays }) => (
-                <div key={h.id} className="flex items-center gap-2.5">
+                <div key={h.id} className="flex items-center gap-3">
                   <span className={`text-xs w-28 truncate flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>{h.name}</span>
                   <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
                     <div
@@ -768,7 +768,7 @@ export function Habits() {
 
       {/* AI Habit Insights */}
       {isAIConfigured() && habits.length > 0 && (
-        <div className="card rounded-2xl p-5">
+        <div className="card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className={`font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
               <Sparkles size={18} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
@@ -809,7 +809,7 @@ export function Habits() {
 
       {/* Mood Trend Sparkline */}
       {moodScores.length >= 2 && (
-        <div className="card rounded-2xl p-5">
+        <div className="card rounded-2xl p-6">
           <h2 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             Mood Trend
           </h2>
@@ -848,7 +848,7 @@ export function Habits() {
 
       {/* Recent Check-ins Summary */}
       {recentLogs.length > 0 && (
-        <div className="card rounded-2xl p-5">
+        <div className="card rounded-2xl p-6">
           <h2 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             Recent Check-ins
           </h2>
@@ -866,7 +866,7 @@ export function Habits() {
                   key={log.id}
                   className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center justify-between mb-2">
                     <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
                       {new Date(log.date).toLocaleDateString('en-US', { 
                         weekday: 'short', 
@@ -875,7 +875,7 @@ export function Habits() {
                       })}
                     </span>
                     {log.energyLevel && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                      <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
                         log.energyLevel <= 3 
                           ? 'bg-red-500/20 text-red-400'
                           : log.energyLevel <= 6

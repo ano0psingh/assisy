@@ -32,7 +32,7 @@ export function StatCardSkeleton() {
 
 export function GoalCardSkeleton() {
   return (
-    <div className="card rounded-2xl p-5 space-y-3">
+    <div className="card rounded-2xl p-6 space-y-3">
       <div className="flex items-center gap-3">
         <Skeleton className="w-10 h-10 rounded-xl" />
         <div className="flex-1 space-y-2">

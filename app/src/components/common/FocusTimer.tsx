@@ -203,7 +203,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
     return (
       <button
         onClick={onReopen || onClose}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[55] flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-xl shadow-lg transition-all hover:scale-105 ${
+        className={`fixed bottom-20 md:bottom-6 right-6 z-[55] flex items-center gap-3 pl-3 pr-4 py-3 rounded-xl shadow-lg transition-all hover:scale-105 ${
           phase === 'work'
             ? isDark ? 'bg-violet-500/20 border border-violet-500/30 text-violet-400' : 'bg-violet-100 border border-violet-200 text-violet-600'
             : isDark ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400' : 'bg-emerald-100 border border-emerald-200 text-emerald-600'
@@ -248,13 +248,13 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
       <div className="fixed inset-0 z-[55] flex items-center justify-center">
         <div className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/70' : 'bg-slate-900/30'}`} onClick={() => setShowSettings(false)} />
         <div className={`relative w-full max-w-sm rounded-2xl overflow-hidden ${isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white'} shadow-2xl`}>
-          <div className={`flex items-center justify-between px-5 py-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+          <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Pomodoro Settings</h2>
-            <button aria-label="Close focus timer" onClick={() => setShowSettings(false)} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
+            <button aria-label="Close focus timer" onClick={() => setShowSettings(false)} className={`p-2 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
               <X size={18} />
             </button>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="p-6 space-y-4">
             <div>
               <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Focus Duration (min)</label>
               <input type="number" min={1} max={90} value={settings.workMinutes} onChange={e => persistSettings({ ...settings, workMinutes: Math.max(1, +e.target.value) })} className={inputCls} />
@@ -291,7 +291,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
             </div>
             <button
               onClick={() => { startPhase('work'); setShowSettings(false); }}
-              className="btn-primary w-full py-2.5 rounded-xl text-sm"
+              className="btn-primary w-full py-3 rounded-xl text-sm"
             >
               Apply & Reset Timer
             </button>
@@ -306,17 +306,17 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
       <div className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/70' : 'bg-slate-900/30'}`} onClick={() => !running && onClose()} />
       <div className={`relative w-full max-w-sm rounded-2xl overflow-hidden ${isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white'} shadow-2xl`}>
         {/* Header */}
-        <div className={`flex items-center justify-between px-5 py-3 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+        <div className={`flex items-center justify-between px-6 py-3 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
           <div className="flex items-center gap-2">
             <Timer className={`w-5 h-5 ${phaseColor.text}`} />
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Pomodoro</h2>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => setShowSettings(true)} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`} title="Settings"
+            <button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`} title="Settings"
  aria-label="Settings">
               <Settings2 size={16} />
             </button>
-            <button aria-label="Close settings" onClick={onClose} className={`p-1.5 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
+            <button aria-label="Close settings" onClick={onClose} className={`p-2 rounded-lg ${isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'}`}>
               <X size={18} />
             </button>
           </div>
@@ -324,7 +324,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
 
         <div className="p-6 flex flex-col items-center">
           {/* Phase indicator tabs */}
-          <div className={`flex rounded-xl overflow-hidden border mb-5 w-full ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className={`flex rounded-xl overflow-hidden border mb-6 w-full ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
             {([
               { p: 'work' as Phase, label: 'Focus', icon: Brain },
               { p: 'shortBreak' as Phase, label: 'Short Break', icon: Coffee },
@@ -334,7 +334,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
                 key={p}
                 onClick={() => { if (!running) startPhase(p); }}
                 disabled={running}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-all ${
                   phase === p
                     ? p === 'work'
                       ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
@@ -358,7 +358,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
           )}
 
           {/* Circular timer */}
-          <div className="relative w-48 h-48 mb-5">
+          <div className="relative w-48 h-48 mb-6">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 180 180">
               <circle cx="90" cy="90" r={radius} fill="none" strokeWidth="5"
                 className={isDark ? 'stroke-white/5' : 'stroke-slate-100'} />
@@ -397,7 +397,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
           </div>
 
           {/* Session dots */}
-          <div className="flex items-center gap-1.5 mb-5">
+          <div className="flex items-center gap-2 mb-6">
             {Array.from({ length: settings.longBreakInterval }).map((_, i) => (
               <div
                 key={i}
@@ -420,7 +420,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
             {!justCompleted && (
               <button
                 onClick={() => running ? setRunning(false) : setRunning(true)}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-sm transition-colors ${
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm transition-colors ${
                   running
                     ? isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     : 'btn-primary'
@@ -432,7 +432,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
             {running && (
               <button
                 onClick={skipPhase}
-                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm ${
+                className={`flex items-center gap-2 px-3 py-3 rounded-xl text-sm ${
                   isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                 }`}
                 title="Skip to next phase"
@@ -443,7 +443,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
             {!running && !justCompleted && remaining < phaseDuration && (
               <button
                 onClick={() => startPhase(phase)}
-                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm ${
+                className={`flex items-center gap-2 px-3 py-3 rounded-xl text-sm ${
                   isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                 }`}
               >
@@ -453,7 +453,7 @@ export function FocusTimer({ isOpen, onClose, onReopen, taskTitle }: FocusTimerP
           </div>
 
           {/* Today's stats */}
-          <div className={`mt-5 flex items-center gap-4 px-4 py-2.5 rounded-xl w-full ${phaseColor.bg}`}>
+          <div className={`mt-6 flex items-center gap-4 px-4 py-3 rounded-xl w-full ${phaseColor.bg}`}>
             <div className="flex-1 text-center">
               <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{todayStats.completed}</div>
               <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>sessions</p>

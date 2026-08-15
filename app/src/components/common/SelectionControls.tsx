@@ -71,7 +71,7 @@ export function SelectButton({ active, onClick, disabled }: SelectButtonProps) {
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
         active
           ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
           : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'

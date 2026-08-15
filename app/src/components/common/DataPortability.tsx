@@ -82,7 +82,7 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
         <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Export Backup</h3>
         <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
@@ -145,7 +145,7 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
                 </div>
                 <button
                   onClick={() => handleRestoreSnapshot(snapshot.takenAt)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium flex-shrink-0 transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium flex-shrink-0 transition-colors ${
                     isDark
                       ? 'bg-white/10 text-gray-300 hover:bg-white/15'
                       : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
@@ -166,7 +166,7 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
             ? isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
             : isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
         }`}>
-          {status === 'success' ? <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" /> : <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />}
+          {status === 'success' ? <CheckCircle2 size={16} className="mt-1 flex-shrink-0" /> : <AlertCircle size={16} className="mt-1 flex-shrink-0" />}
           {message}
         </div>
       )}

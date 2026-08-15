@@ -118,7 +118,7 @@ export function BottomNav() {
   };
 
   const linkCls = (active: boolean) =>
-    `flex flex-col items-center justify-center gap-0.5 py-3 min-w-0 flex-1 min-h-[48px] transition-colors ${
+    `flex flex-col items-center justify-center gap-1 py-3 min-w-0 flex-1 min-h-[48px] transition-colors ${
       active
         ? isDark
           ? 'text-violet-400'
@@ -142,7 +142,7 @@ export function BottomNav() {
             className={({ isActive }) => linkCls(isActive)}
           >
             <Home size={22} strokeWidth={2} />
-            <span className="text-xs font-medium truncate max-w-full px-0.5">Home</span>
+            <span className="text-xs font-medium truncate max-w-full px-1">Home</span>
           </NavLink>
           {middleItems.map((item) => (
             <NavLink
@@ -152,7 +152,7 @@ export function BottomNav() {
               className={({ isActive }) => linkCls(isActive)}
             >
               <item.icon size={22} strokeWidth={2} />
-              <span className="text-xs font-medium truncate max-w-full px-0.5">{item.label}</span>
+              <span className="text-xs font-medium truncate max-w-full px-1">{item.label}</span>
             </NavLink>
           ))}
           <button

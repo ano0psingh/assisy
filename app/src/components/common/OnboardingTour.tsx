@@ -95,7 +95,7 @@ export function OnboardingTour() {
           {description}
         </p>
 
-        <div className="mb-5 flex items-center justify-center gap-1.5">
+        <div className="mb-6 flex items-center justify-center gap-2">
           {STEPS.map((_, i) => (
             <span
               key={i}
@@ -118,7 +118,7 @@ export function OnboardingTour() {
           </button>
           <button
             onClick={next}
-            className="rounded-lg bg-violet-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-transform hover:scale-105 active:scale-95"
+            className="rounded-lg bg-violet-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-transform hover:scale-105 active:scale-95"
           >
             {isLast ? 'Get Started' : 'Next'}
           </button>

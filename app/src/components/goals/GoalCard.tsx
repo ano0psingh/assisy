@@ -66,7 +66,7 @@ export function GoalCard({
   return (
     <div 
       data-focus-id={goal.id}
-      className={`group rounded-2xl p-5 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.985] backdrop-blur-xl ${
+      className={`group rounded-2xl p-6 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.985] backdrop-blur-xl ${
         isSelected
           ? isDark
             ? 'bg-violet-500/10 border border-violet-500/30'
@@ -121,7 +121,7 @@ export function GoalCard({
               {subGoalsCount > 0 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
-                  className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all ${
+                  className={`px-3 py-1 rounded-lg flex items-center gap-2 text-xs font-semibold transition-all ${
                     isDark 
                       ? 'bg-violet-500/25 text-violet-300 border border-violet-500/40 hover:bg-violet-500/35' 
                       : 'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200'

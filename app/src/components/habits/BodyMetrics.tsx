@@ -115,7 +115,7 @@ export function BodyMetrics() {
   }`;
 
   return (
-    <div className="card rounded-2xl p-4 sm:p-5">
+    <div className="card rounded-2xl p-4 sm:p-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Activity size={18} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
@@ -124,7 +124,7 @@ export function BodyMetrics() {
         <button
           type="button"
           onClick={() => setShowForm(prev => !prev)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
+          className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
             isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
           }`}
         >
@@ -181,7 +181,7 @@ export function BodyMetrics() {
               key={t}
               type="button"
               onClick={() => setActiveMetric(t)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                 viewMetric === t
                   ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-700'
                   : isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
@@ -242,13 +242,13 @@ export function BodyMetrics() {
       {metricEntries.length > 0 && (
         <div className="mt-3 space-y-1">
           {[...metricEntries].reverse().slice(0, 5).map(entry => (
-            <div key={entry.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${isDark ? 'bg-white/[0.03]' : 'bg-slate-50'}`}>
+            <div key={entry.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${isDark ? 'bg-white/[0.03]' : 'bg-slate-50'}`}>
               <span className={`flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
                 {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
               <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{entry.value} {entry.unit}</span>
               {entry.note && <span className={`truncate ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{entry.note}</span>}
-              <button type="button" onClick={() => handleDelete(entry.id)} className={`ml-auto p-0.5 rounded ${isDark ? 'text-gray-600 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}>×</button>
+              <button type="button" onClick={() => handleDelete(entry.id)} className={`ml-auto p-1 rounded ${isDark ? 'text-gray-600 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}>×</button>
             </div>
           ))}
         </div>

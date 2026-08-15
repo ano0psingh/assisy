@@ -147,7 +147,7 @@ export function WeeklyChallenges() {
         <button
           onClick={generateChallenges}
           disabled={loading}
-          className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+          className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
           title="Regenerate challenges"
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
@@ -189,7 +189,7 @@ export function WeeklyChallenges() {
                   <span className={`text-sm font-medium ${done ? 'line-through' : ''} ${isDark ? 'text-white' : 'text-slate-800'}`}>
                     {challenge.title}
                   </span>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                     done
                       ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
                       : `${c.badgeBg} ${c.badgeText}`
@@ -197,7 +197,7 @@ export function WeeklyChallenges() {
                     +{challenge.xpReward} XP
                   </span>
                 </div>
-                <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
                   {challenge.description}
                 </p>
               </div>

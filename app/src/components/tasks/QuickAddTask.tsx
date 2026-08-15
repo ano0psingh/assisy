@@ -41,7 +41,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="btn-primary px-3 py-1.5 rounded-lg flex items-center space-x-1.5 text-sm"
+        className="btn-primary px-3 py-2 rounded-lg flex items-center space-x-2 text-sm"
       >
         <Plus size={15} />
         <span>Add</span>
@@ -63,7 +63,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
               aria-label="Close"
               type="button"
               onClick={handleCancel}
-              className={`p-1.5 rounded-lg transition-colors ${
+              className={`p-2 rounded-lg transition-colors ${
                 isDark
                   ? 'text-gray-400 hover:text-white hover:bg-white/10'
                   : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
@@ -78,21 +78,21 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What needs to be done?"
-            className="w-full px-3 py-2.5 input rounded-xl text-sm"
+            className="w-full px-3 py-3 input rounded-xl text-sm"
             autoFocus
           />
 
           <div className="grid grid-cols-3 gap-2">
-            <select value={category} onChange={(e) => setCategory(e.target.value as TaskCategory)} className="px-2 py-1.5 input rounded-lg text-xs">
+            <select value={category} onChange={(e) => setCategory(e.target.value as TaskCategory)} className="px-2 py-2 input rounded-lg text-xs">
               <option value="Personal">Personal</option>
               <option value="Financial">Financial</option>
               <option value="Professional">Professional</option>
             </select>
-            <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="px-2 py-1.5 input rounded-lg text-xs">
+            <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="px-2 py-2 input rounded-lg text-xs">
               <option value="High">High Pri</option>
               <option value="Low">Low Pri</option>
             </select>
-            <select value={effort} onChange={(e) => setEffort(e.target.value as Effort)} className="px-2 py-1.5 input rounded-lg text-xs">
+            <select value={effort} onChange={(e) => setEffort(e.target.value as Effort)} className="px-2 py-2 input rounded-lg text-xs">
               <option value="High">High Effort</option>
               <option value="Low">Low Effort</option>
             </select>
@@ -102,7 +102,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
           <div className="flex gap-2 pt-1">
             <button
               type="submit"
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 isDark
                   ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
                   : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
@@ -114,7 +114,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
             <button
               type="button"
               onClick={() => submit(false)}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 isDark
                   ? 'bg-white/5 text-gray-400 hover:bg-white/10'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200'

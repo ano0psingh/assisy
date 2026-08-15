@@ -105,7 +105,7 @@ export function ExpandableModal({
   );
 
   const header = (
-    <div className={`flex items-center justify-between p-5 border-b flex-shrink-0 ${
+    <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${
       isDark ? 'border-white/10' : 'border-slate-100'
     }`}>
       <div className="flex items-center space-x-3">

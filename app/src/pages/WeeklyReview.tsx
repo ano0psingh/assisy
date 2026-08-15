@@ -287,7 +287,7 @@ Respond ONLY with valid JSON matching this exact schema:
           ? 'bg-violet-500/[0.07] border border-violet-500/15'
           : 'bg-violet-50 border border-violet-100'
       }`}>
-        <div className="relative px-4 py-4 sm:px-6 sm:py-5">
+        <div className="relative px-4 py-4 sm:px-6 sm:py-6">
           <div className="flex items-center gap-2 mb-4">
             <Calendar className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
             <span className={`text-sm font-medium ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{thisWeek.label}</span>
@@ -299,7 +299,7 @@ Respond ONLY with valid JSON matching this exact schema:
               <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Completed</p>
               <div className="flex items-end gap-2">
                 <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{completedThisWeek.length}</span>
-                <span className={`flex items-center gap-0.5 text-xs font-medium pb-1 ${
+                <span className={`flex items-center gap-1 text-xs font-medium pb-1 ${
                   delta > 0
                     ? isDark ? 'text-emerald-400' : 'text-emerald-600'
                     : delta < 0
@@ -321,7 +321,7 @@ Respond ONLY with valid JSON matching this exact schema:
             {/* Streak */}
             <div>
               <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Streak</p>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Flame className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
                 <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>{userStats.currentStreak}</span>
                 <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>days</span>
@@ -331,11 +331,11 @@ Respond ONLY with valid JSON matching this exact schema:
             {/* XP / Level */}
             <div>
               <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Level</p>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
                 <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{getTotalLevel()}</span>
               </div>
-              <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{getTotalXP().toLocaleString()} XP · {getTitle()}</p>
+              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{getTotalXP().toLocaleString()} XP · {getTitle()}</p>
             </div>
           </div>
         </div>
@@ -368,21 +368,21 @@ Respond ONLY with valid JSON matching this exact schema:
           {/* By priority */}
           <div className={cardClass + ' p-4'}>
             <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>High Priority</p>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <TrendingUp size={16} className={isDark ? 'text-red-400' : 'text-red-500'} />
               <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{byPriority.High}</span>
             </div>
           </div>
           <div className={cardClass + ' p-4'}>
             <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Low Priority</p>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <TrendingDown size={16} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
               <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{byPriority.Low}</span>
             </div>
           </div>
           <div className={cardClass + ' p-4'}>
             <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Still Pending</p>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <ClipboardList size={16} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
               <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{pendingCount}</span>
             </div>
@@ -400,7 +400,7 @@ Respond ONLY with valid JSON matching this exact schema:
             {byProject.map(({ projectId, title, count }) => (
               <div key={projectId} className={cardClass + ' p-4'}>
                 <p className={`text-xs font-medium truncate mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{title}</p>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
                   <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{count}</span>
                   <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>done</span>
@@ -439,17 +439,17 @@ Respond ONLY with valid JSON matching this exact schema:
                 <div key={habit.id} className={cardClass + ' px-4 py-3 flex items-center gap-4'}>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{habit.name}</p>
-                    <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex items-center gap-1 mt-1">
                       <Flame size={12} className={isDark ? 'text-orange-400' : 'text-orange-500'} />
                       <span className={`text-xs ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>{streak}d streak</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     {DAYS.map((dayLabel, idx) => {
                       const done = dayDone.get(idx);
                       return (
-                        <div key={dayLabel} className="flex flex-col items-center gap-0.5">
+                        <div key={dayLabel} className="flex flex-col items-center gap-1">
                           <span className={`text-xs leading-none ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{dayLabel[0]}</span>
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                             done
@@ -485,7 +485,7 @@ Respond ONLY with valid JSON matching this exact schema:
               <div key={goal.id} className={cardClass + ' px-4 py-3'}>
                 <div className="flex items-center justify-between mb-2">
                   <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{goal.title}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  <span className={`text-xs px-2 py-1 rounded-full ${
                     isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                   }`}>
                     {goal.category}
@@ -559,14 +559,14 @@ Respond ONLY with valid JSON matching this exact schema:
             {/* Achievements */}
             {aiInsight.achievements?.length > 0 && (
               <div className={`rounded-2xl p-4 ${isDark ? 'bg-emerald-500/[0.06] border border-emerald-500/15' : 'bg-emerald-50 border border-emerald-100'}`}>
-                <div className="flex items-center gap-2 mb-2.5">
+                <div className="flex items-center gap-2 mb-3">
                   <CheckCircle2 size={15} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
                   <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Achievements</h3>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {aiInsight.achievements.map((item, i) => (
                     <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-emerald-200/80' : 'text-emerald-800'}`}>
-                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
                       {item}
                     </li>
                   ))}
@@ -577,14 +577,14 @@ Respond ONLY with valid JSON matching this exact schema:
             {/* Slacked Areas */}
             {aiInsight.slacked_areas?.length > 0 && (
               <div className={`rounded-2xl p-4 ${isDark ? 'bg-amber-500/[0.06] border border-amber-500/15' : 'bg-amber-50 border border-amber-100'}`}>
-                <div className="flex items-center gap-2 mb-2.5">
+                <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle size={15} className={isDark ? 'text-amber-400' : 'text-amber-600'} />
                   <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>Slacked Areas</h3>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {aiInsight.slacked_areas.map((item, i) => (
                     <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-amber-200/80' : 'text-amber-800'}`}>
-                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-amber-400' : 'bg-amber-500'}`} />
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-amber-400' : 'bg-amber-500'}`} />
                       {item}
                     </li>
                   ))}
@@ -595,14 +595,14 @@ Respond ONLY with valid JSON matching this exact schema:
             {/* Delayed Items */}
             {aiInsight.delayed_items?.length > 0 && (
               <div className={`rounded-2xl p-4 ${isDark ? 'bg-red-500/[0.06] border border-red-500/15' : 'bg-red-50 border border-red-100'}`}>
-                <div className="flex items-center gap-2 mb-2.5">
+                <div className="flex items-center gap-2 mb-3">
                   <TrendingDown size={15} className={isDark ? 'text-red-400' : 'text-red-600'} />
                   <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-red-400' : 'text-red-700'}`}>Delayed Items</h3>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {aiInsight.delayed_items.map((item, i) => (
                     <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-red-200/80' : 'text-red-800'}`}>
-                      <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-red-400' : 'bg-red-500'}`} />
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-red-400' : 'bg-red-500'}`} />
                       {item}
                     </li>
                   ))}
@@ -635,14 +635,14 @@ Respond ONLY with valid JSON matching this exact schema:
             {/* Actionable Focus */}
             {aiInsight.actionable_focus?.length > 0 && (
               <div className={`rounded-2xl p-4 ${isDark ? 'bg-violet-500/[0.06] border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}>
-                <div className="flex items-center gap-2 mb-2.5">
+                <div className="flex items-center gap-2 mb-3">
                   <Target size={15} className={isDark ? 'text-violet-400' : 'text-violet-600'} />
                   <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-violet-400' : 'text-violet-700'}`}>Focus Next Week</h3>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {aiInsight.actionable_focus.map((item, i) => (
                     <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-violet-200/80' : 'text-violet-800'}`}>
-                      <span className={`mt-0.5 text-xs font-bold flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>{i + 1}</span>
+                      <span className={`mt-1 text-xs font-bold flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>{i + 1}</span>
                       {item}
                     </li>
                   ))}
@@ -669,7 +669,7 @@ Respond ONLY with valid JSON matching this exact schema:
             </div>
           </div>
         ) : aiInsight && typeof aiInsight === 'string' ? (
-          <div className={cardClass + ' p-5'}>
+          <div className={cardClass + ' p-6'}>
             <div className="space-y-3">
               <div
                 className={`text-sm leading-relaxed space-y-1 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
@@ -685,7 +685,7 @@ Respond ONLY with valid JSON matching this exact schema:
             </div>
           </div>
         ) : (
-          <div className={cardClass + ' p-5'}>
+          <div className={cardClass + ' p-6'}>
             <div className="text-center py-2">
               <p className={`text-sm mb-3 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                 Get an AI-powered analysis of your week

@@ -24,8 +24,8 @@ const TONES: Record<IconButtonTone, string> = {
 };
 
 const SIZES: Record<IconButtonSize, { box: string; icon: number }> = {
-  sm: { box: 'p-1.5 rounded-lg', icon: 14 },
-  md: { box: 'p-2.5 rounded-xl', icon: 16 },
+  sm: { box: 'p-2 rounded-lg', icon: 14 },
+  md: { box: 'p-3 rounded-xl', icon: 16 },
 };
 
 export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> {

@@ -599,7 +599,7 @@ export function Projects() {
                   {task.title}
                 </span>
                 {task.priority === 'High' && (
-                  <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-red-500/20 text-red-400 flex-shrink-0">HIGH</span>
+                  <span className="px-2 py-1 text-xs font-semibold rounded bg-red-500/20 text-red-400 flex-shrink-0">HIGH</span>
                 )}
                 {subTasks.length > 0 && (
                   <span className={`text-xs flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
@@ -610,7 +610,7 @@ export function Projects() {
               {task.tags.length > 0 && (
                 <div className="flex items-center gap-1 mt-1 flex-wrap">
                   {task.tags.map(tag => (
-                    <span key={tag} className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                    <span key={tag} className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
                       {tag}
                     </span>
                   ))}
@@ -625,7 +625,7 @@ export function Projects() {
             {task.status !== 'Done' && isAddedToToday && (
               <button
                 onClick={() => removeTaskFromToday(task.id)}
-                className={`p-1.5 rounded-lg transition-all ${
+                className={`p-2 rounded-lg transition-all ${
                   isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
                 }`}
                 title="Added to Today (click to remove)"
@@ -640,7 +640,7 @@ export function Projects() {
               {task.status !== 'Done' && !isAddedToToday && (
                 <button
                   onClick={() => addTaskToToday(task.id)}
-                  className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'}`}
+                  className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'}`}
                   title="Add to Today"
                   aria-label="Add to Today"
                 >
@@ -649,7 +649,7 @@ export function Projects() {
               )}
               <button
                 onClick={() => openCreateSubTask(task)}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
                 title="Add sub-task"
                 aria-label="Add sub-task"
               >
@@ -657,7 +657,7 @@ export function Projects() {
               </button>
               <button
                 onClick={() => openEditTask(task)}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
                 title="Edit"
                 aria-label="Edit"
               >
@@ -665,7 +665,7 @@ export function Projects() {
               </button>
               <button
                 onClick={() => deleteProjectTask(task.id)}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}
+                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}
                 title="Delete"
                 aria-label="Delete"
               >
@@ -729,7 +729,7 @@ export function Projects() {
               setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
               setIsProjectFormOpen(true);
             }}
-            className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base"
+            className="btn-primary px-4 py-2 md:px-6 md:py-3 rounded-xl flex items-center space-x-2 text-sm md:text-base"
           >
             <Plus size={18} />
             <span>New Project</span>
@@ -762,7 +762,7 @@ export function Projects() {
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects by name or tag"
               aria-label="Search projects"
-              className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm outline-none transition-colors ${
+              className={`w-full pl-8 pr-8 py-3 rounded-xl text-sm outline-none transition-colors ${
                 isDark
                   ? 'bg-white/5 text-white placeholder-gray-500 border border-white/10 focus:border-violet-500/50'
                   : 'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400'
@@ -790,7 +790,7 @@ export function Projects() {
                   <button
                     key={status}
                     onClick={() => setProjectStatusFilter(status)}
-                    className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                    className={`px-3 py-2 text-xs font-medium transition-all ${
                       projectStatusFilter === status
                         ? status === 'All' 
                           ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
@@ -885,7 +885,7 @@ export function Projects() {
                         </div>
 
                         <div className="flex items-center space-x-2 flex-shrink-0">
-                          <span className={`text-xs px-2 py-0.5 rounded-full hidden sm:inline ${
+                          <span className={`text-xs px-2 py-1 rounded-full hidden sm:inline ${
                             project.status === 'Active' 
                               ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                               : project.status === 'Completed'
@@ -1053,7 +1053,7 @@ export function Projects() {
                           <button
                             key={status}
                             onClick={() => setSubProjectStatusFilter(status)}
-                            className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                            className={`px-3 py-2 text-xs font-medium transition-all ${
                               subProjectStatusFilter === status
                                 ? status === 'All' 
                                   ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
@@ -1082,7 +1082,7 @@ export function Projects() {
                             setSubProjectForm({ title: '', description: '', deadline: '', status: 'Backlog' });
                             setIsSubProjectFormOpen(true);
                           }}
-                          className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-colors ${
                             isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
                           }`}
                         >
@@ -1200,7 +1200,7 @@ export function Projects() {
                           <button
                             key={status}
                             onClick={() => setTaskStatusFilter(status)}
-                            className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                            className={`px-3 py-2 text-xs font-medium transition-all ${
                               taskStatusFilter === status
                                 ? status === 'All' 
                                   ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
@@ -1229,7 +1229,7 @@ export function Projects() {
                             setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', parentTaskId: '' });
                             setIsTaskFormOpen(true);
                           }}
-                          className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-colors ${
                             isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
                           }`}
                         >
@@ -1315,7 +1315,7 @@ export function Projects() {
                 type="text"
                 value={projectForm.title}
                 onChange={e => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
-                className={`w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+                className={`w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
                   isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
                 }`}
                 placeholder="Project name"
@@ -1355,7 +1355,7 @@ export function Projects() {
                 type="date"
                 value={projectForm.deadline}
                 onChange={e => setProjectForm(prev => ({ ...prev, deadline: e.target.value }))}
-                className={`w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+                className={`w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
                   isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
                 }`}
               />
@@ -1395,7 +1395,7 @@ export function Projects() {
                     type="button"
                     onClick={handleGenerateAIPlan}
                     disabled={aiPlanLoading || !projectForm.title.trim()}
-                    className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                       aiPlanLoading || !projectForm.title.trim()
                         ? isDark ? 'bg-violet-500/10 text-violet-400/50 cursor-not-allowed' : 'bg-violet-50 text-violet-400 cursor-not-allowed'
                         : isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
@@ -1404,7 +1404,7 @@ export function Projects() {
                     {aiPlanLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                     {aiPlanLoading ? 'Generating plan...' : 'AI: Generate Plan'}
                   </button>
-                  {aiPlanError && <p className={`text-xs mt-1.5 ${isDark ? 'text-red-400' : 'text-red-500'}`}>{aiPlanError}</p>}
+                  {aiPlanError && <p className={`text-xs mt-2 ${isDark ? 'text-red-400' : 'text-red-500'}`}>{aiPlanError}</p>}
                   {!projectForm.title.trim() && <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Enter a project title first</p>}
                 </div>
               ) : (
@@ -1444,7 +1444,7 @@ export function Projects() {
                             key={tIdx}
                             type="button"
                             onClick={() => toggleTaskSelection(spIdx, tIdx)}
-                            className={`w-full flex items-center gap-2 pl-10 pr-3 py-1.5 text-left transition-colors ${
+                            className={`w-full flex items-center gap-2 pl-8 pr-3 py-2 text-left transition-colors ${
                               isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
                             }`}
                           >
@@ -1456,7 +1456,7 @@ export function Projects() {
                               {task.selected && <Check size={10} />}
                             </div>
                             <span className={`text-xs flex-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{task.title}</span>
-                            <span className={`text-xs px-1.5 py-0.5 rounded ${
+                            <span className={`text-xs px-2 py-1 rounded ${
                               task.priority === 'High'
                                 ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
                                 : task.priority === 'Medium'
@@ -1468,7 +1468,7 @@ export function Projects() {
                       </div>
                     ))}
                   </div>
-                  <p className={`text-xs mt-1.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  <p className={`text-xs mt-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
                     Uncheck items you don't want. Click "Create with Plan" to create everything.
                   </p>
                 </div>
@@ -1483,7 +1483,7 @@ export function Projects() {
                 {notesInput}
                 {aiPlanSection}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
                 <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Project details</h3>
                 {colorInput}
                 {deadlineInput}
@@ -1527,7 +1527,7 @@ export function Projects() {
         }
       >
         {(isFS) => {
-          const inputCls = `w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+          const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
             isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
           }`;
           const titleInput = (
@@ -1565,7 +1565,7 @@ export function Projects() {
                 {titleInput}
                 {notesInput}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
                 <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Details</h3>
                 {deadlineInput}
                 {statusInput}
@@ -1606,7 +1606,7 @@ export function Projects() {
         }
       >
         {(isFS) => {
-          const inputCls = `w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+          const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
             isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
           }`;
           const titleInput = (
@@ -1654,7 +1654,7 @@ export function Projects() {
                 {titleInput}
                 {notesInput}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
                 <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Task details</h3>
                 {priorityEffort}
                 {deadlineInput}

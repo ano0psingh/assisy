@@ -38,7 +38,7 @@ export function PageTabs({ tabs, active, onChange, label }: PageTabsProps) {
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
               whitespace-nowrap transition-colors flex-shrink-0
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60
               ${

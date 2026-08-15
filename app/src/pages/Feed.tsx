@@ -93,7 +93,7 @@ function RelevanceBadge({ score, isDark }: { score: number; isDark: boolean }) {
         : isDark ? 'bg-gray-500/15 text-gray-400 border-gray-500/20' : 'bg-slate-100 text-slate-500 border-slate-200';
 
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md border ${color}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border ${color}`}>
       <Star size={10} /> {score}/10
     </span>
   );
@@ -111,7 +111,7 @@ function ContentTypePill({ type, isDark }: { type: string; isDark: boolean }) {
         ? isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-50 text-slate-500'
         : isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600';
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tierColor}`}>
+    <span className={`text-xs px-2 py-1 rounded-full font-medium ${tierColor}`}>
       {label}
     </span>
   );
@@ -175,7 +175,7 @@ export function Feed() {
   }, [setFilter, setTagFilter, setSubFilter]);
   useFocusHighlight(handleSearchFocus);
 
-  const bulkButtonClass = `px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+  const bulkButtonClass = `px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
     isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
   }`;
 
@@ -274,7 +274,7 @@ export function Feed() {
   }
 
   return (
-    <div ref={containerRef} className="space-y-5">
+    <div ref={containerRef} className="space-y-6">
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       {/* Gemini banner */}
       {!geminiReady && (
@@ -283,7 +283,7 @@ export function Feed() {
         }`}>
           <Sparkles className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
           <p className={`text-sm ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
-            Add <code className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>VITE_GEMINI_API_KEY</code> to .env.local for AI summaries
+            Add <code className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>VITE_GEMINI_API_KEY</code> to .env.local for AI summaries
           </p>
         </div>
       )}
@@ -294,7 +294,7 @@ export function Feed() {
           ? 'bg-violet-500/[0.07] border border-violet-500/15'
           : 'bg-violet-50 border border-violet-100'
       }`}>
-        <div className="relative px-4 py-4 sm:px-6 sm:py-5">
+        <div className="relative px-4 py-4 sm:px-6 sm:py-6">
           <div className="mb-4 space-y-3">
             <div className="flex items-center gap-3">
               <a
@@ -306,7 +306,7 @@ export function Feed() {
               </a>
               <div className="min-w-0">
                 <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Feed</h1>
-                <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                   {articles.length} article{articles.length !== 1 ? 's' : ''} · {unreadCount} unread · {bookmarkedCount} bookmarked
                 </p>
               </div>
@@ -319,7 +319,7 @@ export function Feed() {
               />
               <button
                 onClick={() => { setShowAddFeed(!showAddFeed); setShowSaveURL(false); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                   showAddFeed
                     ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
                     : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
@@ -330,7 +330,7 @@ export function Feed() {
               </button>
               <button
                 onClick={() => { setShowSaveURL(!showSaveURL); setShowAddFeed(false); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                   showSaveURL
                     ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
                     : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
@@ -345,11 +345,11 @@ export function Feed() {
                 <button
                   onClick={refreshFeeds}
                   disabled={refreshing}
-                  className={`flex flex-col items-center px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex flex-col items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                     isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
                   } disabled:opacity-50`}
                 >
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-2">
                     <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
                     Check for new
                   </span>
@@ -362,7 +362,7 @@ export function Feed() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                       isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
                     }`}
                   >
@@ -373,7 +373,7 @@ export function Feed() {
                 <button
                   aria-label="Subscriptions"
                   onClick={() => setShowSidebar(!showSidebar)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                     showSidebar
                       ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
                       : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
@@ -387,7 +387,7 @@ export function Feed() {
               <div className="relative md:hidden">
                 <button
                   onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                     moreMenuOpen
                       ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
                       : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
@@ -405,7 +405,7 @@ export function Feed() {
                       <button
                         onClick={() => { refreshFeeds(); setMoreMenuOpen(false); }}
                         disabled={refreshing}
-                        className={`w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                        className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
                           isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
                         } disabled:opacity-50`}
                       >
@@ -415,7 +415,7 @@ export function Feed() {
                       {unreadCount > 0 && (
                         <button
                           onClick={() => { markAllRead(); setMoreMenuOpen(false); }}
-                          className={`w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                          className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
                             isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
                           }`}
                         >
@@ -425,7 +425,7 @@ export function Feed() {
                       )}
                       <button
                         onClick={() => { setMobileSidebarOpen(true); setMoreMenuOpen(false); }}
-                        className={`w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm transition-colors ${
+                        className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
                           isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
                         }`}
                       >
@@ -459,12 +459,12 @@ export function Feed() {
               <button
                 onClick={handleAddFeed}
                 disabled={addingFeed || !feedUrl.trim()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
               >
                 {addingFeed ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Add
               </button>
-              <button aria-label="Cancel adding a feed" onClick={() => setShowAddFeed(false)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
+              <button aria-label="Cancel adding a feed" onClick={() => setShowAddFeed(false)} className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
                 <X size={14} />
               </button>
             </div>
@@ -490,12 +490,12 @@ export function Feed() {
               <button
                 onClick={handleSaveURL}
                 disabled={savingUrl || !articleUrl.trim()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
               >
                 {savingUrl ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Save
               </button>
-              <button aria-label="Cancel saving a URL" onClick={() => setShowSaveURL(false)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
+              <button aria-label="Cancel saving a URL" onClick={() => setShowSaveURL(false)} className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
                 <X size={14} />
               </button>
             </div>
@@ -507,7 +507,7 @@ export function Feed() {
               <button
                 key={opt.value}
                 onClick={() => setFilter(opt.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   filter === opt.value
                     ? 'bg-violet-600 text-white'
                     : isDark
@@ -525,7 +525,7 @@ export function Feed() {
             <div className="relative">
               <button
                 onClick={() => setSortOpen(!sortOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-white/70 text-slate-500 hover:bg-white'
                 }`}
               >
@@ -559,10 +559,10 @@ export function Feed() {
 
           {/* Subscription filter pills */}
           {subscriptions.length > 1 && (
-            <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
               <button
                 onClick={() => setSubFilter(null)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   !subFilter
                     ? 'bg-violet-600 text-white'
                     : isDark
@@ -576,7 +576,7 @@ export function Feed() {
                 <button
                   key={sub.id}
                   onClick={() => setSubFilter(subFilter === sub.id ? null : sub.id)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                     subFilter === sub.id
                       ? 'bg-violet-600 text-white'
                       : isDark
@@ -589,7 +589,7 @@ export function Feed() {
               ))}
               <button
                 onClick={() => setSubFilter('saved')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   subFilter === 'saved'
                     ? 'bg-violet-600 text-white'
                     : isDark
@@ -606,7 +606,7 @@ export function Feed() {
           {allTags.length > 0 && (
             <div className="mt-3">
               {/* Desktop: wrapped layout */}
-              <div className="hidden md:flex items-center gap-1.5 flex-wrap">
+              <div className="hidden md:flex items-center gap-2 flex-wrap">
                 {tagFilter && (
                   <button
                     onClick={() => setTagFilter(null)}
@@ -646,7 +646,7 @@ export function Feed() {
 
               {/* Mobile: horizontal scroll with top 5 + Filter dropdown */}
               <div className="md:hidden">
-                <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap flex-nowrap pb-1 scrollbar-none">
+                <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap flex-nowrap pb-1 scrollbar-none">
                   {tagFilter && (
                     <button
                       onClick={() => setTagFilter(null)}
@@ -726,7 +726,7 @@ export function Feed() {
                 Summarizing {syncProgress.current}/{syncProgress.total}...
               </p>
               {syncProgress.currentTitle && (
-                <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>
+                <p className={`text-xs truncate mt-1 ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>
                   {syncProgress.currentTitle}
                 </p>
               )}
@@ -742,12 +742,12 @@ export function Feed() {
       )}
 
       {/* Main layout: articles + optional sidebar */}
-      <div className={`flex gap-5`}>
+      <div className={`flex gap-6`}>
         {/* Article list */}
         <div className={`flex-1 min-w-0 space-y-3 ${showSidebar ? 'md:max-w-[calc(100%-320px)]' : ''}`}>
           {filteredArticles.length === 0 ? (
             filter === 'unread' ? (
-              <div className={`rounded-2xl p-10 text-center ${
+              <div className={`rounded-2xl p-8 text-center ${
                 isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
               }`}>
                 <CheckCircle2 className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
@@ -757,7 +757,7 @@ export function Feed() {
                 </p>
               </div>
             ) : (
-              <div className={`rounded-2xl p-10 text-center ${
+              <div className={`rounded-2xl p-8 text-center ${
                 isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
               }`}>
                 <Newspaper className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-slate-300'}`} />
@@ -768,13 +768,13 @@ export function Feed() {
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => { setShowAddFeed(true); setShowSaveURL(false); }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
                   >
                     <Rss size={16} /> Add Feed
                   </button>
                   <button
                     onClick={() => { setShowSaveURL(true); setShowAddFeed(false); }}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                       isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
@@ -801,7 +801,7 @@ export function Feed() {
                         : isDark ? 'bg-white/[0.04] border border-white/10 hover:bg-white/[0.06]' : 'bg-white border border-slate-200 hover:shadow-md'
                   }`}
                 >
-                  <div className="px-3 py-3 sm:px-5 sm:py-4">
+                  <div className="px-3 py-3 sm:px-6 sm:py-4">
                     {/* Title + checkbox row — full width on mobile */}
                     <div className="flex items-start gap-2">
                       {/* Only while selecting, matching the other pages. A
@@ -812,7 +812,7 @@ export function Feed() {
                           selected={isSelected}
                           onToggle={() => selection.toggle(article.id)}
                           label={`Select "${article.title}"`}
-                          className="mt-0.5"
+                          className="mt-1"
                         />
                       )}
 
@@ -833,7 +833,7 @@ export function Feed() {
                         </a>
 
                         {/* Meta row */}
-                        <div className={`flex items-center gap-1.5 mt-1 flex-wrap text-xs ${
+                        <div className={`flex items-center gap-2 mt-1 flex-wrap text-xs ${
                           isDark ? 'text-gray-500' : 'text-slate-400'
                         }`}>
                           {sub?.title && <span>{sub.title}</span>}
@@ -846,7 +846,7 @@ export function Feed() {
                           {article.reading_time_minutes != null && (
                             <>
                               <span>·</span>
-                              <span className={`inline-flex items-center gap-0.5 ${
+                              <span className={`inline-flex items-center gap-1 ${
                                 isDark ? 'text-blue-400/70' : 'text-blue-500/80'
                               }`}>
                                 <Clock size={9} /> {article.reading_time_minutes}m
@@ -868,7 +868,7 @@ export function Feed() {
                       <button
                         onClick={() => toggleRead(article.id, !article.read)}
                         title={article.read ? 'Mark unread' : 'Mark read'}
-                        className={`p-1.5 rounded-lg transition-colors ${
+                        className={`p-2 rounded-lg transition-colors ${
                           isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
                         }`}
                       >
@@ -877,7 +877,7 @@ export function Feed() {
                       <button
                         onClick={() => toggleBookmark(article.id, !article.bookmarked)}
                         title={article.bookmarked ? 'Remove bookmark' : 'Bookmark'}
-                        className={`p-1.5 rounded-lg transition-colors ${
+                        className={`p-2 rounded-lg transition-colors ${
                           article.bookmarked
                             ? isDark ? 'text-amber-400 hover:bg-amber-500/15' : 'text-amber-500 hover:bg-amber-50'
                             : isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
@@ -890,7 +890,7 @@ export function Feed() {
                           value={article.goalId ?? ''}
                           onChange={(e) => linkArticleToGoal(article.id, e.target.value || null)}
                           title="Link to Goal"
-                          className={`w-20 sm:w-24 text-xs py-0.5 pl-1.5 pr-5 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
+                          className={`w-20 sm:w-24 text-xs py-1 pl-2 pr-6 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
                             article.goalId
                               ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                               : isDark ? 'bg-white/5 text-gray-600 hover:text-gray-300' : 'bg-slate-50 text-slate-400 hover:text-slate-600'
@@ -907,7 +907,7 @@ export function Feed() {
                         onClick={() => removeArticle(article.id)}
                         title="Delete"
                         aria-label="Delete"
-                        className={`p-1.5 rounded-lg transition-colors ${
+                        className={`p-2 rounded-lg transition-colors ${
                           isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
                         }`}
                       >
@@ -923,7 +923,7 @@ export function Feed() {
                           {/* Tier badge + Surface claim */}
                           <div className="flex items-start gap-2">
                             {analysis.tier && (
-                              <span className={`flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
+                              <span className={`flex-shrink-0 mt-1 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${
                                 analysis.tier === 3
                                   ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
                                   : analysis.tier === 2
@@ -957,7 +957,7 @@ export function Feed() {
                             <div>
                               <button
                                 onClick={() => toggleTakeaways(article.id)}
-                                className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                                className={`flex items-center gap-2 text-xs font-medium transition-colors ${
                                   isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-600'
                                 }`}
                               >
@@ -967,10 +967,10 @@ export function Feed() {
                               </button>
                               {takeawaysExpanded && (
                                 <div className="mt-2 space-y-3">
-                                  <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                  <ul className={`space-y-2 ml-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                                     {analysis.key_points.map((t, i) => (
                                       <li key={i} className="flex items-start gap-2 text-sm">
-                                        <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-violet-400' : 'bg-violet-500'}`} />
+                                        <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-violet-400' : 'bg-violet-500'}`} />
                                         {t}
                                       </li>
                                     ))}
@@ -979,13 +979,13 @@ export function Feed() {
                                   {/* Implications */}
                                   {analysis.implications.length > 0 && (
                                     <div>
-                                      <p className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>
+                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>
                                         Implications
                                       </p>
-                                      <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                      <ul className={`space-y-2 ml-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                                         {analysis.implications.map((t, i) => (
                                           <li key={i} className="flex items-start gap-2 text-sm">
-                                            <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-orange-400' : 'bg-orange-500'}`} />
+                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-orange-400' : 'bg-orange-500'}`} />
                                             {t}
                                           </li>
                                         ))}
@@ -996,13 +996,13 @@ export function Feed() {
                                   {/* Open Questions */}
                                   {analysis.open_questions.length > 0 && (
                                     <div>
-                                      <p className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-blue-400/70' : 'text-blue-500/80'}`}>
+                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-blue-400/70' : 'text-blue-500/80'}`}>
                                         Worth Watching
                                       </p>
-                                      <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                      <ul className={`space-y-2 ml-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                                         {analysis.open_questions.map((t, i) => (
                                           <li key={i} className="flex items-start gap-2 text-sm">
-                                            <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-blue-400' : 'bg-blue-500'}`} />
+                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-blue-400' : 'bg-blue-500'}`} />
                                             {t}
                                           </li>
                                         ))}
@@ -1019,12 +1019,12 @@ export function Feed() {
 
                     {/* Tags */}
                     {article.tags && article.tags.length > 0 && (
-                      <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
                         {article.tags.map(tag => (
                           <button
                             key={tag}
                             onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-                            className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${
+                            className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                               tagFilter === tag
                                 ? 'bg-violet-600 text-white'
                                 : isDark
@@ -1064,7 +1064,7 @@ export function Feed() {
                   {subscriptions.map(sub => (
                     <div
                       key={sub.id}
-                      className={`group/sub rounded-xl px-3 py-2.5 transition-colors ${
+                      className={`group/sub rounded-xl px-3 py-3 transition-colors ${
                         isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
                       }`}
                     >
@@ -1074,13 +1074,13 @@ export function Feed() {
                             <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                               {sub.title || 'Untitled Feed'}
                             </p>
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'
                             }`}>
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                          <p className={`text-xs truncate mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
@@ -1111,7 +1111,7 @@ export function Feed() {
                 }`}>
                   Suggested Feeds
                 </h3>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {CURATED_FEEDS.map(sf => {
                     const alreadySubscribed = subscribedUrls.has(sf.url);
                     return (
@@ -1122,11 +1122,11 @@ export function Feed() {
                         }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                               {sf.label}
                             </p>
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                            <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-200/70 text-slate-400'
                             }`}>
                               {sf.category}
@@ -1160,7 +1160,7 @@ export function Feed() {
                 <button
                   onClick={handleClearOldRead}
                   disabled={clearingOld}
-                  className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isDark
                       ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
@@ -1203,7 +1203,7 @@ export function Feed() {
                   {subscriptions.map(sub => (
                     <div
                       key={sub.id}
-                      className={`rounded-xl px-3 py-2.5 transition-colors ${
+                      className={`rounded-xl px-3 py-3 transition-colors ${
                         isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
                       }`}
                     >
@@ -1213,13 +1213,13 @@ export function Feed() {
                             <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                               {sub.title || 'Untitled Feed'}
                             </p>
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'
                             }`}>
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                          <p className={`text-xs truncate mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
@@ -1231,7 +1231,7 @@ export function Feed() {
                         <button
                           aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
-                          className={`p-1.5 rounded-lg transition-colors ${
+                          className={`p-2 rounded-lg transition-colors ${
                             isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
                           }`}
                         >
@@ -1250,7 +1250,7 @@ export function Feed() {
                 }`}>
                   Suggested Feeds
                 </h3>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {CURATED_FEEDS.map(sf => {
                     const alreadySubscribed = subscribedUrls.has(sf.url);
                     return (
@@ -1261,11 +1261,11 @@ export function Feed() {
                         }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                               {sf.label}
                             </p>
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                            <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
                               isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-200/70 text-slate-400'
                             }`}>
                               {sf.category}
@@ -1299,7 +1299,7 @@ export function Feed() {
                 <button
                   onClick={handleClearOldRead}
                   disabled={clearingOld}
-                  className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isDark
                       ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'

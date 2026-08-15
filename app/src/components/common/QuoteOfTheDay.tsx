@@ -56,7 +56,7 @@ export function QuoteOfTheDay() {
         </button>
 
         {/* Content */}
-        <div className="relative p-8 pt-10">
+        <div className="relative p-8 pt-8">
           {/* Header */}
           <div className="flex items-center justify-center space-x-2 mb-6">
             <Sparkles className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />

@@ -109,11 +109,11 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
       }`}>
         <div className="px-4 md:px-6 py-0 flex items-center justify-between h-14">
           {/* Left: Logo + hamburger on mobile */}
-          <div className="flex items-center space-x-2.5 flex-shrink-0">
+          <div className="flex items-center space-x-3 flex-shrink-0">
             {/* Hamburger - mobile only */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className={`p-2.5 -ml-1 rounded-lg md:hidden transition-colors ${
+              className={`p-3 -ml-1 rounded-lg md:hidden transition-colors ${
                 isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
               }`}
               aria-label="Open menu"
@@ -128,13 +128,13 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </div>
 
           {/* Desktop Navigation - hidden on mobile */}
-          <nav className="hidden md:flex items-center space-x-0.5 mx-4">
+          <nav className="hidden md:flex items-center space-x-1 mx-4">
             {primaryNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  `flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isActive
                       ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                       : isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
@@ -152,7 +152,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 aria-label="More destinations"
                 aria-expanded={moreMenuOpen}
                 aria-haspopup="menu"
-                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -167,7 +167,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                     isDark ? 'bg-[#14141a] border-white/10' : 'bg-white border-slate-200'
                   }`}
                 >
-                  <div className="p-1.5 space-y-0.5">
+                  <div className="p-2 space-y-1">
                     {overflowNavItems.map((item) => (
                       <NavLink
                         key={item.to}
@@ -193,14 +193,14 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </nav>
 
           {/* Right actions */}
-          <div className="flex items-center space-x-1.5 flex-shrink-0">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <SyncStatus />
 
             {/* Search trigger. Shown on mobile too: search was reachable only
                 by ⌘K, which a phone has no way to press. */}
             <button
               onClick={triggerSearch}
-              className={`flex items-center gap-1.5 p-2 md:px-2.5 md:py-1.5 rounded-lg text-xs transition-colors ${
+              className={`flex items-center gap-2 p-2 md:px-3 md:py-2 rounded-lg text-xs transition-colors ${
                 isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
               title="Search (⌘K)"
@@ -208,7 +208,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             >
               <Search size={18} className="md:hidden" />
               <Search size={14} className="hidden md:block" />
-              <kbd className={`text-xs px-1 py-0.5 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
+              <kbd className={`text-xs px-1 py-1 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
             </button>
 
             {/* Focus timer - desktop only */}
@@ -228,7 +228,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <QuickAddTask onSubmit={handleQuickAdd} />
 
             {/* XP/Level pill - desktop only */}
-            <div className={`hidden md:flex items-center space-x-2 rounded-lg px-2.5 py-1.5 text-xs ${
+            <div className={`hidden md:flex items-center space-x-2 rounded-lg px-3 py-2 text-xs ${
               isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
             }`}>
               <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
@@ -278,13 +278,13 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                       <div className={`absolute right-0 mt-2 w-52 rounded-xl z-50 shadow-xl border ${isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-slate-200'}`}>
-                        <div className={`px-3.5 py-3 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+                        <div className={`px-4 py-3 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
                           <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{user.user_metadata?.full_name || user.email}</p>
                           {user.user_metadata?.full_name && (
-                            <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
+                            <p className={`text-xs truncate mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
                           )}
                         </div>
-                        <div className="p-1.5 space-y-0.5">
+                        <div className="p-2 space-y-1">
                           <button
                             onClick={() => { setAccountModalOpen(true); setUserMenuOpen(false); }}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'}`}
@@ -307,7 +307,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               ) : (
                 <button
                   onClick={() => setLoginModalOpen(true)}
-                  className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                  className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
                     isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
                   }`}
                   title="Sign in to sync"
@@ -348,7 +348,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
       >
         {/* Drawer header */}
         <div className={`flex items-center justify-between px-4 h-14 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
@@ -356,7 +356,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </div>
           <button
             onClick={closeMobileMenu}
-            className={`p-2.5 rounded-lg transition-colors ${
+            className={`p-3 rounded-lg transition-colors ${
               isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
             }`}
             aria-label="Close menu"
@@ -369,7 +369,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
         <div className="flex flex-col h-[calc(100%-3.5rem)] overflow-y-auto">
           {/* XP/Level pill */}
           <div className="px-4 pt-4 pb-2">
-            <div className={`flex items-center space-x-2 rounded-lg px-3 py-2.5 text-xs ${
+            <div className={`flex items-center space-x-2 rounded-lg px-3 py-3 text-xs ${
               isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
             }`}>
               <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
@@ -383,7 +383,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </div>
 
           {/* Nav links */}
-          <nav className="px-3 py-2 space-y-0.5">
+          <nav className="px-3 py-2 space-y-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -407,22 +407,22 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           <div className={`mx-4 my-2 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
 
           {/* Action buttons */}
-          <div className="px-3 space-y-0.5">
+          <div className="px-3 space-y-1">
             <button
               onClick={() => { triggerSearch(); closeMobileMenu(); }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                 isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               <Search size={18} />
               <span>Search</span>
-              <kbd className={`ml-auto text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
+              <kbd className={`ml-auto text-xs px-2 py-1 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
             </button>
 
             {onOpenFocusTimer && (
               <button
                 onClick={() => { onOpenFocusTimer(); closeMobileMenu(); }}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -433,7 +433,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
             <button
               onClick={() => { setDataModalOpen(true); closeMobileMenu(); }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                 isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
@@ -450,7 +450,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             {isConfigured && !user && (
               <button
                 onClick={() => { setLoginModalOpen(true); closeMobileMenu(); }}
-                className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 mb-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center justify-center gap-2 px-3 py-3 mb-2 rounded-lg text-sm font-medium transition-colors ${
                   isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
                 }`}
               >
@@ -461,7 +461,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
             <button
               onClick={() => { toggleTheme(); }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                 isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
               }`}
             >

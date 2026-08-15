@@ -286,7 +286,7 @@ export function NotesEditor({
               onClick={() => handleFormat(action)}
               title={label}
               aria-label={label}
-              className={`p-2.5 sm:p-1.5 rounded-lg transition-colors ${
+              className={`p-3 sm:p-2 rounded-lg transition-colors ${
                 isDark
                   ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/10 active:bg-violet-500/20'
                   : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50 active:bg-violet-100'
@@ -336,16 +336,16 @@ export function NotesEditor({
 
       {/* Footer: word count & shortcuts hint */}
       {showWordCount && (
-        <div className={`flex items-center justify-between px-3 py-1.5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+        <div className={`flex items-center justify-between px-3 py-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
           <div className="flex items-center gap-3">
             <span className="text-xs">
               {wordCount} {wordCount === 1 ? 'word' : 'words'} · {charCount} chars
             </span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
-            <kbd className={`text-xs px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>Tab</kbd>
+            <kbd className={`text-xs px-1 py-1 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>Tab</kbd>
             <span className="text-xs">indent</span>
-            <kbd className={`text-xs px-1 py-0.5 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘↵</kbd>
+            <kbd className={`text-xs px-1 py-1 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘↵</kbd>
             <span className="text-xs">toggle check</span>
           </div>
         </div>

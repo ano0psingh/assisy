@@ -160,7 +160,7 @@ export function GoalDetail({
     <div className="flex flex-col items-center gap-3">
       <GoalTree level={goal.level} theme={goal.theme} size="lg" animate />
       <div className="flex items-center gap-3">
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold ${
+        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${
           isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
         }`}>
           <Trophy size={14} /> Level {goal.level}
@@ -246,14 +246,14 @@ export function GoalDetail({
                   }`}>
                     {ms.title}
                   </span>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${
                     isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
                   }`}>
                     +{ms.xpReward} XP
                   </span>
                 </div>
                 {ms.description && (
-                  <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{ms.description}</p>
+                  <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{ms.description}</p>
                 )}
               </div>
               {/* Delete */}
@@ -310,19 +310,19 @@ export function GoalDetail({
             <div className="flex-1" />
             <button
               onClick={() => setShowMilestoneForm(false)}
-              className={`px-3 py-1.5 text-xs rounded-lg ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`px-3 py-2 text-xs rounded-lg ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
             >Cancel</button>
             <button
               onClick={handleAddMilestone}
               disabled={!msTitle.trim()}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40 transition-colors"
+              className="px-3 py-2 text-xs font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40 transition-colors"
             >Add</button>
           </div>
         </div>
       ) : (
         <button
           onClick={() => setShowMilestoneForm(true)}
-          className={`mt-3 flex items-center gap-1.5 text-sm font-medium transition-colors ${
+          className={`mt-3 flex items-center gap-2 text-sm font-medium transition-colors ${
             isDark ? 'text-gray-400 hover:text-violet-400' : 'text-slate-500 hover:text-violet-600'
           }`}
         >
@@ -403,7 +403,7 @@ export function GoalDetail({
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className={`text-xs mt-2 space-y-0.5 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+      <div className={`text-xs mt-2 space-y-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
         {nonRecurringTasks.length > 0 && (
           <p>{completedNonRecurring} of {nonRecurringTasks.length} tasks completed</p>
         )}
@@ -506,7 +506,7 @@ export function GoalDetail({
               </div>
               <button
                 onClick={() => onUnlinkTask(goal.id, task.id)}
-                className={`p-1.5 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   isDark
                     ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20'
                     : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
@@ -556,11 +556,11 @@ export function GoalDetail({
                 )}
               </div>
               {h.streakCount > 0 && (
-                <span className={`text-xs font-bold flex items-center gap-0.5 ${h.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
+                <span className={`text-xs font-bold flex items-center gap-1 ${h.streakCount >= 7 ? 'text-amber-400' : 'text-orange-500'}`}>
                   <Flame size={11} />{h.streakCount}d
                 </span>
               )}
-              <span className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+              <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
                 +{h.xpPerUnit} XP
               </span>
             </div>
@@ -591,17 +591,17 @@ export function GoalDetail({
             >
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{article.title || 'Untitled'}</p>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-2 mt-1">
                   {article.source && (
                     <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.source}</span>
                   )}
                   {article.matched_goals?.some(g => g.toLowerCase() === goal.title.toLowerCase()) && (
-                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                    <span className={`text-xs font-semibold px-2 py-1 rounded ${
                       isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
                     }`}>AI match</span>
                   )}
                   {!article.matched_goals?.some(g => g.toLowerCase() === goal.title.toLowerCase()) && (
-                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                    <span className={`text-xs font-semibold px-2 py-1 rounded ${
                       isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
                     }`}>tag match</span>
                   )}
@@ -633,7 +633,7 @@ export function GoalDetail({
           >
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{article.title || 'Untitled'}</p>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-1">
                 {article.reading_time_minutes && (
                   <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.reading_time_minutes} min read</span>
                 )}
@@ -685,7 +685,7 @@ export function GoalDetail({
                       type="text"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
-                      className={`w-full px-4 py-2.5 mb-4 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
+                      className={`w-full px-4 py-3 mb-4 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
                       autoFocus
                     />
                     <TiptapEditor
@@ -731,7 +731,7 @@ export function GoalDetail({
                     type="text"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className={`w-full px-4 py-2.5 mb-3 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
+                    className={`w-full px-4 py-3 mb-3 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
                     autoFocus
                   />
                   <TiptapEditor

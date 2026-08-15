@@ -121,7 +121,7 @@ function SkillNode({ skill, isDark, index }: { skill: SkillTree; isDark: boolean
         </p>
 
         {/* Milestone indicator */}
-        <div className={`mt-3 px-3 py-1.5 rounded-full text-xs font-medium ${
+        <div className={`mt-3 px-3 py-2 rounded-full text-xs font-medium ${
           isDark ? 'bg-white/5' : 'bg-slate-100'
         }`}>
           <span className={isDark ? 'text-gray-400' : 'text-slate-500'}>

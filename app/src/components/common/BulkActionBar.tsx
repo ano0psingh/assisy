@@ -31,7 +31,7 @@ export function BulkActionBar({
 
   if (count === 0) return null;
 
-  const neutralButton = `px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+  const neutralButton = `px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
     isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
   }`;
   const divider = `w-px h-5 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`;
@@ -62,7 +62,7 @@ export function BulkActionBar({
 
         <button
           onClick={onDelete}
-          className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors whitespace-nowrap"
+          className="px-3 py-2 rounded-lg text-xs font-medium bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors whitespace-nowrap"
         >
           Delete
         </button>
@@ -72,7 +72,7 @@ export function BulkActionBar({
         <button
           onClick={onClear}
           aria-label="Cancel selection"
-          className={`p-1.5 rounded-lg transition-colors ${
+          className={`p-2 rounded-lg transition-colors ${
             isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'
           }`}
         >

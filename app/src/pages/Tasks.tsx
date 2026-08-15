@@ -484,7 +484,7 @@ export function Tasks() {
             onClick={() => selection.active ? selection.clear() : selection.start()}
             disabled={filteredTasks.length === 0}
           />
-          <button onClick={() => setIsTaskFormOpen(true)} className="btn-primary px-4 py-2 md:px-5 md:py-2.5 rounded-xl flex items-center space-x-2 text-sm md:text-base">
+          <button onClick={() => setIsTaskFormOpen(true)} className="btn-primary px-4 py-2 md:px-6 md:py-3 rounded-xl flex items-center space-x-2 text-sm md:text-base">
             <Plus size={18} />
             <span>Add Task</span>
           </button>
@@ -504,7 +504,7 @@ export function Tasks() {
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search tasks by title or description"
           aria-label="Search tasks"
-          className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm outline-none transition-colors ${
+          className={`w-full pl-8 pr-8 py-3 rounded-xl text-sm outline-none transition-colors ${
             isDark
               ? 'bg-white/5 text-white placeholder-gray-500 border border-white/10 focus:border-violet-500/50'
               : 'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400'
@@ -528,7 +528,7 @@ export function Tasks() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
               filtersOpen || statusFilter !== 'all' || categoryFilter !== 'all'
                 ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
                 : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
@@ -564,7 +564,7 @@ export function Tasks() {
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-2.5 py-1.5 flex items-center gap-1 text-xs font-medium transition-all ${
+                className={`px-3 py-2 flex items-center gap-1 text-xs font-medium transition-all ${
                   viewMode === mode
                     ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                     : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -590,7 +590,7 @@ export function Tasks() {
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
-                    className={`px-2.5 py-1 text-xs font-medium capitalize transition-all ${
+                    className={`px-3 py-1 text-xs font-medium capitalize transition-all ${
                       statusFilter === status
                         ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                         : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -608,7 +608,7 @@ export function Tasks() {
                   <button
                     key={cat}
                     onClick={() => setCategoryFilter(cat)}
-                    className={`px-2.5 py-1 text-xs font-medium transition-all ${
+                    className={`px-3 py-1 text-xs font-medium transition-all ${
                       categoryFilter === cat
                         ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
                         : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -635,7 +635,7 @@ export function Tasks() {
               <button
                 key={id}
                 onClick={() => setSmartFilter(id)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
                   smartFilter === id
                     ? id === 'overdue'
                       ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
@@ -758,7 +758,7 @@ export function Tasks() {
                         </p>
                       </div>
                     </div>
-                    <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+                    <span className={`text-xs px-3 py-2 rounded-full font-medium ${
                       isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
                     }`}>
                       {isCompletedExpanded ? 'Hide' : 'Show'}
@@ -949,7 +949,7 @@ export function Tasks() {
                         </h3>
                         {/* Sub-goals badge - more visible */}
                         {hasSubGoals && (
-                          <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 ${
+                          <span className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-2 ${
                             isDark 
                               ? 'bg-violet-500/30 text-violet-300 border border-violet-500/40' 
                               : 'bg-violet-100 text-violet-700 border border-violet-200'
@@ -1168,7 +1168,7 @@ export function Tasks() {
                       setSelectedProjectId(e.target.value);
                       setSelectedSubProjectId('');
                     }}
-                    className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
+                    className={`w-full px-4 py-3 rounded-xl border transition-colors ${
                       isDark 
                         ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
                         : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
@@ -1197,7 +1197,7 @@ export function Tasks() {
                       <select
                         value={selectedSubProjectId}
                         onChange={(e) => setSelectedSubProjectId(e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
+                        className={`w-full px-4 py-3 rounded-xl border transition-colors ${
                           isDark 
                             ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
                             : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'

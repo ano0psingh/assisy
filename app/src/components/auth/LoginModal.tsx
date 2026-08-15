@@ -84,7 +84,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className={`absolute inset-0 ${isDark ? 'bg-black/70' : 'bg-slate-900/50'}`} onClick={onClose} />
       <div className={`relative rounded-2xl max-w-sm w-full overflow-hidden ${isDark ? 'bg-slate-900 border border-white/10' : 'bg-white border border-slate-200'}`}>
-        <div className={`flex items-center justify-between p-5 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+        <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
               <LogIn className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
@@ -99,7 +99,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="flex gap-2">
             <button
               type="button"
@@ -118,7 +118,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </div>
 
           <div>
-            <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Email</label>
+            <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Email</label>
             <div className="relative">
               <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
               <input
@@ -126,7 +126,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className={`w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none border ${
+                className={`w-full pl-9 pr-3 py-3 rounded-lg text-sm outline-none border ${
                   isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
                 }`}
               />
@@ -134,7 +134,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </div>
 
           <div>
-            <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Password</label>
+            <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Password</label>
             <div className="relative">
               <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
               <input
@@ -142,7 +142,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none border ${
+                className={`w-full pl-9 pr-3 py-3 rounded-lg text-sm outline-none border ${
                   isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
                 }`}
               />
@@ -155,7 +155,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn-primary py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="w-full btn-primary py-3 rounded-lg text-sm font-medium disabled:opacity-50"
           >
             {loading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Create account'}
           </button>
@@ -172,7 +172,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
             type="button"
             onClick={handleGoogle}
             disabled={loading}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border ${
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium border ${
               isDark ? 'border-white/10 hover:bg-white/5 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-700'
             } disabled:opacity-50`}
           >

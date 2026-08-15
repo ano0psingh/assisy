@@ -125,7 +125,7 @@ export function LevelUpCelebration() {
         <button
           aria-label="Dismiss"
           onClick={handleDismiss}
-          className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors ${
+          className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
             isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'
           }`}
         >
@@ -158,7 +158,7 @@ export function LevelUpCelebration() {
           )}
         </div>
 
-        <div className="levelup-badge inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl mb-3"
+        <div className="levelup-badge inline-flex items-center gap-2 px-6 py-3 rounded-2xl mb-3"
           style={{
             background: isDark
               ? 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.2))'

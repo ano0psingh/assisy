@@ -161,20 +161,20 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
       <button
         type="button"
         onClick={onCancel}
-        className={`px-5 py-2.5 rounded-xl transition-colors ${
+        className={`px-6 py-3 rounded-xl transition-colors ${
           isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
         }`}
       >
         Cancel
       </button>
-      <button type="button" onClick={handleSubmit} className="btn-primary px-5 py-2.5 rounded-xl">
+      <button type="button" onClick={handleSubmit} className="btn-primary px-6 py-3 rounded-xl">
         {existingLog ? 'Update Check-In' : 'Save Check-In'}
       </button>
     </div>
   );
 
   const aiReflectionSection = (aiLoading || aiReflection || aiError) ? (
-    <div className={`mx-5 mb-5 p-4 rounded-xl border ${
+    <div className={`mx-6 mb-6 p-4 rounded-xl border ${
       isDark
         ? 'bg-violet-500/10 border-violet-500/20'
         : 'bg-violet-50 border-violet-200'
@@ -212,14 +212,14 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
           <div className="flex flex-col h-full">
             <div className="flex flex-1 min-h-0">
               {/* Left: Wins + Challenges */}
-              <div className={`flex-1 flex flex-col p-8 space-y-5 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-6 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
                 <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{today}</p>
                 {energyField}
                 {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-emerald-500" />, wins, setWins, 'What went well today? What are you proud of?', true)}
                 {makeNotesField('Challenges', <AlertCircle size={16} className="text-red-500" />, challenges, setChallenges, 'What obstacles did you face?', true)}
               </div>
               {/* Right: Learnings + Tomorrow */}
-              <div className={`flex-1 flex flex-col p-8 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
                 {makeNotesField('Key Learnings', <Lightbulb size={16} className="text-amber-500" />, learnings, setLearnings, 'What did you learn today? Any insights?', true)}
                 {makeNotesField('Tomorrow\'s Focus', <Target size={16} className="text-violet-500" />, tomorrowFocus, setTomorrowFocus, 'What\'s your main focus for tomorrow?', true)}
               </div>
@@ -227,7 +227,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
             {aiReflectionSection}
           </div>
         ) : (
-          <div className="p-5 space-y-5">
+          <div className="p-6 space-y-6">
             <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{today}</p>
             {energyField}
             {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-emerald-500" />, wins, setWins, 'What went well today?', false)}

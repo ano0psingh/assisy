@@ -487,7 +487,7 @@ export function Calendar() {
   // ── Render: task card for week view ──
 
   const TaskCard = ({ task }: { task: Task }) => (
-    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs ${
+    <div className={`flex items-center gap-2 px-2 py-1 rounded-lg text-xs ${
       isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-50 hover:bg-slate-100'
     } transition-colors`}>
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[task.category]?.dark : CATEGORY_DOT_COLOR[task.category]?.light}`} />
@@ -538,7 +538,7 @@ export function Calendar() {
               </span>
               <button
                 onClick={goToToday}
-                className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
+                className={`text-xs font-medium px-3 py-1 rounded-lg transition-colors ${
                   isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
                 }`}
               >
@@ -548,7 +548,7 @@ export function Calendar() {
               <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
                 <button
                   onClick={() => setViewMode('month')}
-                  className={`text-xs font-medium px-2.5 py-1 transition-colors ${
+                  className={`text-xs font-medium px-3 py-1 transition-colors ${
                     viewMode === 'month'
                       ? isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-100 text-violet-700'
                       : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -558,7 +558,7 @@ export function Calendar() {
                 </button>
                 <button
                   onClick={() => setViewMode('week')}
-                  className={`text-xs font-medium px-2.5 py-1 transition-colors ${
+                  className={`text-xs font-medium px-3 py-1 transition-colors ${
                     viewMode === 'week'
                       ? isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-100 text-violet-700'
                       : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
@@ -571,7 +571,7 @@ export function Calendar() {
                 <button
                   onClick={handleAISchedule}
                   disabled={aiLoading}
-                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                  className={`flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg transition-colors ${
                     isDark
                       ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 disabled:opacity-50'
                       : 'bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:opacity-50'
@@ -637,7 +637,7 @@ export function Calendar() {
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, dateStr)}
                       className={`
-                        relative flex flex-col items-center h-12 md:h-16 py-1.5 md:py-2 rounded-xl transition-colors
+                        relative flex flex-col items-center h-12 md:h-16 py-2 md:py-2 rounded-xl transition-colors
                         ${!isCurrentMonth ? (isDark ? 'text-gray-700' : 'text-slate-300') : ''}
                         ${isCurrentMonth && !isToday && !isSelected ? (isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50') : ''}
                         ${isSelected && !isToday ? (isDark ? 'bg-violet-500/15 text-violet-300' : 'bg-violet-50 text-violet-700') : ''}
@@ -656,7 +656,7 @@ export function Calendar() {
 
                       {/* Mobile: dot indicators */}
                       {isCurrentMonth && (
-                        <div className="flex items-center gap-0.5 mt-0.5 h-2.5 md:hidden">
+                        <div className="flex items-center gap-1 mt-1 h-2.5 md:hidden">
                           {categoryDots.map((cat) => (
                             <span
                               key={cat}
@@ -723,7 +723,7 @@ export function Calendar() {
                   >
                     {/* Day header */}
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <span className={`text-xs font-medium uppercase ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                           {WEEKDAYS[weekDays.indexOf(day)]}
                         </span>
@@ -776,7 +776,7 @@ export function Calendar() {
 
         {/* ── AI SUGGESTIONS PANEL ── */}
         {aiPanelOpen && (
-          <div className={`card rounded-2xl p-5 border ${isDark ? 'border-amber-500/20' : 'border-amber-200'}`}>
+          <div className={`card rounded-2xl p-6 border ${isDark ? 'border-amber-500/20' : 'border-amber-200'}`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Sparkles className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
@@ -805,7 +805,7 @@ export function Calendar() {
                 {aiSuggestions.length > 0 ? 'All suggestions handled!' : 'No suggestions available. Make sure you have pending tasks and recent check-in data.'}
               </p>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {aiSuggestions.filter(s => !s.dismissed).map((suggestion) => (
                   <div
                     key={suggestion.taskTitle}
@@ -815,14 +815,14 @@ export function Calendar() {
                       <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>
                         {suggestion.taskTitle}
                       </p>
-                      <p className={`text-xs mt-0.5 ${isDark ? 'text-amber-400/80' : 'text-amber-600'}`}>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-amber-400/80' : 'text-amber-600'}`}>
                         → {suggestion.suggestedDay}
                       </p>
                       <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
                         {suggestion.reason}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                    <div className="flex items-center gap-2 shrink-0 pt-1">
                       {suggestion.taskId && (
                         <button
                           onClick={() => acceptSuggestion(suggestion)}
@@ -858,7 +858,7 @@ export function Calendar() {
         )}
 
         {/* Selected day detail panel */}
-        <div className="card rounded-2xl p-5">
+        <div className="card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               {selectedDateLabel}
@@ -888,7 +888,7 @@ export function Calendar() {
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Completed ({selectedCompleted.length})
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {selectedCompleted.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
@@ -906,7 +906,7 @@ export function Calendar() {
                     <CalendarDays className="w-3.5 h-3.5" />
                     Planned ({selectedFocused.length})
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {selectedFocused.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
@@ -925,7 +925,7 @@ export function Calendar() {
                     <Circle className="w-3.5 h-3.5" />
                     Created ({selectedCreated.length})
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {selectedCreated.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
@@ -944,7 +944,7 @@ export function Calendar() {
                     <Clock className="w-3.5 h-3.5" />
                     Due ({selectedDue.length})
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {selectedDue.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
                         <Circle className={`w-3 h-3 ${t.status === 'Completed' ? (isDark ? 'text-emerald-400' : 'text-emerald-500') : (isDark ? 'text-red-400' : 'text-red-500')}`} />
@@ -965,7 +965,7 @@ export function Calendar() {
                     <Flame className="w-3.5 h-3.5" />
                     Habits ({selectedHabits.length})
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {selectedHabits.map((h, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <CheckCircle2 className={`w-3.5 h-3.5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
@@ -984,7 +984,7 @@ export function Calendar() {
                     <BookOpen className="w-3.5 h-3.5" />
                     Check-In
                     {selectedCheckIn.energyLevel && (
-                      <span className={`ml-auto normal-case tracking-normal px-1.5 py-0.5 rounded-full ${
+                      <span className={`ml-auto normal-case tracking-normal px-2 py-1 rounded-full ${
                         selectedCheckIn.energyLevel <= 3 ? 'bg-red-500/20 text-red-400'
                         : selectedCheckIn.energyLevel <= 6 ? 'bg-amber-500/20 text-amber-400'
                         : 'bg-emerald-500/20 text-emerald-400'
@@ -1009,7 +1009,7 @@ export function Calendar() {
                       if (lines.length === 0) return null;
                       return (
                         <div key={section.label}>
-                          <p className={`text-xs font-medium mb-0.5 ${section.color}`}>{section.label}</p>
+                          <p className={`text-xs font-medium mb-1 ${section.color}`}>{section.label}</p>
                           {lines.map((line, i) => (
                             <p key={i} className={`text-xs pl-3 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
                               <span className={section.color}>•</span> {line}
@@ -1035,7 +1035,7 @@ export function Calendar() {
           {todaysTasks.length === 0 ? (
             <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks planned for today</p>
           ) : (
-            <ul className="space-y-1.5">
+            <ul className="space-y-2">
               {todaysTasks.map((t) => (
                 <li key={t.id} className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />

@@ -78,7 +78,7 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         aria-haspopup="true"
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
           open
             ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-50 text-violet-700'
             : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -101,14 +101,14 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
           <div className="space-y-3">
             {fields.map(field => (
               <div key={field.key}>
-                <div className={`text-xs font-semibold uppercase tracking-wide mb-1.5 ${
+                <div className={`text-xs font-semibold uppercase tracking-wide mb-2 ${
                   isDark ? 'text-gray-500' : 'text-slate-400'
                 }`}>
                   {field.label}
                 </div>
 
                 {field.kind === 'choice' ? (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {field.options.map(option => (
                       <button
                         key={String(option.value)}
@@ -121,7 +121,7 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <input
                       type={field.kind}
                       aria-label={field.label}

@@ -107,7 +107,7 @@ function MultiSelect({
       <button
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
           hasSelection
             ? isDark
               ? 'bg-violet-500/20 text-violet-400 border-violet-500/40'
@@ -119,7 +119,7 @@ function MultiSelect({
       >
         <Filter size={12} />
         {label}
-        {hasSelection && <span className="ml-0.5">({selected.size})</span>}
+        {hasSelection && <span className="ml-1">({selected.size})</span>}
         <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
@@ -310,17 +310,17 @@ export function TaskSheet() {
     return sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
   };
 
-  const thCls = `px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap transition-colors ${
+  const thCls = `px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap transition-colors ${
     isDark ? 'text-gray-400 hover:text-gray-200' : 'text-slate-500 hover:text-slate-800'
   }`;
 
-  const tdCls = `px-3 py-2.5 text-sm whitespace-nowrap ${isDark ? 'text-gray-300' : 'text-slate-700'}`;
+  const tdCls = `px-3 py-3 text-sm whitespace-nowrap ${isDark ? 'text-gray-300' : 'text-slate-700'}`;
 
   return (
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 flex-1 min-w-[180px] max-w-sm ${
+        <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 flex-1 min-w-[180px] max-w-sm ${
           isDark ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'
         }`}>
           <Search size={14} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
@@ -354,7 +354,7 @@ export function TaskSheet() {
         <select
           value={projectFilter}
           onChange={e => setProjectFilter(e.target.value)}
-          className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium outline-none ${
+          className={`px-3 py-2 rounded-lg border text-xs font-medium outline-none ${
             isDark ? 'bg-white/5 border-white/10 text-gray-300' : 'bg-white border-slate-200 text-slate-600'
           }`}
         >
@@ -484,7 +484,7 @@ export function TaskSheet() {
                         <button
                           type="button"
                           onClick={() => cycleStatus(task)}
-                          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                          className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
                             task.status === 'Done'
                               ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-700'
                               : task.status === 'In Progress'
@@ -521,7 +521,7 @@ export function TaskSheet() {
                             {task.tags.slice(0, 3).map(tag => (
                               <span
                                 key={tag}
-                                className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                className={`px-2 py-1 rounded text-xs font-medium ${
                                   isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
                                 }`}
                               >

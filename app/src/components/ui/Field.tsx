@@ -9,7 +9,7 @@ import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttribu
  * cannot be left unlabelled or an error left unannounced.
  */
 const CONTROL_CLASSES =
-  'w-full px-3 py-2.5 rounded-xl text-sm transition-colors border ' +
+  'w-full px-3 py-3 rounded-xl text-sm transition-colors border ' +
   'bg-white text-slate-900 border-slate-200 placeholder:text-slate-400 ' +
   'dark:bg-white/5 dark:text-white dark:border-white/10 dark:placeholder:text-gray-600 ' +
   'focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent';
@@ -26,7 +26,7 @@ interface FieldShellProps {
 
 function FieldShell({ id, label, error, hint, children }: FieldShellProps) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {label && (
         <label htmlFor={id} className="block text-xs font-medium text-slate-600 dark:text-gray-400">
           {label}

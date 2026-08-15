@@ -114,7 +114,7 @@ export function SyncStatusDetail() {
 
   return (
     <p className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
-      <TriangleAlert size={13} className="mt-0.5 flex-shrink-0" />
+      <TriangleAlert size={13} className="mt-1 flex-shrink-0" />
       <span>
         {pending.length} change set{pending.length === 1 ? '' : 's'} not yet confirmed in the cloud
         ({pending.join(', ')}). Your data is saved on this device and will be reconciled on the next
