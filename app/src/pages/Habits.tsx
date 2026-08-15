@@ -752,7 +752,12 @@ export function Habits() {
                   <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        pct >= 80 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : pct >= 50 ? 'bg-amber-500' : pct >= 20 ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-red-500/60 to-red-400/40'
+                        // A habit with nothing logged has no track record to judge, so
+                        // it reads as neutral. It was previously red, which told anyone
+                        // who had just created a habit they were already failing it.
+                        completedDays === 0
+                          ? (isDark ? 'bg-white/20' : 'bg-slate-300')
+                          : pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : pct >= 20 ? 'bg-orange-500' : 'bg-orange-500/60'
                       }`}
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />

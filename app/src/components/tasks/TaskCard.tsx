@@ -313,7 +313,7 @@ export function TaskCard({
             <div className="flex items-center gap-2">
               <h3
                 onClick={() => selectionMode ? onSelectToggle?.(task.id) : onEdit(task)}
-                className={`font-medium cursor-pointer hover:opacity-80 truncate ${
+                className={`font-medium cursor-pointer hover:opacity-80 line-clamp-2 ${
                   isCompleted
                     ? isDark ? 'line-through text-gray-500' : 'line-through text-slate-400'
                     : isDark ? 'text-white' : 'text-slate-800'
@@ -419,10 +419,12 @@ export function TaskCard({
             />
           )}
 
+          {/* Hidden on phones, where three 40px buttons left the title barely
+              any room. Tapping the title edits, and Edit is in the menu too. */}
           <IconButton
             icon={Pencil}
             onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 hover:text-violet-600 hover:bg-violet-50 dark:hover:text-violet-400 dark:hover:bg-violet-500/20"
+            className="hidden md:inline-flex md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 hover:text-violet-600 hover:bg-violet-50 dark:hover:text-violet-400 dark:hover:bg-violet-500/20"
             title="Edit"
             label={`Edit "${task.title}"`}
           />
