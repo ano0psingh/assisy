@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Sparkles, Target, Pencil, Calendar, Loader2, Check, Square, CheckSquare } from 'lucide-react';
+import { Sparkles, Pencil, Loader2, Check, Square, CheckSquare } from 'lucide-react';
 import { TiptapEditor } from '../common/TiptapEditor';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { askAIJson, isAIConfigured } from '../../lib/ai';
 import { getLocalDateString } from '../../lib/dateUtils';
+import { Button, SelectField, TextField } from '../ui';
 
 interface SuggestedSubtask {
   title: string;
@@ -176,13 +177,13 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         <Sparkles size={14} />
         Suggested Sub-tasks
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {subtasks.map((st, i) => (
           <button
             key={i}
             type="button"
             onClick={() => toggleSubtask(i)}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors ${
               st.selected
                 ? isDark ? 'bg-violet-500/20 text-white' : 'bg-violet-100 text-slate-800'
                 : isDark ? 'bg-white/5 text-gray-400' : 'bg-white text-slate-500'
@@ -193,7 +194,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               : <Square size={15} className={isDark ? 'text-gray-600' : 'text-slate-300'} />
             }
             <span className="flex-1">{st.title}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+            <span className={`text-xs px-2 py-1 rounded-full ${
               st.effort === 'High'
                 ? isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
                 : isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
@@ -202,18 +203,16 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         ))}
       </div>
       {onCreateSubtasks && subtasks.some(s => s.selected) && (
-        <button
+        <Button
           type="button"
+          variant="primary"
+          block
+          icon={Check}
           onClick={handleCreateSelected}
-          className={`mt-2.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-            isDark
-              ? 'bg-violet-500/30 text-violet-200 hover:bg-violet-500/40'
-              : 'bg-violet-600 text-white hover:bg-violet-700'
-          }`}
+          className="mt-3"
         >
-          <Check size={14} />
           Create {subtasks.filter(s => s.selected).length} selected
-        </button>
+        </Button>
       )}
     </div>
   ) : null;
@@ -233,29 +232,27 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}
         aria-invalid={titleError ? true : undefined}
         aria-describedby={titleError ? errorId : undefined}
-        className={`${inputCls} ${isFS ? 'py-3.5 text-lg' : ''} ${
+        className={`${inputCls} ${isFS ? 'py-4 text-lg' : ''} ${
           titleError ? '!border-red-500 focus:!border-red-500' : ''
         }`}
         placeholder="What needs to be done?"
         autoFocus
       />
       {titleError && (
-        <p id={errorId} role="alert" className="mt-1.5 text-xs text-red-500">{titleError}</p>
+        <p id={errorId} role="alert" className="mt-2 text-xs text-red-500">{titleError}</p>
       )}
       {showDecomposeButton && subtasks.length === 0 && (
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
           onClick={handleDecompose}
           disabled={decomposing}
-          className={`mt-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-            isDark
-              ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 border border-violet-500/30 disabled:opacity-50'
-              : 'bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 disabled:opacity-50'
-          }`}
+          className="mt-2"
         >
           {decomposing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
           {decomposing ? 'Breaking down...' : 'Break this down'}
-        </button>
+        </Button>
       )}
       {decomposeError && (
         <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{decomposeError}</p>
@@ -277,21 +274,13 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   );
 
   const dueDateField = (
-    <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-        <span className="flex items-center space-x-2">
-          <Calendar size={14} />
-          <span>Due Date (optional)</span>
-        </span>
-      </label>
-      <input
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        min={getLocalDateString()}
-        className={inputCls}
-      />
-    </div>
+    <TextField
+      label="Due Date (optional)"
+      type="date"
+      value={dueDate}
+      onChange={(e) => setDueDate(e.target.value)}
+      min={getLocalDateString()}
+    />
   );
 
   const categoryField = (
@@ -303,7 +292,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             key={cat}
             type="button"
             onClick={() => handleCategoryChange(cat)}
-            className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+            className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
               category === cat
                 ? cat === 'Personal'
                   ? isDark ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-blue-50 text-blue-600 border-blue-200'
@@ -323,20 +312,16 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   );
 
   const goalField = availableGoals.length > 0 ? (
-    <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-        <span className="flex items-center space-x-2">
-          <Target size={14} />
-          <span>Link to Goal (optional)</span>
-        </span>
-      </label>
-      <select value={selectedGoalId} onChange={(e) => setSelectedGoalId(e.target.value)} className={inputCls}>
-        <option value="">No goal</option>
-        {availableGoals.map(goal => (
-          <option key={goal.id} value={goal.id}>{goal.title}</option>
-        ))}
-      </select>
-    </div>
+    <SelectField
+      label="Link to Goal (optional)"
+      value={selectedGoalId}
+      onChange={(e) => setSelectedGoalId(e.target.value)}
+    >
+      <option value="">No goal</option>
+      {availableGoals.map(goal => (
+        <option key={goal.id} value={goal.id}>{goal.title}</option>
+      ))}
+    </SelectField>
   ) : null;
 
   const priorityEffortField = (
@@ -349,7 +334,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               key={p}
               type="button"
               onClick={() => setPriority(p)}
-              className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+              className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
                 priority === p
                   ? p === 'High'
                     ? isDark ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-red-50 text-red-600 border-red-200'
@@ -372,7 +357,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               key={e}
               type="button"
               onClick={() => setEffort(e)}
-              className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+              className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
                 effort === e
                   ? e === 'High'
                     ? isDark ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-orange-50 text-orange-600 border-orange-200'
@@ -414,7 +399,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
                 key={value}
                 type="button"
                 onClick={() => setRecurrencePattern(value)}
-                className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
                   recurrencePattern === value
                     ? isDark ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 'bg-violet-50 text-violet-600 border-violet-200'
                     : isDark
@@ -427,7 +412,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             ))}
           </div>
           {recurrencePattern === 'specific_days' && (
-            <div className="flex gap-1.5 animate-fade-in">
+            <div className="flex gap-2 animate-fade-in">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
                 <button
                   key={day}
@@ -449,19 +434,15 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
           {recurrencePattern === 'monthly' && (
             <div className="flex items-center gap-3 animate-fade-in">
               <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>On day</span>
-              <select
+              <SelectField
+                aria-label="Day of month"
                 value={monthDay}
                 onChange={e => setMonthDay(Number(e.target.value))}
-                className={`px-3 py-2 rounded-lg text-sm border outline-none ${
-                  isDark
-                    ? 'bg-white/5 border-white/10 text-white focus:border-violet-500'
-                    : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-                }`}
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
-              </select>
+              </SelectField>
               <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>of every month</span>
             </div>
           )}
@@ -479,18 +460,12 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
 
   const actionButtons = (
     <div className="flex justify-end space-x-3">
-      <button
-        type="button"
-        onClick={handleCancel}
-        className={`px-5 py-2.5 rounded-xl transition-colors ${
-          isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-        }`}
-      >
+      <Button type="button" variant="ghost" size="lg" onClick={handleCancel}>
         Cancel
-      </button>
-      <button type="button" onClick={handleSubmit} className="btn-primary px-5 py-2.5 rounded-xl">
+      </Button>
+      <Button type="button" variant="primary" size="lg" onClick={handleSubmit}>
         {isEditing ? 'Save Changes' : 'Create Task'}
-      </button>
+      </Button>
     </div>
   );
 
@@ -508,11 +483,11 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       {(isFS) =>
         isFS ? (
           <div className="flex flex-col sm:flex-row sm:h-full">
-            <div className={`flex-1 flex flex-col p-5 sm:p-8 space-y-5 sm:border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <div className={`flex-1 flex flex-col p-6 sm:p-8 space-y-6 sm:border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               {titleField(true)}
               {notesField(true)}
             </div>
-            <div className={`flex-shrink-0 p-5 sm:p-6 space-y-5 sm:overflow-y-auto sm:w-80 border-t sm:border-t-0 ${isDark ? 'border-white/10 bg-white/[0.02]' : 'border-slate-200 bg-white'}`}>
+            <div className={`flex-shrink-0 p-6 sm:p-6 space-y-6 sm:overflow-y-auto sm:w-80 border-t sm:border-t-0 ${isDark ? 'border-white/10 bg-white/[0.02]' : 'border-slate-200 bg-white'}`}>
               <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Task details</h3>
               {dueDateField}
               {categoryField}
@@ -522,7 +497,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-6">
             {titleField(false)}
             {notesField(false)}
             {dueDateField}

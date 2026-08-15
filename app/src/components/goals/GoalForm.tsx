@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import type { TaskCategory, Goal } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { Target, Pencil, GitBranch } from 'lucide-react';
+import { Target, Pencil } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { TiptapEditor } from '../common/TiptapEditor';
+import { Button, SelectField, Surface } from '../ui';
 
 interface GoalFormProps {
   onSubmit: (data: {
@@ -78,7 +79,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
 
   const isEditing = !!editingGoal;
 
-  const inputCls = `w-full px-4 py-2.5 rounded-xl border transition-colors outline-none ${
+  const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
     isDark
       ? 'bg-white/5 border-white/10 text-white focus:border-violet-500'
       : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
@@ -100,7 +101,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
         autoFocus
       />
       {titleError && (
-        <p id="goal-title-error" role="alert" className="mt-1.5 text-xs text-red-500">{titleError}</p>
+        <p id="goal-title-error" role="alert" className="mt-2 text-xs text-red-500">{titleError}</p>
       )}
     </div>
   );
@@ -125,7 +126,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
             key={cat}
             type="button"
             onClick={() => setCategory(cat)}
-            className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+            className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
               category === cat
                 ? cat === 'Personal'
                   ? isDark ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-blue-50 text-blue-600 border-blue-200'
@@ -145,57 +146,35 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
   );
 
   const parentGoalField = parentOptions.length > 0 ? (
-    <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-        <div className="flex items-center space-x-2">
-          <GitBranch size={14} />
-          <span>Parent Goal (optional)</span>
-        </div>
-      </label>
-      <select
-        value={parentGoalId}
-        onChange={(e) => setParentGoalId(e.target.value)}
-        className={inputCls}
-      >
-        <option value="">No parent (top-level goal)</option>
-        {parentOptions.map((goal) => (
-          <option key={goal.id} value={goal.id}>{goal.title}</option>
-        ))}
-      </select>
-      {parentGoalId && (
-        <p className={`mt-2 text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-          This goal will be a sub-goal of the selected parent.
-        </p>
-      )}
-    </div>
+    <SelectField
+      label="Parent Goal (optional)"
+      value={parentGoalId}
+      onChange={(e) => setParentGoalId(e.target.value)}
+      hint={parentGoalId ? 'This goal will be a sub-goal of the selected parent.' : undefined}
+    >
+      <option value="">No parent (top-level goal)</option>
+      {parentOptions.map((goal) => (
+        <option key={goal.id} value={goal.id}>{goal.title}</option>
+      ))}
+    </SelectField>
   ) : null;
 
   const infoBox = !isEditing ? (
-    <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+    <Surface level="inset" radius="xl">
       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
         After creating a goal, you can link tasks to it to track your progress automatically.
       </p>
-    </div>
+    </Surface>
   ) : null;
 
   const actionButtons = (
     <div className="flex justify-end space-x-3">
-      <button
-        type="button"
-        onClick={handleCancel}
-        className={`px-5 py-2.5 rounded-xl transition-colors ${
-          isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-        }`}
-      >
+      <Button type="button" variant="ghost" size="lg" onClick={handleCancel}>
         Cancel
-      </button>
-      <button
-        type="button"
-        onClick={handleSubmit}
-        className="btn-primary px-5 py-2.5 rounded-xl"
-      >
+      </Button>
+      <Button type="button" variant="primary" size="lg" onClick={handleSubmit}>
         {isEditing ? 'Save Changes' : 'Create Goal'}
-      </button>
+      </Button>
     </div>
   );
 
@@ -213,11 +192,11 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
       {(isFS) =>
         isFS ? (
           <div className="flex h-full">
-            <div className={`flex-1 flex flex-col p-8 space-y-5 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <div className={`flex-1 flex flex-col p-8 space-y-6 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               {titleField}
               {notesField(true)}
             </div>
-            <div className={`w-80 flex-shrink-0 p-6 space-y-5 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+            <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
               <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Goal details</h3>
               {categoryField}
               {parentGoalField}
@@ -225,7 +204,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-6">
             {titleField}
             {notesField(false)}
             {categoryField}
