@@ -7,20 +7,34 @@ import {
   TreePine,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-
-const STORAGE_KEY = 'assisy_onboarding_done';
+import { isOnboardingComplete, markOnboardingComplete } from '../../lib/onboarding';
 
 interface Step {
   icon: typeof CheckSquare;
   title: string;
   description: string;
+  /** Used instead of the above on touch devices, where gestures apply. */
+  touch?: { title: string; description: string };
+}
+
+/**
+ * Whether the primary input is touch. The tour used to describe swiping and
+ * tapping unconditionally, so desktop users were told to perform gestures their
+ * mouse cannot do.
+ */
+function isTouchPrimary(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 }
 
 const STEPS: Step[] = [
   {
     icon: CheckSquare,
-    title: 'Swipe tasks to complete',
-    description: 'Swipe any task card left or right to mark it done instantly.',
+    title: 'Complete a task in one click',
+    description: 'Click the checkbox on any task card to mark it done.',
+    touch: {
+      title: 'Swipe tasks to complete',
+      description: 'Swipe any task card left or right to mark it done instantly.',
+    },
   },
   {
     icon: Sunrise,
@@ -34,8 +48,12 @@ const STEPS: Step[] = [
   },
   {
     icon: Target,
-    title: 'Track habits with one tap',
-    description: 'Tap a habit circle to log it — streaks build automatically.',
+    title: 'Track habits with one click',
+    description: 'Click a habit circle to log it — streaks build automatically.',
+    touch: {
+      title: 'Track habits with one tap',
+      description: 'Tap a habit circle to log it — streaks build automatically.',
+    },
   },
   {
     icon: TreePine,
@@ -47,13 +65,13 @@ const STEPS: Step[] = [
 export function OnboardingTour() {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(
-    () => localStorage.getItem(STORAGE_KEY) !== 'true',
+    () => !isOnboardingComplete(),
   );
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const finish = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    markOnboardingComplete();
     setVisible(false);
   }, []);
 
@@ -67,7 +85,10 @@ export function OnboardingTour() {
 
   if (!visible) return null;
 
-  const { icon: Icon, title, description } = STEPS[step];
+  const current = STEPS[step];
+  const { icon: Icon } = current;
+  const { title, description } =
+    current.touch && isTouchPrimary() ? current.touch : current;
   const isLast = step === STEPS.length - 1;
 
   return (

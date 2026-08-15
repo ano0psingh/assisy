@@ -21,11 +21,12 @@ import { useTheme } from '../../context/ThemeContext';
 import { hapticLight } from '../../lib/haptics';
 
 const STORAGE_KEY = 'assisy_bottom_nav_config';
-// Matches what the onboarding tour teaches: tasks, one-tap habits and goal
-// trees. The old default surfaced Calendar and Feed instead, so two of the
-// three features a new user had just been shown were hidden behind More.
+// Mirrors the header's primary destinations, so the same five places are
+// reachable on a phone as on a desktop. This previously pointed at /goals, which
+// meant the grouping into Plan and Progress only ever landed on desktop and the
+// two navigations disagreed about what the app's main sections were.
 // Only affects people who never customised the bar; a saved config wins.
-const DEFAULT_CONFIG: string[] = ['/tasks', '/habits', '/goals'];
+const DEFAULT_CONFIG: string[] = ['/tasks', '/habits', '/plan'];
 
 const PAGE_REGISTRY: Record<string, { icon: LucideIcon; label: string }> = {
   '/tasks': { icon: CheckSquare, label: 'Tasks' },
@@ -142,7 +143,7 @@ export function BottomNav() {
             className={({ isActive }) => linkCls(isActive)}
           >
             <Home size={22} strokeWidth={2} />
-            <span className="text-xs font-medium truncate max-w-full px-1">Home</span>
+            <span className="text-xs font-medium truncate max-w-full px-1">Today</span>
           </NavLink>
           {middleItems.map((item) => (
             <NavLink
