@@ -248,8 +248,16 @@ export function TaskCard({
     setSwipeOffset(0);
   };
 
+  // The inner card sets both `backdrop-blur-xl` and a transform, and each of those
+  // creates a stacking context — so the dropdown's own z-50 could only ever compete
+  // inside this one card, and the next card in the list painted over it. Lifting the
+  // whole card while its menu is open escapes that. z-30 stays below the header
+  // (z-40) and modals (z-50), so an open menu cannot cover either.
   return (
-    <div className="relative rounded-2xl" data-focus-id={task.id}>
+    <div
+      className={`relative rounded-2xl ${menuOpen ? 'z-30' : ''}`}
+      data-focus-id={task.id}
+    >
       {swipeOffset !== 0 && (
         <div className="absolute inset-0 flex rounded-2xl overflow-hidden">
           <div className={`flex-1 flex items-center justify-end pr-4 ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity ${isDark ? 'bg-red-500/20' : 'bg-red-50'}`}>

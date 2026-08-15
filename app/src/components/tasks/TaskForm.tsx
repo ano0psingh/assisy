@@ -255,6 +255,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         content={description}
         onChange={setDescription}
         placeholder={'Add notes, checklists, or details...'}
+        size={isFS ? 'tall' : 'compact'}
       />
     </div>
   );
@@ -483,14 +484,19 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             </div>
           </div>
         ) : (
+          /* Notes comes last here, though it is second in the fullscreen layout
+             above. It is the largest field and the one least often touched when
+             editing an existing task, and while it sat second the quick decisions —
+             when it is due, how it is prioritised — were all below the fold. Writing
+             at length is what the expand button is for. */
           <div className="p-6 space-y-6">
             {titleField(false)}
-            {notesField(false)}
             {dueDateField}
+            {priorityEffortField}
             {categoryField}
             {goalField}
-            {priorityEffortField}
             {recurringField}
+            {notesField(false)}
           </div>
         )
       }

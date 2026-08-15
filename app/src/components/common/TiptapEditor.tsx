@@ -10,11 +10,28 @@ import {
   CheckSquare, Code, Minus, Undo, Redo,
 } from 'lucide-react';
 
+/**
+ * How much empty space to reserve before any text is typed.
+ *
+ * `tall` reserved 250px on desktop, which was fine for a page-sized writing
+ * surface but meant a compact dialog spent most of its height on an empty notes
+ * box — in the task editor it pushed Priority, Effort and the save button below
+ * the fold. `compact` is the default because most call sites are dialogs; the
+ * field still grows without limit as soon as there is content to show.
+ */
+type EditorSize = 'compact' | 'tall';
+
+const MIN_HEIGHTS: Record<EditorSize, string> = {
+  compact: 'min-h-[120px]',
+  tall: 'min-h-[150px] md:min-h-[250px]',
+};
+
 interface TiptapEditorProps {
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
   className?: string;
+  size?: EditorSize;
 }
 
 export function TiptapEditor({
@@ -22,6 +39,7 @@ export function TiptapEditor({
   onChange,
   placeholder = 'Start writing...',
   className = '',
+  size = 'compact',
 }: TiptapEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -42,7 +60,7 @@ export function TiptapEditor({
     },
     editorProps: {
       attributes: {
-        class: 'tiptap-content outline-none min-h-[150px] md:min-h-[250px] px-4 py-3 text-sm leading-relaxed',
+        class: `tiptap-content outline-none ${MIN_HEIGHTS[size]} px-4 py-3 text-sm leading-relaxed`,
       },
     },
   });
@@ -62,8 +80,9 @@ export function TiptapEditor({
     <div className={`tiptap-editor rounded-xl border transition-colors ${
       isDark ? 'border-white/10 bg-white/[0.03]' : 'border-slate-200 bg-white'
     } ${className}`}>
-      {/* Toolbar */}
-      <div className={`flex items-center gap-1 px-2 py-2 border-b flex-wrap ${
+      {/* Toolbar — one scrolling row rather than wrapping. Wrapping cost a second
+          36px row in any narrow dialog, and every button stays reachable this way. */}
+      <div className={`flex items-center gap-1 px-2 py-2 border-b flex-nowrap overflow-x-auto ${
         isDark ? 'border-white/10' : 'border-slate-100'
       }`}>
         <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btnCls(editor.isActive('bold'))} title="Bold"
@@ -108,7 +127,10 @@ export function TiptapEditor({
           <Minus size={iconSize} />
         </button>
 
-        <div className="flex-1" />
+        {/* A `flex-1` spacer used to push these two to the right, which in a narrow
+            dialog left no room for them and wrapped them onto a row of their own. A
+            divider keeps them read as a separate group without costing that row. */}
+        <div className={`w-px h-4 mx-1 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
 
         <button type="button" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} className={`${btnCls(false)} disabled:opacity-30`} title="Undo"
  aria-label="Undo">

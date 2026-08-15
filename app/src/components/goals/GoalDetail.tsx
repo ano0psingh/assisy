@@ -692,6 +692,7 @@ export function GoalDetail({
                       content={editDescription}
                       onChange={setEditDescription}
                       placeholder="Add a description..."
+                      size="tall"
                     />
                   </>
                 ) : (
@@ -738,6 +739,7 @@ export function GoalDetail({
                     content={editDescription}
                     onChange={setEditDescription}
                     placeholder="Add a description..."
+                    size="tall"
                   />
                 </>
               ) : (

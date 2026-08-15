@@ -99,6 +99,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
         content={description}
         onChange={setDescription}
         placeholder={'Describe your goal, add milestones...'}
+        size={isFS ? 'tall' : 'compact'}
       />
     </div>
   );
