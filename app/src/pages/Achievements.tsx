@@ -550,6 +550,7 @@ function HeroBanner({
   title,
   currentXP,
   xpToNextLevel,
+  xpProgress,
   equippedTitle,
   unlockedTitles,
   onTitleChange,
@@ -560,7 +561,10 @@ function HeroBanner({
   level: number;
   title: string;
   currentXP: number;
+  /** Cumulative XP at which the next level is reached, not the amount remaining. */
   xpToNextLevel: number;
+  /** Percentage through the current level, from the single source of truth. */
+  xpProgress: number;
   equippedTitle: string;
   unlockedTitles: typeof UNLOCKABLE_TITLES;
   onTitleChange: (titleId: string) => void;
@@ -568,7 +572,6 @@ function HeroBanner({
   userStats: UserStats;
 }) {
   const [showTitleSelector, setShowTitleSelector] = useState(false);
-  const xpProgress = (currentXP % 100) / 100 * 100;
   
   // Get rank based on level
   const getRank = (lvl: number) => {
@@ -1377,6 +1380,7 @@ export function Achievements() {
     getTotalLevel,
     getTitle,
     getTotalXP,
+    getLevelProgress,
   } = useGamification();
   
   const [statusFilter, setStatusFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
@@ -1534,6 +1538,7 @@ export function Achievements() {
         title={getTitle()}
         currentXP={getTotalXP()}
         xpToNextLevel={getTotalLevel() * 100}
+        xpProgress={getLevelProgress().percent}
         equippedTitle={equippedTitle}
         unlockedTitles={unlockedTitles}
         onTitleChange={setEquippedTitle}

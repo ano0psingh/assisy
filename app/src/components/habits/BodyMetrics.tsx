@@ -232,11 +232,15 @@ export function BodyMetrics() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-      ) : (
+      ) : metricEntries.length > 0 ? (
         <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-          {metricEntries.length === 0 ? `Log ${viewMetric.toLowerCase()} to see a trend.` : 'One more entry to see the trend.'}
+          One more entry to see the trend.
         </p>
-      )}
+      ) : null}
+      {/* With no entries at all there is nothing to explain: the heading and the
+          Log button already say what this is, so the placeholder only added
+          height. The one-entry case above is worth keeping, because there the
+          absence of a chart genuinely needs accounting for. */}
 
       {/* Recent entries */}
       {metricEntries.length > 0 && (

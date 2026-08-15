@@ -12,7 +12,12 @@ export type SurfaceLevel = 'card' | 'nested' | 'inset';
 export type SurfaceRadius = 'lg' | 'xl' | '2xl';
 
 const LEVELS: Record<SurfaceLevel, string> = {
-  card: 'bg-white border border-slate-200/80 dark:bg-white/5 dark:border-white/10',
+  // Delegates to the `.card` class rather than restating it in Tailwind. Restating
+  // it meant a panel built from this component had no shadow and no backdrop blur
+  // while the forty-odd panels using the class directly had both, so the two routes
+  // to "a card" did not agree. The class derives its colours from the theme
+  // variables, which is what makes it work in both themes without a dark: variant.
+  card: 'card',
   nested: 'bg-slate-50 border border-slate-200/60 dark:bg-white/5 dark:border-white/5',
   inset: 'bg-slate-50/70 dark:bg-white/5',
 };

@@ -1057,7 +1057,7 @@ RULES:
       {/* Daily Login Bonus Notification */}
       {dailyBonusResult?.show && (
         <div
-          className="fixed top-4 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[70] animate-slide-down"
+          className="fixed below-header inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[70] animate-slide-down"
           onClick={() => setDailyBonusResult(null)}
         >
           <div 

@@ -163,12 +163,6 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
 
   const isEditing = !!editingTask;
 
-  const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-    isDark
-      ? 'bg-white/5 border-white/10 text-white focus:border-violet-500 placeholder-gray-600'
-      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 placeholder-slate-400'
-  }`;
-
   const showDecomposeButton = isAIConfigured() && title.trim().length > 30 && !editingTask;
 
   const subtaskSection = subtasks.length > 0 ? (
@@ -217,30 +211,22 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     </div>
   ) : null;
 
+  // Both variants can be mounted by the modal at once; TextField derives its own
+  // id with useId, so the two no longer have to be named apart by hand.
   const titleField = (isFS: boolean) => {
-    // Both variants can be mounted by the modal, so the ids must differ.
-    const fieldId = isFS ? 'task-title-fullscreen' : 'task-title';
-    const errorId = `${fieldId}-error`;
     return (
     <div>
-      <label htmlFor={fieldId} className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Title *</label>
-      <input
-        id={fieldId}
+      <TextField
         ref={titleInputRef}
+        label="Title *"
         type="text"
         value={title}
         onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}
-        aria-invalid={titleError ? true : undefined}
-        aria-describedby={titleError ? errorId : undefined}
-        className={`${inputCls} ${isFS ? 'py-4 text-lg' : ''} ${
-          titleError ? '!border-red-500 focus:!border-red-500' : ''
-        }`}
+        error={titleError ?? undefined}
+        className={isFS ? 'py-4 text-lg' : ''}
         placeholder="What needs to be done?"
         autoFocus
       />
-      {titleError && (
-        <p id={errorId} role="alert" className="mt-2 text-xs text-red-500">{titleError}</p>
-      )}
       {showDecomposeButton && subtasks.length === 0 && (
         <Button
           type="button"
@@ -264,7 +250,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
 
   const notesField = (isFS: boolean) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Notes</label>
+      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Notes</label>
       <TiptapEditor
         content={description}
         onChange={setDescription}
@@ -285,7 +271,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
 
   const categoryField = (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Category</label>
+      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Category</label>
       <div className="grid grid-cols-3 gap-2">
         {(['Personal', 'Financial', 'Professional'] as const).map((cat) => (
           <button
@@ -327,7 +313,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const priorityEffortField = (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Priority</label>
+        <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Priority</label>
         <div className="grid grid-cols-2 gap-2">
           {(['High', 'Low'] as const).map((p) => (
             <button
@@ -350,7 +336,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         </div>
       </div>
       <div>
-        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Effort</label>
+        <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Effort</label>
         <div className="grid grid-cols-2 gap-2">
           {(['High', 'Low'] as const).map((e) => (
             <button

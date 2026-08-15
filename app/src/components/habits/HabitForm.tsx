@@ -145,36 +145,24 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
 
   const isEditing = !!editingHabit;
 
-  const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-    isDark
-      ? 'bg-white/5 border-white/10 text-white focus:border-violet-500'
-      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-  }`;
-
   const nameField = (
     <div>
-      <label htmlFor="habit-name" className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Habit Name *</label>
-      <input
-        id="habit-name"
+      <TextField
         ref={nameInputRef}
+        label="Habit Name *"
         type="text"
         value={name}
         onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
-        aria-invalid={nameError ? true : undefined}
-        aria-describedby={nameError ? 'habit-name-error' : undefined}
+        error={nameError ?? undefined}
         placeholder="e.g., Morning Meditation"
-        className={`${inputCls} ${nameError ? '!border-red-500 focus:!border-red-500' : ''}`}
         autoFocus
       />
-      {nameError && (
-        <p id="habit-name-error" role="alert" className="mt-2 text-xs text-red-500">{nameError}</p>
-      )}
     </div>
   );
 
   const trackingTypeField = (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Tracking Type</label>
+      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Tracking Type</label>
       <div className="space-y-2">
         {TRACKING_TYPES.map((type) => (
           <label
@@ -205,7 +193,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
 
   const goalField = (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">
         <div className="flex items-center gap-2">
           <Link2 size={16} className="text-violet-500" />
           Linked Goal

@@ -774,7 +774,9 @@ export function Habits() {
       {/* AI Habit Insights */}
       {isAIConfigured() && habits.length > 0 && (
         <div className="card rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
+          {/* No bottom margin until there is something below it, so the card is a
+              single row until insights are actually generated. */}
+          <div className={`flex items-center justify-between ${aiInsights || insightsError || insightsLoading ? 'mb-4' : ''}`}>
             <h2 className={`font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
               <Sparkles size={18} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
               AI Habit Insights
@@ -804,11 +806,8 @@ export function Habits() {
               dangerouslySetInnerHTML={{ __html: formatAIText(aiInsights) }}
             />
           )}
-          {!aiInsights && !insightsLoading && !insightsError && (
-            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-              Click "Generate Insights" to get AI-powered analysis of your habit patterns.
-            </p>
-          )}
+          {/* The removed line here told the reader to click the button sitting
+              next to it, which the heading and the button label already convey. */}
         </div>
       )}
 

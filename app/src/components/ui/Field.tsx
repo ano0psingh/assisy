@@ -1,4 +1,4 @@
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes } from 'react';
 
 /**
  * Text and select inputs, with the label wiring and error reporting built in.
@@ -24,11 +24,14 @@ interface FieldShellProps {
   children: ReactNode;
 }
 
+// The label is text-sm to match the labels above the button groups these forms
+// also contain, so a migrated field and a hand-built one read alike. Hints and
+// errors stay text-xs, which keeps the label the dominant line.
 function FieldShell({ id, label, error, hint, children }: FieldShellProps) {
   return (
     <div className="space-y-2">
       {label && (
-        <label htmlFor={id} className="block text-xs font-medium text-slate-600 dark:text-gray-400">
+        <label htmlFor={id} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
           {label}
         </label>
       )}
@@ -52,15 +55,23 @@ export interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   label?: string;
   error?: string;
   hint?: string;
+  /**
+   * Forms focus the first invalid field on submit, which needs the element. In
+   * React 19 `ref` is an ordinary prop on a function component, so this needs no
+   * `forwardRef` — only the type, whose absence previously made these fields
+   * unusable for any form doing focus management.
+   */
+  ref?: Ref<HTMLInputElement>;
 }
 
-export function TextField({ label, error, hint, className = '', ...rest }: TextFieldProps) {
+export function TextField({ label, error, hint, className = '', ref, ...rest }: TextFieldProps) {
   const id = useId();
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
     <FieldShell id={id} label={label} error={error} hint={hint}>
       <input
         id={id}
+        ref={ref}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={`${CONTROL_CLASSES} ${error ? INVALID_CLASSES : ''} ${className}`}

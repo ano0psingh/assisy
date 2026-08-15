@@ -324,6 +324,12 @@
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0));
   }
 
+  /* Clears the sticky header (a 3.5rem row plus the notch inset), for floating
+     elements that would otherwise cover the navigation. */
+  .below-header {
+    top: calc(env(safe-area-inset-top, 0px) + 4.5rem);
+  }
+
   /* Hide bottom nav when a modal is open */
   html[data-modal-open] .bottom-nav-bar {
     display: none !important;

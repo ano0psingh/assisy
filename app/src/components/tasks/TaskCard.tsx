@@ -124,6 +124,9 @@ export function TaskCard({
   const isCarriedForward = task.status === 'Carried Forward' || (!task.isRecurring && isFromPreviousDay(task.createdAt) && !isCompleted);
   const daysAgoText = isCarriedForward && !task.isRecurring ? getDaysAgoText(task.createdAt) : '';
 
+  /** Resting colour for the metadata row; individual items override it to signal urgency. */
+  const metaCls = isDark ? 'text-gray-500' : 'text-slate-400';
+
   const todayStr = getLocalDateString();
   const isFocusedToday = task.isFocusedToday && task.focusedDate === todayStr;
 
@@ -325,11 +328,16 @@ export function TaskCard({
                 <Flame size={14} className="flex-shrink-0 text-red-500" />
               )}
             </div>
-            {/* Meta indicators — wrap below title */}
+            {/* Meta indicators — wrap below title.
+                A recurring task with a goal can show seven of these at once. They
+                used to be seven different colours, which read as noise and left
+                colour meaning nothing in particular. They are muted by default now,
+                and colour is spent only where it reports something the reader has to
+                act on: overdue, and paused. */}
             {!isCompleted && (
-              <div className="flex items-center gap-2 flex-wrap mt-1">
+              <div className={`flex items-center gap-2 flex-wrap mt-1 ${metaCls}`}>
                 {isCarriedForward && (
-                  <span className={`text-xs ${isDark ? 'text-orange-400' : 'text-orange-500'}`}>
+                  <span className="text-xs">
                     <RotateCcw size={11} className="inline -mt-1" /> {daysAgoText}
                   </span>
                 )}
@@ -337,7 +345,7 @@ export function TaskCard({
                   <span className={`text-xs whitespace-nowrap ${
                     task.pausedUntil && getLocalDateString() <= task.pausedUntil
                       ? isDark ? 'text-amber-400' : 'text-amber-500'
-                      : isDark ? 'text-violet-400' : 'text-violet-500'
+                      : ''
                   }`}>
                     <Clock size={10} className="inline -mt-1 mr-1" />
                     {task.pausedUntil && getLocalDateString() <= task.pausedUntil
@@ -347,7 +355,7 @@ export function TaskCard({
                   </span>
                 )}
                 {task.isRecurring && task.completedAt && (
-                  <span className={`text-xs whitespace-nowrap ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                  <span className="text-xs whitespace-nowrap">
                     Last: {(() => {
                       const days = Math.floor((Date.now() - new Date(task.completedAt).getTime()) / 86400000);
                       if (days === 0) return 'today';
@@ -357,21 +365,18 @@ export function TaskCard({
                   </span>
                 )}
                 {task.isRecurring && (task.streakCount ?? 0) > 0 && (
-                  <span className="text-xs whitespace-nowrap text-orange-500">
-                    <Flame size={10} className="inline -mt-1" /> {task.streakCount}d streak
+                  <span className="text-xs whitespace-nowrap">
+                    {/* The flame keeps the streak recognisable without the text
+                        having to compete with the overdue colour. */}
+                    <Flame size={10} className="inline -mt-1 text-orange-500" /> {task.streakCount}d streak
                   </span>
                 )}
                 {task.isRecurring && task.completionLog && (() => {
                   const rate = getRecurringCompletionRate(task, 30);
                   if (rate.expected <= 0) return null;
                   const pct = Math.round(rate.rate * 100);
-                  const color = pct >= 80
-                    ? isDark ? 'text-emerald-400' : 'text-emerald-500'
-                    : pct >= 50
-                      ? isDark ? 'text-amber-400' : 'text-amber-500'
-                      : isDark ? 'text-gray-500' : 'text-slate-400';
                   return (
-                    <span className={`text-xs whitespace-nowrap ${color}`}>
+                    <span className="text-xs whitespace-nowrap">
                       {rate.completed}/{rate.expected} ({pct}%)
                     </span>
                   );
@@ -380,7 +385,7 @@ export function TaskCard({
                   const { text, isOverdue: overdue } = formatDueDate(task.dueDate);
                   return (
                     <span className={`text-xs whitespace-nowrap ${
-                      overdue ? 'text-red-500 font-medium' : isDark ? 'text-gray-500' : 'text-slate-400'
+                      overdue ? 'text-red-500 font-medium' : ''
                     }`}>
                       <CalendarDays size={10} className="inline -mt-1 mr-1" />{text}
                     </span>

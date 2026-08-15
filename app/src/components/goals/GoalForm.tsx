@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Target, Pencil } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { TiptapEditor } from '../common/TiptapEditor';
-import { Button, SelectField, Surface } from '../ui';
+import { Button, SelectField, Surface, TextField } from '../ui';
 
 interface GoalFormProps {
   onSubmit: (data: {
@@ -79,36 +79,22 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
 
   const isEditing = !!editingGoal;
 
-  const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-    isDark
-      ? 'bg-white/5 border-white/10 text-white focus:border-violet-500'
-      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
-  }`;
-
   const titleField = (
-    <div>
-      <label htmlFor="goal-title" className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Goal Title *</label>
-      <input
-        id="goal-title"
-        ref={titleInputRef}
-        type="text"
-        value={title}
-        onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}
-        aria-invalid={titleError ? true : undefined}
-        aria-describedby={titleError ? 'goal-title-error' : undefined}
-        className={`${inputCls} ${titleError ? '!border-red-500 focus:!border-red-500' : ''}`}
-        placeholder="What do you want to achieve?"
-        autoFocus
-      />
-      {titleError && (
-        <p id="goal-title-error" role="alert" className="mt-2 text-xs text-red-500">{titleError}</p>
-      )}
-    </div>
+    <TextField
+      ref={titleInputRef}
+      label="Goal Title *"
+      type="text"
+      value={title}
+      onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}
+      error={titleError ?? undefined}
+      placeholder="What do you want to achieve?"
+      autoFocus
+    />
   );
 
   const notesField = (isFS: boolean) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Notes</label>
+      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Notes</label>
       <TiptapEditor
         content={description}
         onChange={setDescription}
@@ -119,7 +105,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
 
   const categoryField = (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Category</label>
+      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Category</label>
       <div className="grid grid-cols-3 gap-2">
         {(['Personal', 'Financial', 'Professional'] as const).map((cat) => (
           <button
