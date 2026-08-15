@@ -27,6 +27,7 @@ interface TaskFormProps {
     monthDay?: number;
     goalId?: string;
     dueDate?: Date;
+    dueTime?: string;
     addToToday?: boolean;
   }) => void;
   onCancel: () => void;
@@ -51,6 +52,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const [monthDay, setMonthDay] = useState<number>(1);
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
+  const [dueTime, setDueTime] = useState<string>('');
 
   const [subtasks, setSubtasks] = useState<SuggestedSubtask[]>([]);
   const [decomposing, setDecomposing] = useState(false);
@@ -71,6 +73,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       setMonthDay(editingTask.monthDay ?? 1);
       setSelectedGoalId(editingTask.goalId || '');
       setDueDate(editingTask.dueDate ? getLocalDateString(new Date(editingTask.dueDate)) : '');
+      setDueTime(editingTask.dueTime || '');
     } else {
       resetForm();
     }
@@ -88,6 +91,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     setMonthDay(1);
     setSelectedGoalId('');
     setDueDate('');
+    setDueTime('');
     setSubtasks([]);
     setDecomposeError(null);
     setTitleError(null);
@@ -143,6 +147,9 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       monthDay: isRecurring && recurrencePattern === 'monthly' ? monthDay : undefined,
       goalId: selectedGoalId || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
+      // A time without a date has nothing to attach to, so it is dropped rather
+      // than saved as a value no view could place.
+      dueTime: dueDate && dueTime ? dueTime : undefined,
       addToToday: !editingTask ? defaultAddToToday : undefined,
     });
     resetForm();
@@ -260,14 +267,33 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     </div>
   );
 
+  /**
+   * The time only appears once a date is picked, because on its own it has
+   * nothing to attach to and the browser would happily collect a value that no
+   * view could place. Clearing the date clears the time with it, so the two can
+   * never disagree.
+   */
   const dueDateField = (
-    <TextField
-      label="Due Date (optional)"
-      type="date"
-      value={dueDate}
-      onChange={(e) => setDueDate(e.target.value)}
-      min={getLocalDateString()}
-    />
+    <div className={dueDate ? 'grid grid-cols-2 gap-3' : ''}>
+      <TextField
+        label="Due Date (optional)"
+        type="date"
+        value={dueDate}
+        onChange={(e) => {
+          setDueDate(e.target.value);
+          if (!e.target.value) setDueTime('');
+        }}
+        min={getLocalDateString()}
+      />
+      {dueDate && (
+        <TextField
+          label="Time (optional)"
+          type="time"
+          value={dueTime}
+          onChange={(e) => setDueTime(e.target.value)}
+        />
+      )}
+    </div>
   );
 
   const categoryField = (

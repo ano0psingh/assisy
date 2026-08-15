@@ -77,18 +77,49 @@ function ordinalSuffix(n: number): string {
   }
 }
 
-function formatDueDate(dueDate: Date): { text: string; isOverdue: boolean; isToday: boolean } {
-  const today = new Date();
+/** "17:30" -> "5:30 PM", following the reader's locale rather than a fixed format. */
+function formatTimeOfDay(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+/**
+ * @param dueTime optional HH:MM. When present, a task due today counts as overdue
+ * once that hour has passed instead of waiting for the whole day to end — which is
+ * the entire point of setting a time. Without one the day-level behaviour is kept.
+ */
+function formatDueDate(dueDate: Date, dueTime?: string): { text: string; isOverdue: boolean; isToday: boolean } {
+  const now = new Date();
+  const today = new Date(now);
   const due = new Date(dueDate);
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);
   const diffTime = due.getTime() - today.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const at = dueTime ? ` ${formatTimeOfDay(dueTime)}` : '';
+
   if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, isOverdue: true, isToday: false };
-  if (diffDays === 0) return { text: 'Today', isOverdue: false, isToday: true };
-  if (diffDays === 1) return { text: 'Tomorrow', isOverdue: false, isToday: false };
-  if (diffDays <= 7) return { text: `${diffDays}d`, isOverdue: false, isToday: false };
-  return { text: due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), isOverdue: false, isToday: false };
+  if (diffDays === 0) {
+    if (dueTime) {
+      const [h, m] = dueTime.split(':').map(Number);
+      const deadline = new Date(now);
+      deadline.setHours(h, m, 0, 0);
+      if (now.getTime() > deadline.getTime()) {
+        return { text: `Overdue${at}`, isOverdue: true, isToday: true };
+      }
+    }
+    return { text: `Today${at}`, isOverdue: false, isToday: true };
+  }
+  if (diffDays === 1) return { text: `Tomorrow${at}`, isOverdue: false, isToday: false };
+  if (diffDays <= 7) return { text: `${diffDays}d${at}`, isOverdue: false, isToday: false };
+  return {
+    text: due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + at,
+    isOverdue: false,
+    isToday: false,
+  };
 }
 
 const SWIPE_THRESHOLD = 72;
@@ -390,7 +421,7 @@ export function TaskCard({
                   );
                 })()}
                 {task.dueDate && (() => {
-                  const { text, isOverdue: overdue } = formatDueDate(task.dueDate);
+                  const { text, isOverdue: overdue } = formatDueDate(task.dueDate, task.dueTime);
                   return (
                     <span className={`text-xs whitespace-nowrap ${
                       overdue ? 'text-red-500 font-medium' : ''

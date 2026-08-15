@@ -372,8 +372,9 @@ export function Tasks() {
     monthDay?: number;
     goalId?: string;
     dueDate?: Date;
+    dueTime?: string;
   }) => {
-    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, data.specificDays, data.goalId, data.dueDate, data.monthDay);
+    const newTask = createTask(data.title, data.description, data.category, data.priority, data.effort, data.isRecurring, data.recurrencePattern, data.specificDays, data.goalId, data.dueDate, data.monthDay, data.dueTime);
     
     if (data.goalId) {
       linkTaskToGoal(data.goalId, newTask.id);
@@ -398,6 +399,7 @@ export function Tasks() {
     monthDay?: number;
     goalId?: string;
     dueDate?: Date;
+    dueTime?: string;
   }) => {
     if (!editingTask) return;
 
@@ -424,6 +426,7 @@ export function Tasks() {
       monthDay: data.monthDay,
       goalId: data.goalId,
       dueDate: data.dueDate,
+      dueTime: data.dueTime,
     });
     
     setEditingTask(null);
@@ -445,7 +448,7 @@ export function Tasks() {
     if (!task) return;
     deleteTask(taskId);
     pushUndo(`"${task.title}" deleted`, () => {
-      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, undefined, task.goalId, task.dueDate);
+      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate, task.monthDay, task.dueTime);
     });
   };
 

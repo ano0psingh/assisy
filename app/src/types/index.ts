@@ -29,6 +29,12 @@ export interface Task {
   createdAt: Date;
   completedAt?: Date;
   dueDate?: Date;
+  /**
+   * HH:MM in the user's local time, e.g. "17:30". Only meaningful alongside
+   * `dueDate`, and optional: a due date with no time behaves as it always has,
+   * counting as overdue once the whole day has passed rather than at an hour.
+   */
+  dueTime?: string;
   xpValue: number;
   isFocusedToday?: boolean;
   focusedDate?: string; // YYYY-MM-DD

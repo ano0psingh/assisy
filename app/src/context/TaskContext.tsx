@@ -23,7 +23,8 @@ interface TaskContextType {
     specificDays?: number[],
     goalId?: string,
     dueDate?: Date,
-    monthDay?: number
+    monthDay?: number,
+    dueTime?: string
   ) => Task;
   linkTaskToGoal: (taskId: string, goalId: string) => void;
   unlinkTaskFromGoal: (taskId: string) => void;
@@ -168,7 +169,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     specificDays?: number[],
     goalId?: string,
     dueDate?: Date,
-    monthDay?: number
+    monthDay?: number,
+    dueTime?: string
   ): Task => {
     const xpValue = getTaskXPValue({
       category,
@@ -190,6 +192,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       monthDay,
       goalId,
       dueDate,
+      dueTime,
       createdAt: new Date(),
       xpValue,
     };

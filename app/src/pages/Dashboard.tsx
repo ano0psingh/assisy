@@ -439,7 +439,7 @@ RULES:
     if (!task) return;
     deleteTask(taskId);
     pushUndo(`"${task.title}" deleted`, () => {
-      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate);
+      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate, task.monthDay, task.dueTime);
     });
   }, [tasks, deleteTask, createTask, pushUndo]);
 
@@ -518,6 +518,7 @@ RULES:
     recurrencePattern?: RecurrencePattern;
     goalId?: string;
     dueDate?: Date;
+    dueTime?: string;
   }) => {
     if (!editingTask) return;
 
@@ -542,6 +543,7 @@ RULES:
       recurrencePattern: data.recurrencePattern,
       goalId: data.goalId,
       dueDate: data.dueDate,
+      dueTime: data.dueTime,
     });
     
     setEditingTask(null);
