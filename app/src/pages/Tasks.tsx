@@ -970,7 +970,7 @@ export function Tasks() {
                       <div className="flex items-center space-x-2">
                         <div className={`w-24 h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
                           <div 
-                            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all"
+                            className="h-full rounded-full bg-violet-500 transition-all"
                             style={{ width: `${totalTasks > 0 ? (totalCompleted / totalTasks) * 100 : 0}%` }}
                           />
                         </div>
@@ -1066,7 +1066,7 @@ export function Tasks() {
                             <div className="flex items-center space-x-2">
                               <div className={`w-16 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                                 <div 
-                                  className="h-full rounded-full bg-gradient-to-r from-violet-400 to-purple-400 transition-all"
+                                  className="h-full rounded-full bg-violet-400 transition-all"
                                   style={{ width: `${subTotal > 0 ? (subCompleted / subTotal) * 100 : 0}%` }}
                                 />
                               </div>

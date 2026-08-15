@@ -684,7 +684,7 @@ export function Habits() {
               </div>
               <div className={`text-xs mt-0.5 font-medium ${isDark ? 'text-violet-400/50' : 'text-violet-600/50'}`}>Last 7 days</div>
             </div>
-            <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20' : 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60'}`}>
+            <div className={`rounded-2xl p-4 relative overflow-hidden ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200/60'}`}>
               <TrendingUp size={14} className={`mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
               <div className={`text-xl font-black tabular-nums ${rate30 >= 80 ? 'text-emerald-500' : rate30 >= 50 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-gray-500' : 'text-slate-400')}`}>
                 {rate30}<span className="text-xs font-semibold ml-0.5">%</span>
@@ -752,7 +752,7 @@ export function Habits() {
                   <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        pct >= 80 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : pct >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' : pct >= 20 ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-red-500/60 to-red-400/40'
+                        pct >= 80 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : pct >= 50 ? 'bg-amber-500' : pct >= 20 ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-red-500/60 to-red-400/40'
                       }`}
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />

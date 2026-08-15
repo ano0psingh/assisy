@@ -555,7 +555,7 @@ export function Goals() {
                 {/* XP progress bar */}
                 <div className={`h-1.5 rounded-full overflow-hidden mb-1.5 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
+                    className="h-full rounded-full bg-violet-500 transition-all duration-500"
                     style={{ width: `${xpPct}%` }}
                   />
                 </div>
@@ -667,8 +667,8 @@ export function Goals() {
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
                               getGoalProgress(goal) === 100
-                                ? 'bg-gradient-to-r from-emerald-500 to-green-500'
-                                : 'bg-gradient-to-r from-violet-500 to-purple-500'
+                                ? 'bg-emerald-500'
+                                : 'bg-violet-500'
                             }`}
                             style={{ width: `${xpPct}%` }}
                           />

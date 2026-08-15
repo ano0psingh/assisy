@@ -121,7 +121,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               <Menu size={20} />
             </button>
 
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
             <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</span>
@@ -236,7 +236,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               <div className={`w-px h-3.5 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
               <span className="text-violet-500 font-semibold">Lv {level}</span>
               <div className={`w-10 h-1 rounded-full overflow-hidden ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`}>
-                <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
+                <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
               </div>
             </div>
 
@@ -269,7 +269,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-bold">
                         {(user.email?.[0] ?? '?').toUpperCase()}
                       </div>
                     )}
@@ -349,7 +349,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
         {/* Drawer header */}
         <div className={`flex items-center justify-between px-4 h-14 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
             <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</span>
@@ -377,7 +377,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               <div className={`w-px h-3.5 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
               <span className="text-violet-500 font-semibold">Lv {level}</span>
               <div className={`w-12 h-1 rounded-full overflow-hidden ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`}>
-                <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
+                <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }} />
               </div>
             </div>
           </div>

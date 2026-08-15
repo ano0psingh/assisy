@@ -153,8 +153,8 @@ export function GoalCard({
                 <div 
                   className={`h-full rounded-full transition-all duration-500 ${
                     progress === 100 
-                      ? 'bg-gradient-to-r from-emerald-400 to-green-400' 
-                      : 'bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500'
+                      ? 'bg-emerald-400' 
+                      : 'bg-violet-500'
                   }`}
                   style={{ width: `${progress}%`, boxShadow: progress > 0 ? (progress === 100 ? '0 0 8px rgba(52,211,153,0.3)' : '0 0 8px rgba(139,92,246,0.25)') : 'none' }}
                 />

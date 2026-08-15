@@ -284,14 +284,9 @@ Respond ONLY with valid JSON matching this exact schema:
       {/* ── 1. WEEK AT A GLANCE ──────────────────────── */}
       <div className={`relative overflow-hidden rounded-2xl ${
         isDark
-          ? 'bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-indigo-500/10 border border-violet-500/15'
-          : 'bg-gradient-to-br from-violet-50 via-purple-50/50 to-indigo-50 border border-violet-100'
+          ? 'bg-violet-500/[0.07] border border-violet-500/15'
+          : 'bg-violet-50 border border-violet-100'
       }`}>
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className={`absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl ${isDark ? 'bg-violet-500/10' : 'bg-violet-200/40'}`} />
-          <div className={`absolute -bottom-12 -left-12 w-36 h-36 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-200/30'}`} />
-        </div>
-
         <div className="relative px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center gap-2 mb-4">
             <Calendar className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
@@ -381,7 +376,7 @@ Respond ONLY with valid JSON matching this exact schema:
           <div className={cardClass + ' p-4'}>
             <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Low Priority</p>
             <div className="flex items-center gap-1.5">
-              <TrendingDown size={16} className={isDark ? 'text-sky-400' : 'text-sky-500'} />
+              <TrendingDown size={16} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
               <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{byPriority.Low}</span>
             </div>
           </div>
@@ -617,12 +612,12 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Energy Pattern */}
             {aiInsight.energy_pattern && (
-              <div className={`rounded-2xl p-4 ${isDark ? 'bg-sky-500/[0.06] border border-sky-500/15' : 'bg-sky-50 border border-sky-100'}`}>
+              <div className={`rounded-2xl p-4 ${isDark ? 'bg-blue-500/[0.06] border border-blue-500/15' : 'bg-blue-50 border border-blue-100'}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <Activity size={15} className={isDark ? 'text-sky-400' : 'text-sky-600'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-sky-400' : 'text-sky-700'}`}>Energy Pattern</h3>
+                  <Activity size={15} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>Energy Pattern</h3>
                 </div>
-                <p className={`text-sm ${isDark ? 'text-sky-200/80' : 'text-sky-800'}`}>{aiInsight.energy_pattern}</p>
+                <p className={`text-sm ${isDark ? 'text-blue-200/80' : 'text-blue-800'}`}>{aiInsight.energy_pattern}</p>
               </div>
             )}
 

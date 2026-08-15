@@ -35,8 +35,8 @@ function SkillNode({ skill, isDark, index }: { skill: SkillTree; isDark: boolean
       <div 
         className={`relative flex flex-col items-center p-6 rounded-3xl border-2 transition-all duration-300 hover:scale-105 ${
           isDark 
-            ? 'bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 hover:border-white/20' 
-            : 'bg-gradient-to-br from-white to-slate-50 border-slate-200 hover:border-slate-300'
+            ? 'bg-white/5 border-white/10 hover:border-white/20' 
+            : 'bg-white border-slate-200 hover:border-slate-300'
         }`}
         style={{ 
           boxShadow: isDark 
@@ -144,8 +144,8 @@ function CentralHub({ isDark }: { isDark: boolean }) {
   return (
     <div className={`relative p-8 rounded-3xl border-2 ${
       isDark 
-        ? 'bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-pink-500/10 border-violet-500/20' 
-        : 'bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 border-violet-200'
+        ? 'bg-violet-500/[0.07] border-violet-500/20' 
+        : 'bg-violet-50 border-violet-200'
     }`}>
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden rounded-3xl">

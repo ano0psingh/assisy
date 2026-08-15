@@ -291,14 +291,9 @@ export function Feed() {
       {/* Header */}
       <div className={`relative overflow-hidden rounded-2xl ${
         isDark
-          ? 'bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-indigo-500/10 border border-violet-500/15'
-          : 'bg-gradient-to-br from-violet-50 via-purple-50/50 to-indigo-50 border border-violet-100'
+          ? 'bg-violet-500/[0.07] border border-violet-500/15'
+          : 'bg-violet-50 border border-violet-100'
       }`}>
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className={`absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl ${isDark ? 'bg-violet-500/10' : 'bg-violet-200/40'}`} />
-          <div className={`absolute -bottom-12 -left-12 w-36 h-36 rounded-full blur-3xl ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-200/30'}`} />
-        </div>
-
         <div className="relative px-4 py-4 sm:px-6 sm:py-5">
           <div className="mb-4 space-y-3">
             <div className="flex items-center gap-3">
@@ -949,7 +944,7 @@ export function Feed() {
                               analysis.source_credibility === 'high'
                                 ? isDark ? 'text-emerald-400' : 'text-emerald-600'
                                 : analysis.source_credibility === 'medium'
-                                  ? isDark ? 'text-yellow-400' : 'text-yellow-600'
+                                  ? isDark ? 'text-amber-400' : 'text-amber-600'
                                   : isDark ? 'text-gray-500' : 'text-slate-400'
                             }`}>
                               {analysis.source_credibility === 'high' ? <Star size={10} /> : null}
@@ -1001,13 +996,13 @@ export function Feed() {
                                   {/* Open Questions */}
                                   {analysis.open_questions.length > 0 && (
                                     <div>
-                                      <p className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-cyan-400/70' : 'text-cyan-500/80'}`}>
+                                      <p className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-blue-400/70' : 'text-blue-500/80'}`}>
                                         Worth Watching
                                       </p>
                                       <ul className={`space-y-1.5 ml-0.5 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                                         {analysis.open_questions.map((t, i) => (
                                           <li key={i} className="flex items-start gap-2 text-sm">
-                                            <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-cyan-400' : 'bg-cyan-500'}`} />
+                                            <span className={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-blue-400' : 'bg-blue-500'}`} />
                                             {t}
                                           </li>
                                         ))}

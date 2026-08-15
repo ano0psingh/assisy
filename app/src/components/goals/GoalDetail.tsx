@@ -179,7 +179,7 @@ export function GoalDetail({
         </div>
         <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
           <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
+            className="h-full rounded-full bg-violet-500 transition-all duration-500"
             style={{ width: `${xpPercent}%` }}
           />
         </div>
@@ -397,8 +397,8 @@ export function GoalDetail({
         <div
           className={`h-full rounded-full transition-all duration-500 ${
             progress === 100
-              ? 'bg-gradient-to-r from-emerald-500 to-green-500'
-              : 'bg-gradient-to-r from-violet-500 to-purple-500'
+              ? 'bg-emerald-500'
+              : 'bg-violet-500'
           }`}
           style={{ width: `${progress}%` }}
         />

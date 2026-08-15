@@ -443,7 +443,7 @@ export function TaskSheet() {
                     task.effort === 'High'
                       ? isDark ? 'text-orange-400' : 'text-orange-600'
                       : task.effort === 'Medium'
-                        ? isDark ? 'text-yellow-400' : 'text-yellow-600'
+                        ? isDark ? 'text-amber-400' : 'text-amber-600'
                         : isDark ? 'text-gray-400' : 'text-slate-500';
 
                   const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'Done';

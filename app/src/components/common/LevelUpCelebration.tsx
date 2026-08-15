@@ -151,7 +151,7 @@ export function LevelUpCelebration() {
             <GoalTree level={newLevel} theme={(data.event as LevelUpEvent).goalTheme || 'forest'} size="lg" animate />
           ) : (
             <div className={`w-24 h-24 rounded-3xl flex items-center justify-center ${
-              isDark ? 'bg-gradient-to-br from-violet-500/30 to-amber-500/20' : 'bg-gradient-to-br from-violet-100 to-amber-50'
+              isDark ? 'bg-violet-500/25' : 'bg-violet-100'
             }`}>
               <Star className={`w-12 h-12 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} fill="currentColor" />
             </div>
