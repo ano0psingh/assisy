@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "check:merge": "node scripts/check-merge.mjs",
+    "check:classes": "node scripts/check-dead-classes.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

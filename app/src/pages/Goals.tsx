@@ -51,12 +51,19 @@ import { IconButton } from '../components/ui';
 
 type FilterStatus = 'all' | 'Active' | 'Completed' | 'Archived';
 
-const THEME_BG: Record<GoalTheme, { dark: string; light: string }> = {
-  forest:   { dark: 'bg-emerald-500/8',  light: 'bg-emerald-50' },
-  mountain: { dark: 'bg-slate-400/8',    light: 'bg-slate-50' },
-  ocean:    { dark: 'bg-cyan-500/8',     light: 'bg-cyan-50' },
-  space:    { dark: 'bg-violet-500/8',   light: 'bg-violet-50' },
-  garden:   { dark: 'bg-pink-500/8',     light: 'bg-pink-50' },
+/**
+ * Tailwind's opacity scale moves in steps of five, so the `/8` these carried
+ * generated no CSS and the dark tints never rendered — a goal card in dark mode
+ * had no background at all, which read as intentional because the page showed
+ * through. Arbitrary values keep the intended 8% and are what the rest of the
+ * app already uses for tints this faint.
+ */
+const THEME_BG: Record<GoalTheme, string> = {
+  forest:   'bg-emerald-50 dark:bg-emerald-500/[0.08]',
+  mountain: 'bg-slate-50 dark:bg-slate-400/[0.08]',
+  ocean:    'bg-cyan-50 dark:bg-cyan-500/[0.08]',
+  space:    'bg-violet-50 dark:bg-violet-500/[0.08]',
+  garden:   'bg-pink-50 dark:bg-pink-500/[0.08]',
 };
 
 export function Goals() {
@@ -356,11 +363,7 @@ export function Goals() {
     return { completed: ms.filter(m => m.isCompleted).length, total: ms.length };
   };
 
-  const getThemeBg = (goalTheme?: GoalTheme) => {
-    if (!goalTheme) return 'bg-violet-50 dark:bg-violet-500/8';
-    const t = THEME_BG[goalTheme];
-    return isDark ? t.dark : t.light;
-  };
+  const getThemeBg = (goalTheme?: GoalTheme) => THEME_BG[goalTheme ?? 'space'];
 
   return (
     <div ref={containerRef} className="space-y-6">
