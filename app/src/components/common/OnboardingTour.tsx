@@ -6,7 +6,6 @@ import {
   Target,
   TreePine,
 } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 import { isOnboardingComplete, markOnboardingComplete } from '../../lib/onboarding';
 
 interface Step {
@@ -67,8 +66,6 @@ export function OnboardingTour() {
   const [visible, setVisible] = useState(
     () => !isOnboardingComplete(),
   );
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
 
   const finish = useCallback(() => {
     markOnboardingComplete();
@@ -99,20 +96,18 @@ export function OnboardingTour() {
           relative mx-4 w-full max-w-sm rounded-2xl border p-6
           shadow-2xl backdrop-blur-xl
           animate-fade-in
-          ${isDark
-            ? 'border-white/10 bg-white/5 text-white'
-            : 'border-violet-200 bg-white/80 text-slate-900'}
+          border-violet-200 bg-white/80 text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white
         `}
       >
         <div className={`
           mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl
-          ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}
+          bg-violet-100 dark:bg-violet-500/20
         `}>
           <Icon className="h-7 w-7 text-violet-500" />
         </div>
 
         <h2 className="mb-1 text-center text-lg font-bold">{title}</h2>
-        <p className={`mb-6 text-center text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+        <p className={`mb-6 text-center text-sm text-slate-500 dark:text-gray-400`}>
           {description}
         </p>
 
@@ -124,7 +119,7 @@ export function OnboardingTour() {
                 h-2 rounded-full transition-all duration-300
                 ${i === step
                   ? 'w-6 bg-violet-500'
-                  : isDark ? 'w-2 bg-white/20' : 'w-2 bg-slate-300'}
+                  : 'w-2 bg-slate-300 dark:bg-white/20'}
               `}
             />
           ))}
@@ -133,7 +128,7 @@ export function OnboardingTour() {
         <div className="flex items-center justify-between">
           <button
             onClick={finish}
-            className={`text-sm font-medium ${isDark ? 'text-gray-400 hover:text-gray-200' : 'text-slate-400 hover:text-slate-600'} transition-colors`}
+            className={`text-sm font-medium text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors`}
           >
             Skip
           </button>

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import type { TaskCategory, Goal } from '../../types';
-import { useTheme } from '../../context/ThemeContext';
 import { Target, Pencil } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { TiptapEditor } from '../common/TiptapEditor';
@@ -20,8 +19,6 @@ interface GoalFormProps {
 }
 
 export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParentGoals = [] }: GoalFormProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<TaskCategory>('Personal');
@@ -116,13 +113,11 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
             className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
               category === cat
                 ? cat === 'Personal'
-                  ? isDark ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-blue-50 text-blue-600 border-blue-200'
+                  ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
                   : cat === 'Financial'
-                  ? isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                  : isDark ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-slate-100 text-slate-600 border-slate-300'
-                : isDark
-                  ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
+                  : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-gray-500/20 dark:text-gray-300 dark:border-gray-500/30'
+                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
             }`}
           >
             {cat}
@@ -148,7 +143,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
 
   const infoBox = !isEditing ? (
     <Surface level="inset" radius="xl">
-      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+      <p className={`text-sm text-slate-600 dark:text-gray-400`}>
         After creating a goal, you can link tasks to it to track your progress automatically.
       </p>
     </Surface>
@@ -171,20 +166,20 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
       onClose={handleCancel}
       title={isEditing ? 'Edit Goal' : 'Create New Goal'}
       icon={isEditing
-        ? <Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
-        : <Target className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+        ? <Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
+        : <Target className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
       }
       footer={actionButtons}
     >
       {(isFS) =>
         isFS ? (
           <div className="flex h-full">
-            <div className={`flex-1 flex flex-col p-8 space-y-6 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <div className={`flex-1 flex flex-col p-8 space-y-6 border-r border-slate-200 dark:border-white/10`}>
               {titleField}
               {notesField(true)}
             </div>
-            <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
-              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Goal details</h3>
+            <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
+              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Goal details</h3>
               {categoryField}
               {parentGoalField}
               {infoBox}

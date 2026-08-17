@@ -100,23 +100,23 @@ export function ExpandableModal({
       onTouchMove={handleDragMove}
       onTouchEnd={handleDragEnd}
     >
-      <div className={`w-9 h-1 rounded-full ${isDark ? 'bg-white/20' : 'bg-slate-300'}`} />
+      <div className={`w-9 h-1 rounded-full bg-slate-300 dark:bg-white/20`} />
     </div>
   );
 
   const header = (
     <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${
-      isDark ? 'border-white/10' : 'border-slate-100'
+      'border-slate-100 dark:border-white/10'
     }`}>
       <div className="flex items-center space-x-3">
         {icon && (
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            isDark ? 'bg-violet-500/20' : 'bg-violet-100'
+            'bg-violet-100 dark:bg-violet-500/20'
           }`}>
             {icon}
           </div>
         )}
-        <h2 id={titleId} className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+        <h2 id={titleId} className={`text-lg font-semibold text-slate-800 dark:text-white`}>
           {title}
         </h2>
       </div>
@@ -127,9 +127,7 @@ export function ExpandableModal({
           title={isFullScreen ? 'Exit full screen (Esc)' : 'Full screen'}
           aria-label={isFullScreen ? 'Exit full screen' : 'Expand to full screen'}
           className={`p-2 rounded-lg transition-colors ${
-            isDark
-              ? 'text-gray-400 hover:text-white hover:bg-white/10'
-              : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
           }`}
         >
           {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
@@ -139,9 +137,7 @@ export function ExpandableModal({
           onClick={onClose}
           aria-label={`Close ${title}`}
           className={`p-2 rounded-lg transition-colors ${
-            isDark
-              ? 'text-gray-400 hover:text-white hover:bg-white/10'
-              : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
           }`}
         >
           <X size={20} />
@@ -152,7 +148,7 @@ export function ExpandableModal({
 
   const footerEl = footer ? (
     <div className={`flex-shrink-0 px-6 py-4 pb-2 safe-area-pb border-t ${
-      isDark ? 'border-white/10' : 'border-slate-100'
+      'border-slate-100 dark:border-white/10'
     }`}>
       {footer}
     </div>
@@ -161,7 +157,7 @@ export function ExpandableModal({
   if (isFullScreen) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col">
-        <div className={`absolute inset-0 ${isDark ? 'bg-[#0c0c10]' : 'bg-[#f8f8fa]'}`} />
+        <div className={`absolute inset-0 bg-[#f8f8fa] dark:bg-[#0c0c10]`} />
         <div
           ref={dialogRef}
           role="dialog"
@@ -169,7 +165,7 @@ export function ExpandableModal({
           aria-labelledby={titleId}
           tabIndex={-1}
           className={`relative flex flex-col h-full w-full animate-fade-in outline-none ${
-            isDark ? 'bg-[#0c0c10]' : 'bg-[#f8f8fa]'
+            'bg-[#f8f8fa] dark:bg-[#0c0c10]'
           }`}
         >
           {header}
@@ -187,7 +183,7 @@ export function ExpandableModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 animate-fade-in">
       <div
-        className={`absolute inset-0 backdrop-blur-xl ${isDark ? 'bg-black/50' : 'bg-slate-900/15'}`}
+        className={`absolute inset-0 backdrop-blur-xl bg-slate-900/15 dark:bg-black/50`}
         style={{ opacity: backdropOpacity }}
         onClick={onClose}
       />
@@ -199,7 +195,7 @@ export function ExpandableModal({
         tabIndex={-1}
         className={`relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden outline-none ${
           dismissing ? '' : 'animate-slide-up'
-        } ${isDark ? 'bg-[#141418]/90 border border-white/[0.1] backdrop-blur-2xl' : 'bg-white/85 border border-white/60 backdrop-blur-2xl'}`}
+        } bg-white/85 border border-white/60 backdrop-blur-2xl dark:bg-[#141418]/90 dark:border-white/[0.1]`}
         style={{
           transform: `translateY(${dragY}px)`,
           transition: dragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',

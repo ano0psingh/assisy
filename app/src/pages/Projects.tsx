@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useProjectContext, PROJECT_COLORS, type ProjectSnapshot } from '../context/ProjectContext';
-import { useTheme } from '../context/ThemeContext';
 import { 
   Plus, FolderKanban, ChevronRight, 
   Pencil, Trash2, Play, CheckCircle2, Circle,
@@ -22,6 +21,7 @@ import { usePersistentState } from '../hooks/usePersistentState';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { askAIJson, isAIConfigured } from '../lib/ai';
 import { getLocalDateString } from '../lib/dateUtils';
+import { IconButton } from '../components/ui';
 
 const PROJECT_TASK_BULK_FIELDS: BulkEditField[] = [
   {
@@ -94,8 +94,6 @@ export function Projects() {
     removeTaskFromToday,
   } = useProjectContext();
 
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const { pushUndo } = useUndo();
 
   // View state — the drill-down position persists too, so leaving the page and
@@ -522,9 +520,9 @@ export function Projects() {
   // Status helpers
   const getStatusColor = (status: WorkItemStatus) => {
     switch (status) {
-      case 'Backlog': return isDark ? 'text-gray-400 bg-gray-500/20' : 'text-slate-500 bg-slate-100';
-      case 'In Progress': return isDark ? 'text-blue-400 bg-blue-500/20' : 'text-blue-600 bg-blue-100';
-      case 'Done': return isDark ? 'text-emerald-400 bg-emerald-500/20' : 'text-emerald-600 bg-emerald-100';
+      case 'Backlog': return 'text-slate-500 bg-slate-100 dark:text-gray-400 dark:bg-gray-500/20';
+      case 'In Progress': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-500/20';
+      case 'Done': return 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/20';
     }
   };
 
@@ -559,8 +557,8 @@ export function Projects() {
             taskSelection.active ? 'cursor-pointer' : ''
           } ${
             isTaskSelected
-              ? isDark ? 'bg-violet-500/10 ring-1 ring-violet-500/30' : 'bg-violet-50/60 ring-1 ring-violet-200'
-              : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+              ? 'bg-violet-50/60 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:ring-violet-500/30'
+              : 'hover:bg-slate-50 dark:hover:bg-white/5'
           } ${task.status === 'Done' && !isTaskSelected ? 'opacity-60' : ''}`}
         >
           <div className="flex items-center space-x-3 flex-1 min-w-0 overflow-hidden">
@@ -593,8 +591,8 @@ export function Projects() {
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`text-sm font-medium truncate min-w-0 ${
                   task.status === 'Done' 
-                    ? isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through'
-                    : isDark ? 'text-white' : 'text-slate-800'
+                    ? 'text-slate-400 line-through dark:text-gray-500'
+                    : 'text-slate-800 dark:text-white'
                 }`}>
                   {task.title}
                 </span>
@@ -602,7 +600,7 @@ export function Projects() {
                   <span className="px-2 py-1 text-xs font-semibold rounded bg-red-500/20 text-red-400 flex-shrink-0">HIGH</span>
                 )}
                 {subTasks.length > 0 && (
-                  <span className={`text-xs flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <span className={`text-xs flex-shrink-0 text-slate-400 dark:text-gray-500`}>
                     ({subTasks.filter(st => st.status === 'Done').length}/{subTasks.length})
                   </span>
                 )}
@@ -610,7 +608,7 @@ export function Projects() {
               {task.tags.length > 0 && (
                 <div className="flex items-center gap-1 mt-1 flex-wrap">
                   {task.tags.map(tag => (
-                    <span key={tag} className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                    <span key={tag} className={`text-xs px-2 py-1 rounded bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400`}>
                       {tag}
                     </span>
                   ))}
@@ -626,7 +624,7 @@ export function Projects() {
               <button
                 onClick={() => removeTaskFromToday(task.id)}
                 className={`p-2 rounded-lg transition-all ${
-                  isDark ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200'
+                  'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:ring-emerald-500/30'
                 }`}
                 title="Added to Today (click to remove)"
                 aria-label="Added to Today (click to remove)"
@@ -638,46 +636,44 @@ export function Projects() {
                 there is no hover to reveal them with. */}
             <div className="flex items-center space-x-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
               {task.status !== 'Done' && !isAddedToToday && (
-                <button
+                <IconButton
+                  icon={CalendarPlus}
+                  label="Add to Today"
+                  size="sm"
+                  tone="primary"
                   onClick={() => addTaskToToday(task.id)}
-                  className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-violet-500/20 text-gray-400 hover:text-violet-400' : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'}`}
                   title="Add to Today"
-                  aria-label="Add to Today"
-                >
-                  <CalendarPlus size={14} />
-                </button>
+                />
               )}
-              <button
+              <IconButton
+                icon={Plus}
+                label="Add sub-task"
+                size="sm"
                 onClick={() => openCreateSubTask(task)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
                 title="Add sub-task"
-                aria-label="Add sub-task"
-              >
-                <Plus size={14} />
-              </button>
-              <button
+              />
+              <IconButton
+                icon={Pencil}
+                label="Edit"
+                size="sm"
                 onClick={() => openEditTask(task)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
                 title="Edit"
-                aria-label="Edit"
-              >
-                <Pencil size={14} />
-              </button>
-              <button
+              />
+              <IconButton
+                icon={Trash2}
+                label="Delete"
+                size="sm"
+                tone="danger"
                 onClick={() => deleteProjectTask(task.id)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-500'}`}
                 title="Delete"
-                aria-label="Delete"
-              >
-                <Trash2 size={14} />
-              </button>
+              />
             </div>
           </div>
         </div>
 
         {/* Sub-tasks */}
         {subTasks.length > 0 && (
-          <div className={`ml-4 pl-4 border-l-2 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className={`ml-4 pl-4 border-l-2 border-slate-200 dark:border-white/10`}>
             {subTasks.map(st => renderTask(st, depth + 1))}
           </div>
         )}
@@ -690,21 +686,21 @@ export function Projects() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Projects</h1>
-          <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <h1 className={`text-xl md:text-2xl font-bold text-slate-800 dark:text-white`}>Projects</h1>
+          <p className={`mt-1 text-sm text-slate-500 dark:text-gray-500`}>
             {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Cards / Sheet toggle */}
-          <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
             <button
               type="button"
               onClick={() => { setPageView('cards'); }}
               className={`p-2 transition-colors ${
                 pageView === 'cards'
-                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                  : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'
+                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                  : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
               }`}
               title="Card view"
             >
@@ -715,8 +711,8 @@ export function Projects() {
               onClick={() => { setPageView('sheet'); }}
               className={`p-2 transition-colors ${
                 pageView === 'sheet'
-                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                  : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'
+                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                  : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
               }`}
               title="Sheet view"
             >
@@ -754,7 +750,7 @@ export function Projects() {
           <div className="relative mb-3">
             <Search
               size={16}
-              className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? 'text-gray-500' : 'text-slate-400'}`}
+              className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-gray-500`}
             />
             <input
               type="search"
@@ -763,9 +759,7 @@ export function Projects() {
               placeholder="Search projects by name or tag"
               aria-label="Search projects"
               className={`w-full pl-8 pr-8 py-3 rounded-xl text-sm outline-none transition-colors ${
-                isDark
-                  ? 'bg-white/5 text-white placeholder-gray-500 border border-white/10 focus:border-violet-500/50'
-                  : 'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400'
+                'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400 dark:bg-white/5 dark:text-white dark:placeholder-gray-500 dark:border-white/10 dark:focus:border-violet-500/50'
               }`}
             />
             {searchQuery && (
@@ -773,7 +767,7 @@ export function Projects() {
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search"
                 className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
-                  isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                  'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10'
                 }`}
               >
                 <X size={14} />
@@ -784,8 +778,8 @@ export function Projects() {
           {/* Project Status Filter */}
           <div className="mb-4">
             <div className={`flex items-center space-x-2`}>
-              <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Filter:</span>
-              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <span className={`text-sm text-slate-500 dark:text-gray-500`}>Filter:</span>
+              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                 {(['All', 'Active', 'Completed', 'On Hold'] as const).map(status => (
                   <button
                     key={status}
@@ -793,13 +787,13 @@ export function Projects() {
                     className={`px-3 py-2 text-xs font-medium transition-all ${
                       projectStatusFilter === status
                         ? status === 'All' 
-                          ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                          ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
                           : status === 'Active' 
-                            ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                            ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
                             : status === 'Completed'
-                              ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                              : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
-                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                              ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                              : 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                        : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                     }`}
                   >
                     {status}
@@ -812,13 +806,13 @@ export function Projects() {
           {/* Projects List */}
           {filteredProjects.length === 0 ? (
             <div className="card rounded-2xl p-12 text-center">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-                <FolderKanban className={`w-8 h-8 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-violet-50 dark:bg-violet-500/20`}>
+                <FolderKanban className={`w-8 h-8 text-violet-500 dark:text-violet-400`} />
               </div>
-              <h3 className={`font-semibold text-lg mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <h3 className={`font-semibold text-lg mb-2 text-slate-800 dark:text-white`}>
                 {projects.length === 0 ? 'No projects yet' : `No ${projectStatusFilter.toLowerCase()} projects`}
               </h3>
-              <p className={`text-sm mb-4 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              <p className={`text-sm mb-4 text-slate-500 dark:text-gray-500`}>
                 {projects.length === 0 
                   ? 'Create your first project to start organizing your work'
                   : `Try selecting a different filter to see more projects`}
@@ -845,15 +839,15 @@ export function Projects() {
                     key={project.id}
                     data-focus-id={project.id}
                     className={`card rounded-2xl overflow-hidden ${
-                      isSelected ? (isDark ? 'ring-1 ring-violet-500/40' : 'ring-1 ring-violet-300') : ''
+                      isSelected ? ('ring-1 ring-violet-300 dark:ring-violet-500/40') : ''
                     }`}
                   >
                     {/* Project Header */}
                     <div
                       className={`p-4 cursor-pointer transition-colors ${
                         isSelected
-                          ? isDark ? 'bg-violet-500/10' : 'bg-violet-50/60'
-                          : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                          ? 'bg-violet-50/60 dark:bg-violet-500/10'
+                          : 'hover:bg-slate-50 dark:hover:bg-white/5'
                       }`}
                       onClick={() => selection.active ? selection.toggle(project.id) : openProjectDetail(project)}
                     >
@@ -875,10 +869,10 @@ export function Projects() {
                             </div>
                           )}
                           <div className="min-w-0">
-                            <h3 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                            <h3 className={`font-semibold truncate text-slate-800 dark:text-white`}>
                               {project.title}
                             </h3>
-                            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                            <p className={`text-sm text-slate-500 dark:text-gray-500`}>
                               {projectSubProjects.length} sub-project{projectSubProjects.length !== 1 ? 's' : ''}
                             </p>
                           </div>
@@ -887,28 +881,28 @@ export function Projects() {
                         <div className="flex items-center space-x-2 flex-shrink-0">
                           <span className={`text-xs px-2 py-1 rounded-full hidden sm:inline ${
                             project.status === 'Active' 
-                              ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                              ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
                               : project.status === 'Completed'
-                                ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                                : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                : 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
                           }`}>
                             {project.status}
                           </span>
                           
                           <div className="hidden sm:flex items-center space-x-2">
-                            <div className={`w-20 h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
+                            <div className={`w-20 h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10`}>
                               <div
                                 className="h-full rounded-full transition-all"
                                 style={{ width: `${progress}%`, backgroundColor: project.color }}
                               />
                             </div>
-                            <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                            <span className={`text-xs font-medium text-slate-500 dark:text-gray-400`}>
                               {progress}%
                             </span>
                           </div>
 
                           {!selection.active && (
-                            <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                            <ChevronRight className={`w-5 h-5 flex-shrink-0 text-slate-400 dark:text-gray-600`} />
                           )}
                         </div>
                       </div>
@@ -926,14 +920,14 @@ export function Projects() {
           <div className="flex-1 md:w-2/3 min-w-0">
             <div className="card rounded-2xl overflow-hidden h-full">
               {/* Detail Header */}
-              <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+              <div className={`p-4 border-b border-slate-100 dark:border-white/10`}>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center space-x-3 min-w-0 flex-1">
                     {/* Back button - always show on mobile, only for subproject on desktop */}
                     <button
                       aria-label="Back"
                       onClick={detailView === 'subproject' ? goBackToProject : () => setDetailView('none')}
-                      className={`p-2 rounded-lg transition-colors ${detailView === 'project' ? 'md:hidden' : ''} ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                      className={`p-2 rounded-lg transition-colors ${detailView === 'project' ? 'md:hidden' : ''} hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
                     >
                       <ChevronLeft size={20} />
                     </button>
@@ -946,10 +940,10 @@ export function Projects() {
                           <FolderKanban size={20} style={{ color: selectedProject.color }} />
                         </div>
                         <div className="min-w-0">
-                          <h2 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                          <h2 className={`font-semibold truncate text-slate-800 dark:text-white`}>
                             {selectedProject.title}
                           </h2>
-                          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                          <p className={`text-sm text-slate-500 dark:text-gray-500`}>
                             {getSubProjectsByProject(selectedProject.id).length} sub-projects
                           </p>
                         </div>
@@ -957,14 +951,14 @@ export function Projects() {
                     )}
                     {detailView === 'subproject' && selectedSubProject && (
                       <>
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-                          <Layers size={20} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-violet-50 dark:bg-violet-500/20`}>
+                          <Layers size={20} className={'text-violet-500 dark:text-violet-400'} />
                         </div>
                         <div className="min-w-0">
-                          <h2 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                          <h2 className={`font-semibold truncate text-slate-800 dark:text-white`}>
                             {selectedSubProject.title}
                           </h2>
-                          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                          <p className={`text-sm text-slate-500 dark:text-gray-500`}>
                             {getTasksBySubProject(selectedSubProject.id).length} tasks
                           </p>
                         </div>
@@ -975,13 +969,12 @@ export function Projects() {
                   <div className="flex items-center space-x-2 flex-shrink-0">
                     {detailView === 'project' && selectedProject && (
                       <>
-                        <button
-                          aria-label="Edit project"
+                        <IconButton
+                          icon={Pencil}
+                          label="Edit project"
+                          size="lg"
                           onClick={() => openEditProject(selectedProject)}
-                          className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500'}`}
-                        >
-                          <Pencil size={18} />
-                        </button>
+                        />
                         <button
                           onClick={() => {
                             if (confirm('Delete this project and all its contents?')) {
@@ -989,7 +982,7 @@ export function Projects() {
                               closeDetailView();
                             }
                           }}
-                          className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}
+                          className={`p-2 rounded-lg transition-colors hover:bg-red-50 text-slate-500 hover:text-red-500 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400`}
                         >
                           <Trash2 size={18} />
                         </button>
@@ -997,13 +990,12 @@ export function Projects() {
                     )}
                     {detailView === 'subproject' && selectedSubProject && (
                       <>
-                        <button
-                          aria-label="Edit sub-project"
+                        <IconButton
+                          icon={Pencil}
+                          label="Edit sub-project"
+                          size="lg"
                           onClick={() => openEditSubProject(selectedSubProject)}
-                          className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500'}`}
-                        >
-                          <Pencil size={18} />
-                        </button>
+                        />
                         <button
                           onClick={() => {
                             if (confirm('Delete this sub-project and all its tasks?')) {
@@ -1011,30 +1003,30 @@ export function Projects() {
                               goBackToProject();
                             }
                           }}
-                          className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-red-500/20 text-gray-400 hover:text-red-400' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`}
+                          className={`p-2 rounded-lg transition-colors hover:bg-red-50 text-slate-500 hover:text-red-500 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400`}
                         >
                           <Trash2 size={18} />
                         </button>
                       </>
                     )}
-                    <button
-                      aria-label="Close"
+                    <IconButton
+                      icon={X}
+                      label="Close"
+                      size="lg"
+                      className="lg:hidden"
                       onClick={closeDetailView}
-                      className={`p-2 rounded-lg transition-colors lg:hidden ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-                    >
-                      <X size={18} />
-                    </button>
+                    />
                   </div>
                 </div>
 
                 {/* Description */}
                 {detailView === 'project' && selectedProject?.description && (
-                  <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                  <p className={`mt-3 text-sm text-slate-600 dark:text-gray-400`}>
                     {selectedProject.description}
                   </p>
                 )}
                 {detailView === 'subproject' && selectedSubProject?.description && (
-                  <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                  <p className={`mt-3 text-sm text-slate-600 dark:text-gray-400`}>
                     {selectedSubProject.description}
                   </p>
                 )}
@@ -1047,8 +1039,8 @@ export function Projects() {
                   <div className="space-y-3">
                     {/* Sub-Project Filter */}
                     <div className="flex items-center space-x-2 mb-4">
-                      <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Filter:</span>
-                      <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                      <span className={`text-sm text-slate-500 dark:text-gray-500`}>Filter:</span>
+                      <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                         {(['All', 'Backlog', 'In Progress', 'Done'] as const).map(status => (
                           <button
                             key={status}
@@ -1056,9 +1048,9 @@ export function Projects() {
                             className={`px-3 py-2 text-xs font-medium transition-all ${
                               subProjectStatusFilter === status
                                 ? status === 'All' 
-                                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
                                   : getStatusColor(status as WorkItemStatus)
-                                : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                                : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                             }`}
                           >
                             {status}
@@ -1068,7 +1060,7 @@ export function Projects() {
                     </div>
                     
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Sub-Projects</h3>
+                      <h3 className={`font-semibold text-slate-800 dark:text-white`}>Sub-Projects</h3>
                       <div className="flex items-center gap-2">
                         {visibleSubProjectIds.length > 0 && (
                           <SelectButton
@@ -1083,7 +1075,7 @@ export function Projects() {
                             setIsSubProjectFormOpen(true);
                           }}
                           className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                            'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                           }`}
                         >
                           <Plus size={14} />
@@ -1100,7 +1092,7 @@ export function Projects() {
                       
                       if (allSubProjects.length === 0) {
                         return (
-                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
                             <Layers className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No sub-projects yet</p>
                           </div>
@@ -1109,7 +1101,7 @@ export function Projects() {
                       
                       if (filteredSubProjects.length === 0) {
                         return (
-                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
                             <Layers className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No {subProjectStatusFilter.toLowerCase()} sub-projects</p>
                             <button 
@@ -1133,8 +1125,8 @@ export function Projects() {
                             key={subProject.id}
                             className={`p-4 rounded-xl cursor-pointer transition-all ${
                               isSubSelected
-                                ? isDark ? 'bg-violet-500/10 ring-1 ring-violet-500/30' : 'bg-violet-50/60 ring-1 ring-violet-200'
-                                : isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-50 hover:bg-slate-100'
+                                ? 'bg-violet-50/60 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:ring-violet-500/30'
+                                : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10'
                             }`}
                             onClick={() => subProjectSelection.active
                               ? subProjectSelection.toggle(subProject.id)
@@ -1150,15 +1142,15 @@ export function Projects() {
                                     className="w-8 h-8 flex items-center justify-center"
                                   />
                                 ) : (
-                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-                                    <Layers size={16} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-violet-100 dark:bg-violet-500/20`}>
+                                    <Layers size={16} className={'text-violet-500 dark:text-violet-400'} />
                                   </div>
                                 )}
                                 <div className="min-w-0">
-                                  <h4 className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                                  <h4 className={`font-medium truncate text-slate-800 dark:text-white`}>
                                     {subProject.title}
                                   </h4>
-                                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                                  <p className={`text-xs text-slate-500 dark:text-gray-500`}>
                                     {tasks.length} task{tasks.length !== 1 ? 's' : ''} • {tasks.filter(t => t.status === 'Done').length} done
                                   </p>
                                 </div>
@@ -1169,16 +1161,16 @@ export function Projects() {
                                   {subProject.status}
                                 </span>
                                 <div className="hidden sm:flex items-center space-x-2">
-                                  <div className={`w-16 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                                  <div className={`w-16 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
                                     <div
                                       className="h-full rounded-full bg-violet-500 transition-all"
                                       style={{ width: `${progress}%` }}
                                     />
                                   </div>
-                                  <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{progress}%</span>
+                                  <span className={`text-xs text-slate-400 dark:text-gray-500`}>{progress}%</span>
                                 </div>
                                 {!subProjectSelection.active && (
-                                  <ChevronRight size={16} className={`flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                                  <ChevronRight size={16} className={`flex-shrink-0 text-slate-400 dark:text-gray-600`} />
                                 )}
                               </div>
                             </div>
@@ -1194,8 +1186,8 @@ export function Projects() {
                   <div className="space-y-3">
                     {/* Task Status Filter */}
                     <div className="flex items-center space-x-2 mb-4">
-                      <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Filter:</span>
-                      <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                      <span className={`text-sm text-slate-500 dark:text-gray-500`}>Filter:</span>
+                      <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                         {(['All', 'Backlog', 'In Progress', 'Done'] as const).map(status => (
                           <button
                             key={status}
@@ -1203,9 +1195,9 @@ export function Projects() {
                             className={`px-3 py-2 text-xs font-medium transition-all ${
                               taskStatusFilter === status
                                 ? status === 'All' 
-                                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
+                                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
                                   : getStatusColor(status as WorkItemStatus)
-                                : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                                : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                             }`}
                           >
                             {status}
@@ -1215,7 +1207,7 @@ export function Projects() {
                     </div>
 
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Tasks</h3>
+                      <h3 className={`font-semibold text-slate-800 dark:text-white`}>Tasks</h3>
                       <div className="flex items-center gap-2">
                         {visibleProjectTaskIds.length > 0 && (
                           <SelectButton
@@ -1230,7 +1222,7 @@ export function Projects() {
                             setIsTaskFormOpen(true);
                           }}
                           className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                            'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                           }`}
                         >
                           <Plus size={14} />
@@ -1247,7 +1239,7 @@ export function Projects() {
                       
                       if (allTasks.length === 0) {
                         return (
-                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
                             <ListTodo className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No tasks yet</p>
                           </div>
@@ -1256,7 +1248,7 @@ export function Projects() {
                       
                       if (filteredTasks.length === 0) {
                         return (
-                          <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
                             <ListTodo className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No {taskStatusFilter.toLowerCase()} tasks</p>
                             <button 
@@ -1289,12 +1281,12 @@ export function Projects() {
         isOpen={isProjectFormOpen}
         onClose={() => { setIsProjectFormOpen(false); setEditingProject(null); setAiPlan(null); setAiPlanError(null); }}
         title={editingProject ? 'Edit Project' : 'New Project'}
-        icon={<FolderKanban className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        icon={<FolderKanban className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
         footer={
           <div className="flex justify-end space-x-3">
             <button
               onClick={() => { setIsProjectFormOpen(false); setEditingProject(null); setAiPlan(null); }}
-              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >
               Cancel
             </button>
@@ -1310,13 +1302,13 @@ export function Projects() {
         {(isFS) => {
           const titleInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
               <input
                 type="text"
                 value={projectForm.title}
                 onChange={e => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
                 className={`w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-                  isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                  'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
                 }`}
                 placeholder="Project name"
                 autoFocus
@@ -1325,7 +1317,7 @@ export function Projects() {
           );
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes & Ideas</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes & Ideas</label>
               <TiptapEditor
                 content={projectForm.description}
                 onChange={val => setProjectForm(prev => ({ ...prev, description: val }))}
@@ -1335,7 +1327,7 @@ export function Projects() {
           );
           const colorInput = (
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Color</label>
+              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Color</label>
               <div className="flex flex-wrap gap-2">
                 {PROJECT_COLORS.map(color => (
                   <button
@@ -1350,21 +1342,21 @@ export function Projects() {
           );
           const deadlineInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Deadline (optional)</label>
               <input
                 type="date"
                 value={projectForm.deadline}
                 onChange={e => setProjectForm(prev => ({ ...prev, deadline: e.target.value }))}
                 className={`w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-                  isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                  'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
                 }`}
               />
             </div>
           );
           const statusInput = editingProject ? (
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
-              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Status</label>
+              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                 {(['Active', 'Completed', 'On Hold'] as ProjectStatus[]).map(status => (
                   <button
                     key={status}
@@ -1373,11 +1365,11 @@ export function Projects() {
                     className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${
                       projectForm.status === status
                         ? status === 'Active'
-                          ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                          ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
                           : status === 'Completed'
-                            ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                            : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
-                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                            ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                            : 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                        : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                     }`}
                   >
                     {status}
@@ -1397,47 +1389,47 @@ export function Projects() {
                     disabled={aiPlanLoading || !projectForm.title.trim()}
                     className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                       aiPlanLoading || !projectForm.title.trim()
-                        ? isDark ? 'bg-violet-500/10 text-violet-400/50 cursor-not-allowed' : 'bg-violet-50 text-violet-400 cursor-not-allowed'
-                        : isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                        ? 'bg-violet-50 text-violet-400 cursor-not-allowed dark:bg-violet-500/10 dark:text-violet-400/50'
+                        : 'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                     }`}
                   >
                     {aiPlanLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                     {aiPlanLoading ? 'Generating plan...' : 'AI: Generate Plan'}
                   </button>
-                  {aiPlanError && <p className={`text-xs mt-2 ${isDark ? 'text-red-400' : 'text-red-500'}`}>{aiPlanError}</p>}
-                  {!projectForm.title.trim() && <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Enter a project title first</p>}
+                  {aiPlanError && <p className={`text-xs mt-2 text-red-500 dark:text-red-400`}>{aiPlanError}</p>}
+                  {!projectForm.title.trim() && <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>Enter a project title first</p>}
                 </div>
               ) : (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>AI-Generated Plan</span>
+                    <span className={`text-sm font-medium text-slate-800 dark:text-white`}>AI-Generated Plan</span>
                     <button
                       type="button"
                       onClick={() => setAiPlan(null)}
-                      className={`text-xs ${isDark ? 'text-gray-500 hover:text-gray-400' : 'text-slate-500 hover:text-slate-600'}`}
+                      className={`text-xs text-slate-500 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400`}
                     >
                       Discard
                     </button>
                   </div>
-                  <div className={`rounded-xl border max-h-64 overflow-y-auto ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                  <div className={`rounded-xl border max-h-64 overflow-y-auto border-slate-200 dark:border-white/10`}>
                     {aiPlan.map((sp, spIdx) => (
-                      <div key={spIdx} className={`${spIdx > 0 ? `border-t ${isDark ? 'border-white/5' : 'border-slate-100'}` : ''}`}>
+                      <div key={spIdx} className={`${spIdx > 0 ? `border-t border-slate-100 dark:border-white/5` : ''}`}>
                         <button
                           type="button"
                           onClick={() => toggleSubProjectSelection(spIdx)}
                           className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
-                            isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                            'hover:bg-slate-50 dark:hover:bg-white/5'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                             sp.selected
-                              ? isDark ? 'bg-violet-500 text-white' : 'bg-violet-500 text-white'
-                              : isDark ? 'border border-white/20' : 'border border-slate-300'
+                              ? 'bg-violet-500 text-white'
+                              : 'border border-slate-300 dark:border-white/20'
                           }`}>
                             {sp.selected && <Check size={12} />}
                           </div>
-                          <Layers size={14} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
-                          <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{sp.title}</span>
+                          <Layers size={14} className={'text-violet-500 dark:text-violet-400'} />
+                          <span className={`text-sm font-medium text-slate-800 dark:text-white`}>{sp.title}</span>
                         </button>
                         {sp.tasks.map((task, tIdx) => (
                           <button
@@ -1445,30 +1437,30 @@ export function Projects() {
                             type="button"
                             onClick={() => toggleTaskSelection(spIdx, tIdx)}
                             className={`w-full flex items-center gap-2 pl-8 pr-3 py-2 text-left transition-colors ${
-                              isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                              'hover:bg-slate-50 dark:hover:bg-white/5'
                             }`}
                           >
                             <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
                               task.selected
-                                ? isDark ? 'bg-violet-500/80 text-white' : 'bg-violet-400 text-white'
-                                : isDark ? 'border border-white/15' : 'border border-slate-300'
+                                ? 'bg-violet-400 text-white dark:bg-violet-500/80'
+                                : 'border border-slate-300 dark:border-white/15'
                             }`}>
                               {task.selected && <Check size={10} />}
                             </div>
-                            <span className={`text-xs flex-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{task.title}</span>
+                            <span className={`text-xs flex-1 text-slate-600 dark:text-gray-300`}>{task.title}</span>
                             <span className={`text-xs px-2 py-1 rounded ${
                               task.priority === 'High'
-                                ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
+                                ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'
                                 : task.priority === 'Medium'
-                                  ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
-                                  : isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-slate-100 text-slate-500'
+                                  ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                                  : 'bg-slate-100 text-slate-500 dark:bg-gray-500/20 dark:text-gray-400'
                             }`}>{task.priority}</span>
                           </button>
                         ))}
                       </div>
                     ))}
                   </div>
-                  <p className={`text-xs mt-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  <p className={`text-xs mt-2 text-slate-500 dark:text-gray-500`}>
                     Uncheck items you don't want. Click "Create with Plan" to create everything.
                   </p>
                 </div>
@@ -1478,13 +1470,13 @@ export function Projects() {
 
           return isFS ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
                 {titleInput}
                 {notesInput}
                 {aiPlanSection}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Project details</h3>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Project details</h3>
                 {colorInput}
                 {deadlineInput}
                 {statusInput}
@@ -1508,12 +1500,12 @@ export function Projects() {
         isOpen={isSubProjectFormOpen}
         onClose={() => { setIsSubProjectFormOpen(false); setEditingSubProject(null); }}
         title={editingSubProject ? 'Edit Sub-Project' : 'New Sub-Project'}
-        icon={<Layers className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        icon={<Layers className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
         footer={
           <div className="flex justify-end space-x-3">
             <button
               onClick={() => { setIsSubProjectFormOpen(false); setEditingSubProject(null); }}
-              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >
               Cancel
             </button>
@@ -1528,32 +1520,32 @@ export function Projects() {
       >
         {(isFS) => {
           const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-            isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+            'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
           }`;
           const titleInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
               <input type="text" value={subProjectForm.title} onChange={e => setSubProjectForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} placeholder="Sub-project name" autoFocus />
             </div>
           );
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes</label>
               <TiptapEditor content={subProjectForm.description} onChange={val => setSubProjectForm(prev => ({ ...prev, description: val }))} placeholder="Add notes or a description..." />
             </div>
           );
           const deadlineInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Deadline (optional)</label>
               <input type="date" value={subProjectForm.deadline} onChange={e => setSubProjectForm(prev => ({ ...prev, deadline: e.target.value }))} className={inputCls} />
             </div>
           );
           const statusInput = editingSubProject ? (
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
-              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Status</label>
+              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                 {(['Backlog', 'In Progress', 'Done'] as WorkItemStatus[]).map(status => (
-                  <button key={status} type="button" onClick={() => setSubProjectForm(prev => ({ ...prev, status }))} className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${subProjectForm.status === status ? getStatusColor(status) : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>{status}</button>
+                  <button key={status} type="button" onClick={() => setSubProjectForm(prev => ({ ...prev, status }))} className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${subProjectForm.status === status ? getStatusColor(status) : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>{status}</button>
                 ))}
               </div>
             </div>
@@ -1561,12 +1553,12 @@ export function Projects() {
 
           return isFS ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
                 {titleInput}
                 {notesInput}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Details</h3>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Details</h3>
                 {deadlineInput}
                 {statusInput}
               </div>
@@ -1587,12 +1579,12 @@ export function Projects() {
         isOpen={isTaskFormOpen}
         onClose={() => { setIsTaskFormOpen(false); setEditingTask(null); }}
         title={editingTask ? 'Edit Task' : taskForm.parentTaskId ? 'New Sub-Task' : 'New Task'}
-        icon={<ListTodo className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        icon={<ListTodo className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
         footer={
           <div className="flex justify-end space-x-3">
             <button
               onClick={() => { setIsTaskFormOpen(false); setEditingTask(null); }}
-              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >
               Cancel
             </button>
@@ -1607,24 +1599,24 @@ export function Projects() {
       >
         {(isFS) => {
           const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-            isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+            'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
           }`;
           const titleInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
               <input type="text" value={taskForm.title} onChange={e => setTaskForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} placeholder="Task title" autoFocus />
             </div>
           );
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes</label>
               <TiptapEditor content={taskForm.description} onChange={val => setTaskForm(prev => ({ ...prev, description: val }))} placeholder="Add notes or details..." />
             </div>
           );
           const priorityEffort = (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Priority</label>
+                <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Priority</label>
                 <select value={taskForm.priority} onChange={e => setTaskForm(prev => ({ ...prev, priority: e.target.value as any }))} className={inputCls}>
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
@@ -1632,7 +1624,7 @@ export function Projects() {
                 </select>
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Effort</label>
+                <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Effort</label>
                 <select value={taskForm.effort} onChange={e => setTaskForm(prev => ({ ...prev, effort: e.target.value as any }))} className={inputCls}>
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
@@ -1643,19 +1635,19 @@ export function Projects() {
           );
           const deadlineInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Deadline (optional)</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Deadline (optional)</label>
               <input type="date" value={taskForm.deadline} onChange={e => setTaskForm(prev => ({ ...prev, deadline: e.target.value }))} className={inputCls} />
             </div>
           );
 
           return isFS ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
                 {titleInput}
                 {notesInput}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Task details</h3>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Task details</h3>
                 {priorityEffort}
                 {deadlineInput}
               </div>

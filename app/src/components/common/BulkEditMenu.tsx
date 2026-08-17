@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 
 export interface BulkEditOption {
   label: string;
@@ -28,8 +27,6 @@ interface BulkEditMenuProps {
  * than a staged form.
  */
 export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -66,9 +63,7 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
   };
 
   const optionClass = `px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-    isDark
-      ? 'bg-white/[0.06] text-gray-300 hover:bg-violet-500/20 hover:text-violet-300'
-      : 'bg-slate-100 text-slate-600 hover:bg-violet-50 hover:text-violet-700'
+    'bg-slate-100 text-slate-600 hover:bg-violet-50 hover:text-violet-700 dark:bg-white/[0.06] dark:text-gray-300 dark:hover:bg-violet-500/20 dark:hover:text-violet-300'
   }`;
 
   return (
@@ -80,8 +75,8 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
         aria-haspopup="true"
         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
           open
-            ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-50 text-violet-700'
-            : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            ? 'bg-violet-50 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
         } ${className}`}
       >
         <SlidersHorizontal size={13} />
@@ -95,14 +90,14 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
           role="group"
           aria-label="Edit selected items"
           className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-[70] w-60 max-h-[60vh] overflow-y-auto rounded-2xl p-3 shadow-2xl backdrop-blur-xl outline-none ${
-            isDark ? 'bg-gray-900/95 border border-white/10' : 'bg-white/95 border border-slate-200'
+            'bg-white/95 border border-slate-200 dark:bg-gray-900/95 dark:border-white/10'
           }`}
         >
           <div className="space-y-3">
             {fields.map(field => (
               <div key={field.key}>
                 <div className={`text-xs font-semibold uppercase tracking-wide mb-2 ${
-                  isDark ? 'text-gray-500' : 'text-slate-400'
+                  'text-slate-400 dark:text-gray-500'
                 }`}>
                   {field.label}
                 </div>
@@ -129,9 +124,7 @@ export function BulkEditMenu({ fields, onApply, className = '' }: BulkEditMenuPr
                         if (e.target.value) apply(field.key, e.target.value);
                       }}
                       className={`flex-1 min-w-0 px-2 py-1 rounded-lg text-xs outline-none ${
-                        isDark
-                          ? 'bg-white/[0.06] text-gray-200 border border-white/10'
-                          : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-white/[0.06] dark:text-gray-200 dark:border-white/10'
                       }`}
                     />
                     <button type="button" onClick={() => apply(field.key, null)} className={optionClass}>

@@ -68,9 +68,7 @@ export function GoalCard({
       data-focus-id={goal.id}
       className={`group rounded-2xl p-6 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.985] backdrop-blur-xl ${
         isSelected
-          ? isDark
-            ? 'bg-violet-500/10 border border-violet-500/30'
-            : 'bg-violet-50/60 border border-violet-200'
+          ? 'bg-violet-50/60 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30'
           : isDark
             ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted || isArchived ? 'opacity-60' : ''}`
             : `bg-white/65 border border-white/70 hover:bg-white/80 hover:shadow-medium ${isCompleted || isArchived ? 'opacity-60' : ''}`
@@ -89,9 +87,9 @@ export function GoalCard({
             />
           ) : (
             <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-              isDark ? 'bg-violet-500/20 shadow-[0_0_12px_rgba(139,92,246,0.15)]' : 'bg-violet-100/80'
+              'bg-violet-100/80 dark:bg-violet-500/20 dark:shadow-[0_0_12px_rgba(139,92,246,0.15)]'
             }`}>
-              <Target className={`w-6 h-6 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+              <Target className={`w-6 h-6 text-violet-500 dark:text-violet-400`} />
             </div>
           )}
           
@@ -103,8 +101,8 @@ export function GoalCard({
                   whole card a button would nest the actions inside it. */}
               <h3 className={`font-semibold text-lg ${
                 isCompleted || isArchived
-                  ? isDark ? 'text-gray-500' : 'text-slate-400'
-                  : isDark ? 'text-white' : 'text-slate-800'
+                  ? 'text-slate-400 dark:text-gray-500'
+                  : 'text-slate-800 dark:text-white'
               }`}>
                 <button
                   type="button"
@@ -122,9 +120,7 @@ export function GoalCard({
                 <button
                   onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
                   className={`px-3 py-1 rounded-lg flex items-center gap-2 text-xs font-semibold transition-all ${
-                    isDark 
-                      ? 'bg-violet-500/25 text-violet-300 border border-violet-500/40 hover:bg-violet-500/35' 
-                      : 'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200'
+                    'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200 dark:bg-violet-500/25 dark:text-violet-300 dark:border-violet-500/40 dark:hover:bg-violet-500/35'
                   }`}
                 >
                   <GitBranch size={14} />
@@ -136,7 +132,7 @@ export function GoalCard({
             
             {/* Description */}
             {goal.description && (
-              <p className={`text-sm mt-1 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              <p className={`text-sm mt-1 line-clamp-2 text-slate-500 dark:text-gray-500`}>
                 {goal.description}
               </p>
             )}
@@ -144,12 +140,12 @@ export function GoalCard({
             {/* Progress Bar */}
             <div className="mt-4">
               <div className="flex items-center justify-between text-sm mb-2">
-                <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>Progress</span>
-                <span className={`font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+                <span className={'text-slate-600 dark:text-gray-400'}>Progress</span>
+                <span className={`font-medium text-violet-600 dark:text-violet-400`}>
                   {progress}%
                 </span>
               </div>
-              <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/[0.08]' : 'bg-black/[0.04]'}`}>
+              <div className={`h-2 rounded-full overflow-hidden bg-black/[0.04] dark:bg-white/[0.08]`}>
                 <div 
                   className={`h-full rounded-full transition-all duration-500 ${
                     progress === 100 
@@ -169,7 +165,7 @@ export function GoalCard({
               <span className={`badge ${statusBadge.class}`}>
                 {statusBadge.text}
               </span>
-              <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              <span className={`text-xs text-slate-500 dark:text-gray-500`}>
                 {completedTasksCount}/{linkedTasksCount} tasks
               </span>
             </div>
@@ -183,9 +179,7 @@ export function GoalCard({
             <button
               onClick={() => onEdit(goal)}
               className={`p-2 rounded-lg transition-colors ${
-                isDark 
-                  ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' 
-                  : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+                'text-slate-500 hover:text-violet-600 hover:bg-violet-50 dark:text-gray-400 dark:hover:text-violet-400 dark:hover:bg-violet-500/20'
               }`}
               title="Edit"
               aria-label="Edit"
@@ -197,9 +191,7 @@ export function GoalCard({
                 <button
                   onClick={() => onComplete(goal.id)}
                   className={`p-2 rounded-lg transition-colors ${
-                    isDark 
-                      ? 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/20' 
-                      : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'
+                    'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/20'
                   }`}
                   title="Mark as complete"
                   aria-label="Mark as complete"
@@ -209,9 +201,7 @@ export function GoalCard({
                 <button
                   onClick={() => onArchive(goal.id)}
                   className={`p-2 rounded-lg transition-colors ${
-                    isDark 
-                      ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/20' 
-                      : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'
+                    'text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:text-gray-400 dark:hover:text-amber-400 dark:hover:bg-amber-500/20'
                   }`}
                   title="Archive"
                   aria-label="Archive"
@@ -224,9 +214,7 @@ export function GoalCard({
               <button
                 onClick={() => onReactivate(goal.id)}
                 className={`p-2 rounded-lg transition-colors ${
-                  isDark 
-                    ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/20' 
-                    : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                  'text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-500/20'
                 }`}
                 title="Reactivate"
                 aria-label="Reactivate"
@@ -237,9 +225,7 @@ export function GoalCard({
             <button
               onClick={() => onDelete(goal.id)}
               className={`p-2 rounded-lg transition-colors ${
-                isDark 
-                  ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' 
-                  : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
+                'text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-500/20'
               }`}
               title="Delete"
               aria-label="Delete"
@@ -249,7 +235,7 @@ export function GoalCard({
           </div>
           
           {/* Arrow */}
-          <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+          <ChevronRight className={`w-5 h-5 text-slate-400 dark:text-gray-600`} />
         </div>
       </div>
     </div>

@@ -432,50 +432,50 @@ function getQuestObjective(
   return { label, current, target, percent };
 }
 // Tier colors and styles
-const getTierStyles = (tier: string, isDark: boolean) => {
+const getTierStyles = (tier: string) => {
   switch (tier) {
     case 'legendary':
       return {
-        bg: isDark ? 'from-amber-500/30 via-yellow-500/20 to-orange-500/30' : 'from-amber-100 via-yellow-50 to-orange-100',
-        border: isDark ? 'border-amber-400/50' : 'border-amber-300',
-        icon: isDark ? 'text-amber-300' : 'text-amber-500',
-        badge: isDark ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black' : 'bg-gradient-to-r from-amber-500 to-yellow-400 text-white',
+        bg: 'from-amber-100 via-yellow-50 to-orange-100 dark:from-amber-500/30 dark:via-yellow-500/20 dark:to-orange-500/30',
+        border: 'border-amber-300 dark:border-amber-400/50',
+        icon: 'text-amber-500 dark:text-amber-300',
+        badge: 'bg-gradient-to-r from-amber-500 to-yellow-400 text-white dark:text-black',
         glow: 'shadow-lg shadow-amber-500/30',
         ring: 'ring-2 ring-amber-400/50',
       };
     case 'platinum':
       return {
-        bg: isDark ? 'from-cyan-500/20 via-slate-500/20 to-blue-500/20' : 'from-cyan-50 via-slate-50 to-blue-50',
-        border: isDark ? 'border-cyan-400/40' : 'border-cyan-300',
-        icon: isDark ? 'text-cyan-300' : 'text-cyan-500',
-        badge: isDark ? 'bg-gradient-to-r from-cyan-400 to-blue-400 text-black' : 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white',
+        bg: 'from-cyan-50 via-slate-50 to-blue-50 dark:from-cyan-500/20 dark:via-slate-500/20 dark:to-blue-500/20',
+        border: 'border-cyan-300 dark:border-cyan-400/40',
+        icon: 'text-cyan-500 dark:text-cyan-300',
+        badge: 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white dark:from-cyan-400 dark:to-blue-400 dark:text-black',
         glow: 'shadow-lg shadow-cyan-500/20',
         ring: 'ring-2 ring-cyan-400/30',
       };
     case 'gold':
       return {
-        bg: isDark ? 'from-yellow-500/20 to-amber-500/20' : 'from-yellow-50 to-amber-50',
-        border: isDark ? 'border-yellow-500/30' : 'border-yellow-300',
-        icon: isDark ? 'text-yellow-400' : 'text-yellow-500',
-        badge: isDark ? 'bg-yellow-500 text-black' : 'bg-yellow-500 text-white',
+        bg: 'from-yellow-50 to-amber-50 dark:from-yellow-500/20 dark:to-amber-500/20',
+        border: 'border-yellow-300 dark:border-yellow-500/30',
+        icon: 'text-yellow-500 dark:text-yellow-400',
+        badge: 'bg-yellow-500 text-white dark:text-black',
         glow: '',
         ring: '',
       };
     case 'silver':
       return {
-        bg: isDark ? 'from-slate-400/20 to-gray-500/20' : 'from-slate-100 to-gray-100',
-        border: isDark ? 'border-slate-400/30' : 'border-slate-300',
-        icon: isDark ? 'text-slate-300' : 'text-slate-500',
-        badge: isDark ? 'bg-slate-400 text-black' : 'bg-slate-400 text-white',
+        bg: 'from-slate-100 to-gray-100 dark:from-slate-400/20 dark:to-gray-500/20',
+        border: 'border-slate-300 dark:border-slate-400/30',
+        icon: 'text-slate-500 dark:text-slate-300',
+        badge: 'bg-slate-400 text-white dark:text-black',
         glow: '',
         ring: '',
       };
     default: // bronze
       return {
-        bg: isDark ? 'from-orange-800/20 to-amber-900/20' : 'from-orange-100 to-amber-100',
-        border: isDark ? 'border-orange-700/30' : 'border-orange-300',
-        icon: isDark ? 'text-orange-400' : 'text-orange-600',
-        badge: isDark ? 'bg-orange-700 text-white' : 'bg-orange-600 text-white',
+        bg: 'from-orange-100 to-amber-100 dark:from-orange-800/20 dark:to-amber-900/20',
+        border: 'border-orange-300 dark:border-orange-700/30',
+        icon: 'text-orange-600 dark:text-orange-400',
+        badge: 'bg-orange-600 text-white dark:bg-orange-700',
         glow: '',
         ring: '',
       };
@@ -545,7 +545,6 @@ const getAchievementIcon = (achievement: Achievement) => {
 
 // ============ HERO BANNER COMPONENT ============
 function HeroBanner({
-  isDark,
   level,
   title,
   currentXP,
@@ -555,9 +554,7 @@ function HeroBanner({
   unlockedTitles,
   onTitleChange,
   nextReward,
-  userStats,
-}: {
-  isDark: boolean;
+  userStats }: {
   level: number;
   title: string;
   currentXP: number;
@@ -590,20 +587,20 @@ function HeroBanner({
   const titleStyle = TITLE_RARITY_STYLES[currentTitle.rarity];
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl ${isDark ? 'bg-gradient-to-br from-slate-900 via-violet-900/20 to-slate-900 border border-violet-500/20' : 'bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50 border border-violet-200'}`}>
+    <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50 border border-violet-200 dark:from-slate-900 dark:via-violet-900/20 dark:to-slate-900 dark:border-violet-500/20`}>
       <div className="relative p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Avatar with prestige ring */}
           <div className="relative">
-            <div className={`w-28 h-28 rounded-full flex items-center justify-center ${isDark ? 'bg-violet-600' : 'bg-violet-500'} ring-4 ring-amber-400/50`}>
+            <div className={`w-28 h-28 rounded-full flex items-center justify-center bg-violet-500 dark:bg-violet-600 ring-4 ring-amber-400/50`}>
               <span className="text-5xl">🥷</span>
             </div>
             {/* Level badge */}
-            <div className={`absolute -bottom-1 -right-1 px-3 py-1 rounded-full text-sm font-bold ${isDark ? 'bg-amber-500 text-black' : 'bg-amber-500 text-white'} shadow-lg`}>
+            <div className={`absolute -bottom-1 -right-1 px-3 py-1 rounded-full text-sm font-bold bg-amber-500 text-white dark:text-black shadow-lg`}>
               Lv.{level}
             </div>
             {/* Rank indicator */}
-            <div className={`absolute -top-1 -left-1 w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800' : 'bg-white'} border-2 border-violet-400 shadow`}>
+            <div className={`absolute -top-1 -left-1 w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border-2 border-violet-400 shadow`}>
               <RankIcon size={16} className={rank.color} />
             </div>
           </div>
@@ -615,7 +612,7 @@ function HeroBanner({
               {/* Name and equipped title */}
               <div className="flex flex-col md:flex-row md:items-center gap-3">
                 <div className="relative inline-block">
-                  <h2 className={`text-3xl md:text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  <h2 className={`text-3xl md:text-4xl font-black tracking-tight text-slate-800 dark:text-white`}>
                     Kage
                   </h2>
                 </div>
@@ -641,13 +638,13 @@ function HeroBanner({
                 
                 {/* Title selector dropdown */}
                 {showTitleSelector && (
-                  <div className={`absolute top-full left-0 mt-2 w-64 rounded-xl overflow-hidden shadow-2xl z-50 ${isDark ? 'bg-slate-800 border border-white/10' : 'bg-white border border-slate-200'}`}>
-                    <div className={`p-2 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400 bg-white/5' : 'text-slate-500 bg-slate-50'}`}>
+                  <div className={`absolute top-full left-0 mt-2 w-64 rounded-xl overflow-hidden shadow-2xl z-50 bg-white border border-slate-200 dark:bg-slate-800 dark:border-white/10`}>
+                    <div className={`p-2 text-xs font-semibold uppercase tracking-wide text-slate-500 bg-slate-50 dark:text-gray-400 dark:bg-white/5`}>
                       Equip Title
                     </div>
                     <div className="max-h-48 overflow-y-auto p-1">
                       {unlockedTitles.length === 0 ? (
-                        <p className={`p-3 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                        <p className={`p-3 text-sm text-slate-500 dark:text-gray-500`}>
                           Unlock achievements to earn titles!
                         </p>
                       ) : (
@@ -659,8 +656,8 @@ function HeroBanner({
                               onClick={() => { onTitleChange(t.id); setShowTitleSelector(false); }}
                               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
                                 equippedTitle === t.id
-                                  ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
-                                  : isDark ? 'hover:bg-white/5 text-gray-300' : 'hover:bg-slate-50 text-slate-700'
+                                  ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+                                  : 'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-300'
                               }`}
                             >
                               <span className={`inline-block w-2 h-2 rounded-full mr-2 ${style.bg.replace('/20', '')}`} />
@@ -678,12 +675,12 @@ function HeroBanner({
             </div>
             
             {/* Rank & Streak row */}
-            <div className={`flex items-center justify-center md:justify-start gap-4 mb-3 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+            <div className={`flex items-center justify-center md:justify-start gap-4 mb-3 text-slate-600 dark:text-gray-400`}>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5`}>
                 <RankIcon size={16} className={rank.color} />
                 <span className={`text-sm font-medium ${rank.color}`}>{rank.name}</span>
               </div>
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${isDark ? 'bg-orange-500/10' : 'bg-orange-50'}`}>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-lg bg-orange-50 dark:bg-orange-500/10`}>
                 <Flame size={14} className="text-orange-400" />
                 <span className="text-sm font-medium text-orange-400">{userStats.currentStreak} day streak</span>
               </div>
@@ -692,14 +689,14 @@ function HeroBanner({
             {/* XP Progress bar */}
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                <span className={`text-xs font-medium text-slate-600 dark:text-gray-400`}>
                   Experience Points
                 </span>
-                <span className={`text-xs font-bold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+                <span className={`text-xs font-bold text-violet-600 dark:text-violet-400`}>
                   {currentXP} / {xpToNextLevel} XP
                 </span>
               </div>
-              <div className={`h-3 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+              <div className={`h-3 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
                 <div 
                   className="h-full bg-violet-500 rounded-full transition-all duration-700"
                   style={{ width: `${xpProgress}%` }}
@@ -709,7 +706,7 @@ function HeroBanner({
             
             {/* Next reward preview */}
             {nextReward && (
-              <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${isDark ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+              <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20`}>
                 <Gift size={14} />
                 <span>Next Reward: <strong>{nextReward.name}</strong></span>
                 <span className="opacity-70">({nextReward.xpNeeded} XP away)</span>
@@ -718,23 +715,23 @@ function HeroBanner({
           </div>
           
           {/* Stats summary - Enhanced */}
-          <div className={`hidden md:flex flex-col gap-2 p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white/80 border border-slate-200'}`}>
+          <div className={`hidden md:flex flex-col gap-2 p-6 rounded-2xl bg-white/80 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
             <div className="flex items-center gap-3 pb-2 border-b border-white/10">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-amber-100 dark:bg-amber-500/20`}>
                 <Zap size={20} className="text-amber-400" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{currentXP.toLocaleString()}</p>
-                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Total XP</p>
+                <p className={`text-2xl font-black text-amber-600 dark:text-amber-400`}>{currentXP.toLocaleString()}</p>
+                <p className={`text-xs text-slate-500 dark:text-gray-500`}>Total XP</p>
               </div>
             </div>
             <div className="flex items-center gap-3 pt-1">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 dark:bg-emerald-500/20`}>
                 <Target size={20} className="text-emerald-400" />
               </div>
               <div>
-                <p className={`text-2xl font-black ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{userStats.totalTasksCompleted}</p>
-                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Quests Completed</p>
+                <p className={`text-2xl font-black text-emerald-600 dark:text-emerald-400`}>{userStats.totalTasksCompleted}</p>
+                <p className={`text-xs text-slate-500 dark:text-gray-500`}>Quests Completed</p>
               </div>
             </div>
           </div>
@@ -746,11 +743,8 @@ function HeroBanner({
 
 // ============ QUEST LOG ROADMAP COMPONENT ============
 function QuestLogRoadmap({
-  isDark,
   userStats,
-  getTotalLevel,
-}: {
-  isDark: boolean;
+  getTotalLevel }: {
   userStats: UserStats;
   getTotalLevel: () => number;
 }) {
@@ -819,16 +813,16 @@ function QuestLogRoadmap({
   };
 
   return (
-    <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
+    <div className={`p-6 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
       <div className="flex items-center gap-3 mb-6">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-          <Compass size={20} className={isDark ? 'text-violet-400' : 'text-violet-600'} />
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-violet-100 dark:bg-violet-500/20`}>
+          <Compass size={20} className={'text-violet-600 dark:text-violet-400'} />
         </div>
         <div>
-          <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h2 className={`text-lg font-bold text-slate-800 dark:text-white`}>
             Quest Log
           </h2>
-          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <p className={`text-xs text-slate-500 dark:text-gray-500`}>
             Your journey to mastery
           </p>
         </div>
@@ -849,17 +843,17 @@ function QuestLogRoadmap({
           return (
             <div 
               key={path.id}
-              className={`p-4 rounded-xl ${isDark ? 'bg-white/[0.02] border border-white/5' : 'bg-slate-50 border border-slate-100'}`}
+              className={`p-4 rounded-xl bg-slate-50 border border-slate-100 dark:bg-white/[0.02] dark:border-white/5`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors.bg}`}>
                   <Icon size={18} className={colors.icon} />
                 </div>
                 <div className="flex-1">
-                  <h3 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  <h3 className={`font-semibold text-sm text-slate-800 dark:text-white`}>
                     {path.name}
                   </h3>
-                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  <p className={`text-xs text-slate-500 dark:text-gray-500`}>
                     {completedMilestones.length}/{path.milestones.length} milestones
                   </p>
                 </div>
@@ -869,7 +863,7 @@ function QuestLogRoadmap({
               </div>
 
               {/* Progress bar */}
-              <div className={`h-2 rounded-full overflow-hidden mb-3 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+              <div className={`h-2 rounded-full overflow-hidden mb-3 bg-slate-200 dark:bg-white/10`}>
                 <div 
                   className={`h-full bg-gradient-to-r ${colors.progress} rounded-full transition-all duration-700`}
                   style={{ width: `${progress}%` }}
@@ -889,14 +883,14 @@ function QuestLogRoadmap({
                             ? `bg-gradient-to-br ${colors.progress} text-white` 
                             : isCurrent
                               ? `${colors.bg} ${colors.text} ring-2 ring-current`
-                              : isDark ? 'bg-white/10 text-gray-600' : 'bg-slate-200 text-slate-400'
+                              : 'bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-gray-600'
                         }`}
                         title={milestone.name}
                       >
                         {isComplete ? '✓' : idx + 1}
                       </div>
                       {idx < path.milestones.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-1 ${isComplete ? `bg-gradient-to-r ${colors.progress}` : isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+                        <div className={`flex-1 h-0.5 mx-1 ${isComplete ? `bg-gradient-to-r ${colors.progress}` : 'bg-slate-200 dark:bg-white/10'}`} />
                       )}
                     </div>
                   );
@@ -905,7 +899,7 @@ function QuestLogRoadmap({
 
               {/* Next milestone info */}
               {nextMilestone && (
-                <p className={`mt-3 text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                <p className={`mt-3 text-xs text-slate-600 dark:text-gray-400`}>
                   <span className="font-medium">Next:</span> {nextMilestone.name} 
                   <span className={`ml-1 ${colors.text}`}>({nextMilestone.value - path.current} to go)</span>
                 </p>
@@ -924,31 +918,31 @@ function QuestLogRoadmap({
 }
 
 // ============ SEASON TEASER COMPONENT ============
-function SeasonTeaser({ isDark }: { isDark: boolean }) {
+function SeasonTeaser() {
   const daysRemaining = Math.ceil((CURRENT_SEASON.endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-violet-900/50 border border-violet-500/30' : 'bg-violet-100 border border-violet-200'}`}>
+    <div className={`relative overflow-hidden rounded-2xl bg-violet-100 border border-violet-200 dark:bg-violet-900/50 dark:border-violet-500/30`}>
       <div className="relative p-6 flex items-center gap-4">
         {/* Season icon */}
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-violet-500/20 border border-violet-500/30' : 'bg-violet-200/50 border border-violet-300'}`}>
-          <Sparkles size={28} className={isDark ? 'text-violet-300' : 'text-violet-600'} />
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-violet-200/50 border border-violet-300 dark:bg-violet-500/20 dark:border-violet-500/30`}>
+          <Sparkles size={28} className={'text-violet-600 dark:text-violet-300'} />
         </div>
         
         {/* Season info */}
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-violet-300' : 'text-violet-600'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300`}>
               Active Season
             </span>
-            <span className={`px-2 py-1 rounded-full text-xs font-bold ${isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-200 text-violet-700'}`}>
+            <span className={`px-2 py-1 rounded-full text-xs font-bold bg-violet-200 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300`}>
               {daysRemaining} days left
             </span>
           </div>
-          <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`font-bold text-lg text-slate-800 dark:text-white`}>
             {CURRENT_SEASON.name}
           </h3>
-          <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+          <p className={`text-xs mt-1 text-slate-600 dark:text-gray-400`}>
             {CURRENT_SEASON.description}
           </p>
         </div>
@@ -958,12 +952,12 @@ function SeasonTeaser({ isDark }: { isDark: boolean }) {
           {CURRENT_SEASON.exclusiveBadges.slice(0, 3).map((_, idx) => (
             <div 
               key={idx}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white/50 border border-violet-200'}`}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/50 border border-violet-200 dark:bg-white/5 dark:border-white/10`}
             >
-              <Lock size={16} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
+              <Lock size={16} className={'text-slate-400 dark:text-gray-600'} />
             </div>
           ))}
-          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <span className={`text-xs text-slate-500 dark:text-gray-500`}>
             +{CURRENT_SEASON.exclusiveBadges.length} badges
           </span>
         </div>
@@ -973,7 +967,7 @@ function SeasonTeaser({ isDark }: { isDark: boolean }) {
 }
 
 // ============ STREAK BONUS VISUALIZATION ============
-function StreakBonusBanner({ isDark, streak }: { isDark: boolean; streak: number }) {
+function StreakBonusBanner({ streak }: { streak: number }) {
   const bonus = getStreakMultiplier(streak);
   const nextBonus = streak < 3 ? { days: 3, multiplier: '1.1x' } 
     : streak < 7 ? { days: 7, multiplier: '1.25x' }
@@ -984,11 +978,11 @@ function StreakBonusBanner({ isDark, streak }: { isDark: boolean; streak: number
   if (streak === 0) return null;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${isDark ? 'bg-gradient-to-r from-orange-900/30 to-amber-900/20 border border-orange-500/30' : 'bg-gradient-to-r from-orange-100 to-amber-50 border border-orange-200'}`}>
+    <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-100 to-amber-50 border border-orange-200 dark:from-orange-900/30 dark:to-amber-900/20 dark:border-orange-500/30`}>
       <div className="relative p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Fire icon with glow */}
-          <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-orange-500/20' : 'bg-orange-100'}`}>
+          <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center bg-orange-100 dark:bg-orange-500/20`}>
             <Flame size={28} className="text-orange-400 animate-pulse" />
             {bonus.multiplier > 1 && (
               <div className="absolute inset-0 rounded-2xl animate-unlock-glow" style={{ boxShadow: '0 0 20px rgba(251, 146, 60, 0.4)' }} />
@@ -998,9 +992,9 @@ function StreakBonusBanner({ isDark, streak }: { isDark: boolean; streak: number
           <div>
             <div className="flex items-center gap-2">
               <span className={`text-2xl font-black ${bonus.color}`}>{streak}</span>
-              <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Day Streak</span>
+              <span className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>Day Streak</span>
             </div>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+            <p className={`text-xs text-slate-500 dark:text-gray-500`}>
               {nextBonus 
                 ? `${nextBonus.days - streak} more days until ${nextBonus.multiplier} bonus!`
                 : 'Maximum streak bonus active!'
@@ -1010,8 +1004,8 @@ function StreakBonusBanner({ isDark, streak }: { isDark: boolean; streak: number
         </div>
         
         {/* Multiplier badge */}
-        <div className={`px-4 py-2 rounded-xl ${isDark ? 'bg-orange-500/20 border border-orange-500/30' : 'bg-orange-100 border border-orange-200'}`}>
-          <p className={`text-xs font-medium ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>XP Multiplier</p>
+        <div className={`px-4 py-2 rounded-xl bg-orange-100 border border-orange-200 dark:bg-orange-500/20 dark:border-orange-500/30`}>
+          <p className={`text-xs font-medium text-orange-600 dark:text-orange-300`}>XP Multiplier</p>
           <p className={`text-2xl font-black ${bonus.color}`}>{bonus.label}</p>
         </div>
       </div>
@@ -1020,7 +1014,7 @@ function StreakBonusBanner({ isDark, streak }: { isDark: boolean; streak: number
 }
 
 // ============ DAILY CHALLENGES COMPONENT ============
-function DailyChallenges({ isDark, userStats }: { isDark: boolean; userStats: UserStats }) {
+function DailyChallenges({ userStats }: { userStats: UserStats }) {
   const challenges = getTodaysChallenges();
   
   // Simple progress check (in a real app, this would be more sophisticated)
@@ -1036,18 +1030,18 @@ function DailyChallenges({ isDark, userStats }: { isDark: boolean; userStats: Us
   };
 
   return (
-    <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
+    <div className={`p-6 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 dark:bg-emerald-500/20`}>
             <Zap size={20} className="text-emerald-400" />
           </div>
           <div>
-            <h2 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Daily Challenges</h2>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Resets at midnight</p>
+            <h2 className={`font-bold text-slate-800 dark:text-white`}>Daily Challenges</h2>
+            <p className={`text-xs text-slate-500 dark:text-gray-500`}>Resets at midnight</p>
           </div>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-bold ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-600'}`}>
+        <div className={`px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300`}>
           +{challenges.reduce((sum, c) => sum + c.xpReward, 0)} XP Available
         </div>
       </div>
@@ -1063,36 +1057,36 @@ function DailyChallenges({ isDark, userStats }: { isDark: boolean; userStats: Us
               key={challenge.id}
               className={`p-3 rounded-xl transition-all ${
                 isComplete 
-                  ? isDark ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-emerald-50 border border-emerald-200'
-                  : isDark ? 'bg-white/[0.02] border border-white/5 hover:bg-white/5' : 'bg-slate-50 border border-slate-100 hover:bg-slate-100'
+                  ? 'bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30'
+                  : 'bg-slate-50 border border-slate-100 hover:bg-slate-100 dark:bg-white/[0.02] dark:border-white/5 dark:hover:bg-white/5'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                   isComplete
-                    ? isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'
-                    : isDark ? 'bg-white/5' : 'bg-slate-100'
+                    ? 'bg-emerald-100 dark:bg-emerald-500/20'
+                    : 'bg-slate-100 dark:bg-white/5'
                 }`}>
                   {isComplete ? (
                     <CheckCircle2 size={20} className="text-emerald-400" />
                   ) : (
-                    <Icon size={20} className={isDark ? 'text-gray-400' : 'text-slate-500'} />
+                    <Icon size={20} className={'text-slate-500 dark:text-gray-400'} />
                   )}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    <p className={`font-medium text-sm text-slate-800 dark:text-white`}>
                       {challenge.name}
                     </p>
-                    <span className={`text-xs font-bold ${isComplete ? 'text-emerald-400' : isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                    <span className={`text-xs font-bold ${isComplete ? 'text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                       +{challenge.xpReward} XP
                     </span>
                   </div>
-                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                  <p className={`text-xs text-slate-500 dark:text-gray-500`}>
                     {challenge.description}
                   </p>
                   {!isComplete && (
-                    <div className={`mt-2 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                    <div className={`mt-2 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
                       <div 
                         className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                         style={{ width: `${progress}%` }}
@@ -1113,14 +1107,12 @@ function DailyChallenges({ isDark, userStats }: { isDark: boolean; userStats: Us
 function AchievementCard({ 
   achievement, 
   progress, 
-  isDark,
   onClick,
   isNew = false,
   prediction,
 }: { 
   achievement: Achievement; 
   progress: number; 
-  isDark: boolean;
   onClick: () => void;
   isNew?: boolean;
   prediction?: string | null;
@@ -1131,13 +1123,13 @@ function AchievementCard({
   
   const Icon = showAsSecret ? Sparkles : getAchievementIcon(achievement);
   const tier = getTier(achievement.xpReward) as AchievementTier;
-  const tierStyles = getTierStyles(tier, isDark);
+  const tierStyles = getTierStyles(tier);
 
   return (
     <div 
       onClick={() => { onClick(); playSound('click'); }}
       className={`rarity-card rarity-${tier} ${isUnlocked ? 'rarity-unlocked' : 'rarity-locked'} relative w-4/5 mx-auto rounded-xl overflow-hidden cursor-pointer transition-all duration-300 aspect-square ${
-        isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
+        'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
       } ${isUnlocked ? '' : 'opacity-80'} hover:-translate-y-1 ${isNew ? 'animate-unlock-glow' : ''}`}
     >
       {isUnlocked && <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${tierStyles.bg}`} />}
@@ -1146,12 +1138,12 @@ function AchievementCard({
         {/* Top meta row */}
         <div className="flex items-center justify-between gap-2">
           <span className={`text-xs px-2 py-1 rounded-full uppercase tracking-[0.14em] font-semibold ${
-            isUnlocked ? tierStyles.badge : (isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600')
+            isUnlocked ? tierStyles.badge : ('bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-gray-300')
           }`}>
             {tier}
           </span>
           <span className={`text-xs px-2 py-1 rounded-full uppercase tracking-[0.14em] font-semibold ${
-            isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
+            'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400'
           }`}>
             {achievement.type}
           </span>
@@ -1160,21 +1152,21 @@ function AchievementCard({
         {/* Center badge */}
         <div className="flex-1 flex items-center justify-center">
           <div className={`relative w-[80px] h-[80px] rounded-[1.35rem] flex items-center justify-center border ${
-            isDark ? 'bg-white/[0.04] border-white/10' : 'bg-slate-50 border-slate-200'
+            'bg-slate-50 border-slate-200 dark:bg-white/[0.04] dark:border-white/10'
           } ${showAsSecret ? 'animate-pulse' : ''}`}>
             {showAsSecret ? (
-              <span className={`text-3xl font-bold ${isDark ? 'text-violet-400' : 'text-violet-500'}`}>?</span>
+              <span className={`text-3xl font-bold text-violet-500 dark:text-violet-400`}>?</span>
             ) : isUnlocked ? (
               <Icon size={46} className={tierStyles.icon} />
             ) : (
-              <Lock size={38} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
+              <Lock size={38} className={'text-slate-400 dark:text-gray-600'} />
             )}
           </div>
         </div>
 
         {/* Bottom info */}
         <div>
-          <h3 className={`font-bold text-sm leading-tight line-clamp-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`font-bold text-sm leading-tight line-clamp-2 text-slate-800 dark:text-white`}>
             {showAsSecret ? '???' : achievement.name}
           </h3>
 
@@ -1185,29 +1177,29 @@ function AchievementCard({
                 +{achievement.xpReward}
               </div>
             ) : showAsSecret ? (
-              <div className={`text-xs font-bold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+              <div className={`text-xs font-bold text-violet-600 dark:text-violet-400`}>
                 ???
               </div>
             ) : (
-              <div className={`text-xs font-bold ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+              <div className={`text-xs font-bold text-slate-600 dark:text-gray-300`}>
                 {progress}%
               </div>
             )}
-            <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+            <div className={`text-xs text-slate-400 dark:text-gray-500`}>
               {isUnlocked ? 'Earned' : showAsSecret ? 'Hidden' : 'Locked'}
             </div>
           </div>
 
           {!isUnlocked && !showAsSecret && (
             <div className="mt-2">
-              <div className={`h-1 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+              <div className={`h-1 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
                 <div
                   className="h-full bg-violet-500 transition-all duration-700"
                   style={{ width: `${progress}%` }}
                 />
               </div>
               {prediction && (
-                <p className={`mt-1 text-xs truncate ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                <p className={`mt-1 text-xs truncate text-slate-500 dark:text-gray-500`}>
                   {prediction}
                 </p>
               )}
@@ -1226,29 +1218,27 @@ function AchievementModal({
   progress, 
   lore,
   objective,
-  isDark, 
   onClose 
 }: { 
   achievement: Achievement; 
   progress: number; 
   lore: string;
   objective: QuestObjective;
-  isDark: boolean; 
   onClose: () => void;
 }) {
   const Icon = getAchievementIcon(achievement);
   const tier = getTier(achievement.xpReward);
-  const tierStyles = getTierStyles(tier, isDark);
+  const tierStyles = getTierStyles(tier);
   const isUnlocked = achievement.isUnlocked;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div 
-        className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/70' : 'bg-slate-900/30'}`}
+        className={`absolute inset-0 backdrop-blur-sm bg-slate-900/30 dark:bg-black/70`}
         onClick={onClose}
       />
       <div className={`relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl ${
-        isDark ? 'bg-[#12121a]' : 'bg-white'
+        'bg-white dark:bg-[#12121a]'
       }`}>
         {/* Header with gradient */}
         <div className={`relative p-4 sm:p-8 ${isUnlocked ? `bg-gradient-to-br ${tierStyles.bg}` : ''}`}>
@@ -1257,7 +1247,7 @@ function AchievementModal({
             aria-label="Close"
             onClick={onClose}
             className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
-              isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'
+              'hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400'
             }`}
           >
             <X size={20} />
@@ -1266,22 +1256,22 @@ function AchievementModal({
           {/* Icon */}
           <div className={`w-24 h-24 mx-auto rounded-3xl flex items-center justify-center mb-4 ${
             isUnlocked
-              ? `${isDark ? 'bg-white/10' : 'bg-white/80'} ${tierStyles.ring}`
-              : isDark ? 'bg-white/5' : 'bg-slate-100'
+              ? `bg-white/80 dark:bg-white/10 ${tierStyles.ring}`
+              : 'bg-slate-100 dark:bg-white/5'
           }`}>
             {isUnlocked ? (
               <Icon size={48} className={tierStyles.icon} />
             ) : (
-              <Lock size={40} className={isDark ? 'text-gray-600' : 'text-slate-400'} />
+              <Lock size={40} className={'text-slate-400 dark:text-gray-600'} />
             )}
           </div>
 
           {/* Badge */}
           <div className="text-center">
-            <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <h2 className={`text-2xl font-bold mb-2 text-slate-800 dark:text-white`}>
               {achievement.name}
             </h2>
-            <p className={`text-sm italic ${isDark ? 'text-white/60' : 'text-slate-600'}`}>
+            <p className={`text-sm italic text-slate-600 dark:text-white/60`}>
               {lore}
             </p>
             {isUnlocked && (
@@ -1297,13 +1287,13 @@ function AchievementModal({
         <div className="p-6 space-y-6">
           {/* Description */}
           <div>
-            <h3 className={`text-sm font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+            <h3 className={`text-sm font-semibold uppercase tracking-wide mb-2 text-slate-500 dark:text-gray-400`}>
               Quest
             </h3>
-            <p className={`text-lg ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <p className={`text-lg text-slate-800 dark:text-white`}>
               {achievement.description}
             </p>
-            <p className={`mt-2 text-sm ${isDark ? 'text-white/70' : 'text-slate-600'}`}>
+            <p className={`mt-2 text-sm text-slate-600 dark:text-white/70`}>
               Objective: <span className="font-semibold">{objective.current}</span>/<span className="font-semibold">{objective.target}</span>
             </p>
           </div>
@@ -1312,14 +1302,14 @@ function AchievementModal({
           {!isUnlocked && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <h3 className={`text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400`}>
                   Progress
                 </h3>
-                <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                <span className={`text-sm font-bold text-slate-800 dark:text-white`}>
                   {progress}%
                 </span>
               </div>
-              <div className={`h-4 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+              <div className={`h-4 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
                 <div 
                   className={`h-full rounded-full transition-all duration-700 ${
                     progress >= 80 ? 'bg-emerald-500' :
@@ -1333,24 +1323,24 @@ function AchievementModal({
           )}
 
           {/* Stats */}
-          <div className={`grid grid-cols-2 gap-4 p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+          <div className={`grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5`}>
             <div className="text-center">
               <p className={`text-2xl font-bold ${tierStyles.icon}`}>
                 +{achievement.xpReward}
               </p>
-              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>XP Reward</p>
+              <p className={`text-xs text-slate-500 dark:text-gray-400`}>XP Reward</p>
             </div>
             <div className="text-center">
-              <p className={`text-2xl font-bold capitalize ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <p className={`text-2xl font-bold capitalize text-slate-800 dark:text-white`}>
                 {achievement.type}
               </p>
-              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Category</p>
+              <p className={`text-xs text-slate-500 dark:text-gray-400`}>Category</p>
             </div>
           </div>
 
           {/* Unlock info */}
           {isUnlocked && achievement.unlockedAt && (
-            <div className={`flex items-center justify-center gap-2 text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+            <div className={`flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-gray-400`}>
               <Gift size={16} />
               <span>
                 Unlocked on {new Date(achievement.unlockedAt).toLocaleDateString('en-US', { 
@@ -1533,7 +1523,6 @@ export function Achievements() {
     <div className="space-y-6 achievements-ambient">
       {/* Hero Banner - RPG Profile */}
       <HeroBanner
-        isDark={isDark}
         level={getTotalLevel()}
         title={getTitle()}
         currentXP={getTotalXP()}
@@ -1551,7 +1540,7 @@ export function Achievements() {
 
       {/* Tab navigation */}
       <div className="flex items-center justify-between">
-        <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+        <div className={`flex rounded-xl overflow-hidden border border-slate-200 dark:border-white/10`}>
           {([
             { id: 'overview' as const, label: 'Overview' },
             { id: 'all' as const, label: 'All Achievements' },
@@ -1562,8 +1551,8 @@ export function Achievements() {
               onClick={() => setActiveTab(id)}
               className={`px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === id
-                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                  : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
               }`}
             >
               {label}
@@ -1585,30 +1574,30 @@ export function Achievements() {
       {/* ── OVERVIEW TAB ──────────────────────────────── */}
       {activeTab === 'overview' && <>
         {/* Daily Challenges */}
-        <DailyChallenges isDark={isDark} userStats={userStats} />
+        <DailyChallenges userStats={userStats} />
 
         {/* Active Missions */}
         {closestToUnlock.length > 0 && (
-          <div className={`p-6 rounded-2xl ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'}`}>
-            <h2 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+          <div className={`p-6 rounded-2xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20`}>
+            <h2 className={`text-sm font-bold mb-3 flex items-center gap-2 text-emerald-600 dark:text-emerald-400`}>
               <MapPin className="w-4 h-4" /> Active Missions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {closestToUnlock.map(({ achievement, progress }) => {
                 const Icon = getAchievementIcon(achievement);
                 return (
-                  <div key={achievement.id} onClick={() => setSelectedAchievement(achievement)} className={`p-3 rounded-xl cursor-pointer transition-all hover:scale-[1.02] ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-white hover:bg-slate-50'}`}>
+                  <div key={achievement.id} onClick={() => setSelectedAchievement(achievement)} className={`p-3 rounded-xl cursor-pointer transition-all hover:scale-[1.02] bg-white hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/10`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-                        <Icon size={16} className={isDark ? 'text-emerald-300' : 'text-emerald-600'} />
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-white/5`}>
+                        <Icon size={16} className={'text-emerald-600 dark:text-emerald-300'} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{achievement.name}</p>
+                        <p className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{achievement.name}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <div className={`flex-1 h-1.5 rounded-full ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                          <div className={`flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-white/10`}>
                             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${progress}%` }} />
                           </div>
-                          <span className={`text-xs font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{progress}%</span>
+                          <span className={`text-xs font-bold text-emerald-600 dark:text-emerald-400`}>{progress}%</span>
                         </div>
                       </div>
                     </div>
@@ -1621,21 +1610,21 @@ export function Achievements() {
 
         {/* Hall of Glory */}
         {unlockedAchievements.length > 0 && (
-          <div className={`p-6 rounded-2xl ${isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'}`}>
-            <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+          <div className={`p-6 rounded-2xl bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20`}>
+            <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 text-amber-600 dark:text-amber-400`}>
               <Crown className="w-4 h-4" /> Hall of Glory
             </h2>
             <div className="flex items-center justify-center gap-8">
               {unlockedAchievements.sort((a, b) => b.xpReward - a.xpReward).slice(0, 3).map((achievement, index) => {
                 const Icon = getAchievementIcon(achievement);
                 const tier = getTier(achievement.xpReward);
-                const tierStyles = getTierStyles(tier, isDark);
+                const tierStyles = getTierStyles(tier);
                 return (
                   <div key={achievement.id} className={`text-center ${index === 0 ? 'scale-110 -mt-2' : ''}`} onClick={() => setSelectedAchievement(achievement)}>
-                    <div className={`w-16 h-16 mx-auto rounded-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-110 ${isDark ? 'bg-white/10' : 'bg-white/80'} ${tierStyles.ring} ${tierStyles.glow}`}>
+                    <div className={`w-16 h-16 mx-auto rounded-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-110 bg-white/80 dark:bg-white/10 ${tierStyles.ring} ${tierStyles.glow}`}>
                       <Icon size={28} className={tierStyles.icon} />
                     </div>
-                    <p className={`mt-2 text-xs font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{achievement.name}</p>
+                    <p className={`mt-2 text-xs font-medium text-slate-800 dark:text-white`}>{achievement.name}</p>
                   </div>
                 );
               })}
@@ -1645,47 +1634,47 @@ export function Achievements() {
 
         {/* Compact stats + rarity */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className={`p-4 rounded-xl ${isDark ? 'bg-violet-500/10 border border-violet-500/20' : 'bg-violet-50 border border-violet-200'}`}>
-            <div className={`text-2xl font-bold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>{unlockedAchievements.length}/{achievements.length}</div>
-            <p className={`text-xs ${isDark ? 'text-violet-400/70' : 'text-violet-600/70'}`}>Discovered</p>
+          <div className={`p-4 rounded-xl bg-violet-50 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20`}>
+            <div className={`text-2xl font-bold text-violet-600 dark:text-violet-400`}>{unlockedAchievements.length}/{achievements.length}</div>
+            <p className={`text-xs text-violet-600/70 dark:text-violet-400/70`}>Discovered</p>
           </div>
-          <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
-            <div className={`text-2xl font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXPFromAchievements.toLocaleString()}</div>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP Claimed</p>
+          <div className={`p-4 rounded-xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+            <div className={`text-2xl font-bold text-amber-600 dark:text-amber-400`}>{totalXPFromAchievements.toLocaleString()}</div>
+            <p className={`text-xs text-slate-500 dark:text-gray-500`}>XP Claimed</p>
           </div>
-          <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
-            <div className={`text-2xl font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{potentialXP.toLocaleString()}</div>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP Unclaimed</p>
+          <div className={`p-4 rounded-xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+            <div className={`text-2xl font-bold text-emerald-600 dark:text-emerald-400`}>{potentialXP.toLocaleString()}</div>
+            <p className={`text-xs text-slate-500 dark:text-gray-500`}>XP Unclaimed</p>
           </div>
-          <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
-            <div className={`text-2xl font-bold ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>{userStats.currentStreak}</div>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Day Streak</p>
+          <div className={`p-4 rounded-xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+            <div className={`text-2xl font-bold text-orange-600 dark:text-orange-400`}>{userStats.currentStreak}</div>
+            <p className={`text-xs text-slate-500 dark:text-gray-500`}>Day Streak</p>
           </div>
         </div>
 
         {/* Streak Bonus */}
-        <StreakBonusBanner isDark={isDark} streak={userStats.currentStreak} />
+        <StreakBonusBanner streak={userStats.currentStreak} />
       </>}
 
       {/* ── QUESTS TAB ──────────────────────────────── */}
       {activeTab === 'quests' && <>
-        <SeasonTeaser isDark={isDark} />
-        <QuestLogRoadmap isDark={isDark} userStats={userStats} getTotalLevel={getTotalLevel} />
+        <SeasonTeaser />
+        <QuestLogRoadmap userStats={userStats} getTotalLevel={getTotalLevel} />
         {/* Guild Collections */}
-        <div className={`p-4 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
-          <h2 className={`text-sm font-bold uppercase tracking-widest mb-3 ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>Guild Collections</h2>
+        <div className={`p-4 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+          <h2 className={`text-sm font-bold uppercase tracking-widest mb-3 text-slate-700 dark:text-gray-200`}>Guild Collections</h2>
           <div className="flex gap-3 overflow-x-auto pb-1">
             {setStats.map((set) => {
               const SetIcon = set.icon;
               const isActive = setFilter === set.setId;
               return (
-                <button key={set.setId} onClick={() => setSetFilter(isActive ? 'all' : set.setId)} className={`min-w-[200px] text-left p-3 rounded-xl transition-all ${isActive ? isDark ? 'bg-violet-500/20 border border-violet-500/30' : 'bg-violet-50 border border-violet-200' : isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10' : 'bg-slate-50 border border-slate-200 hover:bg-white'}`}>
+                <button key={set.setId} onClick={() => setSetFilter(isActive ? 'all' : set.setId)} className={`min-w-[200px] text-left p-3 rounded-xl transition-all ${isActive ? 'bg-violet-50 border border-violet-200 dark:bg-violet-500/20 dark:border-violet-500/30' : 'bg-slate-50 border border-slate-200 hover:bg-white dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <SetIcon size={16} className={isDark ? 'text-gray-200' : 'text-slate-700'} />
-                    <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{set.label}</span>
-                    <span className={`text-xs ml-auto font-bold ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{set.done}/{set.total}</span>
+                    <SetIcon size={16} className={'text-slate-700 dark:text-gray-200'} />
+                    <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>{set.label}</span>
+                    <span className={`text-xs ml-auto font-bold text-slate-700 dark:text-gray-300`}>{set.done}/{set.total}</span>
                   </div>
-                  <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                  <div className={`h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
                     <div className="h-full bg-violet-500 transition-all duration-700" style={{ width: `${set.percent}%` }} />
                   </div>
                 </button>
@@ -1698,24 +1687,24 @@ export function Achievements() {
       {/* ── ALL ACHIEVEMENTS TAB ────────────────────── */}
       {activeTab === 'all' && <>
         {/* Artifact Vault by Rarity */}
-        <div className={`p-6 rounded-2xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'}`}>
-          <h2 className={`text-sm font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>By Rarity</h2>
+        <div className={`p-6 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+          <h2 className={`text-sm font-bold mb-3 text-slate-800 dark:text-white`}>By Rarity</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {(['legendary', 'platinum', 'gold', 'silver', 'bronze'] as const).map(tier => {
-              const tierStyles = getTierStyles(tier, isDark);
+              const tierStyles = getTierStyles(tier);
               const total = achievements.filter(a => getTier(a.xpReward) === tier).length;
               const unlocked = tierCounts[tier];
               return (
                 <div key={tier} className="text-center">
-                  <div className={`w-12 h-12 mx-auto rounded-lg flex items-center justify-center mb-1 ${unlocked > 0 ? `bg-gradient-to-br ${tierStyles.bg} ${tierStyles.ring}` : isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
-                    {tier === 'legendary' && <Gem size={20} className={unlocked > 0 ? tierStyles.icon : isDark ? 'text-gray-600' : 'text-slate-400'} />}
-                    {tier === 'platinum' && <Star size={20} className={unlocked > 0 ? tierStyles.icon : isDark ? 'text-gray-600' : 'text-slate-400'} />}
-                    {tier === 'gold' && <Medal size={20} className={unlocked > 0 ? tierStyles.icon : isDark ? 'text-gray-600' : 'text-slate-400'} />}
-                    {tier === 'silver' && <Award size={20} className={unlocked > 0 ? tierStyles.icon : isDark ? 'text-gray-600' : 'text-slate-400'} />}
-                    {tier === 'bronze' && <Shield size={20} className={unlocked > 0 ? tierStyles.icon : isDark ? 'text-gray-600' : 'text-slate-400'} />}
+                  <div className={`w-12 h-12 mx-auto rounded-lg flex items-center justify-center mb-1 ${unlocked > 0 ? `bg-gradient-to-br ${tierStyles.bg} ${tierStyles.ring}` : 'bg-slate-100 dark:bg-white/5'}`}>
+                    {tier === 'legendary' && <Gem size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
+                    {tier === 'platinum' && <Star size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
+                    {tier === 'gold' && <Medal size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
+                    {tier === 'silver' && <Award size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
+                    {tier === 'bronze' && <Shield size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
                   </div>
-                  <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{unlocked}/{total}</p>
-                  <p className={`text-xs capitalize ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{tier}</p>
+                  <p className={`text-xs font-bold text-slate-800 dark:text-white`}>{unlocked}/{total}</p>
+                  <p className={`text-xs capitalize text-slate-500 dark:text-gray-500`}>{tier}</p>
                 </div>
               );
             })}
@@ -1724,21 +1713,21 @@ export function Achievements() {
 
         {/* Filters — compact */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
             {(['all', 'unlocked', 'locked'] as const).map((status) => (
-              <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${statusFilter === status ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${statusFilter === status ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
                 {status}
               </button>
             ))}
           </div>
-          <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
             {(['all', 'milestone', 'streak', 'mastery', 'special'] as const).map((type) => (
-              <button key={type} onClick={() => setTypeFilter(type)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${typeFilter === type ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <button key={type} onClick={() => setTypeFilter(type)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${typeFilter === type ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
                 {type}
               </button>
             ))}
           </div>
-          <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{sortedAchievements.length} achievements</span>
+          <span className={`text-xs ml-auto text-slate-400 dark:text-gray-600`}>{sortedAchievements.length} achievements</span>
         </div>
 
         {/* Achievement Grid */}
@@ -1751,7 +1740,6 @@ export function Achievements() {
               key={achievement.id}
               achievement={achievement}
               progress={getAchievementProgress(achievement)}
-              isDark={isDark}
               isNew={isNew}
               prediction={prediction}
               onClick={() => {
@@ -1770,10 +1758,10 @@ export function Achievements() {
         })}
       </div>
       {sortedAchievements.length === 0 && (
-        <div className={`rounded-2xl p-12 text-center ${isDark ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-200'}`}>
-          <Trophy className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-          <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>No achievements match</h3>
-          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Try adjusting filters.</p>
+        <div className={`rounded-2xl p-12 text-center bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+          <Trophy className={`w-10 h-10 mx-auto mb-3 text-violet-500 dark:text-violet-400`} />
+          <h3 className={`text-lg font-bold mb-1 text-slate-800 dark:text-white`}>No achievements match</h3>
+          <p className={`text-sm text-slate-500 dark:text-gray-400`}>Try adjusting filters.</p>
         </div>
       )}
       </>}
@@ -1787,7 +1775,6 @@ export function Achievements() {
         progress={getAchievementProgress(selectedAchievement)}
         objective={getQuestObjective(selectedAchievement, userStats, getTotalLevel, getTotalXP)}
         lore={ACHIEVEMENT_LORE[selectedAchievement.id] || 'A mystery yet to be uncovered.'}
-        isDark={isDark}
         onClose={() => setSelectedAchievement(null)}
       />
     )}

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import { useGoalContext } from '../../context/GoalContext';
 import { useDailyLogContext } from '../../context/DailyLogContext';
 import { Zap, Trophy, AlertCircle, Lightbulb, Target, BookOpen, Sparkles, Loader2 } from 'lucide-react';
@@ -22,8 +21,6 @@ interface DailyCheckInProps {
 }
 
 export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyCheckInProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const { getActiveGoals } = useGoalContext();
   const { createOrUpdateLog } = useDailyLogContext();
 
@@ -105,7 +102,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
 
   const energyField = (
     <div>
-      <label className={`flex items-center gap-2 text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+      <label className={`flex items-center gap-2 text-sm font-medium mb-3 text-slate-700 dark:text-gray-300`}>
         <Zap size={16} className="text-amber-500" />
         Energy Level
       </label>
@@ -122,16 +119,14 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
                   : level <= 6
                   ? 'bg-amber-500 text-white'
                   : 'bg-emerald-500 text-white'
-                : isDark
-                  ? 'bg-white/5 text-gray-400 hover:bg-white/10'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
             }`}
           >
             {level}
           </button>
         ))}
       </div>
-      <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>1 = exhausted, 10 = energized</p>
+      <p className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>1 = exhausted, 10 = energized</p>
     </div>
   );
 
@@ -144,7 +139,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
     isFS: boolean
   ) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
-      <label className={`flex items-center gap-2 text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+      <label className={`flex items-center gap-2 text-sm font-medium mb-2 text-slate-700 dark:text-gray-300`}>
         {icon}
         {label}
       </label>
@@ -162,7 +157,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
         type="button"
         onClick={onCancel}
         className={`px-6 py-3 rounded-xl transition-colors ${
-          isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+          'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
         }`}
       >
         Cancel
@@ -175,25 +170,23 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
 
   const aiReflectionSection = (aiLoading || aiReflection || aiError) ? (
     <div className={`mx-6 mb-6 p-4 rounded-xl border ${
-      isDark
-        ? 'bg-violet-500/10 border-violet-500/20'
-        : 'bg-violet-50 border-violet-200'
+      'bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20'
     }`}>
-      <div className={`flex items-center gap-2 text-sm font-medium mb-2 ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
+      <div className={`flex items-center gap-2 text-sm font-medium mb-2 text-violet-700 dark:text-violet-300`}>
         <Sparkles size={14} />
         AI Reflection
       </div>
       {aiLoading && (
         <div className="flex items-center gap-2">
           <Loader2 size={14} className="animate-spin text-violet-400" />
-          <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Reflecting on your day...</span>
+          <span className={`text-sm text-slate-500 dark:text-gray-400`}>Reflecting on your day...</span>
         </div>
       )}
       {aiError && (
-        <p className={`text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{aiError}</p>
+        <p className={`text-sm text-red-600 dark:text-red-400`}>{aiError}</p>
       )}
       {aiReflection && (
-        <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{aiReflection}</p>
+        <p className={`text-sm leading-relaxed text-slate-600 dark:text-gray-300`}>{aiReflection}</p>
       )}
     </div>
   ) : null;
@@ -203,7 +196,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
       isOpen={isOpen}
       onClose={onCancel}
       title="Daily Check-In"
-      icon={<BookOpen className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+      icon={<BookOpen className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
       maxWidth="max-w-lg"
       footer={actionButtons}
     >
@@ -212,14 +205,14 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
           <div className="flex flex-col h-full">
             <div className="flex flex-1 min-h-0">
               {/* Left: Wins + Challenges */}
-              <div className={`flex-1 flex flex-col p-8 space-y-6 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-                <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{today}</p>
+              <div className={`flex-1 flex flex-col p-8 space-y-6 border-r border-slate-200 dark:border-white/10`}>
+                <p className={`text-sm text-slate-500 dark:text-gray-500`}>{today}</p>
                 {energyField}
                 {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-emerald-500" />, wins, setWins, 'What went well today? What are you proud of?', true)}
                 {makeNotesField('Challenges', <AlertCircle size={16} className="text-red-500" />, challenges, setChallenges, 'What obstacles did you face?', true)}
               </div>
               {/* Right: Learnings + Tomorrow */}
-              <div className={`flex-1 flex flex-col p-8 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-6 bg-white dark:bg-white/[0.02]`}>
                 {makeNotesField('Key Learnings', <Lightbulb size={16} className="text-amber-500" />, learnings, setLearnings, 'What did you learn today? Any insights?', true)}
                 {makeNotesField('Tomorrow\'s Focus', <Target size={16} className="text-violet-500" />, tomorrowFocus, setTomorrowFocus, 'What\'s your main focus for tomorrow?', true)}
               </div>
@@ -228,7 +221,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
           </div>
         ) : (
           <div className="p-6 space-y-6">
-            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{today}</p>
+            <p className={`text-sm text-slate-500 dark:text-gray-500`}>{today}</p>
             {energyField}
             {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-emerald-500" />, wins, setWins, 'What went well today?', false)}
             {makeNotesField('Challenges', <AlertCircle size={16} className="text-red-500" />, challenges, setChallenges, 'What obstacles did you face?', false)}

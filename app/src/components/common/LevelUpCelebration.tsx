@@ -106,7 +106,7 @@ export function LevelUpCelebration() {
       }`}
       onClick={handleDismiss}
     >
-      <div className={`absolute inset-0 ${isDark ? 'bg-black/70' : 'bg-black/50'} backdrop-blur-sm`} />
+      <div className={`absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm`} />
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 40 }).map((_, i) => (
@@ -116,9 +116,7 @@ export function LevelUpCelebration() {
 
       <div
         className={`relative levelup-card rounded-3xl p-6 sm:p-8 max-w-sm w-[90vw] mx-4 text-center shadow-2xl ${
-          isDark
-            ? 'bg-gradient-to-b from-violet-950/95 via-gray-900/95 to-gray-950/95 border border-violet-500/30'
-            : 'bg-gradient-to-b from-violet-50 via-white to-slate-50 border border-violet-200'
+          'bg-gradient-to-b from-violet-50 via-white to-slate-50 border border-violet-200 dark:from-violet-950/95 dark:via-gray-900/95 dark:to-gray-950/95 dark:border-violet-500/30'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -126,7 +124,7 @@ export function LevelUpCelebration() {
           aria-label="Dismiss"
           onClick={handleDismiss}
           className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
-            isDark ? 'text-gray-500 hover:bg-white/10' : 'text-slate-400 hover:bg-slate-100'
+            'text-slate-400 hover:bg-slate-100 dark:text-gray-500 dark:hover:bg-white/10'
           }`}
         >
           <X size={18} />
@@ -141,7 +139,7 @@ export function LevelUpCelebration() {
         </div>
 
         <h2 className={`text-sm font-semibold uppercase tracking-widest mb-1 ${
-          isDark ? 'text-violet-400' : 'text-violet-600'
+          'text-violet-600 dark:text-violet-400'
         }`}>
           {heading}
         </h2>
@@ -151,9 +149,9 @@ export function LevelUpCelebration() {
             <GoalTree level={newLevel} theme={(data.event as LevelUpEvent).goalTheme || 'forest'} size="lg" animate />
           ) : (
             <div className={`w-24 h-24 rounded-3xl flex items-center justify-center ${
-              isDark ? 'bg-violet-500/25' : 'bg-violet-100'
+              'bg-violet-100 dark:bg-violet-500/25'
             }`}>
-              <Star className={`w-12 h-12 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} fill="currentColor" />
+              <Star className={`w-12 h-12 text-amber-500 dark:text-amber-400`} fill="currentColor" />
             </div>
           )}
         </div>
@@ -166,21 +164,21 @@ export function LevelUpCelebration() {
             border: isDark ? '1px solid rgba(139,92,246,0.4)' : '1px solid rgba(139,92,246,0.3)',
           }}
         >
-          <Sparkles className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-          <span className={`text-3xl font-black tabular-nums ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <Sparkles className={`w-5 h-5 text-amber-500 dark:text-amber-400`} />
+          <span className={`text-3xl font-black tabular-nums text-slate-800 dark:text-white`}>
             {newLevel}
           </span>
         </div>
 
-        <p className={`text-base font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+        <p className={`text-base font-semibold mb-1 text-slate-800 dark:text-white`}>
           {subtitle}
         </p>
 
-        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+        <p className={`text-sm text-slate-500 dark:text-gray-400`}>
           {totalXP.toLocaleString()} XP earned
         </p>
 
-        <p className={`mt-4 text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+        <p className={`mt-4 text-xs text-slate-400 dark:text-gray-600`}>
           Tap anywhere to continue
         </p>
       </div>

@@ -75,9 +75,7 @@ function ToastCard({ item, onDismiss, isDark }: { item: ToastItem; onDismiss: (i
     <div
       className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all backdrop-blur-2xl ${
         exiting ? 'opacity-0 translate-y-2 scale-95' : 'opacity-100'
-      } ${isDark
-        ? 'bg-[#1a1a2e]/80 border border-white/[0.1] text-gray-200'
-        : 'bg-white/75 border border-white/60 text-slate-700'
+      } ${'bg-white/75 border border-white/60 text-slate-700 dark:bg-[#1a1a2e]/80 dark:border-white/[0.1] dark:text-gray-200'
       }`}
       style={{
         boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 0.5px rgba(255,255,255,0.06)' : '0 8px 32px rgba(0,0,0,0.1), inset 0 0 0 0.5px rgba(255,255,255,0.8)',
@@ -95,9 +93,7 @@ function ToastCard({ item, onDismiss, isDark }: { item: ToastItem; onDismiss: (i
         <button
           onClick={() => { item.action!.onClick(); handleDismiss(); }}
           className={`flex-shrink-0 px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-            isDark
-              ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
-              : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+            'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
           }`}
         >
           {item.action.label}
@@ -107,7 +103,7 @@ function ToastCard({ item, onDismiss, isDark }: { item: ToastItem; onDismiss: (i
         aria-label="Dismiss notification"
         onClick={handleDismiss}
         className={`flex-shrink-0 p-1 rounded-lg transition-colors ${
-          isDark ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'
+          'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
         }`}
       >
         <X size={14} />

@@ -271,40 +271,38 @@ Respond ONLY with valid JSON matching this exact schema:
     return bullets;
   }, [pendingCount, delta, completedThisWeek, byCategory, tasks, habits, thisWeek, activeGoals]);
 
-  const cardClass = `rounded-2xl ${isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'}`;
+  const cardClass = `rounded-2xl bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10`;
 
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Weekly Review</h1>
-        <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Your week at a glance</p>
+        <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>Weekly Review</h1>
+        <p className={`mt-1 text-sm text-slate-500 dark:text-gray-500`}>Your week at a glance</p>
       </div>
 
       {/* ── 1. WEEK AT A GLANCE ──────────────────────── */}
       <div className={`relative overflow-hidden rounded-2xl ${
-        isDark
-          ? 'bg-violet-500/[0.07] border border-violet-500/15'
-          : 'bg-violet-50 border border-violet-100'
+        'bg-violet-50 border border-violet-100 dark:bg-violet-500/[0.07] dark:border-violet-500/15'
       }`}>
         <div className="relative px-4 py-4 sm:px-6 sm:py-6">
           <div className="flex items-center gap-2 mb-4">
-            <Calendar className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-            <span className={`text-sm font-medium ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{thisWeek.label}</span>
+            <Calendar className={`w-5 h-5 text-violet-500 dark:text-violet-400`} />
+            <span className={`text-sm font-medium text-violet-700 dark:text-violet-300`}>{thisWeek.label}</span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Tasks completed */}
             <div>
-              <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Completed</p>
+              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Completed</p>
               <div className="flex items-end gap-2">
-                <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{completedThisWeek.length}</span>
+                <span className={`text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white`}>{completedThisWeek.length}</span>
                 <span className={`flex items-center gap-1 text-xs font-medium pb-1 ${
                   delta > 0
-                    ? isDark ? 'text-emerald-400' : 'text-emerald-600'
+                    ? 'text-emerald-600 dark:text-emerald-400'
                     : delta < 0
-                      ? isDark ? 'text-red-400' : 'text-red-500'
-                      : isDark ? 'text-gray-500' : 'text-slate-400'
+                      ? 'text-red-500 dark:text-red-400'
+                      : 'text-slate-400 dark:text-gray-500'
                 }`}>
                   {delta > 0 ? <ArrowUp size={12} /> : delta < 0 ? <ArrowDown size={12} /> : <Minus size={12} />}
                   {Math.abs(delta)} vs last week
@@ -314,28 +312,28 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Last week */}
             <div>
-              <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Last Week</p>
-              <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{completedLastWeek.length}</span>
+              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Last Week</p>
+              <span className={`text-2xl sm:text-3xl font-bold text-slate-500 dark:text-gray-400`}>{completedLastWeek.length}</span>
             </div>
 
             {/* Streak */}
             <div>
-              <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Streak</p>
+              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Streak</p>
               <div className="flex items-center gap-2">
-                <Flame className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-                <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>{userStats.currentStreak}</span>
-                <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>days</span>
+                <Flame className={`w-5 h-5 text-orange-500 dark:text-orange-400`} />
+                <span className={`text-2xl sm:text-3xl font-bold text-orange-600 dark:text-orange-300`}>{userStats.currentStreak}</span>
+                <span className={`text-xs text-slate-400 dark:text-gray-500`}>days</span>
               </div>
             </div>
 
             {/* XP / Level */}
             <div>
-              <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Level</p>
+              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Level</p>
               <div className="flex items-center gap-2">
-                <Zap className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-                <span className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{getTotalLevel()}</span>
+                <Zap className={`w-5 h-5 text-amber-500 dark:text-amber-400`} />
+                <span className={`text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-300`}>{getTotalLevel()}</span>
               </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{getTotalXP().toLocaleString()} XP · {getTitle()}</p>
+              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>{getTotalXP().toLocaleString()} XP · {getTitle()}</p>
             </div>
           </div>
         </div>
@@ -343,7 +341,7 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 2. TASK BREAKDOWN ────────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
           <ClipboardList size={16} /> Task Breakdown
         </h2>
 
@@ -359,7 +357,7 @@ Respond ONLY with valid JSON matching this exact schema:
                 <span className={`text-xs font-medium ${isDark ? `text-${color}-400` : `text-${color}-600`}`}>{label}</span>
                 <CheckCircle2 size={14} className={isDark ? `text-${color}-400/60` : `text-${color}-500/60`} />
               </div>
-              <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{count}</span>
+              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{count}</span>
             </div>
           ))}
         </div>
@@ -367,24 +365,24 @@ Respond ONLY with valid JSON matching this exact schema:
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
           {/* By priority */}
           <div className={cardClass + ' p-4'}>
-            <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>High Priority</p>
+            <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>High Priority</p>
             <div className="flex items-center gap-2">
-              <TrendingUp size={16} className={isDark ? 'text-red-400' : 'text-red-500'} />
-              <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{byPriority.High}</span>
+              <TrendingUp size={16} className={'text-red-500 dark:text-red-400'} />
+              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{byPriority.High}</span>
             </div>
           </div>
           <div className={cardClass + ' p-4'}>
-            <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Low Priority</p>
+            <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Low Priority</p>
             <div className="flex items-center gap-2">
-              <TrendingDown size={16} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
-              <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{byPriority.Low}</span>
+              <TrendingDown size={16} className={'text-blue-500 dark:text-blue-400'} />
+              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{byPriority.Low}</span>
             </div>
           </div>
           <div className={cardClass + ' p-4'}>
-            <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Still Pending</p>
+            <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Still Pending</p>
             <div className="flex items-center gap-2">
-              <ClipboardList size={16} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
-              <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{pendingCount}</span>
+              <ClipboardList size={16} className={'text-amber-500 dark:text-amber-400'} />
+              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{pendingCount}</span>
             </div>
           </div>
         </div>
@@ -393,17 +391,17 @@ Respond ONLY with valid JSON matching this exact schema:
       {/* ── 2b. PROJECT BREAKDOWN ───────────────────── */}
       {byProject.length > 0 && (
         <div>
-          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
             <FolderKanban size={16} /> Project progress this week
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {byProject.map(({ projectId, title, count }) => (
               <div key={projectId} className={cardClass + ' p-4'}>
-                <p className={`text-xs font-medium truncate mb-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{title}</p>
+                <p className={`text-xs font-medium truncate mb-1 text-slate-500 dark:text-gray-400`}>{title}</p>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
-                  <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{count}</span>
-                  <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>done</span>
+                  <CheckCircle2 size={14} className={'text-emerald-500 dark:text-emerald-400'} />
+                  <span className={`text-xl font-bold text-slate-800 dark:text-white`}>{count}</span>
+                  <span className={`text-xs text-slate-400 dark:text-gray-500`}>done</span>
                 </div>
               </div>
             ))}
@@ -413,13 +411,13 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 3. HABIT SCORECARD ───────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
           <Flame size={16} /> Habit Scorecard
         </h2>
 
         {habits.length === 0 ? (
           <div className={cardClass + ' p-6 text-center'}>
-            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>No habits tracked yet.</p>
+            <p className={`text-sm text-slate-400 dark:text-gray-500`}>No habits tracked yet.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -438,10 +436,10 @@ Respond ONLY with valid JSON matching this exact schema:
               return (
                 <div key={habit.id} className={cardClass + ' px-4 py-3 flex items-center gap-4'}>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{habit.name}</p>
+                    <p className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{habit.name}</p>
                     <div className="flex items-center gap-1 mt-1">
-                      <Flame size={12} className={isDark ? 'text-orange-400' : 'text-orange-500'} />
-                      <span className={`text-xs ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>{streak}d streak</span>
+                      <Flame size={12} className={'text-orange-500 dark:text-orange-400'} />
+                      <span className={`text-xs text-orange-600 dark:text-orange-400`}>{streak}d streak</span>
                     </div>
                   </div>
 
@@ -450,11 +448,11 @@ Respond ONLY with valid JSON matching this exact schema:
                       const done = dayDone.get(idx);
                       return (
                         <div key={dayLabel} className="flex flex-col items-center gap-1">
-                          <span className={`text-xs leading-none ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{dayLabel[0]}</span>
+                          <span className={`text-xs leading-none text-slate-400 dark:text-gray-600`}>{dayLabel[0]}</span>
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                             done
-                              ? isDark ? 'bg-emerald-500/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                              : isDark ? 'bg-white/5 text-gray-700' : 'bg-slate-100 text-slate-300'
+                              ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/30 dark:text-emerald-400'
+                              : 'bg-slate-100 text-slate-300 dark:bg-white/5 dark:text-gray-700'
                           }`}>
                             {done ? <CheckCircle2 size={12} /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />}
                           </div>
@@ -471,34 +469,34 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 4. GOAL PROGRESS ─────────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
           <Target size={16} /> Goal Progress
         </h2>
 
         {activeGoals.length === 0 ? (
           <div className={cardClass + ' p-6 text-center'}>
-            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>No active goals.</p>
+            <p className={`text-sm text-slate-400 dark:text-gray-500`}>No active goals.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {activeGoals.map(goal => (
               <div key={goal.id} className={cardClass + ' px-4 py-3'}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{goal.title}</p>
+                  <p className={`text-sm font-medium text-slate-800 dark:text-white`}>{goal.title}</p>
                   <span className={`text-xs px-2 py-1 rounded-full ${
-                    isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
+                    'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
                   }`}>
                     {goal.category}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className={`flex-1 h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+                  <div className={`flex-1 h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/5`}>
                     <div
                       className="h-full rounded-full bg-violet-500 transition-all duration-500"
                       style={{ width: `${goal.progress}%` }}
                     />
                   </div>
-                  <span className={`text-xs font-medium tabular-nums w-8 text-right ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-medium tabular-nums w-8 text-right text-slate-500 dark:text-gray-400`}>
                     {goal.progress}%
                   </span>
                 </div>
@@ -510,21 +508,21 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 4b. FEED SUMMARY ────────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
           <Newspaper size={16} /> Feed this week
         </h2>
         <div className={cardClass + ' p-4'}>
           <div className="flex flex-wrap items-center gap-3">
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-              Read <strong className={isDark ? 'text-white' : 'text-slate-800'}>{feedSummary.readCount}</strong>
+            <span className={`text-sm text-slate-600 dark:text-gray-400`}>
+              Read <strong className={'text-slate-800 dark:text-white'}>{feedSummary.readCount}</strong>
             </span>
-            <span className={isDark ? 'text-gray-600' : 'text-slate-300'}>·</span>
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-              Bookmarked <strong className={isDark ? 'text-white' : 'text-slate-800'}>{feedSummary.bookmarkedCount}</strong>
+            <span className={'text-slate-300 dark:text-gray-600'}>·</span>
+            <span className={`text-sm text-slate-600 dark:text-gray-400`}>
+              Bookmarked <strong className={'text-slate-800 dark:text-white'}>{feedSummary.bookmarkedCount}</strong>
             </span>
           </div>
           {feedSummary.recentTitles.filter(Boolean).length > 0 && (
-            <p className={`text-xs mt-2 truncate max-w-full ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+            <p className={`text-xs mt-2 truncate max-w-full text-slate-400 dark:text-gray-500`}>
               Recent: {feedSummary.recentTitles.filter(Boolean).join(' · ')}
             </p>
           )}
@@ -533,14 +531,14 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 4c. QUICK INSIGHTS (rule-based) ──────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
           <Lightbulb size={16} /> Quick insights
         </h2>
         <div className={cardClass + ' p-4'}>
           <ul className="space-y-2">
             {ruleBasedInsights.map((text, i) => (
-              <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                <span className={isDark ? 'text-amber-400' : 'text-amber-500'} aria-hidden>•</span>
+              <li key={i} className={`text-sm flex items-start gap-2 text-slate-700 dark:text-gray-300`}>
+                <span className={'text-amber-500 dark:text-amber-400'} aria-hidden>•</span>
                 <span>{text}</span>
               </li>
             ))}
@@ -550,7 +548,7 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 5. AI WEEKLY INSIGHT ────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
           <Sparkles size={16} /> AI Coach
         </h2>
 
@@ -558,15 +556,15 @@ Respond ONLY with valid JSON matching this exact schema:
           <div className="space-y-3">
             {/* Achievements */}
             {aiInsight.achievements?.length > 0 && (
-              <div className={`rounded-2xl p-4 ${isDark ? 'bg-emerald-500/[0.06] border border-emerald-500/15' : 'bg-emerald-50 border border-emerald-100'}`}>
+              <div className={`rounded-2xl p-4 bg-emerald-50 border border-emerald-100 dark:bg-emerald-500/[0.06] dark:border-emerald-500/15`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 size={15} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Achievements</h3>
+                  <CheckCircle2 size={15} className={'text-emerald-600 dark:text-emerald-400'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400`}>Achievements</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.achievements.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-emerald-200/80' : 'text-emerald-800'}`}>
-                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
+                    <li key={i} className={`text-sm flex items-start gap-2 text-emerald-800 dark:text-emerald-200/80`}>
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-500 dark:bg-emerald-400`} />
                       {item}
                     </li>
                   ))}
@@ -576,15 +574,15 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Slacked Areas */}
             {aiInsight.slacked_areas?.length > 0 && (
-              <div className={`rounded-2xl p-4 ${isDark ? 'bg-amber-500/[0.06] border border-amber-500/15' : 'bg-amber-50 border border-amber-100'}`}>
+              <div className={`rounded-2xl p-4 bg-amber-50 border border-amber-100 dark:bg-amber-500/[0.06] dark:border-amber-500/15`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle size={15} className={isDark ? 'text-amber-400' : 'text-amber-600'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>Slacked Areas</h3>
+                  <AlertTriangle size={15} className={'text-amber-600 dark:text-amber-400'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400`}>Slacked Areas</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.slacked_areas.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-amber-200/80' : 'text-amber-800'}`}>
-                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-amber-400' : 'bg-amber-500'}`} />
+                    <li key={i} className={`text-sm flex items-start gap-2 text-amber-800 dark:text-amber-200/80`}>
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-amber-500 dark:bg-amber-400`} />
                       {item}
                     </li>
                   ))}
@@ -594,15 +592,15 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Delayed Items */}
             {aiInsight.delayed_items?.length > 0 && (
-              <div className={`rounded-2xl p-4 ${isDark ? 'bg-red-500/[0.06] border border-red-500/15' : 'bg-red-50 border border-red-100'}`}>
+              <div className={`rounded-2xl p-4 bg-red-50 border border-red-100 dark:bg-red-500/[0.06] dark:border-red-500/15`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingDown size={15} className={isDark ? 'text-red-400' : 'text-red-600'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-red-400' : 'text-red-700'}`}>Delayed Items</h3>
+                  <TrendingDown size={15} className={'text-red-600 dark:text-red-400'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-400`}>Delayed Items</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.delayed_items.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-red-200/80' : 'text-red-800'}`}>
-                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDark ? 'bg-red-400' : 'bg-red-500'}`} />
+                    <li key={i} className={`text-sm flex items-start gap-2 text-red-800 dark:text-red-200/80`}>
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-500 dark:bg-red-400`} />
                       {item}
                     </li>
                   ))}
@@ -612,37 +610,37 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Energy Pattern */}
             {aiInsight.energy_pattern && (
-              <div className={`rounded-2xl p-4 ${isDark ? 'bg-blue-500/[0.06] border border-blue-500/15' : 'bg-blue-50 border border-blue-100'}`}>
+              <div className={`rounded-2xl p-4 bg-blue-50 border border-blue-100 dark:bg-blue-500/[0.06] dark:border-blue-500/15`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <Activity size={15} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>Energy Pattern</h3>
+                  <Activity size={15} className={'text-blue-600 dark:text-blue-400'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-400`}>Energy Pattern</h3>
                 </div>
-                <p className={`text-sm ${isDark ? 'text-blue-200/80' : 'text-blue-800'}`}>{aiInsight.energy_pattern}</p>
+                <p className={`text-sm text-blue-800 dark:text-blue-200/80`}>{aiInsight.energy_pattern}</p>
               </div>
             )}
 
             {/* Habit Analysis */}
             {aiInsight.habit_analysis && (
-              <div className={`rounded-2xl p-4 ${isDark ? 'bg-orange-500/[0.06] border border-orange-500/15' : 'bg-orange-50 border border-orange-100'}`}>
+              <div className={`rounded-2xl p-4 bg-orange-50 border border-orange-100 dark:bg-orange-500/[0.06] dark:border-orange-500/15`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <BarChart3 size={15} className={isDark ? 'text-orange-400' : 'text-orange-600'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-orange-400' : 'text-orange-700'}`}>Habit Analysis</h3>
+                  <BarChart3 size={15} className={'text-orange-600 dark:text-orange-400'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-400`}>Habit Analysis</h3>
                 </div>
-                <p className={`text-sm ${isDark ? 'text-orange-200/80' : 'text-orange-800'}`}>{aiInsight.habit_analysis}</p>
+                <p className={`text-sm text-orange-800 dark:text-orange-200/80`}>{aiInsight.habit_analysis}</p>
               </div>
             )}
 
             {/* Actionable Focus */}
             {aiInsight.actionable_focus?.length > 0 && (
-              <div className={`rounded-2xl p-4 ${isDark ? 'bg-violet-500/[0.06] border border-violet-500/15' : 'bg-violet-50 border border-violet-100'}`}>
+              <div className={`rounded-2xl p-4 bg-violet-50 border border-violet-100 dark:bg-violet-500/[0.06] dark:border-violet-500/15`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <Target size={15} className={isDark ? 'text-violet-400' : 'text-violet-600'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-violet-400' : 'text-violet-700'}`}>Focus Next Week</h3>
+                  <Target size={15} className={'text-violet-600 dark:text-violet-400'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400`}>Focus Next Week</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.actionable_focus.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 ${isDark ? 'text-violet-200/80' : 'text-violet-800'}`}>
-                      <span className={`mt-1 text-xs font-bold flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>{i + 1}</span>
+                    <li key={i} className={`text-sm flex items-start gap-2 text-violet-800 dark:text-violet-200/80`}>
+                      <span className={`mt-1 text-xs font-bold flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400`}>{i + 1}</span>
                       {item}
                     </li>
                   ))}
@@ -652,9 +650,9 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Motivational Note */}
             {aiInsight.motivational_note && (
-              <div className={`rounded-2xl p-4 text-center ${isDark ? 'bg-pink-500/[0.06] border border-pink-500/15' : 'bg-pink-50 border border-pink-100'}`}>
-                <Heart size={16} className={`mx-auto mb-2 ${isDark ? 'text-pink-400' : 'text-pink-500'}`} />
-                <p className={`text-sm italic ${isDark ? 'text-pink-200/80' : 'text-pink-700'}`}>{aiInsight.motivational_note}</p>
+              <div className={`rounded-2xl p-4 text-center bg-pink-50 border border-pink-100 dark:bg-pink-500/[0.06] dark:border-pink-500/15`}>
+                <Heart size={16} className={`mx-auto mb-2 text-pink-500 dark:text-pink-400`} />
+                <p className={`text-sm italic text-pink-700 dark:text-pink-200/80`}>{aiInsight.motivational_note}</p>
               </div>
             )}
 
@@ -662,7 +660,7 @@ Respond ONLY with valid JSON matching this exact schema:
               <button
                 onClick={generateInsight}
                 disabled={aiLoading}
-                className={`text-xs font-medium ${isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-600 hover:text-violet-500'}`}
+                className={`text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300`}
               >
                 {aiLoading ? 'Regenerating...' : 'Regenerate'}
               </button>
@@ -672,13 +670,13 @@ Respond ONLY with valid JSON matching this exact schema:
           <div className={cardClass + ' p-6'}>
             <div className="space-y-3">
               <div
-                className={`text-sm leading-relaxed space-y-1 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
+                className={`text-sm leading-relaxed space-y-1 text-slate-700 dark:text-gray-300`}
                 dangerouslySetInnerHTML={{ __html: formatAIText(aiInsight) }}
               />
               <button
                 onClick={generateInsight}
                 disabled={aiLoading}
-                className={`text-xs font-medium ${isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-600 hover:text-violet-500'}`}
+                className={`text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300`}
               >
                 Regenerate
               </button>
@@ -687,7 +685,7 @@ Respond ONLY with valid JSON matching this exact schema:
         ) : (
           <div className={cardClass + ' p-6'}>
             <div className="text-center py-2">
-              <p className={`text-sm mb-3 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+              <p className={`text-sm mb-3 text-slate-400 dark:text-gray-500`}>
                 Get an AI-powered analysis of your week
               </p>
               <button

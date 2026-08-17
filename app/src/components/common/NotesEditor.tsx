@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import {
   List,
   CheckSquare,
@@ -33,8 +32,6 @@ export function NotesEditor({
   className = '',
   autoFocus = false,
 }: NotesEditorProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -271,12 +268,8 @@ export function NotesEditor({
         <div
           className={`flex items-center gap-1 px-3 py-2 rounded-t-xl border border-b-0 transition-colors ${
             isFocused
-              ? isDark
-                ? 'border-violet-500/50 bg-violet-500/5'
-                : 'border-violet-300 bg-violet-50/50'
-              : isDark
-                ? 'border-white/10 bg-white/[0.02]'
-                : 'border-slate-200 bg-slate-50/50'
+              ? 'border-violet-300 bg-violet-50/50 dark:border-violet-500/50 dark:bg-violet-500/5'
+              : 'border-slate-200 bg-slate-50/50 dark:border-white/10 dark:bg-white/[0.02]'
           }`}
         >
           {toolbarButtons.map(({ action, icon: Icon, label }) => (
@@ -287,18 +280,16 @@ export function NotesEditor({
               title={label}
               aria-label={label}
               className={`p-3 sm:p-2 rounded-lg transition-colors ${
-                isDark
-                  ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/10 active:bg-violet-500/20'
-                  : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50 active:bg-violet-100'
+                'text-slate-400 hover:text-violet-600 hover:bg-violet-50 active:bg-violet-100 dark:text-gray-500 dark:hover:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20'
               }`}
             >
               <Icon size={18} className="sm:w-[15px] sm:h-[15px]" />
             </button>
           ))}
 
-          <div className={`mx-1 sm:mx-2 w-px h-4 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+          <div className={`mx-1 sm:mx-2 w-px h-4 bg-slate-200 dark:bg-white/10`} />
 
-          <span className={`text-xs tracking-wider uppercase font-medium hidden sm:inline ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+          <span className={`text-xs tracking-wider uppercase font-medium hidden sm:inline text-slate-400 dark:text-gray-600`}>
             Markdown
           </span>
         </div>
@@ -318,13 +309,9 @@ export function NotesEditor({
           showToolbar ? 'rounded-b-xl border border-t-0' : 'rounded-xl border'
         } ${
           isFocused
-            ? isDark
-              ? 'border-violet-500/50 bg-white/[0.03]'
-              : 'border-violet-300 bg-white'
-            : isDark
-              ? 'border-white/10 bg-white/5'
-              : 'border-slate-200 bg-slate-50'
-        } ${isDark ? 'text-white placeholder-gray-600' : 'text-slate-800 placeholder-slate-400'}`}
+            ? 'border-violet-300 bg-white dark:border-violet-500/50 dark:bg-white/[0.03]'
+            : 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/5'
+        } text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-600`}
         style={{
           minHeight: `${minRows * lineHeight + paddingY}px`,
           fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace",
@@ -336,16 +323,16 @@ export function NotesEditor({
 
       {/* Footer: word count & shortcuts hint */}
       {showWordCount && (
-        <div className={`flex items-center justify-between px-3 py-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+        <div className={`flex items-center justify-between px-3 py-2 text-slate-400 dark:text-gray-600`}>
           <div className="flex items-center gap-3">
             <span className="text-xs">
               {wordCount} {wordCount === 1 ? 'word' : 'words'} · {charCount} chars
             </span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
-            <kbd className={`text-xs px-1 py-1 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>Tab</kbd>
+            <kbd className={`text-xs px-1 py-1 rounded bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500`}>Tab</kbd>
             <span className="text-xs">indent</span>
-            <kbd className={`text-xs px-1 py-1 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘↵</kbd>
+            <kbd className={`text-xs px-1 py-1 rounded bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500`}>⌘↵</kbd>
             <span className="text-xs">toggle check</span>
           </div>
         </div>

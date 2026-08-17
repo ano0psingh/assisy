@@ -1,6 +1,7 @@
 import { useState, useCallback, createContext, useContext, type ReactNode } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { Undo2, X } from 'lucide-react';
+import { IconButton } from '../ui';
 
 type UndoAction = {
   id: string;
@@ -62,21 +63,18 @@ export function UndoProvider({ children }: { children: ReactNode }) {
             <button
               onClick={handleUndo}
               className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                isDark
-                  ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
-                  : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
               }`}
             >
               <Undo2 size={14} />
               Undo
             </button>
-            <button
-              aria-label="Dismiss"
+            <IconButton
+              icon={X}
+              label="Dismiss"
+              size="sm"
               onClick={dismiss}
-              className={`p-1 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
-            >
-              <X size={14} />
-            </button>
+            />
           </div>
         </div>
       )}

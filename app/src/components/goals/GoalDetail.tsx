@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import type { Goal, Task, GoalTheme, Habit } from '../../types';
-import { useTheme } from '../../context/ThemeContext';
 import { useGoalContext } from '../../context/GoalContext';
 import { askAI, isAIConfigured } from '../../lib/ai';
 import { GoalTree } from './GoalTree';
@@ -50,8 +49,6 @@ export function GoalDetail({
   onToggleTaskComplete,
   isOpen
 }: GoalDetailProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const { addMilestone, completeMilestone, removeMilestone } = useGoalContext();
 
   const [isLinkingMode, setIsLinkingMode] = useState(false);
@@ -161,23 +158,23 @@ export function GoalDetail({
       <GoalTree level={goal.level} theme={goal.theme} size="lg" animate />
       <div className="flex items-center gap-3">
         <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${
-          isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
+          'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
         }`}>
           <Trophy size={14} /> Level {goal.level}
         </span>
-        <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+        <span className={`text-xs text-slate-500 dark:text-gray-500`}>
           {goal.totalXP} XP total
         </span>
       </div>
       {/* XP progress bar */}
       <div className="w-full max-w-xs">
         <div className="flex items-center justify-between mb-1">
-          <span className={`text-xs font-medium ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP to next level</span>
-          <span className={`text-xs font-semibold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+          <span className={`text-xs font-medium text-slate-500 dark:text-gray-500`}>XP to next level</span>
+          <span className={`text-xs font-semibold text-violet-600 dark:text-violet-400`}>
             {goal.currentLevelXP} / {goal.xpToNextLevel || '—'}
           </span>
         </div>
-        <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
+        <div className={`h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10`}>
           <div
             className="h-full rounded-full bg-violet-500 transition-all duration-500"
             style={{ width: `${xpPercent}%` }}
@@ -197,7 +194,7 @@ export function GoalDetail({
           className={`w-6 h-6 rounded-full border-2 transition-all hover:scale-110 ${
             goal.theme === t.value
               ? 'border-white shadow-lg scale-110'
-              : isDark ? 'border-transparent opacity-60 hover:opacity-100' : 'border-transparent opacity-50 hover:opacity-100'
+              : 'border-transparent opacity-50 hover:opacity-100 dark:opacity-60'
           }`}
           style={{ backgroundColor: t.color }}
         />
@@ -207,18 +204,18 @@ export function GoalDetail({
 
   const milestonesSection = (
     <div>
-      <label className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+      <label className={`text-sm font-medium mb-3 flex items-center gap-2 text-slate-600 dark:text-gray-400`}>
         Milestones ({(goal.milestones || []).filter(m => m.isCompleted).length}/{(goal.milestones || []).length})
       </label>
       {(goal.milestones || []).length === 0 && !showMilestoneForm && (
-        <div className={`text-center py-6 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>No milestones yet. Add one to track progress!</p>
+        <div className={`text-center py-6 rounded-xl bg-slate-50 dark:bg-white/5`}>
+          <p className={`text-sm text-slate-500 dark:text-gray-500`}>No milestones yet. Add one to track progress!</p>
         </div>
       )}
       {(goal.milestones || []).length > 0 && (
         <div className="relative pl-6 space-y-0">
           {/* Vertical line */}
-          <div className={`absolute left-[11px] top-2 bottom-2 w-0.5 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+          <div className={`absolute left-[11px] top-2 bottom-2 w-0.5 bg-slate-200 dark:bg-white/10`} />
           {(goal.milestones || []).map((ms) => (
             <div key={ms.id} className="relative flex items-start gap-3 py-2">
               {/* Circle / check */}
@@ -227,9 +224,7 @@ export function GoalDetail({
                 className={`absolute -left-6 top-2.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all z-10 ${
                   ms.isCompleted
                     ? 'bg-emerald-500 border-emerald-500'
-                    : isDark
-                      ? 'border-gray-600 bg-gray-900 hover:border-emerald-500 hover:bg-emerald-500/20'
-                      : 'border-slate-300 bg-white hover:border-emerald-500 hover:bg-emerald-50'
+                    : 'border-slate-300 bg-white hover:border-emerald-500 hover:bg-emerald-50 dark:border-gray-600 dark:bg-gray-900 dark:hover:bg-emerald-500/20'
                 }`}
                 disabled={ms.isCompleted}
                 title={ms.isCompleted ? 'Completed' : 'Click to complete'}
@@ -241,28 +236,26 @@ export function GoalDetail({
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-medium ${
                     ms.isCompleted
-                      ? isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through'
-                      : isDark ? 'text-gray-200' : 'text-slate-700'
+                      ? 'text-slate-400 line-through dark:text-gray-500'
+                      : 'text-slate-700 dark:text-gray-200'
                   }`}>
                     {ms.title}
                   </span>
                   <span className={`text-xs font-bold px-2 py-1 rounded ${
-                    isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
+                    'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
                   }`}>
                     +{ms.xpReward} XP
                   </span>
                 </div>
                 {ms.description && (
-                  <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{ms.description}</p>
+                  <p className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>{ms.description}</p>
                 )}
               </div>
               {/* Delete */}
               <button
                 onClick={() => removeMilestone(goal.id, ms.id)}
                 className={`p-1 rounded-lg transition-colors flex-shrink-0 ${
-                  isDark
-                    ? 'text-gray-600 hover:text-red-400 hover:bg-red-500/20'
-                    : 'text-slate-300 hover:text-red-500 hover:bg-red-50'
+                  'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:text-gray-600 dark:hover:text-red-400 dark:hover:bg-red-500/20'
                 }`}
                 title="Remove milestone"
                 aria-label="Remove milestone"
@@ -275,14 +268,14 @@ export function GoalDetail({
       )}
 
       {showMilestoneForm ? (
-        <div className={`mt-3 p-3 rounded-xl space-y-2 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-200'}`}>
+        <div className={`mt-3 p-3 rounded-xl space-y-2 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
           <input
             type="text"
             placeholder="Milestone title"
             value={msTitle}
             onChange={e => setMsTitle(e.target.value)}
             className={`w-full px-3 py-2 text-sm rounded-lg border outline-none ${
-              isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600 focus:border-violet-500' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500'
+              'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
             }`}
             autoFocus
             onKeyDown={e => e.key === 'Enter' && handleAddMilestone()}
@@ -293,7 +286,7 @@ export function GoalDetail({
             value={msDescription}
             onChange={e => setMsDescription(e.target.value)}
             className={`w-full px-3 py-2 text-sm rounded-lg border outline-none ${
-              isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600 focus:border-violet-500' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500'
+              'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
             }`}
           />
           <div className="flex items-center gap-2">
@@ -303,14 +296,14 @@ export function GoalDetail({
               value={msXP}
               onChange={e => setMsXP(e.target.value)}
               className={`w-20 px-3 py-2 text-sm rounded-lg border outline-none ${
-                isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600 focus:border-violet-500' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500'
+                'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
               }`}
             />
-            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>XP reward</span>
+            <span className={`text-xs text-slate-500 dark:text-gray-500`}>XP reward</span>
             <div className="flex-1" />
             <button
               onClick={() => setShowMilestoneForm(false)}
-              className={`px-3 py-2 text-xs rounded-lg ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`px-3 py-2 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >Cancel</button>
             <button
               onClick={handleAddMilestone}
@@ -323,7 +316,7 @@ export function GoalDetail({
         <button
           onClick={() => setShowMilestoneForm(true)}
           className={`mt-3 flex items-center gap-2 text-sm font-medium transition-colors ${
-            isDark ? 'text-gray-400 hover:text-violet-400' : 'text-slate-500 hover:text-violet-600'
+            'text-slate-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400'
           }`}
         >
           <Plus size={15} /> Add milestone
@@ -334,16 +327,14 @@ export function GoalDetail({
 
   const aiCoachSection = isAIConfigured() ? (
     <div>
-      <label className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+      <label className={`text-sm font-medium mb-3 flex items-center gap-2 text-slate-600 dark:text-gray-400`}>
         <Sparkles size={14} /> AI Coach
       </label>
       {!aiResponse && !aiLoading && (
         <button
           onClick={handleAskAI}
           className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-            isDark
-              ? 'bg-violet-500/10 border border-violet-500/20 text-violet-300 hover:bg-violet-500/20'
-              : 'bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100'
+            'bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:border-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/20'
           }`}
         >
           <Sparkles size={16} /> Get AI Advice
@@ -351,28 +342,26 @@ export function GoalDetail({
       )}
       {aiLoading && (
         <div className={`flex items-center justify-center gap-2 px-4 py-6 rounded-xl ${
-          isDark ? 'bg-violet-500/10 border border-violet-500/20' : 'bg-violet-50 border border-violet-200'
+          'bg-violet-50 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20'
         }`}>
           <Loader2 size={18} className="animate-spin text-violet-500" />
-          <span className={`text-sm ${isDark ? 'text-violet-300' : 'text-violet-600'}`}>Thinking...</span>
+          <span className={`text-sm text-violet-600 dark:text-violet-300`}>Thinking...</span>
         </div>
       )}
       {aiError && (
-        <div className={`p-4 rounded-xl text-sm ${isDark ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-red-50 border border-red-200 text-red-600'}`}>
+        <div className={`p-4 rounded-xl text-sm bg-red-50 border border-red-200 text-red-600 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-300`}>
           {aiError}
           <button onClick={handleAskAI} className="ml-2 underline">Retry</button>
         </div>
       )}
       {aiResponse && (
         <div className={`p-4 rounded-xl text-sm whitespace-pre-wrap leading-relaxed ${
-          isDark
-            ? 'bg-violet-500/10 border border-violet-500/20 text-violet-200'
-            : 'bg-violet-50 border border-violet-200 text-violet-900'
+          'bg-violet-50 border border-violet-200 text-violet-900 dark:bg-violet-500/10 dark:border-violet-500/20 dark:text-violet-200'
         }`}>
           {aiResponse}
           <button
             onClick={handleAskAI}
-            className={`mt-3 flex items-center gap-1 text-xs font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'} hover:underline`}
+            className={`mt-3 flex items-center gap-1 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline`}
           >
             <Sparkles size={12} /> Refresh advice
           </button>
@@ -390,10 +379,10 @@ export function GoalDetail({
   const progressBar = (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Progress</label>
-        <span className={`text-sm font-semibold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>{progress}%</span>
+        <label className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>Progress</label>
+        <span className={`text-sm font-semibold text-violet-600 dark:text-violet-400`}>{progress}%</span>
       </div>
-      <div className={`h-3 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
+      <div className={`h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10`}>
         <div
           className={`h-full rounded-full transition-all duration-500 ${
             progress === 100
@@ -403,7 +392,7 @@ export function GoalDetail({
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className={`text-xs mt-2 space-y-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+      <div className={`text-xs mt-2 space-y-1 text-slate-500 dark:text-gray-500`}>
         {nonRecurringTasks.length > 0 && (
           <p>{completedNonRecurring} of {nonRecurringTasks.length} tasks completed</p>
         )}
@@ -411,10 +400,10 @@ export function GoalDetail({
           <p>{completedMilestones} of {totalMilestones} milestones completed</p>
         )}
         {recurringCount > 0 && (
-          <p className={isDark ? 'text-gray-600' : 'text-slate-400'}>{recurringCount} recurring task{recurringCount > 1 ? 's' : ''} (ongoing, earn XP daily)</p>
+          <p className={'text-slate-400 dark:text-gray-600'}>{recurringCount} recurring task{recurringCount > 1 ? 's' : ''} (ongoing, earn XP daily)</p>
         )}
         {linkedHabits.length > 0 && (
-          <p className={isDark ? 'text-gray-600' : 'text-slate-400'}>{linkedHabits.length} habit{linkedHabits.length > 1 ? 's' : ''} linked (earn XP daily)</p>
+          <p className={'text-slate-400 dark:text-gray-600'}>{linkedHabits.length} habit{linkedHabits.length > 1 ? 's' : ''} linked (earn XP daily)</p>
         )}
       </div>
     </div>
@@ -423,7 +412,7 @@ export function GoalDetail({
   const linkedTasksSection = (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <label className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+        <label className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>
           Linked Tasks ({linkedTasks.length})
         </label>
         <button
@@ -431,7 +420,7 @@ export function GoalDetail({
           className={`flex items-center space-x-1 text-sm font-medium transition-colors ${
             isLinkingMode
               ? 'text-violet-500'
-              : isDark ? 'text-gray-400 hover:text-violet-400' : 'text-slate-500 hover:text-violet-600'
+              : 'text-slate-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400'
           }`}
         >
           <Plus size={16} />
@@ -440,21 +429,19 @@ export function GoalDetail({
       </div>
 
       {isLinkingMode && availableTasks.length > 0 && (
-        <div className={`mb-4 p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-          <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Select tasks to link:</p>
+        <div className={`mb-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5`}>
+          <p className={`text-sm mb-3 text-slate-600 dark:text-gray-400`}>Select tasks to link:</p>
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {availableTasks.map(task => (
               <button
                 key={task.id}
                 onClick={() => onLinkTask(goal.id, task.id)}
                 className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                  isDark
-                    ? 'bg-white/5 hover:bg-white/10 text-gray-300'
-                    : 'bg-white hover:bg-slate-100 text-slate-700'
+                  'bg-white hover:bg-slate-100 text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-gray-300'
                 }`}
               >
                 <span className="text-sm truncate">{task.title}</span>
-                <Link2 size={14} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
+                <Link2 size={14} className={'text-violet-500 dark:text-violet-400'} />
               </button>
             ))}
           </div>
@@ -462,15 +449,15 @@ export function GoalDetail({
       )}
 
       {isLinkingMode && availableTasks.length === 0 && (
-        <div className={`mb-4 p-4 rounded-xl text-center ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>No available tasks to link.</p>
+        <div className={`mb-4 p-4 rounded-xl text-center bg-slate-50 dark:bg-white/5`}>
+          <p className={`text-sm text-slate-500 dark:text-gray-500`}>No available tasks to link.</p>
         </div>
       )}
 
       {linkedTasks.length === 0 ? (
-        <div className={`text-center py-8 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-          <Target className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
-          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>No tasks linked yet.</p>
+        <div className={`text-center py-8 rounded-xl bg-slate-50 dark:bg-white/5`}>
+          <Target className={`w-10 h-10 mx-auto mb-3 text-slate-400 dark:text-gray-600`} />
+          <p className={`text-sm text-slate-500 dark:text-gray-500`}>No tasks linked yet.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -478,9 +465,7 @@ export function GoalDetail({
             <div
               key={task.id}
               className={`flex items-center justify-between p-3 rounded-xl ${
-                isDark
-                  ? 'bg-white/5 border border-white/10'
-                  : 'bg-slate-50 border border-slate-200'
+                'bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10'
               }`}
             >
               <div className="flex items-center space-x-3">
@@ -489,17 +474,15 @@ export function GoalDetail({
                   className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                     task.status === 'Completed'
                       ? 'bg-emerald-500 border-emerald-500'
-                      : isDark
-                        ? 'border-gray-600 hover:border-violet-500 hover:bg-violet-500/20'
-                        : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50'
+                      : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50 dark:border-gray-600 dark:hover:bg-violet-500/20'
                   }`}
                 >
                   {task.status === 'Completed' && <Check size={14} className="text-white" strokeWidth={3} />}
                 </button>
                 <span className={`text-sm ${
                   task.status === 'Completed'
-                    ? isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through'
-                    : isDark ? 'text-gray-300' : 'text-slate-700'
+                    ? 'text-slate-400 line-through dark:text-gray-500'
+                    : 'text-slate-700 dark:text-gray-300'
                 }`}>
                   {task.title}
                 </span>
@@ -507,9 +490,7 @@ export function GoalDetail({
               <button
                 onClick={() => onUnlinkTask(goal.id, task.id)}
                 className={`p-2 rounded-lg transition-colors ${
-                  isDark
-                    ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20'
-                    : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                  'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-500/20'
                 }`}
                 title="Unlink task"
                 aria-label="Unlink task"
@@ -525,7 +506,7 @@ export function GoalDetail({
 
   const linkedHabitsSection = linkedHabits.length > 0 ? (
     <div>
-      <label className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+      <label className={`text-sm font-medium mb-3 flex items-center gap-2 text-slate-600 dark:text-gray-400`}>
         <Flame size={14} /> Linked Habits ({linkedHabits.length})
       </label>
       <div className="space-y-2">
@@ -537,20 +518,20 @@ export function GoalDetail({
             <div
               key={h.id}
               className={`flex items-center gap-3 p-3 rounded-xl ${
-                isDark ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-200'
+                'bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10'
               }`}
             >
               <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
-                done ? 'bg-emerald-500 text-white' : isDark ? 'bg-white/10 text-gray-600' : 'bg-slate-200 text-slate-400'
+                done ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-gray-600'
               }`}>
                 {done && <Check size={12} strokeWidth={3} />}
               </div>
               <div className="flex-1 min-w-0">
-                <span className={`text-sm ${done ? (isDark ? 'text-gray-500 line-through' : 'text-slate-400 line-through') : (isDark ? 'text-gray-300' : 'text-slate-700')}`}>
+                <span className={`text-sm ${done ? ('text-slate-400 line-through dark:text-gray-500') : ('text-slate-700 dark:text-gray-300')}`}>
                   {h.name}
                 </span>
                 {h.dailyTarget && h.trackingType !== 'boolean' && (
-                  <span className={`ml-2 text-xs tabular-nums ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                  <span className={`ml-2 text-xs tabular-nums text-slate-400 dark:text-gray-600`}>
                     {todayVal}/{h.dailyTarget}{h.trackingType === 'duration' ? 'm' : ''}
                   </span>
                 )}
@@ -560,7 +541,7 @@ export function GoalDetail({
                   <Flame size={11} />{h.streakCount}d
                 </span>
               )}
-              <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+              <span className={`text-xs px-2 py-1 rounded bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400`}>
                 +{h.xpPerUnit} XP
               </span>
             </div>
@@ -572,11 +553,11 @@ export function GoalDetail({
 
   const recommendedReadingSection = (
     <div>
-      <label className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+      <label className={`text-sm font-medium mb-3 flex items-center gap-2 text-slate-600 dark:text-gray-400`}>
         <BookOpen size={14} /> Recommended Reading
       </label>
       {recommendedArticles.length === 0 ? (
-        <p className={`text-xs italic ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No recommended articles yet</p>
+        <p className={`text-xs italic text-slate-400 dark:text-gray-600`}>No recommended articles yet</p>
       ) : (
         <div className="space-y-2">
           {recommendedArticles.map(article => (
@@ -586,28 +567,28 @@ export function GoalDetail({
               target="_blank"
               rel="noopener noreferrer"
               className={`flex items-center justify-between p-3 rounded-xl transition-colors group ${
-                isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10' : 'bg-slate-50 border border-slate-100 hover:bg-slate-100'
+                'bg-slate-50 border border-slate-100 hover:bg-slate-100 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'
               }`}
             >
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{article.title || 'Untitled'}</p>
+                <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>{article.title || 'Untitled'}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {article.source && (
-                    <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.source}</span>
+                    <span className={`text-xs text-slate-400 dark:text-gray-600`}>{article.source}</span>
                   )}
                   {article.matched_goals?.some(g => g.toLowerCase() === goal.title.toLowerCase()) && (
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                      isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
+                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
                     }`}>AI match</span>
                   )}
                   {!article.matched_goals?.some(g => g.toLowerCase() === goal.title.toLowerCase()) && (
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                      isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
+                      'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
                     }`}>tag match</span>
                   )}
                 </div>
               </div>
-              <ExternalLink size={14} className={`flex-shrink-0 transition-opacity opacity-60 md:opacity-0 md:group-hover:opacity-100 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+              <ExternalLink size={14} className={`flex-shrink-0 transition-opacity opacity-60 md:opacity-0 md:group-hover:opacity-100 text-slate-400 dark:text-gray-500`} />
             </a>
           ))}
         </div>
@@ -617,7 +598,7 @@ export function GoalDetail({
 
   const relatedArticlesSection = linkedArticles.length > 0 ? (
     <div>
-      <label className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+      <label className={`text-sm font-medium mb-3 flex items-center gap-2 text-slate-600 dark:text-gray-400`}>
         <BookOpen size={14} /> Related Articles ({linkedArticles.length})
       </label>
       <div className="space-y-2">
@@ -628,25 +609,25 @@ export function GoalDetail({
             target="_blank"
             rel="noopener noreferrer"
             className={`flex items-center justify-between p-3 rounded-xl transition-colors group ${
-              isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10' : 'bg-slate-50 border border-slate-100 hover:bg-slate-100'
+              'bg-slate-50 border border-slate-100 hover:bg-slate-100 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'
             }`}
           >
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{article.title || 'Untitled'}</p>
+              <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>{article.title || 'Untitled'}</p>
               <div className="flex items-center gap-2 mt-1">
                 {article.reading_time_minutes && (
-                  <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.reading_time_minutes} min read</span>
+                  <span className={`text-xs text-slate-400 dark:text-gray-600`}>{article.reading_time_minutes} min read</span>
                 )}
                 {article.relevance_score && (
-                  <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{article.relevance_score}/10</span>
+                  <span className={`text-xs text-slate-400 dark:text-gray-600`}>{article.relevance_score}/10</span>
                 )}
               </div>
             </div>
-            <ExternalLink size={14} className={`flex-shrink-0 transition-opacity opacity-60 md:opacity-0 md:group-hover:opacity-100 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+            <ExternalLink size={14} className={`flex-shrink-0 transition-opacity opacity-60 md:opacity-0 md:group-hover:opacity-100 text-slate-400 dark:text-gray-500`} />
           </a>
         ))}
       </div>
-      <p className={`text-xs mt-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+      <p className={`text-xs mt-2 text-slate-400 dark:text-gray-600`}>
         Total reading: ~{linkedArticles.reduce((s, a) => s + (a.reading_time_minutes ?? 0), 0)} min across {linkedArticles.length} article{linkedArticles.length !== 1 ? 's' : ''}
       </p>
     </div>
@@ -654,7 +635,7 @@ export function GoalDetail({
 
   const editButtons = isEditing ? (
     <div className="flex justify-end space-x-2">
-      <button onClick={() => setIsEditing(false)} className={`px-4 py-2 rounded-lg text-sm ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}>Cancel</button>
+      <button onClick={() => setIsEditing(false)} className={`px-4 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}>Cancel</button>
       <button onClick={handleSaveEdit} className="btn-primary px-4 py-2 rounded-lg text-sm">Save Changes</button>
     </div>
   ) : null;
@@ -664,28 +645,28 @@ export function GoalDetail({
       isOpen={isOpen}
       onClose={onClose}
       title={goal.title}
-      icon={<Target className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+      icon={<Target className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
       maxWidth="max-w-2xl"
     >
       {(isFS) =>
         isFS ? (
           <div className="flex h-full">
             {/* Left: tree + description + milestones + AI */}
-            <div className={`flex-1 flex flex-col p-8 space-y-6 border-r overflow-y-auto ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <div className={`flex-1 flex flex-col p-8 space-y-6 border-r overflow-y-auto border-slate-200 dark:border-white/10`}>
               {treeSection}
               {themeSelector}
               <div>
-                <p className={`text-sm mb-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{goal.category} &bull; {goal.status}</p>
+                <p className={`text-sm mb-1 text-slate-500 dark:text-gray-500`}>{goal.category} &bull; {goal.status}</p>
               </div>
               <div className="flex-1">
-                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Description</label>
+                <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
                 {isEditing ? (
                   <>
                     <input
                       type="text"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
-                      className={`w-full px-4 py-3 mb-4 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
+                      className={`w-full px-4 py-3 mb-4 rounded-xl border outline-none bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white`}
                       autoFocus
                     />
                     <TiptapEditor
@@ -697,7 +678,7 @@ export function GoalDetail({
                   </>
                 ) : (
                   <p
-                    className={`cursor-pointer hover:opacity-80 whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
+                    className={`cursor-pointer hover:opacity-80 whitespace-pre-wrap text-slate-700 dark:text-gray-300`}
                     onClick={() => setIsEditing(true)}
                   >
                     {goal.description || 'Click to add a description...'}
@@ -709,7 +690,7 @@ export function GoalDetail({
               {aiCoachSection}
             </div>
             {/* Right: progress + linked tasks */}
-            <div className={`w-96 flex-shrink-0 p-6 space-y-6 overflow-y-auto ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
+            <div className={`w-96 flex-shrink-0 p-6 space-y-6 overflow-y-auto bg-white dark:bg-white/[0.02]`}>
               {progressBar}
               {linkedHabitsSection}
               {linkedTasksSection}
@@ -722,17 +703,17 @@ export function GoalDetail({
             {treeSection}
             {themeSelector}
             <div>
-              <p className={`text-sm mb-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{goal.category} &bull; {goal.status}</p>
+              <p className={`text-sm mb-1 text-slate-500 dark:text-gray-500`}>{goal.category} &bull; {goal.status}</p>
             </div>
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Description</label>
+              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
               {isEditing ? (
                 <>
                   <input
                     type="text"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className={`w-full px-4 py-3 mb-3 rounded-xl border outline-none ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'}`}
+                    className={`w-full px-4 py-3 mb-3 rounded-xl border outline-none bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white`}
                     autoFocus
                   />
                   <TiptapEditor
@@ -744,7 +725,7 @@ export function GoalDetail({
                 </>
               ) : (
                 <p
-                  className={`cursor-pointer hover:opacity-80 whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
+                  className={`cursor-pointer hover:opacity-80 whitespace-pre-wrap text-slate-700 dark:text-gray-300`}
                   onClick={() => setIsEditing(true)}
                 >
                   {goal.description || 'Click to add a description...'}

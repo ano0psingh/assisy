@@ -46,7 +46,7 @@ function XPAnimation({ xp, onComplete }: { xp: number; onComplete: () => void })
   );
 }
 
-function BacklogPicker({ tasks, onAdd, isDark }: { tasks: Task[]; onAdd: (id: string) => void; isDark: boolean }) {
+function BacklogPicker({ tasks, onAdd }: { tasks: Task[]; onAdd: (id: string) => void; }) {
   const [expanded, setExpanded] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -58,15 +58,15 @@ function BacklogPicker({ tasks, onAdd, isDark }: { tasks: Task[]; onAdd: (id: st
   const visible = expanded ? filtered : filtered.slice(0, 4);
 
   return (
-    <div className={`mt-3 pt-3 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+    <div className={`mt-3 pt-3 border-t border-slate-100 dark:border-white/5`}>
       <div className="flex items-center justify-between mb-2">
-        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+        <p className={`text-xs text-slate-400 dark:text-gray-500`}>
           Add from backlog ({tasks.length})
         </p>
         {tasks.length > 4 && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className={`text-xs ${isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-600'}`}
+            className={`text-xs text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300`}
           >
             {expanded ? 'Show less' : 'Show all'}
           </button>
@@ -79,7 +79,7 @@ function BacklogPicker({ tasks, onAdd, isDark }: { tasks: Task[]; onAdd: (id: st
           onChange={e => setSearch(e.target.value)}
           placeholder="Search backlog..."
           className={`w-full px-3 py-2 mb-2 rounded-lg text-xs outline-none ${
-            isDark ? 'bg-white/5 border border-white/10 text-white placeholder-gray-600' : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400'
+            'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
           }`}
         />
       )}
@@ -89,18 +89,16 @@ function BacklogPicker({ tasks, onAdd, isDark }: { tasks: Task[]; onAdd: (id: st
             key={task.id}
             onClick={() => onAdd(task.id)}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left transition-colors ${
-              isDark
-                ? 'text-gray-400 hover:bg-violet-500/10 hover:text-violet-400'
-                : 'text-slate-500 hover:bg-violet-50 hover:text-violet-600'
+              'text-slate-500 hover:bg-violet-50 hover:text-violet-600 dark:text-gray-400 dark:hover:bg-violet-500/10 dark:hover:text-violet-400'
             }`}
           >
             <Plus size={12} className="flex-shrink-0" />
             <span className="truncate flex-1">{task.title}</span>
-            <span className={`text-xs flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{task.category}</span>
+            <span className={`text-xs flex-shrink-0 text-slate-400 dark:text-gray-600`}>{task.category}</span>
           </button>
         ))}
         {expanded && filtered.length === 0 && search && (
-          <p className={`text-xs py-2 text-center ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks match "{search}"</p>
+          <p className={`text-xs py-2 text-center text-slate-400 dark:text-gray-600`}>No tasks match "{search}"</p>
         )}
       </div>
     </div>
@@ -594,21 +592,21 @@ RULES:
         return (
           <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 ${
             status === 'denied'
-              ? isDark ? 'bg-red-500/10 border border-red-500/20' : 'bg-red-50 border border-red-200'
-              : isDark ? 'bg-violet-500/10 border border-violet-500/20' : 'bg-violet-50 border border-violet-200'
+              ? 'bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/20'
+              : 'bg-violet-50 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20'
           }`}>
             <div>
               <p className={`text-sm font-medium ${
                 status === 'denied'
-                  ? isDark ? 'text-red-300' : 'text-red-700'
-                  : isDark ? 'text-violet-300' : 'text-violet-700'
+                  ? 'text-red-700 dark:text-red-300'
+                  : 'text-violet-700 dark:text-violet-300'
               }`}>
                 {status === 'denied'
                   ? 'Notifications blocked'
                   : 'Enable notifications for habit reminders'}
               </p>
               {status === 'denied' && (
-                <p className={`text-xs mt-1 ${isDark ? 'text-red-400/60' : 'text-red-500/60'}`}>
+                <p className={`text-xs mt-1 text-red-500/60 dark:text-red-400/60`}>
                   Open browser settings → Site settings → Notifications → Allow for this site
                 </p>
               )}
@@ -633,7 +631,7 @@ RULES:
                   </button>
                   <button
                     onClick={() => setShowNotifBanner(false)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
                   >
                     Later
                   </button>
@@ -668,14 +666,14 @@ RULES:
         if (overdueTasks.length === 0) return null;
         return (
           <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
-            isDark ? 'bg-red-500/10 border border-red-500/20' : 'bg-red-50 border border-red-200'
+            'bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/20'
           }`}>
-            <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-red-400' : 'text-red-500'}`} />
+            <AlertTriangle className={`w-4 h-4 flex-shrink-0 text-red-500 dark:text-red-400`} />
             <div className="flex-1">
-              <span className={`text-sm font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+              <span className={`text-sm font-medium text-red-600 dark:text-red-400`}>
                 {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}
               </span>
-              <span className={`text-xs ml-2 ${isDark ? 'text-red-400/60' : 'text-red-500/60'}`}>
+              <span className={`text-xs ml-2 text-red-500/60 dark:text-red-400/60`}>
                 {overdueTasks.slice(0, 3).map(t => t.title).join(', ')}{overdueTasks.length > 3 ? ` +${overdueTasks.length - 3} more` : ''}
               </span>
             </div>
@@ -686,13 +684,13 @@ RULES:
       {/* ── GREETING: date, progress, actions ───────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>
             Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, Kage {greetingEmoji}
           </h1>
-          <p className={`mt-1 text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+          <p className={`mt-1 text-sm text-slate-500 dark:text-gray-400`}>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             {totalTodayTasks > 0 && (
-              <span className={isDark ? 'text-violet-400' : 'text-violet-600'}> · {totalTodayDone} of {totalTodayTasks} done</span>
+              <span className={'text-violet-600 dark:text-violet-400'}> · {totalTodayDone} of {totalTodayTasks} done</span>
             )}
           </p>
         </div>
@@ -709,7 +707,7 @@ RULES:
             <span>Plan Day</span>
             {getSuggestedTasks().length > 0 && (
               <span className={`ml-1 px-2 py-1 text-xs font-bold rounded-full ${
-                isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-200 text-violet-700'
+                'bg-violet-200 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
               }`}>{getSuggestedTasks().length}</span>
             )}
           </button>
@@ -726,9 +724,9 @@ RULES:
       {/* ── TODAY'S TASKS — the hero section ───────────────── */}
       {todaysTasks.length === 0 && todaysProjectTasks.length === 0 ? (
         <div className={`card rounded-2xl p-6 sm:p-8 text-center`}>
-          <Sparkles className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-          <h3 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>All clear!</h3>
-          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>No tasks for today.</p>
+          <Sparkles className={`w-10 h-10 mx-auto mb-3 text-emerald-500 dark:text-emerald-400`} />
+          <h3 className={`font-semibold mb-1 text-slate-800 dark:text-white`}>All clear!</h3>
+          <p className={`text-sm mb-4 text-slate-500 dark:text-gray-400`}>No tasks for today.</p>
           <button
             onClick={() => setIsTaskFormOpen(true)}
             className="btn-primary px-4 py-2 rounded-xl text-sm inline-flex items-center gap-2"
@@ -760,8 +758,8 @@ RULES:
                     }}
                     className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
                       task.status === 'In Progress'
-                        ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-500'
-                        : isDark ? 'bg-gray-500/20 text-gray-500' : 'bg-slate-200 text-slate-400'
+                        ? 'bg-blue-100 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400'
+                        : 'bg-slate-200 text-slate-400 dark:bg-gray-500/20 dark:text-gray-500'
                     }`}
                     title={task.status}
                   >
@@ -769,13 +767,13 @@ RULES:
                   </button>
                   <h3
                     onClick={() => handleEditProjectTask(task)}
-                    className={`flex-1 font-medium truncate cursor-pointer hover:opacity-80 ${isDark ? 'text-white' : 'text-slate-800'}`}
+                    className={`flex-1 font-medium truncate cursor-pointer hover:opacity-80 text-slate-800 dark:text-white`}
                   >
                     {task.title}
                   </h3>
                   <button
                     onClick={(e) => { e.stopPropagation(); navigate('/projects'); }}
-                    className={`text-xs px-2 py-1 rounded-full flex-shrink-0 cursor-pointer hover:ring-1 transition-all ${isDark ? 'bg-violet-500/15 text-violet-400 hover:ring-violet-500/40' : 'bg-violet-50 text-violet-600 hover:ring-violet-300'}`}
+                    className={`text-xs px-2 py-1 rounded-full flex-shrink-0 cursor-pointer hover:ring-1 transition-all bg-violet-50 text-violet-600 hover:ring-violet-300 dark:bg-violet-500/15 dark:text-violet-400 dark:hover:ring-violet-500/40`}
                     title="Go to Projects"
                   >
                     {project?.title}{subProject ? ` → ${subProject.title}` : ''}
@@ -784,9 +782,7 @@ RULES:
                   <button
                     onClick={(e) => { e.stopPropagation(); removeProjectTaskFromToday(task.id); }}
                     className={`p-3 rounded-lg transition-all flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
-                      isDark
-                        ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/20'
-                        : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                      'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-500/20'
                     }`}
                     title="Remove from Today"
                     aria-label={`Remove "${task.title}" from Today`}
@@ -815,12 +811,11 @@ RULES:
           <BacklogPicker
             tasks={getSuggestedTasks()}
             onAdd={addToToday}
-            isDark={isDark}
           />
 
           {/* Completed tasks — subtle, at bottom */}
           {(allTodayCompleted.length > 0 || todaysProjectTasks.filter(t => t.status === 'Done').length > 0) && (
-            <p className={`text-xs pt-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+            <p className={`text-xs pt-2 text-slate-400 dark:text-gray-600`}>
               {allTodayCompleted.length + todaysProjectTasks.filter(t => t.status === 'Done').length} completed today
             </p>
           )}
@@ -828,18 +823,18 @@ RULES:
       )}
 
       {/* ── STATS STRIP: compact on mobile, detailed on md+ ── */}
-      <div className={`rounded-2xl border p-3 ${isDark ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-white border-slate-200'}`}>
+      <div className={`rounded-2xl border p-3 bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.08]`}>
         <div className="grid grid-cols-4 gap-2 sm:gap-3">
           <div
             className="flex flex-col items-center gap-1 text-center"
             title={`You earn XP by completing tasks, logging habits and progressing goals. Every ${levelProgress.xpPerLevel} XP is one level.`}
           >
-            <Crown className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-            <span className={`text-lg font-bold ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>{getTotalLevel()}</span>
-            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Level</span>
+            <Crown className={`w-4 h-4 text-violet-500 dark:text-violet-400`} />
+            <span className={`text-lg font-bold text-violet-700 dark:text-violet-300`}>{getTotalLevel()}</span>
+            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Level</span>
             <div className={`w-full ${statsExpanded ? '' : 'hidden'} md:block`}>
               <div
-                className={`mt-1 h-1 rounded-full overflow-hidden ${isDark ? 'bg-violet-500/20' : 'bg-violet-200'}`}
+                className={`mt-1 h-1 rounded-full overflow-hidden bg-violet-200 dark:bg-violet-500/20`}
                 role="progressbar"
                 aria-valuenow={Math.round(levelProgress.percent)}
                 aria-valuemin={0}
@@ -847,44 +842,44 @@ RULES:
                 aria-label={`${levelProgress.xpToNextLevel} XP to level ${getTotalLevel() + 1}`}
               >
                 <div
-                  className={`h-full rounded-full transition-[width] duration-500 ${isDark ? 'bg-violet-400' : 'bg-violet-500'}`}
+                  className={`h-full rounded-full transition-[width] duration-500 bg-violet-500 dark:bg-violet-400`}
                   style={{ width: `${levelProgress.percent}%` }}
                 />
               </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>{getTitle()}</p>
-              <p className={`text-xs ${isDark ? 'text-violet-400/50' : 'text-violet-500/60'}`}>
+              <p className={`text-xs mt-1 text-violet-500/60 dark:text-violet-400/50`}>{getTitle()}</p>
+              <p className={`text-xs text-violet-500/60 dark:text-violet-400/50`}>
                 {levelProgress.xpToNextLevel} XP to level {getTotalLevel() + 1}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-center gap-1 text-center">
-            <CheckSquare className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
-            <span className={`text-lg font-bold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{totalTodayDone}/{totalTodayTasks}</span>
-            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Tasks</span>
-            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block ${isDark ? 'text-blue-400/50' : 'text-blue-500/60'}`}>done today</p>
+            <CheckSquare className={`w-4 h-4 text-blue-500 dark:text-blue-400`} />
+            <span className={`text-lg font-bold text-blue-700 dark:text-blue-300`}>{totalTodayDone}/{totalTodayTasks}</span>
+            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Tasks</span>
+            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block text-blue-500/60 dark:text-blue-400/50`}>done today</p>
           </div>
           <div className="flex flex-col items-center gap-1 text-center">
-            <Flame className={`w-4 h-4 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-            <span className={`text-lg font-bold ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>{userStats.currentStreak}</span>
-            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Streak</span>
-            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block ${isDark ? 'text-orange-400/50' : 'text-orange-500/60'}`}>days</p>
+            <Flame className={`w-4 h-4 text-orange-500 dark:text-orange-400`} />
+            <span className={`text-lg font-bold text-orange-700 dark:text-orange-300`}>{userStats.currentStreak}</span>
+            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Streak</span>
+            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block text-orange-500/60 dark:text-orange-400/50`}>days</p>
           </div>
           <div className="flex flex-col items-center gap-1 text-center">
-            <Trophy className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-            <span className={`text-lg font-bold ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{getUnlockedAchievements().length}</span>
-            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Badges</span>
-            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block ${isDark ? 'text-amber-400/50' : 'text-amber-500/60'}`}>unlocked</p>
+            <Trophy className={`w-4 h-4 text-amber-500 dark:text-amber-400`} />
+            <span className={`text-lg font-bold text-amber-700 dark:text-amber-300`}>{getUnlockedAchievements().length}</span>
+            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Badges</span>
+            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block text-amber-500/60 dark:text-amber-400/50`}>unlocked</p>
           </div>
         </div>
         {habitCheckInStats.totalHabits > 0 && (
-          <p className={`mt-3 text-center text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <p className={`mt-3 text-center text-xs text-slate-500 dark:text-gray-500`}>
             {habitCheckInStats.todayCompletedCount}/{habitCheckInStats.totalHabits} habits done today
           </p>
         )}
         <button
           type="button"
           onClick={() => setStatsExpanded(prev => !prev)}
-          className={`md:hidden w-full mt-2 text-xs font-medium ${isDark ? 'text-gray-500 hover:text-gray-400' : 'text-slate-500 hover:text-slate-600'}`}
+          className={`md:hidden w-full mt-2 text-xs font-medium text-slate-500 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400`}
         >
           {statsExpanded ? '▲ Less' : '▼ More'}
         </button>
@@ -892,15 +887,15 @@ RULES:
 
       {/* ── SUGGESTED FOR YOU (pattern-based) ───────────────── */}
       {suggestionGroups.length > 0 && (
-        <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200'}`}>
+        <div className={`rounded-xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.03] dark:border-white/10`}>
           <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-            <Sparkles size={18} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
-            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Suggested for you</span>
+            <Sparkles size={18} className={'text-amber-500 dark:text-amber-400'} />
+            <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>Suggested for you</span>
           </div>
           <div className="divide-y divide-white/5">
             {suggestionGroups.map((group) => (
               <div key={group.label} className="p-3">
-                <p className={`text-xs font-medium mb-2 flex items-center gap-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                <p className={`text-xs font-medium mb-2 flex items-center gap-2 text-slate-500 dark:text-gray-500`}>
                   <group.icon size={12} />
                   {group.label} ({group.tasks.length})
                 </p>
@@ -908,14 +903,14 @@ RULES:
                   {group.tasks.slice(0, 4).map((task) => (
                     <div
                       key={task.id}
-                      className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
+                      className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 bg-slate-50 dark:bg-white/5`}
                     >
-                      <span className={`text-sm truncate flex-1 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{task.title}</span>
+                      <span className={`text-sm truncate flex-1 text-slate-700 dark:text-gray-300`}>{task.title}</span>
                       <button
                         type="button"
                         onClick={() => addToToday(task.id)}
                         className={`text-xs font-medium px-3 py-1 rounded-lg flex-shrink-0 transition-colors ${
-                          isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                          'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                         }`}
                       >
                         Add to Today
@@ -923,7 +918,7 @@ RULES:
                     </div>
                   ))}
                   {group.tasks.length > 4 && (
-                    <p className={`text-xs pl-3 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>+{group.tasks.length - 4} more in backlog</p>
+                    <p className={`text-xs pl-3 text-slate-400 dark:text-gray-600`}>+{group.tasks.length - 4} more in backlog</p>
                   )}
                 </div>
               </div>
@@ -941,41 +936,41 @@ RULES:
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-500/15' : 'bg-slate-200/70'}`}>
-              <Calendar className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-slate-200/70 dark:bg-slate-500/15`}>
+              <Calendar className={`w-3.5 h-3.5 text-slate-500 dark:text-gray-400`} />
             </div>
             <div>
-              <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>This Week</span>
-              <span className={`text-xs ml-2 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+              <span className={`text-sm font-medium text-slate-700 dark:text-gray-300`}>This Week</span>
+              <span className={`text-xs ml-2 text-slate-400 dark:text-gray-600`}>
                 {weeklyProfessionalReview.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weeklyProfessionalReview.weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
             </div>
           </div>
-          <span className={`text-xs font-medium px-2 py-1 rounded-full ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-200/70 text-slate-500'}`}>View full review →</span>
+          <span className={`text-xs font-medium px-2 py-1 rounded-full bg-slate-200/70 text-slate-500 dark:bg-white/5 dark:text-gray-500`}>View full review →</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-xs">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={12} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
-            <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>
-              <span className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{weeklyProfessionalReview.completed.length}</span> completed
+            <CheckCircle2 size={12} className={'text-emerald-500 dark:text-emerald-400'} />
+            <span className={'text-slate-600 dark:text-gray-400'}>
+              <span className={`font-semibold text-emerald-600 dark:text-emerald-400`}>{weeklyProfessionalReview.completed.length}</span> completed
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <ListTodo size={12} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
-            <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>
-              <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{weeklyProfessionalReview.backlog.length}</span> pending
+            <ListTodo size={12} className={'text-blue-500 dark:text-blue-400'} />
+            <span className={'text-slate-600 dark:text-gray-400'}>
+              <span className={`font-semibold text-blue-600 dark:text-blue-400`}>{weeklyProfessionalReview.backlog.length}</span> pending
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Flame size={12} className={isDark ? 'text-orange-400' : 'text-orange-500'} />
-            <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>
-              <span className={`font-semibold ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>{userStats.currentStreak}</span> day streak
+            <Flame size={12} className={'text-orange-500 dark:text-orange-400'} />
+            <span className={'text-slate-600 dark:text-gray-400'}>
+              <span className={`font-semibold text-orange-600 dark:text-orange-400`}>{userStats.currentStreak}</span> day streak
             </span>
           </div>
           {projects.length > 0 && (
             <div className="flex items-center gap-2">
-              <Zap size={12} className={isDark ? 'text-violet-400' : 'text-violet-500'} />
-              <span className={`truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+              <Zap size={12} className={'text-violet-500 dark:text-violet-400'} />
+              <span className={`truncate text-slate-600 dark:text-gray-400`}>
                 {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -984,33 +979,33 @@ RULES:
       </div>
 
       {/* ── BRIEFING / QUOTE OF THE DAY — quiet closing line ── */}
-      <div className={`flex items-start gap-3 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+      <div className={`flex items-start gap-3 text-slate-600 dark:text-gray-300`}>
         <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-1 ${
-          isDark ? 'bg-violet-500/10' : 'bg-violet-50'
+          'bg-violet-50 dark:bg-violet-500/10'
         }`}>
           {morningBriefing || briefingLoading
-            ? <Bot className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
-            : <Quote className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            ? <Bot className={`w-4 h-4 text-violet-500 dark:text-violet-400`} />
+            : <Quote className={`w-4 h-4 text-violet-500 dark:text-violet-400`} />
           }
         </div>
         <div className="flex-1 min-w-0">
           {briefingLoading ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Generating your morning briefing...</p>
+              <p className={`text-sm text-slate-500 dark:text-gray-400`}>Generating your morning briefing...</p>
             </div>
           ) : morningBriefing ? (
             <>
               <div
-                className={`text-sm leading-relaxed space-y-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}
+                className={`text-sm leading-relaxed space-y-1 text-slate-600 dark:text-gray-300`}
                 dangerouslySetInnerHTML={{ __html: formatAIText(morningBriefing) }}
               />
               <div className="flex items-center gap-3 mt-2">
-                <p className={`text-xs ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>— AI Coach</p>
+                <p className={`text-xs text-violet-500/80 dark:text-violet-400/70`}>— AI Coach</p>
                 <button
                   onClick={() => generateBriefing(true)}
                   className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
-                    isDark ? 'text-gray-500 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+                    'text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:text-gray-500 dark:hover:text-violet-400 dark:hover:bg-violet-500/10'
                   }`}
                 >
                   <RefreshCw size={10} />
@@ -1020,10 +1015,10 @@ RULES:
             </>
           ) : (
             <>
-              <p className={`text-sm leading-relaxed italic ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+              <p className={`text-sm leading-relaxed italic text-slate-600 dark:text-gray-300`}>
                 "{quote.text}"
               </p>
-              <p className={`text-xs mt-1 ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>— {quote.author}</p>
+              <p className={`text-xs mt-1 text-violet-500/80 dark:text-violet-400/70`}>— {quote.author}</p>
             </>
           )}
         </div>
@@ -1064,30 +1059,28 @@ RULES:
         >
           <div 
             className={`flex items-center space-x-3 p-4 rounded-2xl shadow-elevated max-w-sm mx-auto ${
-              isDark 
-                ? 'bg-[#1a1a2e]/95 backdrop-blur border border-violet-500/30' 
-                : 'bg-white/95 backdrop-blur border border-violet-200'
+              'bg-white/95 backdrop-blur border border-violet-200 dark:bg-[#1a1a2e]/95 dark:border-violet-500/30'
             }`}
           >
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
-              isDark ? 'bg-violet-500/20' : 'bg-violet-100'
+              'bg-violet-100 dark:bg-violet-500/20'
             }`}>
               🌅
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-xs font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+              <p className={`text-xs font-medium text-violet-600 dark:text-violet-400`}>
                 Welcome Back! Daily Bonus
               </p>
-              <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <h4 className={`text-lg font-bold text-slate-800 dark:text-white`}>
                 +{dailyBonusResult.xp} XP
               </h4>
               <div className="flex items-center space-x-2">
-                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <span className={`text-xs text-slate-500 dark:text-gray-400`}>
                   🔥 {dailyBonusResult.streak} day streak
                 </span>
                 {dailyBonusResult.multiplier > 1 && (
                   <span className={`text-xs px-2 py-1 rounded-full ${
-                    isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
+                    'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'
                   }`}>
                     {dailyBonusResult.multiplier}x bonus
                   </span>
@@ -1097,7 +1090,7 @@ RULES:
             <button
               onClick={() => setDailyBonusResult(null)}
               className={`p-2 rounded-lg transition-colors ${
-                isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'
+                'hover:bg-slate-100 text-slate-400 dark:hover:bg-white/10 dark:text-gray-400'
               }`}
             >
               ✕
@@ -1113,31 +1106,29 @@ RULES:
             <div 
               key={achievement.id}
               className={`flex items-center space-x-3 p-4 rounded-2xl shadow-elevated max-w-sm ${
-                isDark 
-                  ? 'bg-amber-500/20 border border-amber-500/30' 
-                  : 'bg-amber-50 border border-amber-200'
+                'bg-amber-50 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30'
               }`}
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
-                isDark ? 'bg-amber-500/20' : 'bg-amber-100'
+                'bg-amber-100 dark:bg-amber-500/20'
               }`}>
                 {achievement.icon}
               </div>
               <div className="flex-1">
-                <p className={`text-xs font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                <p className={`text-xs font-medium text-amber-600 dark:text-amber-400`}>
                   🎉 Achievement Unlocked!
                 </p>
-                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                <h4 className={`font-semibold text-slate-800 dark:text-white`}>
                   {achievement.name}
                 </h4>
-                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <p className={`text-xs text-slate-500 dark:text-gray-400`}>
                   +{achievement.xpReward} XP
                 </p>
               </div>
               <button
                 onClick={clearRecentUnlocks}
                 className={`p-2 rounded-lg transition-colors ${
-                  isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'
+                  'hover:bg-slate-100 text-slate-400 dark:hover:bg-white/10 dark:text-gray-400'
                 }`}
               >
                 ✕
@@ -1164,12 +1155,12 @@ RULES:
         isOpen={!!editingProjectTask}
         onClose={() => setEditingProjectTask(null)}
         title="Edit Task"
-        icon={<Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        icon={<Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
         footer={
           <div className="flex justify-end space-x-3">
             <button
               onClick={() => setEditingProjectTask(null)}
-              className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >
               Cancel
             </button>
@@ -1180,34 +1171,34 @@ RULES:
         {(isFS) => {
           if (!editingProjectTask) return null;
           const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-            isDark ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+            'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
           }`;
           const titleInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Title</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
               <input type="text" value={projectTaskForm.title} onChange={(e) => setProjectTaskForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} autoFocus />
             </div>
           );
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Notes</label>
+              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes</label>
               <TiptapEditor content={projectTaskForm.description} onChange={(val) => setProjectTaskForm(prev => ({ ...prev, description: val }))} placeholder="Add notes, checklists, or details..." />
             </div>
           );
           const statusSelector = (
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Status</label>
-              <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Status</label>
+              <div className={`flex rounded-xl overflow-hidden border border-slate-200 dark:border-white/10`}>
                 {(['Backlog', 'In Progress', 'Done'] as const).map((status) => (
-                  <button key={status} onClick={() => updateTaskStatus(editingProjectTask.id, status)} className={`flex-1 px-3 py-2 text-xs font-medium transition-all ${editingProjectTask.status === status ? status === 'Done' ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600' : status === 'In Progress' ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600' : isDark ? 'bg-gray-500/20 text-gray-300' : 'bg-slate-100 text-slate-700' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>{status}</button>
+                  <button key={status} onClick={() => updateTaskStatus(editingProjectTask.id, status)} className={`flex-1 px-3 py-2 text-xs font-medium transition-all ${editingProjectTask.status === status ? status === 'Done' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : status === 'In Progress' ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-gray-500/20 dark:text-gray-300' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>{status}</button>
                 ))}
               </div>
             </div>
           );
           const projectInfo = (
-            <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Project</p>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+            <div className={`p-3 rounded-xl bg-slate-50 dark:bg-white/5`}>
+              <p className={`text-xs text-slate-500 dark:text-gray-500`}>Project</p>
+              <p className={`text-sm font-medium text-slate-700 dark:text-gray-300`}>
                 {getProject(editingProjectTask.projectId)?.title} → {getSubProject(editingProjectTask.subProjectId)?.title}
               </p>
             </div>
@@ -1215,12 +1206,12 @@ RULES:
 
           return isFS ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
                 {titleInput}
                 {notesInput}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Details</h3>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Details</h3>
                 {statusSelector}
                 {projectInfo}
               </div>

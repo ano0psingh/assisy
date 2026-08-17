@@ -47,6 +47,7 @@ const GOAL_BULK_FIELDS: BulkEditField[] = [
 ];
 import { SelectButton, SelectionCheckbox, SelectionIndicator } from '../components/common/SelectionControls';
 import type { Goal, TaskCategory, GoalStatus, GoalTheme } from '../types';
+import { IconButton } from '../components/ui';
 
 type FilterStatus = 'all' | 'Active' | 'Completed' | 'Archived';
 
@@ -356,7 +357,7 @@ export function Goals() {
   };
 
   const getThemeBg = (goalTheme?: GoalTheme) => {
-    if (!goalTheme) return isDark ? 'bg-violet-500/8' : 'bg-violet-50';
+    if (!goalTheme) return 'bg-violet-50 dark:bg-violet-500/8';
     const t = THEME_BG[goalTheme];
     return isDark ? t.dark : t.light;
   };
@@ -367,20 +368,20 @@ export function Goals() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Goals</h1>
-          <p className={`mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>Goals</h1>
+          <p className={`mt-1 text-slate-500 dark:text-gray-500`}>
             {activeGoalsCount} active • {completedGoalsCount} completed • {totalLevels} total levels
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
             <button
               onClick={() => setViewMode('garden')}
               className={`px-3 py-2 flex items-center gap-2 text-sm font-medium transition-all ${
                 viewMode === 'garden'
-                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                  : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
               }`}
               title="Garden View"
             >
@@ -391,8 +392,8 @@ export function Goals() {
               onClick={() => setViewMode('list')}
               className={`px-3 py-2 flex items-center gap-2 text-sm font-medium transition-all ${
                 viewMode === 'list'
-                  ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                  : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
               }`}
               title="List View"
             >
@@ -422,8 +423,8 @@ export function Goals() {
             onClick={() => setFiltersOpen(!filtersOpen)}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
               filtersOpen || statusFilter !== 'all' || categoryFilter !== 'all'
-                ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
             }`}
           >
             <Filter size={15} />
@@ -437,33 +438,33 @@ export function Goals() {
           {(statusFilter !== 'all' || categoryFilter !== 'all') && (
             <button
               onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }}
-              className={`text-xs px-2 py-1 rounded-lg ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`text-xs px-2 py-1 rounded-lg text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300`}
             >
               Clear
             </button>
           )}
         </div>
-        <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+        <span className={`text-xs text-slate-400 dark:text-gray-600`}>
           {filteredGoals.length} goal{filteredGoals.length !== 1 ? 's' : ''}
         </span>
       </div>
       {filtersOpen && (
         <div className={`card rounded-xl p-3 flex flex-wrap items-center gap-3 animate-fade-in`}>
           <div className="flex items-center gap-2">
-            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status</label>
-            <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <label className={`text-xs text-slate-500 dark:text-gray-500`}>Status</label>
+            <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
               {(['all', 'Active', 'Completed', 'Archived'] as const).map((status) => (
-                <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-1 text-xs font-medium capitalize transition-all ${statusFilter === status ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+                <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-1 text-xs font-medium capitalize transition-all ${statusFilter === status ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
                   {status}
                 </button>
               ))}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Category</label>
-            <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <label className={`text-xs text-slate-500 dark:text-gray-500`}>Category</label>
+            <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
               {(['all', 'Personal', 'Financial', 'Professional'] as const).map((cat) => (
-                <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-3 py-1 text-xs font-medium transition-all ${categoryFilter === cat ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600' : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'}`}>
+                <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-3 py-1 text-xs font-medium transition-all ${categoryFilter === cat ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
                   {cat === 'all' ? 'All' : cat}
                 </button>
               ))}
@@ -475,13 +476,13 @@ export function Goals() {
       {/* Goals */}
       {filteredGoals.length === 0 ? (
         <div className="card rounded-2xl p-6 sm:p-12 text-center">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-            <Target className={`w-8 h-8 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-violet-50 dark:bg-violet-500/20`}>
+            <Target className={`w-8 h-8 text-violet-500 dark:text-violet-400`} />
           </div>
-          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`text-lg font-semibold mb-2 text-slate-800 dark:text-white`}>
             {goals.length === 0 ? 'No goals yet' : 'No goals match filters'}
           </h3>
-          <p className={`mb-4 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <p className={`mb-4 text-slate-500 dark:text-gray-500`}>
             {goals.length === 0 
               ? 'Create your first goal to start tracking your progress!'
               : 'Try adjusting your filters to see more goals.'
@@ -540,32 +541,32 @@ export function Goals() {
 
                 {/* Title */}
                 <h3 className={`font-semibold text-sm leading-tight line-clamp-2 mb-2 ${
-                  isDark ? 'text-white' : 'text-slate-800'
+                  'text-slate-800 dark:text-white'
                 }`}>
                   {goal.title}
                 </h3>
 
                 {/* Level badge */}
                 <span className={`inline-block text-xs font-bold px-2 py-1 rounded-full mb-2 ${
-                  isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600'
+                  'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-gray-300'
                 }`}>
                   Lv.&nbsp;{goal.level || 1}
                 </span>
 
                 {/* XP progress bar */}
-                <div className={`h-1.5 rounded-full overflow-hidden mb-2 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                <div className={`h-1.5 rounded-full overflow-hidden mb-2 bg-slate-200 dark:bg-white/10`}>
                   <div
                     className="h-full rounded-full bg-violet-500 transition-all duration-500"
                     style={{ width: `${xpPct}%` }}
                   />
                 </div>
-                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                <p className={`text-xs text-slate-400 dark:text-gray-500`}>
                   {goal.currentLevelXP}/{goal.xpToNextLevel} XP
                 </p>
 
                 {/* Milestones */}
                 {ms.total > 0 && (
-                  <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>
                     {ms.completed}/{ms.total} milestones
                   </p>
                 )}
@@ -594,9 +595,7 @@ export function Goals() {
                 <div
                   className={`group rounded-xl p-6 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.99] ${
                     selection.isSelected(goal.id)
-                      ? isDark
-                        ? 'bg-violet-500/10 border border-violet-500/30'
-                        : 'bg-violet-50/60 border border-violet-200'
+                      ? 'bg-violet-50/60 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30'
                       : isDark
                         ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${goal.status !== 'Active' ? 'opacity-60' : ''}`
                         : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${goal.status !== 'Active' ? 'opacity-60 bg-neutral-50' : ''}`
@@ -623,13 +622,13 @@ export function Goals() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className={`font-semibold text-lg ${
                           goal.status !== 'Active'
-                            ? isDark ? 'text-gray-500' : 'text-slate-400'
-                            : isDark ? 'text-white' : 'text-slate-800'
+                            ? 'text-slate-400 dark:text-gray-500'
+                            : 'text-slate-800 dark:text-white'
                         }`}>
                           {goal.title}
                         </h3>
                         <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                          isDark ? 'bg-white/10 text-gray-300' : 'bg-slate-200 text-slate-600'
+                          'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-gray-300'
                         }`}>
                           Lv.&nbsp;{goal.level || 1}
                         </span>
@@ -637,9 +636,7 @@ export function Goals() {
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleGoalExpanded(goal.id); }}
                             className={`px-2 py-1 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${
-                              isDark 
-                                ? 'bg-violet-500/25 text-violet-300 border border-violet-500/40 hover:bg-violet-500/35' 
-                                : 'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200'
+                              'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200 dark:bg-violet-500/25 dark:text-violet-300 dark:border-violet-500/40 dark:hover:bg-violet-500/35'
                             }`}
                           >
                             {subGoals.length} sub-goal{subGoals.length !== 1 ? 's' : ''}
@@ -648,7 +645,7 @@ export function Goals() {
                       </div>
 
                       {goal.description && (
-                        <p className={`text-sm mt-1 line-clamp-2 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                        <p className={`text-sm mt-1 line-clamp-2 text-slate-500 dark:text-gray-500`}>
                           {goal.description}
                         </p>
                       )}
@@ -656,14 +653,14 @@ export function Goals() {
                       {/* XP bar */}
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className={isDark ? 'text-gray-400' : 'text-slate-500'}>
+                          <span className={'text-slate-500 dark:text-gray-400'}>
                             {goal.currentLevelXP}/{goal.xpToNextLevel} XP
                           </span>
-                          <span className={`font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+                          <span className={`font-medium text-violet-600 dark:text-violet-400`}>
                             {getGoalProgress(goal)}%
                           </span>
                         </div>
-                        <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
+                        <div className={`h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10`}>
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
                               getGoalProgress(goal) === 100
@@ -689,7 +686,7 @@ export function Goals() {
                         }`}>
                           {goal.status}
                         </span>
-                        <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                        <span className={`text-xs text-slate-500 dark:text-gray-500`}>
                           {getCompletedTasksCount(goal)}/{hasChildren ? subGoals.length : getLinkedTasks(goal).length} tasks
                         </span>
                       </div>
@@ -700,32 +697,52 @@ export function Goals() {
                       className={`flex items-center space-x-1 flex-shrink-0 ${selection.active ? 'hidden' : ''}`}
                       onClick={e => e.stopPropagation()}
                     >
-                      <button onClick={() => handleEdit(goal)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/20' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'}`} title="Edit"
- aria-label="Edit">
-                        <Pencil size={16} />
-                      </button>
+                      <IconButton
+                        icon={Pencil}
+                        label="Edit"
+                        size="sm"
+                        tone="primary"
+                        onClick={() => handleEdit(goal)}
+                        title="Edit"
+                      />
                       {goal.status === 'Active' && (
                         <>
-                          <button onClick={() => handleCompleteGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'}`} title="Complete"
- aria-label="Complete">
-                            <CheckCircle size={16} />
-                          </button>
-                          <button onClick={() => archiveGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/20' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`} title="Archive"
- aria-label="Archive">
-                            <Archive size={16} />
-                          </button>
+                          <IconButton
+                            icon={CheckCircle}
+                            label="Complete"
+                            size="sm"
+                            tone="success"
+                            onClick={() => handleCompleteGoal(goal.id)}
+                            title="Complete"
+                          />
+                          <IconButton
+                            icon={Archive}
+                            label="Archive"
+                            size="sm"
+                            tone="warning"
+                            onClick={() => archiveGoal(goal.id)}
+                            title="Archive"
+                          />
                         </>
                       )}
                       {(goal.status === 'Completed' || goal.status === 'Archived') && (
-                        <button onClick={() => reactivateGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/20' : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'}`} title="Reactivate"
- aria-label="Reactivate">
-                          <RotateCcw size={16} />
-                        </button>
+                        <IconButton
+                          icon={RotateCcw}
+                          label="Reactivate"
+                          size="sm"
+                          tone="info"
+                          onClick={() => reactivateGoal(goal.id)}
+                          title="Reactivate"
+                        />
                       )}
-                      <button onClick={() => handleDeleteGoal(goal.id)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/20' : 'text-slate-500 hover:text-red-600 hover:bg-red-50'}`} title="Delete"
- aria-label="Delete">
-                        <Trash2 size={16} />
-                      </button>
+                      <IconButton
+                        icon={Trash2}
+                        label="Delete"
+                        size="sm"
+                        tone="danger"
+                        onClick={() => handleDeleteGoal(goal.id)}
+                        title="Delete"
+                      />
                     </div>
                   </div>
                 </div>
@@ -733,7 +750,7 @@ export function Goals() {
                 {/* Sub-goals (expanded) */}
                 {hasChildren && isExpanded && (
                   <div className={`ml-8 mt-2 space-y-2 pl-4 border-l-2 ${
-                    isDark ? 'border-violet-500/30' : 'border-violet-200'
+                    'border-violet-200 dark:border-violet-500/30'
                   }`}>
                     {subGoals.map((subGoal, subIndex) => (
                       <div 

@@ -110,21 +110,21 @@ export function WeeklyChallenges() {
 
   if (challenges.length === 0) {
     return (
-      <div className={`rounded-xl border p-4 ${isDark ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200'}`}>
+      <div className={`rounded-xl border p-4 bg-white border-slate-200 dark:bg-white/[0.03] dark:border-white/10`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Swords size={18} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
-            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Weekly Challenges</span>
+            <Swords size={18} className={'text-amber-500 dark:text-amber-400'} />
+            <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>Weekly Challenges</span>
           </div>
         </div>
-        {error && <p className={`text-xs mb-2 ${isDark ? 'text-red-400' : 'text-red-500'}`}>{error}</p>}
+        {error && <p className={`text-xs mb-2 text-red-500 dark:text-red-400`}>{error}</p>}
         <button
           onClick={generateChallenges}
           disabled={loading}
           className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
             loading
-              ? isDark ? 'bg-violet-500/10 text-violet-400/60' : 'bg-violet-50 text-violet-400'
-              : isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+              ? 'bg-violet-50 text-violet-400 dark:bg-violet-500/10 dark:text-violet-400/60'
+              : 'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
           }`}
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
@@ -137,24 +137,24 @@ export function WeeklyChallenges() {
   const completedCount = completed.filter(Boolean).length;
 
   return (
-    <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200'}`}>
-      <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+    <div className={`rounded-xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.03] dark:border-white/10`}>
+      <div className={`flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/5`}>
         <div className="flex items-center gap-2">
-          <Swords size={18} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
-          <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Weekly Challenges</span>
-          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{completedCount}/{challenges.length}</span>
+          <Swords size={18} className={'text-amber-500 dark:text-amber-400'} />
+          <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>Weekly Challenges</span>
+          <span className={`text-xs text-slate-500 dark:text-gray-500`}>{completedCount}/{challenges.length}</span>
         </div>
         <button
           onClick={generateChallenges}
           disabled={loading}
-          className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+          className={`p-2 rounded-lg transition-colors hover:bg-slate-100 text-slate-400 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-400 dark:hover:text-white`}
           title="Regenerate challenges"
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
         </button>
       </div>
 
-      {error && <p className={`text-xs px-4 pt-2 ${isDark ? 'text-red-400' : 'text-red-500'}`}>{error}</p>}
+      {error && <p className={`text-xs px-4 pt-2 text-red-500 dark:text-red-400`}>{error}</p>}
 
       <div className="p-3 space-y-2">
         {challenges.map((challenge, i) => {
@@ -170,34 +170,34 @@ export function WeeklyChallenges() {
               onClick={() => toggleComplete(i)}
               className={`w-full text-left flex items-start gap-3 p-3 rounded-xl border transition-all ${
                 done
-                  ? isDark ? 'bg-emerald-500/10 border-emerald-500/20 opacity-70' : 'bg-emerald-50 border-emerald-200 opacity-70'
+                  ? 'bg-emerald-50 border-emerald-200 opacity-70 dark:bg-emerald-500/10 dark:border-emerald-500/20'
                   : `${c.bg} ${c.border}`
               }`}
             >
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                 done
-                  ? isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'
+                  ? 'bg-emerald-100 dark:bg-emerald-500/20'
                   : c.badgeBg
               }`}>
                 {done
-                  ? <Check size={18} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
+                  ? <Check size={18} className={'text-emerald-600 dark:text-emerald-400'} />
                   : <Icon size={18} className={c.text} />
                 }
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${done ? 'line-through' : ''} ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  <span className={`text-sm font-medium ${done ? 'line-through' : ''} text-slate-800 dark:text-white`}>
                     {challenge.title}
                   </span>
                   <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                     done
-                      ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                      ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
                       : `${c.badgeBg} ${c.badgeText}`
                   }`}>
                     +{challenge.xpReward} XP
                   </span>
                 </div>
-                <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <p className={`text-xs mt-1 text-slate-500 dark:text-gray-400`}>
                   {challenge.description}
                 </p>
               </div>

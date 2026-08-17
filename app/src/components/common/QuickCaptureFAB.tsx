@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Plus, Check } from 'lucide-react';
 import { useTaskContext } from '../../context/TaskContext';
-import { useTheme } from '../../context/ThemeContext';
 import { hapticLight } from '../../lib/haptics';
 import type { TaskCategory } from '../../types';
 
@@ -15,8 +14,6 @@ const COLLAPSE_DELAY = 2000;
 
 export function QuickCaptureFAB() {
   const { createTask, addToToday } = useTaskContext();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
 
   const [expanded, setExpanded] = useState(false);
   const [title, setTitle] = useState('');
@@ -111,9 +108,7 @@ export function QuickCaptureFAB() {
         <div
           ref={cardRef}
           className={`rounded-2xl shadow-xl p-3 w-64 max-w-[calc(100vw-2rem)] animate-slide-up ${
-            isDark
-              ? 'bg-gray-800 border border-white/10'
-              : 'bg-white border border-slate-200'
+            'bg-white border border-slate-200 dark:bg-gray-800 dark:border-white/10'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -125,9 +120,7 @@ export function QuickCaptureFAB() {
               onKeyDown={handleKeyDown}
               placeholder="New task…"
               className={`flex-1 text-sm rounded-lg px-3 py-2 outline-none ${
-                isDark
-                  ? 'bg-gray-700 text-white placeholder-gray-400'
-                  : 'bg-slate-100 text-slate-900 placeholder-slate-400'
+                'bg-slate-100 text-slate-900 placeholder-slate-400 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400'
               }`}
             />
             <button
@@ -150,7 +143,7 @@ export function QuickCaptureFAB() {
                 }`}
               />
             ))}
-            <span className={`text-xs ml-auto ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+            <span className={`text-xs ml-auto text-slate-400 dark:text-gray-500`}>
               {category}
             </span>
           </div>

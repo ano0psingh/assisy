@@ -3,11 +3,11 @@ import type { Task } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { TiptapViewer } from '../common/TiptapViewer';
 import { SelectionCheckbox } from '../common/SelectionControls';
-import { IconButton } from '../ui';
 import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
 import { hapticLight, hapticMedium } from '../../lib/haptics';
 import { getRecurringCompletionRate } from '../../context/TaskContext';
 import { getLocalDateString } from '../../lib/dateUtils';
+import { IconButton } from '../ui';
 
 interface TaskCardProps {
   task: Task;
@@ -156,7 +156,7 @@ export function TaskCard({
   const daysAgoText = isCarriedForward && !task.isRecurring ? getDaysAgoText(task.createdAt) : '';
 
   /** Resting colour for the metadata row; individual items override it to signal urgency. */
-  const metaCls = isDark ? 'text-gray-500' : 'text-slate-400';
+  const metaCls = 'text-slate-400 dark:text-gray-500';
 
   const todayStr = getLocalDateString();
   const isFocusedToday = task.isFocusedToday && task.focusedDate === todayStr;
@@ -291,11 +291,11 @@ export function TaskCard({
     >
       {swipeOffset !== 0 && (
         <div className="absolute inset-0 flex rounded-2xl overflow-hidden">
-          <div className={`flex-1 flex items-center justify-end pr-4 ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity ${isDark ? 'bg-red-500/20' : 'bg-red-50'}`}>
-            <Trash2 size={24} className={isDark ? 'text-red-400' : 'text-red-500'} />
+          <div className={`flex-1 flex items-center justify-end pr-4 ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity bg-red-50 dark:bg-red-500/20`}>
+            <Trash2 size={24} className={'text-red-500 dark:text-red-400'} />
           </div>
-          <div className={`flex-1 flex items-center justify-start pl-4 ${swipeOffset > 20 ? 'opacity-100' : 'opacity-0'} transition-opacity ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}>
-            <Check size={24} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+          <div className={`flex-1 flex items-center justify-start pl-4 ${swipeOffset > 20 ? 'opacity-100' : 'opacity-0'} transition-opacity bg-emerald-50 dark:bg-emerald-500/20`}>
+            <Check size={24} className={'text-emerald-500 dark:text-emerald-400'} />
           </div>
         </div>
       )}
@@ -309,9 +309,7 @@ export function TaskCard({
           swipeOffset !== 0 ? 'shadow-lg' : ''
         } ${
       isSelected
-        ? isDark
-          ? 'bg-violet-500/10 border border-violet-500/30'
-          : 'bg-violet-50/60 border border-violet-200'
+        ? 'bg-violet-50/60 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30'
         : isDark
           ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted ? 'opacity-60' : ''}`
           : `bg-white/65 border border-white/70 hover:bg-white/80 ${isCompleted ? 'opacity-60' : ''}`
@@ -340,9 +338,7 @@ export function TaskCard({
                 className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
                   isCompleted
                     ? 'bg-emerald-500 border-emerald-500'
-                    : isDark
-                      ? 'border-gray-600 hover:border-violet-500 hover:bg-violet-500/20'
-                      : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50'
+                    : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50 dark:border-gray-600 dark:hover:bg-violet-500/20'
                 }`}
               >
                 {isCompleted && <Check size={12} className="text-white" strokeWidth={3} />}
@@ -357,8 +353,8 @@ export function TaskCard({
                 onClick={() => selectionMode ? onSelectToggle?.(task.id) : onEdit(task)}
                 className={`font-medium cursor-pointer hover:opacity-80 line-clamp-2 ${
                   isCompleted
-                    ? isDark ? 'line-through text-gray-500' : 'line-through text-slate-400'
-                    : isDark ? 'text-white' : 'text-slate-800'
+                    ? 'line-through text-slate-400 dark:text-gray-500'
+                    : 'text-slate-800 dark:text-white'
                 }`}
               >
                 {task.title}
@@ -383,7 +379,7 @@ export function TaskCard({
                 {task.isRecurring && (
                   <span className={`text-xs whitespace-nowrap ${
                     task.pausedUntil && getLocalDateString() <= task.pausedUntil
-                      ? isDark ? 'text-amber-400' : 'text-amber-500'
+                      ? 'text-amber-500 dark:text-amber-400'
                       : ''
                   }`}>
                     <Clock size={10} className="inline -mt-1 mr-1" />
@@ -431,7 +427,7 @@ export function TaskCard({
                   );
                 })()}
                 {goalName && (
-                  <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
+                  <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400`}>
                     {goalName}
                   </span>
                 )}
@@ -490,14 +486,14 @@ export function TaskCard({
 
             {menuOpen && (
               <div className={`absolute right-0 top-full mt-1 w-44 rounded-xl shadow-lg border z-50 py-1 animate-fade-in ${
-                isDark ? 'bg-[#1a1a2e] border-white/10' : 'bg-white border-slate-200'
+                'bg-white border-slate-200 dark:bg-[#1a1a2e] dark:border-white/10'
               }`}>
                 {/* Remove from Today */}
                 {isInTodayView && canRemoveFromToday && onRemoveFromToday && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); setMenuOpen(false); }}
                     className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                      isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                      'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                     }`}
                   >
                     <CalendarMinus size={14} /> Remove from Today
@@ -508,7 +504,7 @@ export function TaskCard({
                   <button
                     onClick={(e) => { e.stopPropagation(); onMoveToProject(task); setMenuOpen(false); }}
                     className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                      isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                      'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                     }`}
                   >
                     <FolderInput size={14} /> Move to Project
@@ -521,7 +517,7 @@ export function TaskCard({
                       <button
                         onClick={(e) => { e.stopPropagation(); onSkipOccurrence(task.id); setMenuOpen(false); }}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                          isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                          'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                         }`}
                       >
                         <SkipForward size={14} /> Skip Today
@@ -532,7 +528,7 @@ export function TaskCard({
                         <button
                           onClick={(e) => { e.stopPropagation(); onPauseRecurring(task.id, 7); setMenuOpen(false); }}
                           className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                            isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                            'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                           }`}
                         >
                           <Pause size={14} /> Pause 1 Week
@@ -540,7 +536,7 @@ export function TaskCard({
                         <button
                           onClick={(e) => { e.stopPropagation(); onPauseRecurring(task.id, 30); setMenuOpen(false); }}
                           className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                            isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                            'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                           }`}
                         >
                           <Pause size={14} /> Pause 1 Month
@@ -551,7 +547,7 @@ export function TaskCard({
                       <button
                         onClick={(e) => { e.stopPropagation(); onResumeRecurring(task.id); setMenuOpen(false); }}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                          isDark ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-emerald-600 hover:bg-emerald-50'
+                          'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10'
                         }`}
                       >
                         <Play size={14} /> Resume Recurring
@@ -561,13 +557,13 @@ export function TaskCard({
                 )}
                 {/* Divider before destructive action */}
                 {(hasSecondaryActions || (task.isRecurring && !isCompleted)) && (
-                  <div className={`my-1 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+                  <div className={`my-1 border-t border-slate-100 dark:border-white/10`} />
                 )}
                 {/* Delete */}
                 <button
                   onClick={(e) => { e.stopPropagation(); if (confirm('Delete this task?')) { onDelete(task.id); } setMenuOpen(false); }}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                    isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
+                    'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
                   }`}
                 >
                   <Trash2 size={14} /> Delete
@@ -579,7 +575,7 @@ export function TaskCard({
       </div>
       {/* Description preview */}
       {task.description && task.description.trim() && (
-        <div className={`mt-2 pt-2 border-t ${isDark ? 'border-white/[0.05]' : 'border-slate-100'}`}>
+        <div className={`mt-2 pt-2 border-t border-slate-100 dark:border-white/[0.05]`}>
           <TiptapViewer content={task.description} collapsible maxHeight={60} />
         </div>
       )}
@@ -590,7 +586,7 @@ export function TaskCard({
         <div
           ref={quickActionRef}
           className={`fixed z-[100] rounded-xl shadow-lg border py-1 animate-fade-in min-w-[160px] ${
-            isDark ? 'bg-[#1a1a2e] border-white/10' : 'bg-white border-slate-200'
+            'bg-white border-slate-200 dark:bg-[#1a1a2e] dark:border-white/10'
           }`}
           style={{
             left: Math.min(quickAction.x, window.innerWidth - 180),
@@ -601,7 +597,7 @@ export function TaskCard({
             <button
               onClick={() => { onToggleComplete(task.id); setQuickAction(null); }}
               className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-                isDark ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-emerald-600 hover:bg-emerald-50'
+                'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10'
               }`}
             >
               <Check size={15} /> Complete
@@ -611,7 +607,7 @@ export function TaskCard({
             <button
               onClick={() => { onAddToToday(task.id); setQuickAction(null); }}
               className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-                isDark ? 'text-blue-400 hover:bg-blue-500/10' : 'text-blue-600 hover:bg-blue-50'
+                'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10'
               }`}
             >
               <Calendar size={15} /> Tomorrow
@@ -620,16 +616,16 @@ export function TaskCard({
           <button
             onClick={() => { onEdit(task); setQuickAction(null); }}
             className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-              isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+              'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
             }`}
           >
             <Pencil size={15} /> Edit
           </button>
-          <div className={`my-1 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+          <div className={`my-1 border-t border-slate-100 dark:border-white/10`} />
           <button
             onClick={() => { if (confirm('Delete this task?')) onDelete(task.id); setQuickAction(null); }}
             className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-              isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
+              'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
             }`}
           >
             <Trash2 size={15} /> Delete

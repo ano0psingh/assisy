@@ -17,8 +17,8 @@ import {
   Check,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 import { hapticLight } from '../../lib/haptics';
+import { IconButton } from '../ui';
 
 const STORAGE_KEY = 'assisy_bottom_nav_config';
 // Mirrors the header's primary destinations, so the same five places are
@@ -67,8 +67,6 @@ export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
   const [pendingSelection, setPendingSelection] = useState<string[]>([]);
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -121,19 +119,15 @@ export function BottomNav() {
   const linkCls = (active: boolean) =>
     `flex flex-col items-center justify-center gap-1 py-3 min-w-0 flex-1 min-h-[48px] transition-colors ${
       active
-        ? isDark
-          ? 'text-violet-400'
-          : 'text-violet-600'
-        : isDark
-          ? 'text-gray-500'
-          : 'text-slate-500'
+        ? 'text-violet-600 dark:text-violet-400'
+        : 'text-slate-500 dark:text-gray-500'
     }`;
 
   return (
     <>
       <nav
         className={`bottom-nav-bar md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t ${
-          isDark ? 'bg-[#0c0c10]/70 backdrop-blur-2xl border-white/[0.06]' : 'bg-white/60 backdrop-blur-2xl border-black/[0.04]'
+          'bg-white/60 backdrop-blur-2xl border-black/[0.04] dark:bg-[#0c0c10]/70 dark:border-white/[0.06]'
         }`}
       >
         <div className="flex items-stretch">
@@ -176,39 +170,37 @@ export function BottomNav() {
           />
           <div
             className={`md:hidden fixed bottom-0 left-0 right-0 z-[61] rounded-t-2xl shadow-elevated animate-slide-up ${
-              isDark ? 'bg-[#12121a] border-t border-white/10' : 'bg-white border-t border-slate-200'
+              'bg-white border-t border-slate-200 dark:bg-[#12121a] dark:border-white/10'
             }`}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>
                 {customizing ? 'Customize Nav' : 'More'}
               </span>
               <div className="flex items-center gap-1">
                 {customizing ? (
-                  <button
-                    aria-label="Stop customising"
+                  <IconButton
+                    icon={X}
+                    label="Stop customising"
+                    size="lg"
                     type="button"
                     onClick={() => setCustomizing(false)}
-                    className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-                  >
-                    <X size={20} />
-                  </button>
+                  />
                 ) : (
-                  <button
-                    aria-label="Close menu"
+                  <IconButton
+                    icon={X}
+                    label="Close menu"
+                    size="lg"
                     type="button"
                     onClick={closeMore}
-                    className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-                  >
-                    <X size={20} />
-                  </button>
+                  />
                 )}
               </div>
             </div>
 
             {customizing ? (
               <div className="p-3 pb-8 max-h-[60vh] overflow-y-auto">
-                <p className={`text-xs mb-3 px-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <p className={`text-xs mb-3 px-1 text-slate-500 dark:text-gray-400`}>
                   Select exactly 3 pages for your nav bar ({pendingSelection.length}/3)
                 </p>
                 <div className="space-y-1">
@@ -225,21 +217,15 @@ export function BottomNav() {
                         disabled={disabled}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
                           selected
-                            ? isDark
-                              ? 'bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/30'
-                              : 'bg-violet-50 text-violet-700 ring-1 ring-violet-200'
+                            ? 'bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/30'
                             : disabled
-                              ? isDark
-                                ? 'text-gray-600 opacity-50'
-                                : 'text-slate-400 opacity-50'
-                              : isDark
-                                ? 'hover:bg-white/5 text-gray-200'
-                                : 'hover:bg-slate-50 text-slate-700'
+                              ? 'text-slate-400 opacity-50 dark:text-gray-600'
+                              : 'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-200'
                         }`}
                       >
                         <Icon size={20} className="flex-shrink-0" />
                         <span className="text-sm font-medium flex-1">{page.label}</span>
-                        {selected && <Check size={16} className={isDark ? 'text-violet-400' : 'text-violet-600'} />}
+                        {selected && <Check size={16} className={'text-violet-600 dark:text-violet-400'} />}
                       </button>
                     );
                   })}
@@ -250,12 +236,8 @@ export function BottomNav() {
                   disabled={pendingSelection.length !== 3}
                   className={`mt-4 w-full py-3 rounded-xl font-medium text-sm transition-colors ${
                     pendingSelection.length === 3
-                      ? isDark
-                        ? 'bg-violet-600 text-white hover:bg-violet-500'
-                        : 'bg-violet-600 text-white hover:bg-violet-700'
-                      : isDark
-                        ? 'bg-white/5 text-gray-600'
-                        : 'bg-slate-100 text-slate-400'
+                      ? 'bg-violet-600 text-white hover:bg-violet-700 dark:hover:bg-violet-500'
+                      : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-600'
                   }`}
                 >
                   Save
@@ -267,9 +249,7 @@ export function BottomNav() {
                   type="button"
                   onClick={openCustomize}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors mb-1 ${
-                    isDark
-                      ? 'hover:bg-white/5 text-violet-400 border border-white/10'
-                      : 'hover:bg-violet-50 text-violet-600 border border-slate-200'
+                    'hover:bg-violet-50 text-violet-600 border border-slate-200 dark:hover:bg-white/5 dark:text-violet-400 dark:border-white/10'
                   }`}
                 >
                   <Settings size={20} className="flex-shrink-0" />
@@ -282,7 +262,7 @@ export function BottomNav() {
                       type="button"
                       onClick={() => handleMoreNav(item.to)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
-                        isDark ? 'hover:bg-white/5 text-gray-200' : 'hover:bg-slate-50 text-slate-700'
+                        'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-200'
                       }`}
                     >
                       <item.icon size={20} className="flex-shrink-0" />

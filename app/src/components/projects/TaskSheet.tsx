@@ -14,7 +14,6 @@ import {
   Filter,
 } from 'lucide-react';
 import { useProjectContext } from '../../context/ProjectContext';
-import { useTheme } from '../../context/ThemeContext';
 import type { ProjectTask, WorkItemStatus } from '../../types';
 import { getLocalDateString } from '../../lib/dateUtils';
 
@@ -40,14 +39,14 @@ const STATUS_ORDER: Record<WorkItemStatus, number> = {
 
 const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
 
-function statusIcon(status: WorkItemStatus, isDark: boolean) {
+function statusIcon(status: WorkItemStatus) {
   switch (status) {
     case 'Done':
       return <CheckCircle2 size={14} className="text-emerald-500" />;
     case 'In Progress':
-      return <Play size={10} fill="currentColor" className={isDark ? 'text-blue-400' : 'text-blue-500'} />;
+      return <Play size={10} fill="currentColor" className={'text-blue-500 dark:text-blue-400'} />;
     default:
-      return <Circle size={14} className={isDark ? 'text-gray-600' : 'text-slate-400'} />;
+      return <Circle size={14} className={'text-slate-400 dark:text-gray-600'} />;
   }
 }
 
@@ -71,15 +70,12 @@ function MultiSelect({
   options,
   selected,
   onToggle,
-  onClear,
-  isDark,
-}: {
+  onClear }: {
   label: string;
   options: string[];
   selected: Set<string>;
   onToggle: (v: string) => void;
   onClear: () => void;
-  isDark: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -109,12 +105,8 @@ function MultiSelect({
         onClick={() => setOpen(prev => !prev)}
         className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
           hasSelection
-            ? isDark
-              ? 'bg-violet-500/20 text-violet-400 border-violet-500/40'
-              : 'bg-violet-100 text-violet-700 border-violet-300'
-            : isDark
-              ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
-              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            ? 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-500/20 dark:text-violet-400 dark:border-violet-500/40'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
         }`}
       >
         <Filter size={12} />
@@ -124,7 +116,7 @@ function MultiSelect({
       </button>
       {open && (
         <div className={`absolute top-full left-0 mt-1 z-50 min-w-[160px] rounded-xl shadow-lg border py-1 animate-fade-in ${
-          isDark ? 'bg-[#1a1a2e] border-white/10' : 'bg-white border-slate-200'
+          'bg-white border-slate-200 dark:bg-[#1a1a2e] dark:border-white/10'
         }`}>
           {options.map(opt => {
             const active = selected.has(opt);
@@ -135,14 +127,14 @@ function MultiSelect({
                 onClick={() => onToggle(opt)}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
                   active
-                    ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-700'
-                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                    ? 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400'
+                    : 'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                 }`}
               >
                 <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${
                   active
                     ? 'bg-violet-500 border-violet-500'
-                    : isDark ? 'border-gray-600' : 'border-slate-300'
+                    : 'border-slate-300 dark:border-gray-600'
                 }`}>
                   {active && <CheckCircle2 size={10} className="text-white" />}
                 </div>
@@ -152,12 +144,12 @@ function MultiSelect({
           })}
           {hasSelection && (
             <>
-              <div className={`my-1 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+              <div className={`my-1 border-t border-slate-100 dark:border-white/10`} />
               <button
                 type="button"
                 onClick={() => { onClear(); setOpen(false); }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
-                  isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                  'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/5'
                 }`}
               >
                 <X size={12} /> Clear selection
@@ -171,8 +163,6 @@ function MultiSelect({
 }
 
 export function TaskSheet() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const {
     projectTasks,
     projects,
@@ -311,24 +301,24 @@ export function TaskSheet() {
   };
 
   const thCls = `px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap transition-colors ${
-    isDark ? 'text-gray-400 hover:text-gray-200' : 'text-slate-500 hover:text-slate-800'
+    'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
   }`;
 
-  const tdCls = `px-3 py-3 text-sm whitespace-nowrap ${isDark ? 'text-gray-300' : 'text-slate-700'}`;
+  const tdCls = `px-3 py-3 text-sm whitespace-nowrap text-slate-700 dark:text-gray-300`;
 
   return (
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 flex-1 min-w-[180px] max-w-sm ${
-          isDark ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'
+          'bg-white border-slate-200 dark:bg-white/5 dark:border-white/10'
         }`}>
-          <Search size={14} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+          <Search size={14} className={'text-slate-400 dark:text-gray-500'} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search tasks..."
-            className={`bg-transparent outline-none text-sm flex-1 ${isDark ? 'text-white placeholder-gray-500' : 'text-slate-800 placeholder-slate-400'}`}
+            className={`bg-transparent outline-none text-sm flex-1 text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-500`}
           />
         </div>
 
@@ -338,7 +328,6 @@ export function TaskSheet() {
           selected={statusFilter as Set<string>}
           onToggle={toggleSetItem(setStatusFilter) as (v: string) => void}
           onClear={() => setStatusFilter(new Set())}
-          isDark={isDark}
         />
 
         <MultiSelect
@@ -347,7 +336,6 @@ export function TaskSheet() {
           selected={priorityFilter}
           onToggle={toggleSetItem(setPriorityFilter)}
           onClear={() => setPriorityFilter(new Set())}
-          isDark={isDark}
         />
 
         {/* Project dropdown */}
@@ -355,7 +343,7 @@ export function TaskSheet() {
           value={projectFilter}
           onChange={e => setProjectFilter(e.target.value)}
           className={`px-3 py-2 rounded-lg border text-xs font-medium outline-none ${
-            isDark ? 'bg-white/5 border-white/10 text-gray-300' : 'bg-white border-slate-200 text-slate-600'
+            'bg-white border-slate-200 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-gray-300'
           }`}
         >
           <option value="">All projects</option>
@@ -369,29 +357,29 @@ export function TaskSheet() {
             type="button"
             onClick={clearFilters}
             className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
-              isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+              'text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
             }`}
           >
             <X size={12} /> Clear all
           </button>
         )}
 
-        <span className={`ml-auto text-xs tabular-nums ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+        <span className={`ml-auto text-xs tabular-nums text-slate-400 dark:text-gray-500`}>
           {sorted.length} task{sorted.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Table */}
-      <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+      <div className={`rounded-xl border overflow-hidden border-slate-200 dark:border-white/10`}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px]">
             <thead>
-              <tr className={isDark ? 'bg-white/[0.04]' : 'bg-slate-50'}>
+              <tr className={'bg-slate-50 dark:bg-white/[0.04]'}>
                 {/* Today toggle header */}
                 <th className={`${thCls} w-10 text-center`}>
                   <span title="Add to Today">📌</span>
                 </th>
-                <th className={`${thCls} sticky left-0 z-10 ${isDark ? 'bg-[#13131b]' : 'bg-slate-50'}`} onClick={() => handleSort('title')}>
+                <th className={`${thCls} sticky left-0 z-10 bg-slate-50 dark:bg-[#13131b]`} onClick={() => handleSort('title')}>
                   <span className="inline-flex items-center gap-1">Title <SortIcon col="title" /></span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('status')}>
@@ -424,10 +412,10 @@ export function TaskSheet() {
                 </th>
               </tr>
             </thead>
-            <tbody className={`divide-y ${isDark ? 'divide-white/5' : 'divide-slate-100'}`}>
+            <tbody className={`divide-y divide-slate-100 dark:divide-white/5`}>
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <td colSpan={12} className={`px-4 py-12 text-center text-sm text-slate-400 dark:text-gray-500`}>
                     {hasActiveFilters ? 'No tasks match the current filters.' : 'No project tasks yet.'}
                   </td>
                 </tr>
@@ -435,16 +423,16 @@ export function TaskSheet() {
                 sorted.map(({ task, projectName, subProjectName }) => {
                   const priorityColor =
                     task.priority === 'High'
-                      ? isDark ? 'text-red-400' : 'text-red-600'
+                      ? 'text-red-600 dark:text-red-400'
                       : task.priority === 'Medium'
-                        ? isDark ? 'text-amber-400' : 'text-amber-600'
-                        : isDark ? 'text-gray-400' : 'text-slate-500';
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-slate-500 dark:text-gray-400';
                   const effortColor =
                     task.effort === 'High'
-                      ? isDark ? 'text-orange-400' : 'text-orange-600'
+                      ? 'text-orange-600 dark:text-orange-400'
                       : task.effort === 'Medium'
-                        ? isDark ? 'text-amber-400' : 'text-amber-600'
-                        : isDark ? 'text-gray-400' : 'text-slate-500';
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-slate-500 dark:text-gray-400';
 
                   const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'Done';
                   const isToday = task.isFocusedToday && task.focusedDate === todayStr;
@@ -454,7 +442,7 @@ export function TaskSheet() {
                       key={task.id}
                       className={`transition-colors ${
                         task.status === 'Done' ? 'opacity-60' : ''
-                      } ${isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-slate-50/80'}`}
+                      } hover:bg-slate-50/80 dark:hover:bg-white/[0.03]`}
                     >
                       {/* Today toggle */}
                       <td className={`${tdCls} text-center`}>
@@ -463,8 +451,8 @@ export function TaskSheet() {
                           onClick={() => toggleToday(task)}
                           className={`p-1 rounded-lg transition-colors ${
                             isToday
-                              ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                              : isDark ? 'text-gray-600 hover:text-emerald-400 hover:bg-emerald-500/10' : 'text-slate-300 hover:text-emerald-500 hover:bg-emerald-50'
+                              ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                              : 'text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:text-gray-600 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10'
                           }`}
                           title={isToday ? 'Remove from Today' : 'Add to Today'}
                         >
@@ -474,7 +462,7 @@ export function TaskSheet() {
 
                       {/* Title — sticky */}
                       <td className={`${tdCls} sticky left-0 z-10 font-medium max-w-[260px] truncate ${
-                        isDark ? 'bg-[#111117]' : 'bg-white'
+                        'bg-white dark:bg-[#111117]'
                       } ${task.status === 'Done' ? 'line-through' : ''}`}>
                         {task.title}
                       </td>
@@ -486,13 +474,13 @@ export function TaskSheet() {
                           onClick={() => cycleStatus(task)}
                           className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
                             task.status === 'Done'
-                              ? isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-700'
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
                               : task.status === 'In Progress'
-                                ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-50 text-blue-700'
-                                : isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-600'
+                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                                : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-gray-400'
                           }`}
                         >
-                          {statusIcon(task.status, isDark)}
+                          {statusIcon(task.status)}
                           {task.status}
                         </button>
                       </td>
@@ -522,20 +510,20 @@ export function TaskSheet() {
                               <span
                                 key={tag}
                                 className={`px-2 py-1 rounded text-xs font-medium ${
-                                  isDark ? 'bg-white/5 text-gray-400' : 'bg-slate-100 text-slate-500'
+                                  'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400'
                                 }`}
                               >
                                 {tag}
                               </span>
                             ))}
                             {task.tags.length > 3 && (
-                              <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                              <span className={`text-xs text-slate-400 dark:text-gray-500`}>
                                 +{task.tags.length - 3}
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className={isDark ? 'text-gray-600' : 'text-slate-300'}>—</span>
+                          <span className={'text-slate-300 dark:text-gray-600'}>—</span>
                         )}
                       </td>
 
@@ -548,9 +536,9 @@ export function TaskSheet() {
                       {/* Completed At */}
                       <td className={tdCls}>
                         {task.completedAt ? (
-                          <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>{fmtDate(task.completedAt)}</span>
+                          <span className={'text-emerald-600 dark:text-emerald-400'}>{fmtDate(task.completedAt)}</span>
                         ) : (
-                          <span className={isDark ? 'text-gray-600' : 'text-slate-300'}>—</span>
+                          <span className={'text-slate-300 dark:text-gray-600'}>—</span>
                         )}
                       </td>
                     </tr>

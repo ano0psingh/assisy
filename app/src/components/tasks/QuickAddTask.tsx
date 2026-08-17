@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { TaskCategory, Priority, Effort } from '../../types';
-import { useTheme } from '../../context/ThemeContext';
 import { Plus, X, CalendarPlus, Archive } from 'lucide-react';
 
 interface QuickAddTaskProps {
@@ -14,8 +13,6 @@ interface QuickAddTaskProps {
 }
 
 export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('Personal');
@@ -52,21 +49,17 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
   return (
     <div className="relative">
       <div className={`absolute top-full right-0 mt-3 w-80 rounded-2xl shadow-elevated z-50 overflow-hidden animate-slide-down ${
-        isDark
-          ? 'bg-[#12121a] border border-white/10'
-          : 'bg-white border border-slate-200'
+        'bg-white border border-slate-200 dark:bg-[#12121a] dark:border-white/10'
       }`}>
         <form onSubmit={e => { e.preventDefault(); submit(true); }} className="p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>Quick Add</h3>
+            <h3 className={`font-semibold text-sm text-slate-800 dark:text-white`}>Quick Add</h3>
             <button
               aria-label="Close"
               type="button"
               onClick={handleCancel}
               className={`p-2 rounded-lg transition-colors ${
-                isDark
-                  ? 'text-gray-400 hover:text-white hover:bg-white/10'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
               }`}
             >
               <X size={16} />
@@ -103,9 +96,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
             <button
               type="submit"
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                isDark
-                  ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
-                  : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
               }`}
             >
               <CalendarPlus size={14} />
@@ -115,9 +106,7 @@ export function QuickAddTask({ onSubmit }: QuickAddTaskProps) {
               type="button"
               onClick={() => submit(false)}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                isDark
-                  ? 'bg-white/5 text-gray-400 hover:bg-white/10'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
               }`}
             >
               <Archive size={14} />

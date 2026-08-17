@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern } from '../../types';
-import { useTheme } from '../../context/ThemeContext';
 import { Sparkles, Pencil, Loader2, Check, Square, CheckSquare } from 'lucide-react';
 import { TiptapEditor } from '../common/TiptapEditor';
 import { ExpandableModal } from '../common/ExpandableModal';
@@ -39,8 +38,6 @@ interface TaskFormProps {
 }
 
 export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, defaultAddToToday = false, onCreateSubtasks }: TaskFormProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<TaskCategory>('Personal');
@@ -173,8 +170,8 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const showDecomposeButton = isAIConfigured() && title.trim().length > 30 && !editingTask;
 
   const subtaskSection = subtasks.length > 0 ? (
-    <div className={`mt-3 p-3 rounded-xl border ${isDark ? 'bg-violet-500/10 border-violet-500/20' : 'bg-violet-50 border-violet-200'}`}>
-      <div className={`flex items-center gap-2 text-sm font-medium mb-2 ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
+    <div className={`mt-3 p-3 rounded-xl border bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20`}>
+      <div className={`flex items-center gap-2 text-sm font-medium mb-2 text-violet-700 dark:text-violet-300`}>
         <Sparkles size={14} />
         Suggested Sub-tasks
       </div>
@@ -186,19 +183,19 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             onClick={() => toggleSubtask(i)}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors ${
               st.selected
-                ? isDark ? 'bg-violet-500/20 text-white' : 'bg-violet-100 text-slate-800'
-                : isDark ? 'bg-white/5 text-gray-400' : 'bg-white text-slate-500'
+                ? 'bg-violet-100 text-slate-800 dark:bg-violet-500/20 dark:text-white'
+                : 'bg-white text-slate-500 dark:bg-white/5 dark:text-gray-400'
             }`}
           >
             {st.selected
-              ? <CheckSquare size={15} className={isDark ? 'text-violet-400' : 'text-violet-600'} />
-              : <Square size={15} className={isDark ? 'text-gray-600' : 'text-slate-300'} />
+              ? <CheckSquare size={15} className={'text-violet-600 dark:text-violet-400'} />
+              : <Square size={15} className={'text-slate-300 dark:text-gray-600'} />
             }
             <span className="flex-1">{st.title}</span>
             <span className={`text-xs px-2 py-1 rounded-full ${
               st.effort === 'High'
-                ? isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
-                : isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'
+                : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
             }`}>{st.effort}</span>
           </button>
         ))}
@@ -248,7 +245,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         </Button>
       )}
       {decomposeError && (
-        <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{decomposeError}</p>
+        <p className={`mt-1 text-xs text-red-600 dark:text-red-400`}>{decomposeError}</p>
       )}
       {subtaskSection}
     </div>
@@ -308,13 +305,11 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
               category === cat
                 ? cat === 'Personal'
-                  ? isDark ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-blue-50 text-blue-600 border-blue-200'
+                  ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
                   : cat === 'Financial'
-                  ? isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                  : isDark ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-slate-100 text-slate-600 border-slate-300'
-                : isDark
-                  ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
+                  : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-gray-500/20 dark:text-gray-300 dark:border-gray-500/30'
+                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
             }`}
           >
             {cat}
@@ -350,11 +345,9 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
                 priority === p
                   ? p === 'High'
-                    ? isDark ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-red-50 text-red-600 border-red-200'
-                    : isDark ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-amber-50 text-amber-600 border-amber-200'
-                  : isDark
-                    ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
-                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                    ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30'
+                    : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30'
+                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
               }`}
             >
               {p}
@@ -373,11 +366,9 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
                 effort === e
                   ? e === 'High'
-                    ? isDark ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-orange-50 text-orange-600 border-orange-200'
-                    : isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                  : isDark
-                    ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
-                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                    ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-500/30'
+                    : 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
+                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
               }`}
             >
               {e}
@@ -393,11 +384,11 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       <label className="flex items-center space-x-3 cursor-pointer group">
         <div className="relative">
           <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="sr-only" />
-          <div className={`w-10 h-6 rounded-full transition-all ${isRecurring ? 'bg-violet-500' : isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+          <div className={`w-10 h-6 rounded-full transition-all ${isRecurring ? 'bg-violet-500' : 'bg-slate-200 dark:bg-white/10'}`}>
             <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform ${isRecurring ? 'translate-x-5' : 'translate-x-1'} mt-1`} />
           </div>
         </div>
-        <span className={`text-sm transition-colors ${isDark ? 'text-gray-400 group-hover:text-gray-200' : 'text-slate-600 group-hover:text-slate-800'}`}>Recurring task</span>
+        <span className={`text-sm transition-colors text-slate-600 group-hover:text-slate-800 dark:text-gray-400 dark:group-hover:text-gray-200`}>Recurring task</span>
       </label>
       {isRecurring && (
         <div className="space-y-3 animate-fade-in">
@@ -414,10 +405,8 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
                 onClick={() => setRecurrencePattern(value)}
                 className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
                   recurrencePattern === value
-                    ? isDark ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 'bg-violet-50 text-violet-600 border-violet-200'
-                    : isDark
-                      ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
-                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                    ? 'bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:border-violet-500/30'
+                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
                 }`}
               >
                 {label}
@@ -435,8 +424,8 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
                   )}
                   className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                     specificDays.includes(i)
-                      ? isDark ? 'bg-violet-500/30 text-violet-300 border border-violet-500/40' : 'bg-violet-100 text-violet-700 border border-violet-200'
-                      : isDark ? 'bg-white/5 text-gray-500 border border-white/10' : 'bg-slate-50 text-slate-400 border border-slate-200'
+                      ? 'bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-500/30 dark:text-violet-300 dark:border-violet-500/40'
+                      : 'bg-slate-50 text-slate-400 border border-slate-200 dark:bg-white/5 dark:text-gray-500 dark:border-white/10'
                   }`}
                 >
                   {day}
@@ -446,7 +435,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
           )}
           {recurrencePattern === 'monthly' && (
             <div className="flex items-center gap-3 animate-fade-in">
-              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>On day</span>
+              <span className={`text-sm text-slate-500 dark:text-gray-400`}>On day</span>
               <SelectField
                 aria-label="Day of month"
                 value={monthDay}
@@ -456,10 +445,10 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
                   <option key={d} value={d}>{d}</option>
                 ))}
               </SelectField>
-              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>of every month</span>
+              <span className={`text-sm text-slate-500 dark:text-gray-400`}>of every month</span>
             </div>
           )}
-          <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+          <p className={`text-xs text-slate-400 dark:text-gray-600`}>
             {recurrencePattern === 'daily' ? 'Repeats every day' :
              recurrencePattern === 'weekly' ? 'Repeats every week on this day' :
              recurrencePattern === 'monthly' ? `Repeats on the ${monthDay}${monthDay === 1 ? 'st' : monthDay === 2 ? 'nd' : monthDay === 3 ? 'rd' : 'th'} of every month` :
@@ -488,20 +477,20 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       onClose={handleCancel}
       title={isEditing ? 'Edit Task' : 'Create New Task'}
       icon={isEditing
-        ? <Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
-        : <Sparkles className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+        ? <Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
+        : <Sparkles className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
       }
       footer={actionButtons}
     >
       {(isFS) =>
         isFS ? (
           <div className="flex flex-col sm:flex-row sm:h-full">
-            <div className={`flex-1 flex flex-col p-6 sm:p-8 space-y-6 sm:border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <div className={`flex-1 flex flex-col p-6 sm:p-8 space-y-6 sm:border-r border-slate-200 dark:border-white/10`}>
               {titleField(true)}
               {notesField(true)}
             </div>
-            <div className={`flex-shrink-0 p-6 sm:p-6 space-y-6 sm:overflow-y-auto sm:w-80 border-t sm:border-t-0 ${isDark ? 'border-white/10 bg-white/[0.02]' : 'border-slate-200 bg-white'}`}>
-              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Task details</h3>
+            <div className={`flex-shrink-0 p-6 sm:p-6 space-y-6 sm:overflow-y-auto sm:w-80 border-t sm:border-t-0 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02]`}>
+              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Task details</h3>
               {dueDateField}
               {categoryField}
               {goalField}

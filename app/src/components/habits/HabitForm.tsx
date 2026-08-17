@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import { useHabitContext } from '../../context/HabitContext';
 import { useGoalContext } from '../../context/GoalContext';
 import { Pencil, Heart, Sparkles, Loader2, Link2 } from 'lucide-react';
@@ -43,10 +42,8 @@ const TRACKING_TYPES: { value: TrackingType; label: string; description: string 
 ];
 
 export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFormProps) {
-  const { theme } = useTheme();
   const { getHabitLogs } = useHabitContext();
   const { goals, getActiveGoals } = useGoalContext();
-  const isDark = theme === 'dark';
 
   const [name, setName] = useState('');
   const [trackingType, setTrackingType] = useState<TrackingType>('duration');
@@ -169,8 +166,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
             key={type.value}
             className={`flex items-start p-3 rounded-xl cursor-pointer transition-all ${
               trackingType === type.value
-                ? isDark ? 'bg-violet-500/20 border border-violet-500/50' : 'bg-violet-50 border border-violet-300'
-                : isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10' : 'bg-slate-50 border border-slate-200 hover:bg-slate-100'
+                ? 'bg-violet-50 border border-violet-300 dark:bg-violet-500/20 dark:border-violet-500/50'
+                : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'
             }`}
           >
             <input
@@ -182,8 +179,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
               className="sr-only"
             />
             <div>
-              <div className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{type.label}</div>
-              <div className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{type.description}</div>
+              <div className={`font-medium text-slate-800 dark:text-white`}>{type.label}</div>
+              <div className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>{type.description}</div>
             </div>
           </label>
         ))}
@@ -206,8 +203,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
               key={g.id}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
                 goalId === g.id
-                  ? isDark ? 'bg-violet-500/20 border border-violet-500/50' : 'bg-violet-50 border border-violet-300'
-                  : isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10' : 'bg-slate-50 border border-slate-200 hover:bg-slate-100'
+                  ? 'bg-violet-50 border border-violet-300 dark:bg-violet-500/20 dark:border-violet-500/50'
+                  : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'
               }`}
             >
               <input
@@ -222,8 +219,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
                 <GoalTreeThumbnail level={g.level} theme={g.theme} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{g.title}</div>
-                <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Lv.{g.level} · {g.category}</div>
+                <div className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{g.title}</div>
+                <div className={`text-xs text-slate-500 dark:text-gray-500`}>Lv.{g.level} · {g.category}</div>
               </div>
             </label>
           ))}
@@ -235,7 +232,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
         </div>
       ) : (
         <Surface level="inset" radius="xl">
-          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <p className={`text-sm text-slate-500 dark:text-gray-500`}>
             No active goals yet. Create a goal first to link habits to it.
           </p>
         </Surface>
@@ -296,11 +293,11 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
         )}
       </div>
       {aiReason && (
-        <p className={`text-xs mt-2 px-3 py-2 rounded-lg ${isDark ? 'bg-violet-500/10 text-violet-400' : 'bg-violet-50 text-violet-600'}`}>
+        <p className={`text-xs mt-2 px-3 py-2 rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400`}>
           {aiReason}
         </p>
       )}
-      <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+      <p className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>
         {reminderTime ? `You'll get a notification at ${reminderTime} daily.` : 'Set a time to get reminded about this habit.'}
       </p>
     </div>
@@ -339,20 +336,20 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
       onClose={handleCancel}
       title={isEditing ? 'Edit Habit' : 'Create New Habit'}
       icon={isEditing
-        ? <Pencil className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
-        : <Heart className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+        ? <Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
+        : <Heart className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
       }
       footer={actionButtons}
     >
       {(isFS) =>
         isFS ? (
           <div className="flex h-full">
-            <div className={`flex-1 p-8 space-y-6 border-r ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+            <div className={`flex-1 p-8 space-y-6 border-r border-slate-200 dark:border-white/10`}>
               {nameField}
               {trackingTypeField}
             </div>
-            <div className={`w-80 flex-shrink-0 p-6 space-y-6 overflow-y-auto ${isDark ? 'bg-white/[0.02]' : 'bg-white'}`}>
-              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Settings</h3>
+            <div className={`w-80 flex-shrink-0 p-6 space-y-6 overflow-y-auto bg-white dark:bg-white/[0.02]`}>
+              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Settings</h3>
               {goalField}
               {categoryField}
               {targetField}

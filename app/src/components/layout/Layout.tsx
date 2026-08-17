@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
-import { useTheme } from '../../context/ThemeContext';
 import { GlobalSearch } from '../common/GlobalSearch';
 import { FocusTimer } from '../common/FocusTimer';
 import { LevelUpCelebration } from '../common/LevelUpCelebration';
@@ -19,8 +18,6 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [focusTimerOpen, setFocusTimerOpen] = useState(false);
   const [transition, setTransition] = useState<'left' | 'right' | null>(null);
   const location = useLocation();
@@ -67,7 +64,7 @@ export function Layout({ children }: LayoutProps) {
       : 'animate-fade-in';
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDark ? 'dark' : ''}`}>
+    <div className={`min-h-screen flex flex-col dark:dark`}>
       <Header onOpenFocusTimer={handleTimerToggle} />
       <main
         className="flex-1 px-4 pt-4 pb-20 md:px-6 md:pt-8 md:pb-8 overflow-x-hidden"
@@ -79,8 +76,8 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </main>
 
-      <footer className={`hidden md:block border-t py-4 px-4 md:px-6 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-        <div className={`max-w-6xl mx-auto flex items-center justify-between text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+      <footer className={`hidden md:block border-t py-4 px-4 md:px-6 border-slate-200 dark:border-white/10`}>
+        <div className={`max-w-6xl mx-auto flex items-center justify-between text-sm text-slate-500 dark:text-gray-500`}>
           <span>Assisy</span>
           <span>Built for productivity</span>
         </div>

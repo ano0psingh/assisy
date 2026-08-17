@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 
 interface HabitLog {
   date: string;
@@ -13,8 +12,6 @@ interface ContributionGraphProps {
 }
 
 export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGraphProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
 
   const { grid, months, calculatedMax } = useMemo(() => {
     const today = new Date();
@@ -81,19 +78,19 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
 
   const getColor = (value: number) => {
     if (value === 0) {
-      return isDark ? 'bg-white/5' : 'bg-slate-100';
+      return 'bg-slate-100 dark:bg-white/5';
     }
     
     const intensity = Math.min(value / calculatedMax, 1);
     
     if (intensity <= 0.25) {
-      return isDark ? 'bg-emerald-900/50' : 'bg-emerald-100';
+      return 'bg-emerald-100 dark:bg-emerald-900/50';
     } else if (intensity <= 0.5) {
-      return isDark ? 'bg-emerald-700/60' : 'bg-emerald-300';
+      return 'bg-emerald-300 dark:bg-emerald-700/60';
     } else if (intensity <= 0.75) {
-      return isDark ? 'bg-emerald-500/70' : 'bg-emerald-400';
+      return 'bg-emerald-400 dark:bg-emerald-500/70';
     } else {
-      return isDark ? 'bg-emerald-400' : 'bg-emerald-500';
+      return 'bg-emerald-500 dark:bg-emerald-400';
     }
   };
 
@@ -107,7 +104,7 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
           {months.map((m, i) => (
             <div
               key={i}
-              className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}
+              className={`text-xs text-slate-500 dark:text-gray-500`}
               style={{ 
                 position: 'relative',
                 left: `${m.column * 14}px`,
@@ -128,7 +125,7 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
               <div
                 key={day}
                 className={`text-xs h-[12px] flex items-center justify-end pr-1 ${
-                  isDark ? 'text-gray-500' : 'text-slate-500'
+                  'text-slate-500 dark:text-gray-500'
                 }`}
                 style={{ visibility: i % 2 === 1 ? 'visible' : 'hidden' }}
               >
@@ -168,13 +165,13 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
         
         {/* Legend */}
         <div className="flex items-center justify-end gap-1 mt-2">
-          <span className={`text-xs mr-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Less</span>
-          <div className={`w-[12px] h-[12px] rounded-sm ${isDark ? 'bg-white/5' : 'bg-slate-100'}`} />
-          <div className={`w-[12px] h-[12px] rounded-sm ${isDark ? 'bg-emerald-900/50' : 'bg-emerald-100'}`} />
-          <div className={`w-[12px] h-[12px] rounded-sm ${isDark ? 'bg-emerald-700/60' : 'bg-emerald-300'}`} />
-          <div className={`w-[12px] h-[12px] rounded-sm ${isDark ? 'bg-emerald-500/70' : 'bg-emerald-400'}`} />
-          <div className={`w-[12px] h-[12px] rounded-sm ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
-          <span className={`text-xs ml-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>More</span>
+          <span className={`text-xs mr-1 text-slate-500 dark:text-gray-500`}>Less</span>
+          <div className={`w-[12px] h-[12px] rounded-sm bg-slate-100 dark:bg-white/5`} />
+          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-100 dark:bg-emerald-900/50`} />
+          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-300 dark:bg-emerald-700/60`} />
+          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-400 dark:bg-emerald-500/70`} />
+          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-500 dark:bg-emerald-400`} />
+          <span className={`text-xs ml-1 text-slate-500 dark:text-gray-500`}>More</span>
         </div>
       </div>
     </div>

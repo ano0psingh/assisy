@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { LogIn, Mail, Lock, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { IconButton } from '../ui';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -69,9 +70,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   if (!isConfigured) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className={`absolute inset-0 ${isDark ? 'bg-black/70' : 'bg-slate-900/50'}`} onClick={onClose} />
-        <div className={`relative rounded-2xl p-6 max-w-sm w-full ${isDark ? 'bg-slate-900 border border-white/10' : 'bg-white border border-slate-200'}`}>
-          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+        <div className={`absolute inset-0 bg-slate-900/50 dark:bg-black/70`} onClick={onClose} />
+        <div className={`relative rounded-2xl p-6 max-w-sm w-full bg-white border border-slate-200 dark:bg-slate-900 dark:border-white/10`}>
+          <p className={`text-sm text-slate-500 dark:text-gray-400`}>
             Sign-in is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local. See SUPABASE_SETUP.md.
           </p>
           <button onClick={onClose} className="mt-4 btn-primary px-4 py-2 rounded-lg text-sm">Close</button>
@@ -82,21 +83,24 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className={`absolute inset-0 ${isDark ? 'bg-black/70' : 'bg-slate-900/50'}`} onClick={onClose} />
-      <div className={`relative rounded-2xl max-w-sm w-full overflow-hidden ${isDark ? 'bg-slate-900 border border-white/10' : 'bg-white border border-slate-200'}`}>
-        <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+      <div className={`absolute inset-0 bg-slate-900/50 dark:bg-black/70`} onClick={onClose} />
+      <div className={`relative rounded-2xl max-w-sm w-full overflow-hidden bg-white border border-slate-200 dark:bg-slate-900 dark:border-white/10`}>
+        <div className={`flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/10`}>
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-100'}`}>
-              <LogIn className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-violet-100 dark:bg-violet-500/20`}>
+              <LogIn className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
             </div>
             <div>
-              <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Sign in</h2>
-              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Sync your data across devices</p>
+              <h2 className={`font-semibold text-slate-800 dark:text-white`}>Sign in</h2>
+              <p className={`text-xs text-slate-500 dark:text-gray-500`}>Sync your data across devices</p>
             </div>
           </div>
-          <button aria-label="Close sign in" onClick={onClose} className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}>
-            <X size={18} />
-          </button>
+          <IconButton
+            icon={X}
+            label="Close sign in"
+            size="lg"
+            onClick={onClose}
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -104,46 +108,46 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <button
               type="button"
               onClick={() => { setMode('signin'); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium ${mode === 'signin' ? (isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-50 text-violet-600') : (isDark ? 'text-gray-500 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50')}`}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium ${mode === 'signin' ? ('bg-violet-50 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400') : ('text-slate-500 hover:bg-slate-50 dark:text-gray-500 dark:hover:bg-white/5')}`}
             >
               Sign in
             </button>
             <button
               type="button"
               onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium ${mode === 'signup' ? (isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-50 text-violet-600') : (isDark ? 'text-gray-500 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50')}`}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium ${mode === 'signup' ? ('bg-violet-50 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400') : ('text-slate-500 hover:bg-slate-50 dark:text-gray-500 dark:hover:bg-white/5')}`}
             >
               Sign up
             </button>
           </div>
 
           <div>
-            <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Email</label>
+            <label className={`block text-xs font-medium mb-2 text-slate-500 dark:text-gray-400`}>Email</label>
             <div className="relative">
-              <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+              <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-gray-500`} />
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className={`w-full pl-9 pr-3 py-3 rounded-lg text-sm outline-none border ${
-                  isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                className={`w-full pl-8 pr-3 py-3 rounded-lg text-sm outline-none border ${
+                  'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
                 }`}
               />
             </div>
           </div>
 
           <div>
-            <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Password</label>
+            <label className={`block text-xs font-medium mb-2 text-slate-500 dark:text-gray-400`}>Password</label>
             <div className="relative">
-              <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+              <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-gray-500`} />
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full pl-9 pr-3 py-3 rounded-lg text-sm outline-none border ${
-                  isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                className={`w-full pl-8 pr-3 py-3 rounded-lg text-sm outline-none border ${
+                  'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
                 }`}
               />
             </div>
@@ -162,9 +166,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
           <div className="relative">
             <div className={`absolute inset-0 flex items-center ${isDark ? '' : ''}`}>
-              <span className={`flex-1 border-t ${isDark ? 'border-white/10' : 'border-slate-200'}`} />
-              <span className={`px-2 text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>or</span>
-              <span className={`flex-1 border-t ${isDark ? 'border-white/10' : 'border-slate-200'}`} />
+              <span className={`flex-1 border-t border-slate-200 dark:border-white/10`} />
+              <span className={`px-2 text-xs text-slate-400 dark:text-gray-500`}>or</span>
+              <span className={`flex-1 border-t border-slate-200 dark:border-white/10`} />
             </div>
           </div>
 
@@ -173,7 +177,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
             onClick={handleGoogle}
             disabled={loading}
             className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium border ${
-              isDark ? 'border-white/10 hover:bg-white/5 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+              'border-slate-200 hover:bg-slate-50 text-slate-700 dark:border-white/10 dark:hover:bg-white/5 dark:text-gray-300'
             } disabled:opacity-50`}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">

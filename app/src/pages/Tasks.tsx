@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useProjectContext } from '../context/ProjectContext';
-import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
 import { useDataVersion } from '../context/DataVersionContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -24,6 +23,7 @@ import { hapticMedium } from '../lib/haptics';
 import { getLocalDateString } from '../lib/dateUtils';
 import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, Search, X } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
+import { IconButton } from '../components/ui';
 
 const TASK_BULK_FIELDS: BulkEditField[] = [
   {
@@ -70,8 +70,6 @@ export function Tasks() {
   // Get tasks already in today to determine which show the "Add to Today" button
   const todaysTasks = getTodaysTasks();
   const todayTaskIds = new Set(todaysTasks.map(t => t.id));
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const { pushUndo } = useUndo();
   const { toast } = useToast();
   const { refresh } = useDataVersion();
@@ -478,8 +476,8 @@ export function Tasks() {
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className={`text-xl md:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>All Tasks</h1>
-          <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{tasks.length} total tasks</p>
+          <h1 className={`text-xl md:text-2xl font-bold text-slate-800 dark:text-white`}>All Tasks</h1>
+          <p className={`mt-1 text-sm text-slate-500 dark:text-gray-500`}>{tasks.length} total tasks</p>
         </div>
         <div className="flex items-center gap-2">
           <SelectButton
@@ -499,7 +497,7 @@ export function Tasks() {
       <div className="relative">
         <Search
           size={16}
-          className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? 'text-gray-500' : 'text-slate-400'}`}
+          className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-gray-500`}
         />
         <input
           type="search"
@@ -508,9 +506,7 @@ export function Tasks() {
           placeholder="Search tasks by title or description"
           aria-label="Search tasks"
           className={`w-full pl-8 pr-8 py-3 rounded-xl text-sm outline-none transition-colors ${
-            isDark
-              ? 'bg-white/5 text-white placeholder-gray-500 border border-white/10 focus:border-violet-500/50'
-              : 'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400'
+            'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400 dark:bg-white/5 dark:text-white dark:placeholder-gray-500 dark:border-white/10 dark:focus:border-violet-500/50'
           }`}
         />
         {searchQuery && (
@@ -518,7 +514,7 @@ export function Tasks() {
             onClick={() => setSearchQuery('')}
             aria-label="Clear search"
             className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
-              isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10'
             }`}
           >
             <X size={14} />
@@ -533,8 +529,8 @@ export function Tasks() {
             onClick={() => setFiltersOpen(!filtersOpen)}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
               filtersOpen || statusFilter !== 'all' || categoryFilter !== 'all'
-                ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                : isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
             }`}
           >
             <ListFilter size={15} />
@@ -549,7 +545,7 @@ export function Tasks() {
             <button
               onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); setSmartFilter('none'); }}
               className={`text-xs px-2 py-1 rounded-lg transition-colors ${
-                isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/5'
               }`}
             >
               Clear
@@ -558,7 +554,7 @@ export function Tasks() {
         </div>
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
-          <div className={`flex rounded-xl overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className={`flex rounded-xl overflow-hidden border border-slate-200 dark:border-white/10`}>
             {([
               { mode: 'list' as const, icon: LayoutList, label: 'List' },
               { mode: 'grouped' as const, icon: FolderKanban, label: 'By Goal' },
@@ -569,8 +565,8 @@ export function Tasks() {
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-2 flex items-center gap-1 text-xs font-medium transition-all ${
                   viewMode === mode
-                    ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                    : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                    ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                    : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                 }`}
               >
                 <Icon size={13} />
@@ -578,7 +574,7 @@ export function Tasks() {
               </button>
             ))}
           </div>
-          <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+          <span className={`text-xs text-slate-400 dark:text-gray-600`}>
             {filteredTasks.length}
           </span>
         </div>
@@ -587,16 +583,16 @@ export function Tasks() {
         <div className={`card rounded-xl p-3 space-y-3 animate-fade-in`}>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Status</label>
-              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <label className={`text-xs text-slate-500 dark:text-gray-500`}>Status</label>
+              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                 {(['all', 'pending', 'completed'] as const).map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
                     className={`px-3 py-1 text-xs font-medium capitalize transition-all ${
                       statusFilter === status
-                        ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                        ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                        : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                     }`}
                   >
                     {status}
@@ -605,16 +601,16 @@ export function Tasks() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Category</label>
-              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <label className={`text-xs text-slate-500 dark:text-gray-500`}>Category</label>
+              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                 {(['all', 'Personal', 'Financial', 'Professional'] as const).map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setCategoryFilter(cat)}
                     className={`px-3 py-1 text-xs font-medium transition-all ${
                       categoryFilter === cat
-                        ? isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                        ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                        : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                     }`}
                   >
                     {cat === 'all' ? 'All' : cat}
@@ -624,7 +620,7 @@ export function Tasks() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <label className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Quick</label>
+            <label className={`text-xs text-slate-500 dark:text-gray-500`}>Quick</label>
             {([
               { id: 'none' as const, label: 'All' },
               { id: 'overdue' as const, label: 'Overdue' },
@@ -641,9 +637,9 @@ export function Tasks() {
                 className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
                   smartFilter === id
                     ? id === 'overdue'
-                      ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
-                      : isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'
-                    : isDark ? 'text-gray-400 hover:bg-white/5 bg-white/[0.02]' : 'text-slate-500 hover:bg-slate-50 bg-slate-50'
+                      ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'
+                      : 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                    : 'text-slate-500 hover:bg-slate-50 bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5 dark:bg-white/[0.02]'
                 }`}
               >
                 {label}
@@ -664,11 +660,11 @@ export function Tasks() {
           /* Genuinely no data — offer to create, not to clear filters that
              were never set. */
           <div className="card rounded-2xl p-12 text-center">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
-              <LayoutList className={`w-8 h-8 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-slate-100 dark:bg-white/5`}>
+              <LayoutList className={`w-8 h-8 text-slate-400 dark:text-gray-600`} />
             </div>
-            <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>No tasks yet</p>
-            <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+            <p className={`font-medium text-slate-800 dark:text-white`}>No tasks yet</p>
+            <p className={`text-sm mt-1 text-slate-500 dark:text-gray-500`}>
               Add your first task and it will show up here.
             </p>
             <button onClick={() => setIsTaskFormOpen(true)} className="mt-4 text-violet-500 hover:text-violet-400 text-sm font-medium">
@@ -677,10 +673,10 @@ export function Tasks() {
           </div>
         ) : (
           <div className="card rounded-2xl p-12 text-center">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
-              <ListFilter className={`w-8 h-8 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-slate-100 dark:bg-white/5`}>
+              <ListFilter className={`w-8 h-8 text-slate-400 dark:text-gray-600`} />
             </div>
-            <p className={isDark ? 'text-gray-500' : 'text-slate-500'}>
+            <p className={'text-slate-500 dark:text-gray-500'}>
               {normalisedQuery
                 ? `No tasks match "${searchQuery.trim()}".`
                 : 'No tasks found matching your filters.'}
@@ -725,7 +721,7 @@ export function Tasks() {
                   ))}
                 </div>
               ) : completedTasks.length > 0 ? (
-                <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                <div className={`text-center py-8 text-slate-500 dark:text-gray-500`}>
                   <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-emerald-500" />
                   <p className="font-medium">All caught up!</p>
                   <p className="text-sm mt-1">No pending tasks</p>
@@ -734,42 +730,42 @@ export function Tasks() {
               
               {/* Completed Tasks - Collapsible */}
               {completedTasks.length > 0 && (
-                <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-emerald-500/20' : 'border-emerald-200'}`}>
+                <div className={`card rounded-2xl overflow-hidden border-emerald-200 dark:border-emerald-500/20`}>
                   <button
                     onClick={() => setIsCompletedExpanded(!isCompletedExpanded)}
                     className={`w-full p-4 flex items-center justify-between transition-colors ${
-                      isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                      'hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
                       {isCompletedExpanded ? (
-                        <ChevronDown className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                        <ChevronDown className={`w-5 h-5 text-emerald-500 dark:text-emerald-400`} />
                       ) : (
-                        <ChevronRight className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                        <ChevronRight className={`w-5 h-5 text-emerald-500 dark:text-emerald-400`} />
                       )}
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        isDark ? 'bg-emerald-500/20' : 'bg-emerald-50'
+                        'bg-emerald-50 dark:bg-emerald-500/20'
                       }`}>
-                        <CheckCircle2 className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                        <CheckCircle2 className={`w-5 h-5 text-emerald-500 dark:text-emerald-400`} />
                       </div>
                       <div className="text-left">
-                        <h3 className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                        <h3 className={`font-semibold text-emerald-700 dark:text-emerald-400`}>
                           Completed Tasks
                         </h3>
-                        <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                        <p className={`text-sm text-slate-500 dark:text-gray-500`}>
                           {completedTasks.length} task{completedTasks.length !== 1 ? 's' : ''} done
                         </p>
                       </div>
                     </div>
                     <span className={`text-xs px-3 py-2 rounded-full font-medium ${
-                      isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                      'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
                     }`}>
                       {isCompletedExpanded ? 'Hide' : 'Show'}
                     </span>
                   </button>
                   
                   {isCompletedExpanded && (
-                    <div className={`p-4 pt-0 space-y-2 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+                    <div className={`p-4 pt-0 space-y-2 border-t border-slate-100 dark:border-white/10`}>
                       <div className="pt-3 space-y-2">
                         {completedTasks.map((task, index) => (
                           <div 
@@ -799,22 +795,22 @@ export function Tasks() {
         /* 2x2 Priority/Effort Matrix View */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Quadrant 1: High Priority, High Effort - DO FIRST (Important & Hard) */}
-          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-red-500/30' : 'border-red-200'}`}>
-            <div className={`p-4 border-b ${isDark ? 'bg-red-500/10 border-red-500/20' : 'bg-red-50 border-red-100'}`}>
+          <div className={`card rounded-2xl overflow-hidden border-red-200 dark:border-red-500/30`}>
+            <div className={`p-4 border-b bg-red-50 border-red-100 dark:bg-red-500/10 dark:border-red-500/20`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
-                    <Flame className={`w-4 h-4 ${isDark ? 'text-red-400' : 'text-red-500'}`} />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-red-100 dark:bg-red-500/20`}>
+                    <Flame className={`w-4 h-4 text-red-500 dark:text-red-400`} />
                   </div>
-                  <h3 className={`font-semibold ${isDark ? 'text-red-400' : 'text-red-700'}`}>Do First</h3>
+                  <h3 className={`font-semibold text-red-700 dark:text-red-400`}>Do First</h3>
                 </div>
-                <span className={`text-xs ${isDark ? 'text-red-400/70' : 'text-red-600'}`}>High Priority • High Effort</span>
+                <span className={`text-xs text-red-600 dark:text-red-400/70`}>High Priority • High Effort</span>
               </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-red-600/70'}`}>Critical tasks that need focus time</p>
+              <p className={`text-xs mt-1 text-red-600/70 dark:text-gray-500`}>Critical tasks that need focus time</p>
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').length === 0 ? (
-                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -824,22 +820,22 @@ export function Tasks() {
           </div>
 
           {/* Quadrant 2: High Priority, Low Effort - QUICK WINS */}
-          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-emerald-500/30' : 'border-emerald-200'}`}>
-            <div className={`p-4 border-b ${isDark ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-100'}`}>
+          <div className={`card rounded-2xl overflow-hidden border-emerald-200 dark:border-emerald-500/30`}>
+            <div className={`p-4 border-b bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
-                    <Zap className={`w-4 h-4 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-100 dark:bg-emerald-500/20`}>
+                    <Zap className={`w-4 h-4 text-emerald-500 dark:text-emerald-400`} />
                   </div>
-                  <h3 className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Quick Wins</h3>
+                  <h3 className={`font-semibold text-emerald-700 dark:text-emerald-400`}>Quick Wins</h3>
                 </div>
-                <span className={`text-xs ${isDark ? 'text-emerald-400/70' : 'text-emerald-600'}`}>High Priority • Low Effort</span>
+                <span className={`text-xs text-emerald-600 dark:text-emerald-400/70`}>High Priority • Low Effort</span>
               </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-emerald-600/70'}`}>Do these first for momentum!</p>
+              <p className={`text-xs mt-1 text-emerald-600/70 dark:text-gray-500`}>Do these first for momentum!</p>
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').length === 0 ? (
-                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -849,22 +845,22 @@ export function Tasks() {
           </div>
 
           {/* Quadrant 3: Low Priority, High Effort - SCHEDULE */}
-          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-amber-500/30' : 'border-amber-200'}`}>
-            <div className={`p-4 border-b ${isDark ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-100'}`}>
+          <div className={`card rounded-2xl overflow-hidden border-amber-200 dark:border-amber-500/30`}>
+            <div className={`p-4 border-b bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/20`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
-                    <CalendarClock className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-amber-100 dark:bg-amber-500/20`}>
+                    <CalendarClock className={`w-4 h-4 text-amber-500 dark:text-amber-400`} />
                   </div>
-                  <h3 className={`font-semibold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>Schedule</h3>
+                  <h3 className={`font-semibold text-amber-700 dark:text-amber-400`}>Schedule</h3>
                 </div>
-                <span className={`text-xs ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>Low Priority • High Effort</span>
+                <span className={`text-xs text-amber-600 dark:text-amber-400/70`}>Low Priority • High Effort</span>
               </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-amber-600/70'}`}>Plan dedicated time for these</p>
+              <p className={`text-xs mt-1 text-amber-600/70 dark:text-gray-500`}>Plan dedicated time for these</p>
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').length === 0 ? (
-                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -874,22 +870,22 @@ export function Tasks() {
           </div>
 
           {/* Quadrant 4: Low Priority, Low Effort - FILL TIME */}
-          <div className={`card rounded-2xl overflow-hidden ${isDark ? 'border-blue-500/30' : 'border-blue-200'}`}>
-            <div className={`p-4 border-b ${isDark ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-50 border-blue-100'}`}>
+          <div className={`card rounded-2xl overflow-hidden border-blue-200 dark:border-blue-500/30`}>
+            <div className={`p-4 border-b bg-blue-50 border-blue-100 dark:bg-blue-500/10 dark:border-blue-500/20`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-blue-500/20' : 'bg-blue-100'}`}>
-                    <Coffee className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-blue-100 dark:bg-blue-500/20`}>
+                    <Coffee className={`w-4 h-4 text-blue-500 dark:text-blue-400`} />
                   </div>
-                  <h3 className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>Fill Time</h3>
+                  <h3 className={`font-semibold text-blue-700 dark:text-blue-400`}>Fill Time</h3>
                 </div>
-                <span className={`text-xs ${isDark ? 'text-blue-400/70' : 'text-blue-600'}`}>Low Priority • Low Effort</span>
+                <span className={`text-xs text-blue-600 dark:text-blue-400/70`}>Low Priority • Low Effort</span>
               </div>
-              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-blue-600/70'}`}>Do when you have spare moments</p>
+              <p className={`text-xs mt-1 text-blue-600/70 dark:text-gray-500`}>Do when you have spare moments</p>
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').length === 0 ? (
-                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -925,44 +921,42 @@ export function Tasks() {
                 <button
                   onClick={() => toggleGoalExpanded(goalId)}
                   className={`w-full p-4 flex items-center justify-between transition-colors ${
-                    isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                    'hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
                     {isExpanded ? (
-                      <ChevronDown className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+                      <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-gray-500`} />
                     ) : (
-                      <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
+                      <ChevronRight className={`w-5 h-5 text-slate-400 dark:text-gray-500`} />
                     )}
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                       group.goal 
-                        ? isDark ? 'bg-violet-500/20' : 'bg-violet-100'
-                        : isDark ? 'bg-gray-500/20' : 'bg-slate-100'
+                        ? 'bg-violet-100 dark:bg-violet-500/20'
+                        : 'bg-slate-100 dark:bg-gray-500/20'
                     }`}>
                       <Target className={`w-5 h-5 ${
                         group.goal 
-                          ? isDark ? 'text-violet-400' : 'text-violet-500'
-                          : isDark ? 'text-gray-400' : 'text-slate-400'
+                          ? 'text-violet-500 dark:text-violet-400'
+                          : 'text-slate-400 dark:text-gray-400'
                       }`} />
                     </div>
                     <div className="text-left">
                       <div className="flex items-center gap-2">
-                        <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        <h3 className={`font-semibold text-slate-800 dark:text-white`}>
                           {group.goal?.title || 'Unlinked Tasks'}
                         </h3>
                         {/* Sub-goals badge - more visible */}
                         {hasSubGoals && (
                           <span className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-2 ${
-                            isDark 
-                              ? 'bg-violet-500/30 text-violet-300 border border-violet-500/40' 
-                              : 'bg-violet-100 text-violet-700 border border-violet-200'
+                            'bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-500/30 dark:text-violet-300 dark:border-violet-500/40'
                           }`}>
                             <Target size={12} />
                             {group.subGoalGroups.length} sub-goal{group.subGoalGroups.length !== 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
-                      <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                      <p className={`text-sm text-slate-500 dark:text-gray-500`}>
                         {totalCompleted}/{totalTasks} tasks completed
                       </p>
                     </div>
@@ -971,13 +965,13 @@ export function Tasks() {
                     {/* Progress indicator */}
                     {group.goal && (
                       <div className="flex items-center space-x-2">
-                        <div className={`w-24 h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-100'}`}>
+                        <div className={`w-24 h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10`}>
                           <div 
                             className="h-full rounded-full bg-violet-500 transition-all"
                             style={{ width: `${totalTasks > 0 ? (totalCompleted / totalTasks) * 100 : 0}%` }}
                           />
                         </div>
-                        <span className={`text-xs font-medium ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+                        <span className={`text-xs font-medium text-violet-600 dark:text-violet-400`}>
                           {totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0}%
                         </span>
                       </div>
@@ -995,12 +989,12 @@ export function Tasks() {
                 
                 {/* Expanded Content */}
                 {isExpanded && (
-                  <div className={`border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+                  <div className={`border-t border-slate-100 dark:border-white/10`}>
                     {/* Parent Goal's Direct Tasks */}
                     {group.tasks.length > 0 && (
                       <div className="p-3 space-y-2">
                         {hasSubGoals && (
-                          <p className={`text-xs font-medium px-2 py-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                          <p className={`text-xs font-medium px-2 py-1 text-slate-500 dark:text-gray-500`}>
                             Direct tasks ({group.tasks.length})
                           </p>
                         )}
@@ -1037,43 +1031,43 @@ export function Tasks() {
                       return (
                         <div 
                           key={subGoalId}
-                          className={`border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}
+                          className={`border-t border-slate-100 dark:border-white/10`}
                         >
                           {/* Sub-goal Header */}
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleGoalExpanded(subGoalId); }}
                             className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
-                              isDark ? 'bg-white/[0.02] hover:bg-white/[0.05]' : 'bg-slate-50/50 hover:bg-slate-50'
+                              'bg-slate-50/50 hover:bg-slate-50 dark:bg-white/[0.02] dark:hover:bg-white/[0.05]'
                             }`}
                           >
                             <div className="flex items-center space-x-3 pl-6">
                               {isSubExpanded ? (
-                                <ChevronDown className={`w-4 h-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                                <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-gray-600`} />
                               ) : (
-                                <ChevronRight className={`w-4 h-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`} />
+                                <ChevronRight className={`w-4 h-4 text-slate-400 dark:text-gray-600`} />
                               )}
                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                isDark ? 'bg-violet-500/15' : 'bg-violet-50'
+                                'bg-violet-50 dark:bg-violet-500/15'
                               }`}>
-                                <Target className={`w-4 h-4 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+                                <Target className={`w-4 h-4 text-violet-500 dark:text-violet-400`} />
                               </div>
                               <div className="text-left">
-                                <h4 className={`font-medium text-sm ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                                <h4 className={`font-medium text-sm text-slate-700 dark:text-gray-300`}>
                                   {subGroup.goal.title}
                                 </h4>
-                                <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                                <p className={`text-xs text-slate-400 dark:text-gray-600`}>
                                   {subCompleted}/{subTotal} tasks
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <div className={`w-16 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                              <div className={`w-16 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
                                 <div 
                                   className="h-full rounded-full bg-violet-400 transition-all"
                                   style={{ width: `${subTotal > 0 ? (subCompleted / subTotal) * 100 : 0}%` }}
                                 />
                               </div>
-                              <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                              <span className={`text-xs text-slate-500 dark:text-gray-500`}>
                                 {subTotal > 0 ? Math.round((subCompleted / subTotal) * 100) : 0}%
                               </span>
                             </div>
@@ -1082,7 +1076,7 @@ export function Tasks() {
                           {/* Sub-goal Tasks */}
                           {isSubExpanded && (
                             <div className={`px-4 py-2 pl-16 space-y-2 ${
-                              isDark ? 'bg-white/[0.01]' : 'bg-slate-50/30'
+                              'bg-slate-50/30 dark:bg-white/[0.01]'
                             }`}>
                               {subGroup.tasks.map((task, taskIndex) => (
                                 <div 
@@ -1128,32 +1122,31 @@ export function Tasks() {
       {/* Move to Project Modal */}
       {isMoveToProjectOpen && taskToMove && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`w-full max-w-md rounded-2xl p-6 ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
+          <div className={`w-full max-w-md rounded-2xl p-6 bg-white dark:bg-[#12121a]`}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <h2 className={`text-lg font-semibold text-slate-800 dark:text-white`}>
                 Move to Project
               </h2>
-              <button
-                aria-label="Close"
+              <IconButton
+                icon={X}
+                label="Close"
+                size="lg"
                 onClick={() => setIsMoveToProjectOpen(false)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-              >
-                <X size={18} />
-              </button>
+              />
             </div>
 
             {/* Task being moved */}
-            <div className={`p-3 rounded-xl mb-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-slate-50 border border-slate-200'}`}>
-              <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <div className={`p-3 rounded-xl mb-4 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+              <p className={`text-sm font-medium text-slate-800 dark:text-white`}>
                 {taskToMove.title}
               </p>
-              <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              <p className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>
                 {taskToMove.category} • {taskToMove.priority} Priority
               </p>
             </div>
 
             {activeProjects.length === 0 ? (
-              <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              <div className={`text-center py-8 text-slate-500 dark:text-gray-500`}>
                 <FolderKanban className="w-10 h-10 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">No active projects</p>
                 <p className="text-xs mt-1">Create a project first to move tasks</p>
@@ -1162,7 +1155,7 @@ export function Tasks() {
               <div className="space-y-4">
                 {/* Project Selection */}
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                  <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>
                     Select Project
                   </label>
                   <select
@@ -1172,9 +1165,7 @@ export function Tasks() {
                       setSelectedSubProjectId('');
                     }}
                     className={`w-full px-4 py-3 rounded-xl border transition-colors ${
-                      isDark 
-                        ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
-                        : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                      'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
                     }`}
                   >
                     <option value="">Choose a project...</option>
@@ -1189,11 +1180,11 @@ export function Tasks() {
                 {/* Sub-Project Selection */}
                 {selectedProjectId && (
                   <div>
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                    <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>
                       Select Sub-Project
                     </label>
                     {availableSubProjects.length === 0 ? (
-                      <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+                      <p className={`text-sm text-slate-500 dark:text-gray-500`}>
                         No sub-projects in this project. Create one first.
                       </p>
                     ) : (
@@ -1201,9 +1192,7 @@ export function Tasks() {
                         value={selectedSubProjectId}
                         onChange={(e) => setSelectedSubProjectId(e.target.value)}
                         className={`w-full px-4 py-3 rounded-xl border transition-colors ${
-                          isDark 
-                            ? 'bg-white/5 border-white/10 text-white focus:border-violet-500' 
-                            : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500'
+                          'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
                         }`}
                       >
                         <option value="">Choose a sub-project...</option>
@@ -1222,7 +1211,7 @@ export function Tasks() {
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setIsMoveToProjectOpen(false)}
-                className={`px-4 py-2 rounded-xl transition-colors ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
               >
                 Cancel
               </button>

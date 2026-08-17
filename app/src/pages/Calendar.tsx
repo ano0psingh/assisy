@@ -467,9 +467,7 @@ export function Calendar() {
           type="text"
           placeholder="Task title…"
           className={`w-full text-xs px-2 py-1 rounded-lg border outline-none ${
-            isDark
-              ? 'bg-white/5 border-white/10 text-gray-200 placeholder-gray-600 focus:border-violet-500/50'
-              : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-violet-400'
+            'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-violet-400 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 dark:placeholder-gray-600 dark:focus:border-violet-500/50'
           }`}
           onKeyDown={(e) => handleInlineKeyDown(e, dateStr)}
           onBlur={(e) => {
@@ -488,10 +486,10 @@ export function Calendar() {
 
   const TaskCard = ({ task }: { task: Task }) => (
     <div className={`flex items-center gap-2 px-2 py-1 rounded-lg text-xs ${
-      isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-50 hover:bg-slate-100'
+      'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10'
     } transition-colors`}>
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[task.category]?.dark : CATEGORY_DOT_COLOR[task.category]?.light}`} />
-      <span className={`truncate ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{task.title}</span>
+      <span className={`truncate text-slate-600 dark:text-gray-300`}>{task.title}</span>
       {task.status === 'Completed' ? (
         <CheckCircle2 className={`w-3 h-3 shrink-0 ml-auto ${isDark ? STATUS_ICON_COLOR.Completed.dark : STATUS_ICON_COLOR.Completed.light}`} />
       ) : (
@@ -510,12 +508,12 @@ export function Calendar() {
       <div className="flex-1 min-w-0 space-y-6">
         {/* Page header */}
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-violet-500/20' : 'bg-violet-50'}`}>
-            <CalendarDays className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-violet-50 dark:bg-violet-500/20`}>
+            <CalendarDays className={`w-5 h-5 text-violet-500 dark:text-violet-400`} />
           </div>
           <div>
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Calendar</h1>
-            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+            <h1 className={`text-2xl font-bold text-slate-800 dark:text-white`}>Calendar</h1>
+            <p className={`text-sm text-slate-500 dark:text-gray-500`}>
               {monthStats.completed} completed · {monthStats.planned} planned · {monthStats.habitsLogged} habits · {monthStats.due} due
             </p>
           </div>
@@ -527,31 +525,31 @@ export function Calendar() {
             <button
               aria-label="Previous period"
               onClick={() => viewMode === 'month' ? navigateMonth(-1) : navigateWeek(-1)}
-              className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+              className={`p-2 rounded-xl transition-colors hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-3">
-              <span className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <span className={`text-lg font-semibold text-slate-800 dark:text-white`}>
                 {viewMode === 'month' ? monthLabel : weekLabel}
               </span>
               <button
                 onClick={goToToday}
                 className={`text-xs font-medium px-3 py-1 rounded-lg transition-colors ${
-                  isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                  'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                 }`}
               >
                 Today
               </button>
               {/* View mode toggle */}
-              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
                 <button
                   onClick={() => setViewMode('month')}
                   className={`text-xs font-medium px-3 py-1 transition-colors ${
                     viewMode === 'month'
-                      ? isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-100 text-violet-700'
-                      : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
+                      : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                   }`}
                 >
                   Month
@@ -560,8 +558,8 @@ export function Calendar() {
                   onClick={() => setViewMode('week')}
                   className={`text-xs font-medium px-3 py-1 transition-colors ${
                     viewMode === 'week'
-                      ? isDark ? 'bg-violet-500/30 text-violet-300' : 'bg-violet-100 text-violet-700'
-                      : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-50'
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
+                      : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
                   }`}
                 >
                   Week
@@ -572,9 +570,7 @@ export function Calendar() {
                   onClick={handleAISchedule}
                   disabled={aiLoading}
                   className={`flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg transition-colors ${
-                    isDark
-                      ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 disabled:opacity-50'
-                      : 'bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:opacity-50'
+                    'bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'
                   }`}
                 >
                   {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -586,7 +582,7 @@ export function Calendar() {
             <button
               aria-label="Next period"
               onClick={() => viewMode === 'month' ? navigateMonth(1) : navigateWeek(1)}
-              className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+              className={`p-2 rounded-xl transition-colors hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -600,7 +596,7 @@ export function Calendar() {
                 {WEEKDAYS.map((day) => (
                   <div
                     key={day}
-                    className={`text-center text-xs font-medium py-2 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}
+                    className={`text-center text-xs font-medium py-2 text-slate-400 dark:text-gray-500`}
                   >
                     {day}
                   </div>
@@ -638,10 +634,10 @@ export function Calendar() {
                       onDrop={(e) => handleDrop(e, dateStr)}
                       className={`
                         relative flex flex-col items-center h-12 md:h-16 py-2 md:py-2 rounded-xl transition-colors
-                        ${!isCurrentMonth ? (isDark ? 'text-gray-700' : 'text-slate-300') : ''}
-                        ${isCurrentMonth && !isToday && !isSelected ? (isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50') : ''}
-                        ${isSelected && !isToday ? (isDark ? 'bg-violet-500/15 text-violet-300' : 'bg-violet-50 text-violet-700') : ''}
-                        ${isDragTarget ? (isDark ? 'ring-2 ring-violet-400/60 bg-violet-500/10' : 'ring-2 ring-violet-400/60 bg-violet-50') : ''}
+                        ${!isCurrentMonth ? ('text-slate-300 dark:text-gray-700') : ''}
+                        ${isCurrentMonth && !isToday && !isSelected ? ('text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5') : ''}
+                        ${isSelected && !isToday ? ('bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300') : ''}
+                        ${isDragTarget ? ('ring-2 ring-violet-400/60 bg-violet-50 dark:bg-violet-500/10') : ''}
                       `}
                     >
                       <span
@@ -663,7 +659,7 @@ export function Calendar() {
                               className={`w-1.5 h-1.5 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`}
                             />
                           ))}
-                          {hasFocused && !categoryDots.length && <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-violet-400/60' : 'bg-violet-300'}`} />}
+                          {hasFocused && !categoryDots.length && <span className={`w-1.5 h-1.5 rounded-full bg-violet-300 dark:bg-violet-400/60`} />}
                           {hasHabit && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
                           {hasCheckIn && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
                           {hasDue && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
@@ -678,8 +674,8 @@ export function Calendar() {
                           ))}
                           <span className={`text-xs font-medium ${
                             allTasksForDay.some(t => t.status === 'Completed')
-                              ? isDark ? 'text-emerald-400' : 'text-emerald-600'
-                              : isDark ? 'text-gray-500' : 'text-slate-400'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-slate-400 dark:text-gray-500'
                           }`}>
                             {allTasksForDay.filter(t => t.status === 'Completed').length}/{allTasksForDay.length}
                           </span>
@@ -713,24 +709,24 @@ export function Calendar() {
                     className={`
                       rounded-xl p-2 min-h-[140px] cursor-pointer transition-colors border
                       ${isToday
-                        ? isDark ? 'border-violet-500/40 bg-violet-500/5' : 'border-violet-300 bg-violet-50/50'
+                        ? 'border-violet-300 bg-violet-50/50 dark:border-violet-500/40 dark:bg-violet-500/5'
                         : isSelected
-                          ? isDark ? 'border-violet-500/25 bg-white/[0.02]' : 'border-violet-200 bg-violet-50/30'
-                          : isDark ? 'border-white/5 hover:border-white/10' : 'border-slate-100 hover:border-slate-200'
+                          ? 'border-violet-200 bg-violet-50/30 dark:border-violet-500/25 dark:bg-white/[0.02]'
+                          : 'border-slate-100 hover:border-slate-200 dark:border-white/5 dark:hover:border-white/10'
                       }
-                      ${dragOverDate === dateStr ? (isDark ? 'ring-2 ring-violet-400/60' : 'ring-2 ring-violet-400/60') : ''}
+                      ${dragOverDate === dateStr ? ('ring-2 ring-violet-400/60') : ''}
                     `}
                   >
                     {/* Day header */}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium uppercase ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                        <span className={`text-xs font-medium uppercase text-slate-400 dark:text-gray-500`}>
                           {WEEKDAYS[weekDays.indexOf(day)]}
                         </span>
                         <span
                           className={`
                             w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium
-                            ${isToday ? 'bg-violet-500 text-white' : isDark ? 'text-gray-300' : 'text-slate-600'}
+                            ${isToday ? 'bg-violet-500 text-white' : 'text-slate-600 dark:text-gray-300'}
                           `}
                         >
                           {day.getDate()}
@@ -739,7 +735,7 @@ export function Calendar() {
                       <button
                         onClick={(e) => { e.stopPropagation(); openInlineCreate(dateStr); }}
                         className={`w-5 h-5 flex items-center justify-center rounded-md transition-colors ${
-                          isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                          'hover:bg-slate-100 text-slate-400 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-500 dark:hover:text-gray-300'
                         }`}
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -764,7 +760,7 @@ export function Calendar() {
                         </div>
                       ))}
                       {allUnique.length === 0 && (
-                        <p className={`text-xs ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>No tasks</p>
+                        <p className={`text-xs text-slate-300 dark:text-gray-700`}>No tasks</p>
                       )}
                     </div>
                   </div>
@@ -776,11 +772,11 @@ export function Calendar() {
 
         {/* ── AI SUGGESTIONS PANEL ── */}
         {aiPanelOpen && (
-          <div className={`card rounded-2xl p-6 border ${isDark ? 'border-amber-500/20' : 'border-amber-200'}`}>
+          <div className={`card rounded-2xl p-6 border border-amber-200 dark:border-amber-500/20`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Sparkles className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-                <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                <Sparkles className={`w-4 h-4 text-amber-500 dark:text-amber-400`} />
+                <h2 className={`text-base font-semibold text-slate-800 dark:text-white`}>
                   AI Schedule Suggestions
                 </h2>
               </div>
@@ -788,7 +784,7 @@ export function Calendar() {
                 aria-label="Close"
                 onClick={() => setAiPanelOpen(false)}
                 className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                  isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                  'hover:bg-slate-100 text-slate-400 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-500 dark:hover:text-gray-300'
                 }`}
               >
                 <X className="w-4 h-4" />
@@ -797,11 +793,11 @@ export function Calendar() {
 
             {aiLoading ? (
               <div className="flex items-center justify-center py-8 gap-2">
-                <Loader2 className={`w-5 h-5 animate-spin ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Analyzing your energy patterns and tasks…</span>
+                <Loader2 className={`w-5 h-5 animate-spin text-amber-500 dark:text-amber-400`} />
+                <span className={`text-sm text-slate-500 dark:text-gray-400`}>Analyzing your energy patterns and tasks…</span>
               </div>
             ) : aiSuggestions.filter(s => !s.dismissed).length === 0 ? (
-              <p className={`text-sm py-4 text-center ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+              <p className={`text-sm py-4 text-center text-slate-400 dark:text-gray-500`}>
                 {aiSuggestions.length > 0 ? 'All suggestions handled!' : 'No suggestions available. Make sure you have pending tasks and recent check-in data.'}
               </p>
             ) : (
@@ -809,16 +805,16 @@ export function Calendar() {
                 {aiSuggestions.filter(s => !s.dismissed).map((suggestion) => (
                   <div
                     key={suggestion.taskTitle}
-                    className={`flex items-start gap-3 p-3 rounded-xl ${isDark ? 'bg-white/[0.03]' : 'bg-slate-50'}`}
+                    className={`flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03]`}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>
+                      <p className={`text-sm font-medium text-slate-700 dark:text-gray-200`}>
                         {suggestion.taskTitle}
                       </p>
-                      <p className={`text-xs mt-1 ${isDark ? 'text-amber-400/80' : 'text-amber-600'}`}>
+                      <p className={`text-xs mt-1 text-amber-600 dark:text-amber-400/80`}>
                         → {suggestion.suggestedDay}
                       </p>
-                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                      <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>
                         {suggestion.reason}
                       </p>
                     </div>
@@ -827,9 +823,7 @@ export function Calendar() {
                         <button
                           onClick={() => acceptSuggestion(suggestion)}
                           className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                            isDark
-                              ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
-                              : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                            'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'
                           }`}
                           title="Accept suggestion"
                           aria-label="Accept suggestion"
@@ -840,9 +834,7 @@ export function Calendar() {
                       <button
                         onClick={() => dismissSuggestion(suggestion.taskTitle)}
                         className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                          isDark
-                            ? 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
-                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                          'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300'
                         }`}
                         title="Dismiss suggestion"
                         aria-label="Dismiss suggestion"
@@ -860,13 +852,13 @@ export function Calendar() {
         {/* Selected day detail panel */}
         <div className="card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <h2 className={`text-base font-semibold text-slate-800 dark:text-white`}>
               {selectedDateLabel}
             </h2>
             <button
               onClick={() => openInlineCreate(selectedDateStr)}
               className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                isDark ? 'hover:bg-white/10 text-gray-500 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                'hover:bg-slate-100 text-slate-400 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-500 dark:hover:text-gray-300'
               }`}
               title="Add task"
               aria-label="Add task"
@@ -878,13 +870,13 @@ export function Calendar() {
           <InlineCreateInput dateStr={selectedDateStr} />
 
           {!hasActivity && inlineCreateDate !== selectedDateStr ? (
-            <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>No activity</p>
+            <p className={`text-sm text-slate-400 dark:text-gray-500`}>No activity</p>
           ) : (
             <div className="space-y-4">
               {/* Completed tasks */}
               {selectedCompleted.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Completed ({selectedCompleted.length})
                   </div>
@@ -892,7 +884,7 @@ export function Calendar() {
                     {selectedCompleted.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
+                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
                       </li>
                     ))}
                   </ul>
@@ -902,7 +894,7 @@ export function Calendar() {
               {/* Focused/planned tasks */}
               {selectedFocused.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
                     <CalendarDays className="w-3.5 h-3.5" />
                     Planned ({selectedFocused.length})
                   </div>
@@ -910,8 +902,8 @@ export function Calendar() {
                     {selectedFocused.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
-                        <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
+                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
+                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-600`}>{t.status}</span>
                       </li>
                     ))}
                   </ul>
@@ -921,7 +913,7 @@ export function Calendar() {
               {/* Created tasks (pending, not focused) */}
               {selectedCreated.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
                     <Circle className="w-3.5 h-3.5" />
                     Created ({selectedCreated.length})
                   </div>
@@ -929,8 +921,8 @@ export function Calendar() {
                     {selectedCreated.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
-                        <span className={`text-xs ml-auto ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>{t.status}</span>
+                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
+                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-600`}>{t.status}</span>
                       </li>
                     ))}
                   </ul>
@@ -940,16 +932,16 @@ export function Calendar() {
               {/* Due tasks */}
               {selectedDue.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
                     <Clock className="w-3.5 h-3.5" />
                     Due ({selectedDue.length})
                   </div>
                   <ul className="space-y-2">
                     {selectedDue.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
-                        <Circle className={`w-3 h-3 ${t.status === 'Completed' ? (isDark ? 'text-emerald-400' : 'text-emerald-500') : (isDark ? 'text-red-400' : 'text-red-500')}`} />
-                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{t.title}</span>
-                        <span className={`text-xs ml-auto ${t.status === 'Completed' ? (isDark ? 'text-emerald-500' : 'text-emerald-600') : (isDark ? 'text-red-500' : 'text-red-600')}`}>
+                        <Circle className={`w-3 h-3 ${t.status === 'Completed' ? ('text-emerald-500 dark:text-emerald-400') : ('text-red-500 dark:text-red-400')}`} />
+                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
+                        <span className={`text-xs ml-auto ${t.status === 'Completed' ? ('text-emerald-600 dark:text-emerald-500') : ('text-red-600 dark:text-red-500')}`}>
                           {t.status}
                         </span>
                       </li>
@@ -961,16 +953,16 @@ export function Calendar() {
               {/* Habits */}
               {selectedHabits.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
                     <Flame className="w-3.5 h-3.5" />
                     Habits ({selectedHabits.length})
                   </div>
                   <ul className="space-y-2">
                     {selectedHabits.map((h, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <CheckCircle2 className={`w-3.5 h-3.5 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{h.habitName}</span>
-                        <span className={`text-xs ml-auto ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>×{h.value}</span>
+                        <CheckCircle2 className={`w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400`} />
+                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{h.habitName}</span>
+                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-500`}>×{h.value}</span>
                       </li>
                     ))}
                   </ul>
@@ -980,7 +972,7 @@ export function Calendar() {
               {/* Daily Check-In */}
               {selectedCheckIn && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
                     <BookOpen className="w-3.5 h-3.5" />
                     Check-In
                     {selectedCheckIn.energyLevel && (
@@ -1011,7 +1003,7 @@ export function Calendar() {
                         <div key={section.label}>
                           <p className={`text-xs font-medium mb-1 ${section.color}`}>{section.label}</p>
                           {lines.map((line, i) => (
-                            <p key={i} className={`text-xs pl-3 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+                            <p key={i} className={`text-xs pl-3 text-slate-600 dark:text-gray-300`}>
                               <span className={section.color}>•</span> {line}
                             </p>
                           ))}
@@ -1029,11 +1021,11 @@ export function Calendar() {
       {/* ── TODAY'S SCHEDULE SIDEBAR (desktop only) ── */}
       <div className={`hidden md:block w-72 shrink-0`}>
         <div className={`card rounded-2xl p-4 sticky top-6`}>
-          <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`text-sm font-semibold mb-3 text-slate-800 dark:text-white`}>
             Today&apos;s Schedule
           </h3>
           {todaysTasks.length === 0 ? (
-            <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>No tasks planned for today</p>
+            <p className={`text-xs text-slate-400 dark:text-gray-600`}>No tasks planned for today</p>
           ) : (
             <ul className="space-y-2">
               {todaysTasks.map((t) => (
@@ -1041,19 +1033,19 @@ export function Calendar() {
                   <span className={`w-2 h-2 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
                   <span className={`text-xs truncate ${
                     t.status === 'Completed'
-                      ? isDark ? 'text-gray-600 line-through' : 'text-slate-400 line-through'
-                      : isDark ? 'text-gray-300' : 'text-slate-600'
+                      ? 'text-slate-400 line-through dark:text-gray-600'
+                      : 'text-slate-600 dark:text-gray-300'
                   }`}>
                     {t.title}
                   </span>
                   {t.status === 'Completed' && (
-                    <CheckCircle2 className={`w-3 h-3 shrink-0 ml-auto ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                    <CheckCircle2 className={`w-3 h-3 shrink-0 ml-auto text-emerald-500 dark:text-emerald-400`} />
                   )}
                 </li>
               ))}
             </ul>
           )}
-          <div className={`mt-3 pt-3 border-t text-xs ${isDark ? 'border-white/5 text-gray-500' : 'border-slate-100 text-slate-400'}`}>
+          <div className={`mt-3 pt-3 border-t text-xs border-slate-100 text-slate-400 dark:border-white/5 dark:text-gray-500`}>
             {todaysTasks.filter(t => t.status === 'Completed').length}/{todaysTasks.length} completed
           </div>
         </div>

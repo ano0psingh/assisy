@@ -4,7 +4,6 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Underline from '@tiptap/extension-underline';
 import { useState } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface TiptapViewerProps {
@@ -31,8 +30,6 @@ export function TiptapViewer({
   collapsible = false,
   maxHeight = 80,
 }: TiptapViewerProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [expanded, setExpanded] = useState(false);
 
   const html = isPlainText(content) ? wrapPlainText(content) : content;
@@ -55,7 +52,7 @@ export function TiptapViewer({
       <div
         className={`tiptap-content text-sm leading-relaxed overflow-hidden transition-all ${
           collapsible && !expanded ? '' : ''
-        } ${isDark ? 'text-gray-400' : 'text-slate-600'}`}
+        } text-slate-600 dark:text-gray-400`}
         style={collapsible && !expanded ? { maxHeight: `${maxHeight}px` } : undefined}
       >
         <EditorContent editor={editor} />
@@ -64,7 +61,7 @@ export function TiptapViewer({
         <button
           onClick={() => setExpanded(!expanded)}
           className={`flex items-center gap-1 mt-1 text-xs font-medium ${
-            isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-600'
+            'text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300'
           }`}
         >
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}

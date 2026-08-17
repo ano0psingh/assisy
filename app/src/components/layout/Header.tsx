@@ -102,9 +102,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
   return (
     <>
       <header className={`sticky top-0 z-40 border-b transition-colors duration-300 safe-area-pt ${
-        isDark
-          ? 'bg-[#0c0c10]/70 backdrop-blur-2xl border-white/[0.06]'
-          : 'bg-white/60 backdrop-blur-2xl border-black/[0.04]'
+        'bg-white/60 backdrop-blur-2xl border-black/[0.04] dark:bg-[#0c0c10]/70 dark:border-white/[0.06]'
       }`}>
         <div className="px-4 md:px-6 py-0 flex items-center justify-between h-14">
           {/* Left: Logo + hamburger on mobile */}
@@ -113,7 +111,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <button
               onClick={() => setMobileMenuOpen(true)}
               className={`p-3 -ml-1 rounded-lg md:hidden transition-colors ${
-                isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
               }`}
               aria-label="Open menu"
             >
@@ -123,7 +121,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
-            <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</span>
+            <span className={`text-lg font-bold text-slate-800 dark:text-white`}>Assisy</span>
           </div>
 
           {/* Desktop Navigation - hidden on mobile */}
@@ -135,8 +133,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 className={({ isActive }) =>
                   `flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isActive
-                      ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                      : isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                      ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
                   }`
                 }
               >
@@ -152,7 +150,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 aria-expanded={moreMenuOpen}
                 aria-haspopup="menu"
                 className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
                 }`}
               >
                 <MoreHorizontal size={15} />
@@ -163,7 +161,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 <div
                   role="menu"
                   className={`absolute right-0 mt-1 w-48 rounded-xl border overflow-hidden z-50 ${
-                    isDark ? 'bg-[#14141a] border-white/10' : 'bg-white border-slate-200'
+                    'bg-white border-slate-200 dark:bg-[#14141a] dark:border-white/10'
                   }`}
                 >
                   <div className="p-2 space-y-1">
@@ -176,8 +174,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                         className={({ isActive }) =>
                           `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
                             isActive
-                              ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'
+                              ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                              : 'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                           }`
                         }
                       >
@@ -200,14 +198,14 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <button
               onClick={triggerSearch}
               className={`flex items-center gap-2 p-2 md:px-3 md:py-2 rounded-lg text-xs transition-colors ${
-                isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/5'
               }`}
               title="Search (⌘K)"
               aria-label="Search"
             >
               <Search size={18} className="md:hidden" />
               <Search size={14} className="hidden md:block" />
-              <kbd className={`text-xs px-1 py-1 rounded hidden md:inline ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>⌘K</kbd>
+              <kbd className={`text-xs px-1 py-1 rounded hidden md:inline bg-slate-100 dark:bg-white/5`}>⌘K</kbd>
             </button>
 
             {/* Focus timer - desktop only */}
@@ -215,7 +213,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               <button
                 onClick={onOpenFocusTimer}
                 className={`hidden md:block p-2 rounded-lg transition-colors ${
-                  isDark ? 'text-gray-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+                  'text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:text-gray-400 dark:hover:text-violet-400 dark:hover:bg-violet-500/10'
                 }`}
                 title="Focus Timer"
                 aria-label="Focus Timer"
@@ -229,11 +227,11 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             {/* XP/Level pill - desktop only. The bar lives on the Dashboard,
                 where there is room to say what it is progress toward. */}
             <div className={`hidden md:flex items-center space-x-2 rounded-lg px-3 py-2 text-xs ${
-              isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+              'bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20'
             }`}>
-              <Zap className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-              <span className={`font-semibold tabular-nums ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</span>
-              <div className={`w-px h-4 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
+              <Zap className={`w-4 h-4 text-amber-500 dark:text-amber-400`} />
+              <span className={`font-semibold tabular-nums text-amber-600 dark:text-amber-400`}>{totalXP.toLocaleString()}</span>
+              <div className={`w-px h-4 bg-amber-200 dark:bg-amber-500/20`} />
               <span className="text-violet-500 font-semibold">Lv {level}</span>
             </div>
 
@@ -241,7 +239,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <button
               onClick={() => setDataModalOpen(true)}
               className={`hidden md:block p-2 rounded-lg transition-colors ${
-                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/10'
               }`}
               title="Backup & Restore"
               aria-label="Backup & Restore"
@@ -274,24 +272,24 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                   {userMenuOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                      <div className={`absolute right-0 mt-2 w-52 rounded-xl z-50 shadow-xl border ${isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-slate-200'}`}>
-                        <div className={`px-4 py-3 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-                          <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{user.user_metadata?.full_name || user.email}</p>
+                      <div className={`absolute right-0 mt-2 w-52 rounded-xl z-50 shadow-xl border bg-white border-slate-200 dark:bg-[#12121a] dark:border-white/10`}>
+                        <div className={`px-4 py-3 border-b border-slate-100 dark:border-white/10`}>
+                          <p className={`text-xs font-medium truncate text-slate-800 dark:text-white`}>{user.user_metadata?.full_name || user.email}</p>
                           {user.user_metadata?.full_name && (
-                            <p className={`text-xs truncate mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
+                            <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-500`}>{user.email}</p>
                           )}
                         </div>
                         <div className="p-2 space-y-1">
                           <button
                             onClick={() => { setAccountModalOpen(true); setUserMenuOpen(false); }}
-                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50'}`}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5`}
                           >
                             <Settings size={14} />
                             Account Settings
                           </button>
                           <button
                             onClick={() => { signOut(); setUserMenuOpen(false); }}
-                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'}`}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10`}
                           >
                             <LogOut size={14} />
                             Sign out
@@ -305,7 +303,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 <button
                   onClick={() => setLoginModalOpen(true)}
                   className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
-                    isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                    'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                   }`}
                   title="Sign in to sync"
                 >
@@ -319,7 +317,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <button
               onClick={toggleTheme}
               className={`hidden md:block p-2 rounded-lg transition-colors ${
-                isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
               }`}
               aria-label="Toggle theme"
             >
@@ -341,20 +339,20 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
       <div
         className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out md:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${isDark ? 'bg-[#0a0a0f] border-r border-white/10' : 'bg-white border-r border-slate-200'}`}
+        } bg-white border-r border-slate-200 dark:bg-[#0a0a0f] dark:border-white/10`}
       >
         {/* Drawer header */}
-        <div className={`flex items-center justify-between px-4 h-14 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+        <div className={`flex items-center justify-between px-4 h-14 border-b border-slate-200 dark:border-white/10`}>
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
-            <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Assisy</span>
+            <span className={`text-lg font-bold text-slate-800 dark:text-white`}>Assisy</span>
           </div>
           <button
             onClick={closeMobileMenu}
             className={`p-3 rounded-lg transition-colors ${
-              isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
             }`}
             aria-label="Close menu"
           >
@@ -367,11 +365,11 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           {/* XP/Level pill */}
           <div className="px-4 pt-4 pb-2">
             <div className={`flex items-center space-x-2 rounded-lg px-3 py-3 text-xs ${
-              isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+              'bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20'
             }`}>
-              <Zap className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-              <span className={`font-semibold tabular-nums ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{totalXP.toLocaleString()}</span>
-              <div className={`w-px h-4 ${isDark ? 'bg-amber-500/20' : 'bg-amber-200'}`} />
+              <Zap className={`w-4 h-4 text-amber-500 dark:text-amber-400`} />
+              <span className={`font-semibold tabular-nums text-amber-600 dark:text-amber-400`}>{totalXP.toLocaleString()}</span>
+              <div className={`w-px h-4 bg-amber-200 dark:bg-amber-500/20`} />
               <span className="text-violet-500 font-semibold">Lv {level}</span>
             </div>
           </div>
@@ -386,8 +384,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                     isActive
-                      ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                      : isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                      ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
                   }`
                 }
               >
@@ -398,26 +396,26 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </nav>
 
           {/* Divider */}
-          <div className={`mx-4 my-2 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`} />
+          <div className={`mx-4 my-2 border-t border-slate-100 dark:border-white/10`} />
 
           {/* Action buttons */}
           <div className="px-3 space-y-1">
             <button
               onClick={() => { triggerSearch(); closeMobileMenu(); }}
               className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
               }`}
             >
               <Search size={18} />
               <span>Search</span>
-              <kbd className={`ml-auto text-xs px-2 py-1 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>⌘K</kbd>
+              <kbd className={`ml-auto text-xs px-2 py-1 rounded bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500`}>⌘K</kbd>
             </button>
 
             {onOpenFocusTimer && (
               <button
                 onClick={() => { onOpenFocusTimer(); closeMobileMenu(); }}
                 className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
                 }`}
               >
                 <Timer size={18} />
@@ -428,7 +426,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <button
               onClick={() => { setDataModalOpen(true); closeMobileMenu(); }}
               className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
               }`}
             >
               <Download size={18} />
@@ -440,12 +438,12 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           <div className="flex-1" />
 
           {/* Bottom section: auth + theme */}
-          <div className={`px-3 py-3 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+          <div className={`px-3 py-3 border-t border-slate-100 dark:border-white/10`}>
             {isConfigured && !user && (
               <button
                 onClick={() => { setLoginModalOpen(true); closeMobileMenu(); }}
                 className={`w-full flex items-center justify-center gap-2 px-3 py-3 mb-2 rounded-lg text-sm font-medium transition-colors ${
-                  isDark ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                  'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                 }`}
               >
                 <LogIn size={16} />
@@ -456,7 +454,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <button
               onClick={() => { toggleTheme(); }}
               className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
               }`}
             >
               {isDark ? <Moon size={18} /> : <Sun size={18} />}
@@ -471,7 +469,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
         isOpen={dataModalOpen}
         onClose={() => setDataModalOpen(false)}
         title="Backup & Restore"
-        icon={<Download className={`w-5 h-5 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />}
+        icon={<Download className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
       >
         {() => (
           <div className="p-6">
@@ -485,8 +483,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
       {/* Account Settings Modal */}
       {accountModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className={`absolute inset-0 backdrop-blur-sm ${isDark ? 'bg-black/60' : 'bg-slate-900/20'}`} onClick={() => setAccountModalOpen(false)} />
-          <div className={`relative rounded-2xl shadow-elevated w-full max-w-sm overflow-hidden animate-slide-up ${isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white'}`}>
+          <div className={`absolute inset-0 backdrop-blur-sm bg-slate-900/20 dark:bg-black/60`} onClick={() => setAccountModalOpen(false)} />
+          <div className={`relative rounded-2xl shadow-elevated w-full max-w-sm overflow-hidden animate-slide-up bg-white dark:bg-[#12121a] dark:border dark:border-white/10`}>
             <AccountSettings onClose={() => setAccountModalOpen(false)} />
           </div>
         </div>

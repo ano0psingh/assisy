@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, CheckSquare, Target, FolderKanban, Calendar, ArrowRight, Newspaper, ListTodo } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { useTaskContext } from '../../context/TaskContext';
 import { useGoalContext } from '../../context/GoalContext';
@@ -22,8 +21,6 @@ type SearchResult = {
 };
 
 export function GlobalSearch() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -190,12 +187,12 @@ export function GlobalSearch() {
 
   const typeColor = (type: SearchResult['type']) => {
     switch (type) {
-      case 'task': return isDark ? 'text-blue-400' : 'text-blue-500';
-      case 'goal': return isDark ? 'text-violet-400' : 'text-violet-500';
-      case 'habit': return isDark ? 'text-orange-400' : 'text-orange-500';
-      case 'project': return isDark ? 'text-emerald-400' : 'text-emerald-500';
-      case 'project_task': return isDark ? 'text-teal-400' : 'text-teal-500';
-      case 'feed': return isDark ? 'text-amber-400' : 'text-amber-500';
+      case 'task': return 'text-blue-500 dark:text-blue-400';
+      case 'goal': return 'text-violet-500 dark:text-violet-400';
+      case 'habit': return 'text-orange-500 dark:text-orange-400';
+      case 'project': return 'text-emerald-500 dark:text-emerald-400';
+      case 'project_task': return 'text-teal-500 dark:text-teal-400';
+      case 'feed': return 'text-amber-500 dark:text-amber-400';
     }
   };
 
@@ -203,7 +200,7 @@ export function GlobalSearch() {
 
   return (
     <div className="fixed inset-0 z-[60]">
-      <div className={`absolute inset-0 ${isDark ? 'bg-black/60' : 'bg-slate-900/20'} backdrop-blur-sm`} onClick={() => setOpen(false)} />
+      <div className={`absolute inset-0 bg-slate-900/20 dark:bg-black/60 backdrop-blur-sm`} onClick={() => setOpen(false)} />
       <div className="relative flex justify-center pt-[15vh]">
         <div
           ref={dialogRef}
@@ -212,12 +209,12 @@ export function GlobalSearch() {
           aria-label="Search everything"
           tabIndex={-1}
           className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-slide-down outline-none ${
-            isDark ? 'bg-[#12121a] border border-white/10' : 'bg-white border border-slate-200'
+            'bg-white border border-slate-200 dark:bg-[#12121a] dark:border-white/10'
           }`}
         >
           {/* Search input */}
-          <div className={`flex items-center gap-3 px-4 py-4 border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-            <Search size={18} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+          <div className={`flex items-center gap-3 px-4 py-4 border-b border-slate-100 dark:border-white/10`}>
+            <Search size={18} className={'text-slate-400 dark:text-gray-500'} />
             <input
               ref={inputRef}
               value={query}
@@ -230,9 +227,9 @@ export function GlobalSearch() {
               aria-controls="global-search-results"
               aria-activedescendant={results[selectedIndex] ? `global-search-option-${selectedIndex}` : undefined}
               autoComplete="off"
-              className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-gray-500' : 'text-slate-800 placeholder-slate-400'}`}
+              className={`flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-500`}
             />
-            <kbd className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'}`}>ESC</kbd>
+            <kbd className={`text-xs px-2 py-1 rounded bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500`}>ESC</kbd>
           </div>
 
           {/* Screen readers get no signal from a list that silently repopulates. */}
@@ -247,7 +244,7 @@ export function GlobalSearch() {
           {/* Results */}
           <div className="max-h-80 overflow-y-auto" id="global-search-results" role="listbox" aria-label="Search results">
             {query && results.length === 0 && (
-              <div className={`px-4 py-8 text-center text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+              <div className={`px-4 py-8 text-center text-sm text-slate-500 dark:text-gray-500`}>
                 No results for "{query}"
               </div>
             )}
@@ -261,31 +258,31 @@ export function GlobalSearch() {
                 onMouseEnter={() => setSelectedIndex(idx)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                   idx === selectedIndex
-                    ? isDark ? 'bg-violet-500/10' : 'bg-violet-50'
-                    : isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                    ? 'bg-violet-50 dark:bg-violet-500/10'
+                    : 'hover:bg-slate-50 dark:hover:bg-white/5'
                 }`}
               >
                 <span className={typeColor(result.type)}>{typeIcon(result.type)}</span>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{result.title}</p>
+                  <p className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{result.title}</p>
                   {result.subtitle && (
-                    <p className={`text-xs truncate ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{result.subtitle}</p>
+                    <p className={`text-xs truncate text-slate-500 dark:text-gray-500`}>{result.subtitle}</p>
                   )}
                 </div>
-                <span className={`text-xs uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                <span className={`text-xs uppercase tracking-wider text-slate-400 dark:text-gray-600`}>
                   {result.type === 'project_task' ? 'Task' : result.type === 'feed' ? 'Article' : result.type}
                 </span>
-                {idx === selectedIndex && <ArrowRight size={12} className={isDark ? 'text-violet-400' : 'text-violet-500'} />}
+                {idx === selectedIndex && <ArrowRight size={12} className={'text-violet-500 dark:text-violet-400'} />}
               </button>
             ))}
           </div>
 
           {/* Footer hint */}
           {!query && (
-            <div className={`px-4 py-3 border-t flex items-center gap-4 text-xs ${isDark ? 'border-white/10 text-gray-600' : 'border-slate-100 text-slate-400'}`}>
-              <span><kbd className={`px-1 py-1 rounded ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>↑↓</kbd> navigate</span>
-              <span><kbd className={`px-1 py-1 rounded ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>↵</kbd> select</span>
-              <span><kbd className={`px-1 py-1 rounded ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>esc</kbd> close</span>
+            <div className={`px-4 py-3 border-t flex items-center gap-4 text-xs border-slate-100 text-slate-400 dark:border-white/10 dark:text-gray-600`}>
+              <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>↑↓</kbd> navigate</span>
+              <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>↵</kbd> select</span>
+              <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>esc</kbd> close</span>
             </div>
           )}
         </div>

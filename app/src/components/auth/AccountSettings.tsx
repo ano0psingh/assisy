@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { hasLocalData, resetCloudData, downloadCloudData } from '../../store/cloudStore';
 import { SyncStatusDetail } from '../common/SyncStatus';
@@ -21,8 +20,6 @@ interface AccountSettingsProps {
 type Section = 'main' | 'password' | 'clearLocal' | 'resetCloud' | 'delete';
 
 export function AccountSettings({ onClose }: AccountSettingsProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const { user, resetPassword, updatePassword, deleteAccount, signOut } = useAuth();
 
   const [section, setSection] = useState<Section>('main');
@@ -129,15 +126,15 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
   };
 
   const itemCls = `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-    isDark ? 'hover:bg-white/5 text-gray-300' : 'hover:bg-slate-50 text-slate-700'
+    'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-300'
   }`;
 
   const inputCls = `w-full px-3 py-3 rounded-lg text-sm outline-none border ${
-    isDark ? 'bg-white/5 border-white/10 text-white placeholder-gray-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+    'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
   }`;
 
   const backBtn = (
-    <button onClick={() => go('main')} className={`text-xs font-medium mb-4 ${isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-600 hover:text-violet-500'}`}>
+    <button onClick={() => go('main')} className={`text-xs font-medium mb-4 text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300`}>
       &larr; Back
     </button>
   );
@@ -145,8 +142,8 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
   const msgEl = message && (
     <div className={`flex items-center gap-2 px-3 py-3 rounded-lg text-xs ${
       message.type === 'success'
-        ? isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
-        : isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
+        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+        : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
     }`}>
       {message.type === 'success' ? <Check size={14} /> : <AlertTriangle size={14} />}
       {message.text}
@@ -158,28 +155,28 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
     return (
       <div className="p-6 space-y-4">
         {backBtn}
-        <SectionHeader icon={Lock} title="Change Password" color="violet" isDark={isDark} />
+        <SectionHeader icon={Lock} title="Change Password" color="violet" />
         {provider === 'google' ? (
-          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+          <p className={`text-sm text-slate-500 dark:text-gray-400`}>
             You signed in with Google. Password management is handled through your Google account.
           </p>
         ) : (
           <>
             <div>
-              <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>New Password</label>
+              <label className={`block text-xs font-medium mb-2 text-slate-500 dark:text-gray-400`}>New Password</label>
               <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" className={inputCls} />
             </div>
             <div>
-              <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Confirm Password</label>
+              <label className={`block text-xs font-medium mb-2 text-slate-500 dark:text-gray-400`}>Confirm Password</label>
               <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat password" className={inputCls} />
             </div>
             {msgEl}
             <button onClick={handleUpdatePassword} disabled={loading} className="w-full btn-primary py-3 rounded-lg text-sm font-medium disabled:opacity-50">
               {loading ? 'Updating...' : 'Update Password'}
             </button>
-            <div className={`text-center ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+            <div className={`text-center text-slate-400 dark:text-gray-500`}>
               <span className="text-xs">or </span>
-              <button onClick={handleResetPassword} disabled={loading} className={`text-xs font-medium ${isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-600 hover:text-violet-500'}`}>
+              <button onClick={handleResetPassword} disabled={loading} className={`text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300`}>
                 send a reset email instead
               </button>
             </div>
@@ -194,20 +191,20 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
     return (
       <div className="p-6 space-y-4">
         {backBtn}
-        <SectionHeader icon={CloudOff} title="Clear Local Data" color="amber" isDark={isDark} />
-        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+        <SectionHeader icon={CloudOff} title="Clear Local Data" color="amber" />
+        <p className={`text-sm text-slate-500 dark:text-gray-400`}>
           Removes all data stored in this browser (tasks, goals, habits, projects, settings).
           {user ? ' Your cloud data will not be affected.' : ' This cannot be undone.'}
         </p>
         {hasLocalData() ? (
           <>
             {msgEl}
-            <button onClick={handleClearLocalData} className={`w-full py-3 rounded-lg text-sm font-medium ${isDark ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}>
+            <button onClick={handleClearLocalData} className={`w-full py-3 rounded-lg text-sm font-medium bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30`}>
               Clear local data
             </button>
           </>
         ) : (
-          <p className={`text-sm italic ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>No local data found.</p>
+          <p className={`text-sm italic text-slate-400 dark:text-gray-500`}>No local data found.</p>
         )}
       </div>
     );
@@ -218,13 +215,13 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
     return (
       <div className="p-6 space-y-4">
         {backBtn}
-        <SectionHeader icon={RotateCcw} title="Reset Cloud Data" color="orange" isDark={isDark} />
-        <div className={`px-3 py-3 rounded-lg text-xs ${isDark ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
+        <SectionHeader icon={RotateCcw} title="Reset Cloud Data" color="orange" />
+        <div className={`px-3 py-3 rounded-lg text-xs bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400`}>
           <p className="font-medium">This will erase all your cloud data.</p>
           <p className="mt-1 opacity-80">All tasks, goals, habits, projects, achievements, and settings stored in the cloud will be permanently deleted. Local browser data will also be cleared.</p>
         </div>
         <div>
-          <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+          <label className={`block text-xs font-medium mb-2 text-slate-500 dark:text-gray-400`}>
             Type <span className="font-mono font-bold">RESET</span> to confirm
           </label>
           <input type="text" value={dangerConfirm} onChange={e => setDangerConfirm(e.target.value)} placeholder="RESET" className={inputCls} />
@@ -233,7 +230,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
         <button
           onClick={handleResetCloudData}
           disabled={dangerConfirm !== 'RESET' || loading}
-          className={`w-full py-3 rounded-lg text-sm font-medium disabled:opacity-30 ${isDark ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}
+          className={`w-full py-3 rounded-lg text-sm font-medium disabled:opacity-30 bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-500/20 dark:text-orange-400 dark:hover:bg-orange-500/30`}
         >
           {loading ? 'Resetting...' : 'Reset All Cloud Data'}
         </button>
@@ -246,13 +243,13 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
     return (
       <div className="p-6 space-y-4">
         {backBtn}
-        <SectionHeader icon={Trash2} title="Delete Account" color="red" isDark={isDark} />
-        <div className={`px-3 py-3 rounded-lg text-xs ${isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'}`}>
+        <SectionHeader icon={Trash2} title="Delete Account" color="red" />
+        <div className={`px-3 py-3 rounded-lg text-xs bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400`}>
           <p className="font-medium">This action cannot be undone.</p>
           <p className="mt-1 opacity-80">All your cloud data will be permanently deleted and you will be signed out. Your account will need to be re-created.</p>
         </div>
         <div>
-          <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+          <label className={`block text-xs font-medium mb-2 text-slate-500 dark:text-gray-400`}>
             Type <span className="font-mono font-bold">DELETE</span> to confirm
           </label>
           <input type="text" value={dangerConfirm} onChange={e => setDangerConfirm(e.target.value)} placeholder="DELETE" className={inputCls} />
@@ -261,7 +258,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
         <button
           onClick={handleDeleteAccount}
           disabled={dangerConfirm !== 'DELETE' || loading}
-          className={`w-full py-3 rounded-lg text-sm font-medium disabled:opacity-30 ${isDark ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+          className={`w-full py-3 rounded-lg text-sm font-medium disabled:opacity-30 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30`}
         >
           {loading ? 'Deleting...' : 'Permanently Delete Account'}
         </button>
@@ -273,7 +270,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
   return (
     <div className="p-6 space-y-4">
       {/* Profile card */}
-      <div className={`flex items-center gap-3 p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+      <div className={`flex items-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-white/5`}>
         {user?.user_metadata?.avatar_url ? (
           <img src={user.user_metadata.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
         ) : (
@@ -282,13 +279,13 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <p className={`font-medium truncate text-slate-800 dark:text-white`}>
             {user?.user_metadata?.full_name || user?.email}
           </p>
           {user?.user_metadata?.full_name && (
-            <p className={`text-xs truncate ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{user.email}</p>
+            <p className={`text-xs truncate text-slate-400 dark:text-gray-500`}>{user.email}</p>
           )}
-          <div className={`flex items-center gap-3 mt-1 text-xs ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+          <div className={`flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-gray-600`}>
             <span className="flex items-center gap-1">
               <Mail size={10} /> {provider === 'google' ? 'Google' : 'Email'}
             </span>
@@ -297,16 +294,16 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
         </div>
       </div>
 
-      <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
+      <div className={`p-4 rounded-xl bg-slate-50 dark:bg-white/5`}>
         <SyncStatusDetail />
       </div>
 
       {/* Security */}
       {provider !== 'google' && (
         <div>
-          <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Security</p>
+          <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-slate-400 dark:text-gray-600`}>Security</p>
           <button onClick={() => go('password')} className={itemCls}>
-            <Lock size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+            <Lock size={16} className={'text-slate-400 dark:text-gray-500'} />
             Change Password
           </button>
         </div>
@@ -314,17 +311,17 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       {/* Data */}
       <div>
-        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>Data</p>
+        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-slate-400 dark:text-gray-600`}>Data</p>
         <div className="space-y-1">
           <button onClick={handleDownloadCloudData} disabled={loading} className={itemCls}>
-            <Download size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+            <Download size={16} className={'text-slate-400 dark:text-gray-500'} />
             Download Cloud Backup
           </button>
           <button onClick={() => go('clearLocal')} className={itemCls}>
-            <Database size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+            <Database size={16} className={'text-slate-400 dark:text-gray-500'} />
             Clear Local Data
           </button>
-          <button onClick={() => go('resetCloud')} className={`${itemCls} ${isDark ? '!text-orange-400' : '!text-orange-500'}`}>
+          <button onClick={() => go('resetCloud')} className={`${itemCls} !text-orange-500 dark:!text-orange-400`}>
             <RotateCcw size={16} />
             Reset Cloud Data
           </button>
@@ -333,16 +330,16 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       {/* Danger zone */}
       <div>
-        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 ${isDark ? 'text-red-500/60' : 'text-red-400'}`}>Danger Zone</p>
-        <button onClick={() => go('delete')} className={`${itemCls} ${isDark ? '!text-red-400' : '!text-red-500'}`}>
+        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-red-400 dark:text-red-500/60`}>Danger Zone</p>
+        <button onClick={() => go('delete')} className={`${itemCls} !text-red-500 dark:!text-red-400`}>
           <Trash2 size={16} />
           Delete Account
         </button>
       </div>
 
       {/* Sign out */}
-      <div className={`pt-3 border-t ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
-        <button onClick={() => { signOut(); onClose(); }} className={`${itemCls} ${isDark ? '!text-gray-500' : '!text-slate-400'}`}>
+      <div className={`pt-3 border-t border-slate-100 dark:border-white/10`}>
+        <button onClick={() => { signOut(); onClose(); }} className={`${itemCls} !text-slate-400 dark:!text-gray-500`}>
           <User size={16} />
           Sign Out
         </button>
@@ -353,12 +350,12 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
   );
 }
 
-function SectionHeader({ icon: Icon, title, color, isDark }: { icon: typeof Lock; title: string; color: string; isDark: boolean }) {
+function SectionHeader({ icon: Icon, title, color }: { icon: typeof Lock; title: string; color: string; }) {
   const colorMap: Record<string, { bg: string; text: string }> = {
-    violet: { bg: isDark ? 'bg-violet-500/20' : 'bg-violet-100', text: isDark ? 'text-violet-400' : 'text-violet-600' },
-    amber: { bg: isDark ? 'bg-amber-500/20' : 'bg-amber-100', text: isDark ? 'text-amber-400' : 'text-amber-600' },
-    orange: { bg: isDark ? 'bg-orange-500/20' : 'bg-orange-100', text: isDark ? 'text-orange-400' : 'text-orange-600' },
-    red: { bg: isDark ? 'bg-red-500/20' : 'bg-red-100', text: isDark ? 'text-red-400' : 'text-red-600' },
+    violet: { bg: 'bg-violet-100 dark:bg-violet-500/20', text: 'text-violet-600 dark:text-violet-400' },
+    amber: { bg: 'bg-amber-100 dark:bg-amber-500/20', text: 'text-amber-600 dark:text-amber-400' },
+    orange: { bg: 'bg-orange-100 dark:bg-orange-500/20', text: 'text-orange-600 dark:text-orange-400' },
+    red: { bg: 'bg-red-100 dark:bg-red-500/20', text: 'text-red-600 dark:text-red-400' },
   };
   const c = colorMap[color] ?? colorMap.violet;
   return (
@@ -366,7 +363,7 @@ function SectionHeader({ icon: Icon, title, color, isDark }: { icon: typeof Lock
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${c.bg}`}>
         <Icon className={`w-4 h-4 ${c.text}`} />
       </div>
-      <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{title}</h3>
+      <h3 className={`font-semibold text-slate-800 dark:text-white`}>{title}</h3>
     </div>
   );
 }

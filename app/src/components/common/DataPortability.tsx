@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import { Download, Upload, AlertCircle, CheckCircle2, History } from 'lucide-react';
 import { ALL_DATA_KEYS } from '../../store/storageKeys';
 import { listSnapshots, restoreSnapshot, takeSnapshot } from '../../store/syncMeta';
@@ -10,8 +9,6 @@ import { getLocalDateString } from '../../lib/dateUtils';
 const ALL_KEYS = ALL_DATA_KEYS;
 
 export function DataExportImport({ onClose: _onClose }: { onClose: () => void }) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -83,17 +80,15 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
 
   return (
     <div className="space-y-6">
-      <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-        <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Export Backup</h3>
-        <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+      <div className={`p-4 rounded-xl bg-slate-50 dark:bg-white/5`}>
+        <h3 className={`text-sm font-semibold mb-2 text-slate-800 dark:text-white`}>Export Backup</h3>
+        <p className={`text-xs mb-3 text-slate-500 dark:text-gray-500`}>
           Download all your data as a JSON file. Includes tasks, goals, habits, projects, achievements, and settings.
         </p>
         <button
           onClick={handleExport}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            isDark
-              ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
-              : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+            'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
           }`}
         >
           <Download size={16} />
@@ -101,18 +96,16 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
         </button>
       </div>
 
-      <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-        <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Import Backup</h3>
-        <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+      <div className={`p-4 rounded-xl bg-slate-50 dark:bg-white/5`}>
+        <h3 className={`text-sm font-semibold mb-2 text-slate-800 dark:text-white`}>Import Backup</h3>
+        <p className={`text-xs mb-3 text-slate-500 dark:text-gray-500`}>
           Restore from a previously exported JSON file. This will overwrite your current data.
         </p>
         <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
         <button
           onClick={() => fileRef.current?.click()}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            isDark
-              ? 'bg-white/10 text-gray-300 hover:bg-white/15'
-              : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            'bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
           }`}
         >
           <Upload size={16} />
@@ -121,11 +114,11 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
       </div>
 
       {snapshots.length > 0 && (
-        <div className={`p-4 rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}>
-          <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+        <div className={`p-4 rounded-xl bg-slate-50 dark:bg-white/5`}>
+          <h3 className={`text-sm font-semibold mb-2 text-slate-800 dark:text-white`}>
             Automatic Snapshots
           </h3>
-          <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
+          <p className={`text-xs mb-3 text-slate-500 dark:text-gray-500`}>
             Taken automatically before your data is merged with the cloud or overwritten by an
             import, so a bad sync can be undone.
           </p>
@@ -133,22 +126,20 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
             {snapshots.map(snapshot => (
               <div
                 key={snapshot.takenAt}
-                className={`flex items-center gap-3 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-white'}`}
+                className={`flex items-center gap-3 p-2 rounded-lg bg-white dark:bg-white/5`}
               >
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                  <p className={`text-xs font-medium truncate text-slate-700 dark:text-gray-300`}>
                     {snapshot.reason}
                   </p>
-                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                  <p className={`text-xs text-slate-400 dark:text-gray-500`}>
                     {new Date(snapshot.takenAt).toLocaleString()}
                   </p>
                 </div>
                 <button
                   onClick={() => handleRestoreSnapshot(snapshot.takenAt)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium flex-shrink-0 transition-colors ${
-                    isDark
-                      ? 'bg-white/10 text-gray-300 hover:bg-white/15'
-                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                    'bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                   }`}
                 >
                   <History size={13} />
@@ -163,8 +154,8 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
       {status !== 'idle' && (
         <div className={`flex items-start gap-2 p-3 rounded-xl text-sm ${
           status === 'success'
-            ? isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
-            : isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
+            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+            : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
         }`}>
           {status === 'success' ? <CheckCircle2 size={16} className="mt-1 flex-shrink-0" /> : <AlertCircle size={16} className="mt-1 flex-shrink-0" />}
           {message}

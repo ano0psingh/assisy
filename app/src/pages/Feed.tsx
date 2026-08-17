@@ -14,6 +14,7 @@ import {
   Rss, Clock, Star, Sparkles, X, Settings2, Loader2,
   CheckCircle2, ArrowLeft, MoreHorizontal, Filter,
 } from 'lucide-react';
+import { IconButton } from '../components/ui';
 
 const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -84,13 +85,13 @@ function relativeTime(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function RelevanceBadge({ score, isDark }: { score: number; isDark: boolean }) {
+function RelevanceBadge({ score }: { score: number; }) {
   const color =
     score >= 7
-      ? isDark ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+      ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/20'
       : score >= 4
-        ? isDark ? 'bg-amber-500/15 text-amber-400 border-amber-500/20' : 'bg-amber-50 text-amber-600 border-amber-200'
-        : isDark ? 'bg-gray-500/15 text-gray-400 border-gray-500/20' : 'bg-slate-100 text-slate-500 border-slate-200';
+        ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/20'
+        : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-gray-500/15 dark:text-gray-400 dark:border-gray-500/20';
 
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border ${color}`}>
@@ -99,17 +100,17 @@ function RelevanceBadge({ score, isDark }: { score: number; isDark: boolean }) {
   );
 }
 
-function ContentTypePill({ type, isDark }: { type: string; isDark: boolean }) {
+function ContentTypePill({ type }: { type: string; }) {
   const label = type.startsWith('tier_')
     ? `Tier ${type.replace('tier_', '')}`
     : type.replace(/_/g, ' ');
   const tierColor = type === 'tier_3'
-    ? isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-50 text-amber-700'
+    ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
     : type === 'tier_2'
-      ? isDark ? 'bg-blue-500/15 text-blue-400' : 'bg-blue-50 text-blue-700'
+      ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
       : type === 'tier_1'
-        ? isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-50 text-slate-500'
-        : isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600';
+        ? 'bg-slate-50 text-slate-500 dark:bg-white/5 dark:text-gray-500'
+        : 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400';
   return (
     <span className={`text-xs px-2 py-1 rounded-full font-medium ${tierColor}`}>
       {label}
@@ -176,7 +177,7 @@ export function Feed() {
   useFocusHighlight(handleSearchFocus);
 
   const bulkButtonClass = `px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-    isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+    'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
   }`;
 
   const bookmarkedCount = useMemo(() => articles.filter(a => a.bookmarked).length, [articles]);
@@ -279,34 +280,32 @@ export function Feed() {
       {/* Gemini banner */}
       {!geminiReady && (
         <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
-          isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+          'bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20'
         }`}>
-          <Sparkles className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-          <p className={`text-sm ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
-            Add <code className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-amber-500/20' : 'bg-amber-100'}`}>VITE_GEMINI_API_KEY</code> to .env.local for AI summaries
+          <Sparkles className={`w-4 h-4 flex-shrink-0 text-amber-500 dark:text-amber-400`} />
+          <p className={`text-sm text-amber-700 dark:text-amber-300`}>
+            Add <code className={`text-xs px-2 py-1 rounded bg-amber-100 dark:bg-amber-500/20`}>VITE_GEMINI_API_KEY</code> to .env.local for AI summaries
           </p>
         </div>
       )}
 
       {/* Header */}
       <div className={`relative overflow-hidden rounded-2xl ${
-        isDark
-          ? 'bg-violet-500/[0.07] border border-violet-500/15'
-          : 'bg-violet-50 border border-violet-100'
+        'bg-violet-50 border border-violet-100 dark:bg-violet-500/[0.07] dark:border-violet-500/15'
       }`}>
         <div className="relative px-4 py-4 sm:px-6 sm:py-6">
           <div className="mb-4 space-y-3">
             <div className="flex items-center gap-3">
               <a
                 href="/"
-                className={`p-2 rounded-lg transition-colors flex-shrink-0 ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                className={`p-2 rounded-lg transition-colors flex-shrink-0 hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
                 title="Back to Assisy"
               >
                 <ArrowLeft size={18} />
               </a>
               <div className="min-w-0">
-                <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Feed</h1>
-                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+                <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>My Feed</h1>
+                <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>
                   {articles.length} article{articles.length !== 1 ? 's' : ''} · {unreadCount} unread · {bookmarkedCount} bookmarked
                 </p>
               </div>
@@ -321,8 +320,8 @@ export function Feed() {
                 onClick={() => { setShowAddFeed(!showAddFeed); setShowSaveURL(false); }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                   showAddFeed
-                    ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
-                    : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+                    : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                 }`}
               >
                 <Rss size={16} />
@@ -332,8 +331,8 @@ export function Feed() {
                 onClick={() => { setShowSaveURL(!showSaveURL); setShowAddFeed(false); }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                   showSaveURL
-                    ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
-                    : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+                    : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                 }`}
               >
                 <Link size={16} />
@@ -346,7 +345,7 @@ export function Feed() {
                   onClick={refreshFeeds}
                   disabled={refreshing}
                   className={`flex flex-col items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                    'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                   } disabled:opacity-50`}
                 >
                   <span className="flex items-center gap-2">
@@ -354,7 +353,7 @@ export function Feed() {
                     Check for new
                   </span>
                   {lastRefreshedAt && (
-                    <span className={`text-xs leading-tight ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                    <span className={`text-xs leading-tight text-slate-400 dark:text-gray-600`}>
                       Last checked {relativeTime(lastRefreshedAt)}
                     </span>
                   )}
@@ -363,7 +362,7 @@ export function Feed() {
                   <button
                     onClick={markAllRead}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                      'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                     }`}
                   >
                     <Eye size={16} />
@@ -375,8 +374,8 @@ export function Feed() {
                   onClick={() => setShowSidebar(!showSidebar)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                     showSidebar
-                      ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
-                      : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+                      : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                   }`}
                 >
                   <Settings2 size={16} />
@@ -389,8 +388,8 @@ export function Feed() {
                   onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                     moreMenuOpen
-                      ? isDark ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-100 text-violet-700'
-                      : isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-white/70 text-slate-600 hover:bg-white'
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+                      : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                   }`}
                 >
                   <MoreHorizontal size={16} />
@@ -400,13 +399,13 @@ export function Feed() {
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setMoreMenuOpen(false)} />
                     <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 min-w-[180px] ${
-                      isDark ? 'bg-gray-900 border border-white/10' : 'bg-white border border-slate-200'
+                      'bg-white border border-slate-200 dark:bg-gray-900 dark:border-white/10'
                     }`}>
                       <button
                         onClick={() => { refreshFeeds(); setMoreMenuOpen(false); }}
                         disabled={refreshing}
                         className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
-                          isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                          'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                         } disabled:opacity-50`}
                       >
                         <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
@@ -416,7 +415,7 @@ export function Feed() {
                         <button
                           onClick={() => { markAllRead(); setMoreMenuOpen(false); }}
                           className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
-                            isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                            'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                           }`}
                         >
                           <Eye size={15} />
@@ -426,7 +425,7 @@ export function Feed() {
                       <button
                         onClick={() => { setMobileSidebarOpen(true); setMoreMenuOpen(false); }}
                         className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
-                          isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                          'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                         }`}
                       >
                         <Settings2 size={15} />
@@ -442,9 +441,9 @@ export function Feed() {
           {/* Inline Add Feed */}
           {showAddFeed && (
             <div className={`mb-4 flex items-center gap-2 p-3 rounded-xl ${
-              isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'
+              'bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10'
             }`}>
-              <Rss size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+              <Rss size={16} className={'text-slate-400 dark:text-gray-500'} />
               <input
                 type="url"
                 value={feedUrl}
@@ -453,7 +452,7 @@ export function Feed() {
                 placeholder="Paste RSS feed URL..."
                 autoFocus
                 className={`flex-1 bg-transparent outline-none text-sm ${
-                  isDark ? 'text-white placeholder-gray-600' : 'text-slate-800 placeholder-slate-400'
+                  'text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-600'
                 }`}
               />
               <button
@@ -464,18 +463,21 @@ export function Feed() {
                 {addingFeed ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Add
               </button>
-              <button aria-label="Cancel adding a feed" onClick={() => setShowAddFeed(false)} className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
-                <X size={14} />
-              </button>
+              <IconButton
+                icon={X}
+                label="Cancel adding a feed"
+                size="sm"
+                onClick={() => setShowAddFeed(false)}
+              />
             </div>
           )}
 
           {/* Inline Save URL */}
           {showSaveURL && (
             <div className={`mb-4 flex items-center gap-2 p-3 rounded-xl ${
-              isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-slate-200'
+              'bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10'
             }`}>
-              <Link size={16} className={isDark ? 'text-gray-500' : 'text-slate-400'} />
+              <Link size={16} className={'text-slate-400 dark:text-gray-500'} />
               <input
                 type="url"
                 value={articleUrl}
@@ -484,7 +486,7 @@ export function Feed() {
                 placeholder="Paste any article URL..."
                 autoFocus
                 className={`flex-1 bg-transparent outline-none text-sm ${
-                  isDark ? 'text-white placeholder-gray-600' : 'text-slate-800 placeholder-slate-400'
+                  'text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-600'
                 }`}
               />
               <button
@@ -495,9 +497,12 @@ export function Feed() {
                 {savingUrl ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Save
               </button>
-              <button aria-label="Cancel saving a URL" onClick={() => setShowSaveURL(false)} className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}>
-                <X size={14} />
-              </button>
+              <IconButton
+                icon={X}
+                label="Cancel saving a URL"
+                size="sm"
+                onClick={() => setShowSaveURL(false)}
+              />
             </div>
           )}
 
@@ -510,9 +515,7 @@ export function Feed() {
                 className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   filter === opt.value
                     ? 'bg-violet-600 text-white'
-                    : isDark
-                      ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
-                      : 'bg-white/70 text-slate-500 hover:bg-white hover:text-slate-700'
+                    : 'bg-white/70 text-slate-500 hover:bg-white hover:text-slate-700 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-300'
                 }`}
               >
                 {filterLabel(opt)}
@@ -526,7 +529,7 @@ export function Feed() {
               <button
                 onClick={() => setSortOpen(!sortOpen)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  isDark ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-white/70 text-slate-500 hover:bg-white'
+                  'bg-white/70 text-slate-500 hover:bg-white dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
                 }`}
               >
                 {SORT_OPTIONS.find(o => o.value === sort)?.label}
@@ -536,7 +539,7 @@ export function Feed() {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setSortOpen(false)} />
                   <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 min-w-[140px] ${
-                    isDark ? 'bg-gray-900 border border-white/10' : 'bg-white border border-slate-200'
+                    'bg-white border border-slate-200 dark:bg-gray-900 dark:border-white/10'
                   }`}>
                     {SORT_OPTIONS.map(opt => (
                       <button
@@ -544,8 +547,8 @@ export function Feed() {
                         onClick={() => { setSort(opt.value); setSortOpen(false); }}
                         className={`w-full text-left px-3 py-2 text-xs transition-colors ${
                           sort === opt.value
-                            ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                            : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                            ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                            : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                         }`}
                       >
                         {opt.label}
@@ -565,9 +568,7 @@ export function Feed() {
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   !subFilter
                     ? 'bg-violet-600 text-white'
-                    : isDark
-                      ? 'bg-white/5 text-gray-500 hover:bg-white/10'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
                 }`}
               >
                 All sources
@@ -579,9 +580,7 @@ export function Feed() {
                   className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                     subFilter === sub.id
                       ? 'bg-violet-600 text-white'
-                      : isDark
-                        ? 'bg-white/5 text-gray-500 hover:bg-white/10'
-                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
                   }`}
                 >
                   {sub.title || 'Untitled'}
@@ -592,9 +591,7 @@ export function Feed() {
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   subFilter === 'saved'
                     ? 'bg-violet-600 text-white'
-                    : isDark
-                      ? 'bg-white/5 text-gray-500 hover:bg-white/10'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
                 }`}
               >
                 Saved URLs
@@ -611,7 +608,7 @@ export function Feed() {
                   <button
                     onClick={() => setTagFilter(null)}
                     className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                      isDark ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-red-50 text-red-500 hover:bg-red-100'
+                      'bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
                     }`}
                   >
                     <X size={10} /> Clear
@@ -624,9 +621,7 @@ export function Feed() {
                     className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                       tagFilter === tag
                         ? 'bg-violet-600 text-white'
-                        : isDark
-                          ? 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-400'
-                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400'
                     }`}
                   >
                     {tag}
@@ -636,7 +631,7 @@ export function Feed() {
                   <button
                     onClick={() => setShowAllTags(p => !p)}
                     className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                      isDark ? 'bg-white/5 text-violet-400 hover:bg-white/10' : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
+                      'bg-violet-50 text-violet-500 hover:bg-violet-100 dark:bg-white/5 dark:text-violet-400 dark:hover:bg-white/10'
                     }`}
                   >
                     {showAllTags ? 'Show less' : `+${allTags.length - 8} more`}
@@ -651,7 +646,7 @@ export function Feed() {
                     <button
                       onClick={() => setTagFilter(null)}
                       className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                        isDark ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-red-50 text-red-500 hover:bg-red-100'
+                        'bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
                       }`}
                     >
                       <X size={10} /> Clear
@@ -664,9 +659,7 @@ export function Feed() {
                       className={`flex-shrink-0 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                         tagFilter === tag
                           ? 'bg-violet-600 text-white'
-                          : isDark
-                            ? 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-400'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400'
                       }`}
                     >
                       {tag}
@@ -677,7 +670,7 @@ export function Feed() {
                       <button
                         onClick={() => setMobileTagsOpen(!mobileTagsOpen)}
                         className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                          isDark ? 'bg-white/5 text-violet-400 hover:bg-white/10' : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
+                          'bg-violet-50 text-violet-500 hover:bg-violet-100 dark:bg-white/5 dark:text-violet-400 dark:hover:bg-white/10'
                         }`}
                       >
                         <Filter size={10} />
@@ -687,7 +680,7 @@ export function Feed() {
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setMobileTagsOpen(false)} />
                           <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 max-h-60 overflow-y-auto min-w-[160px] ${
-                            isDark ? 'bg-gray-900 border border-white/10' : 'bg-white border border-slate-200'
+                            'bg-white border border-slate-200 dark:bg-gray-900 dark:border-white/10'
                           }`}>
                             {allTags.slice(5).map(tag => (
                               <button
@@ -695,8 +688,8 @@ export function Feed() {
                                 onClick={() => { setTagFilter(tagFilter === tag ? null : tag); setMobileTagsOpen(false); }}
                                 className={`w-full text-left px-3 py-2 text-xs transition-colors ${
                                   tagFilter === tag
-                                    ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                                 }`}
                               >
                                 {tag} ({tagCounts[tag]})
@@ -717,22 +710,22 @@ export function Feed() {
       {/* Sync progress bar */}
       {syncProgress && (
         <div className={`rounded-xl px-4 py-3 ${
-          isDark ? 'bg-violet-500/10 border border-violet-500/15' : 'bg-violet-50 border border-violet-100'
+          'bg-violet-50 border border-violet-100 dark:bg-violet-500/10 dark:border-violet-500/15'
         }`}>
           <div className="flex items-center gap-3">
-            <Loader2 size={16} className={`animate-spin ${isDark ? 'text-violet-400' : 'text-violet-500'}`} />
+            <Loader2 size={16} className={`animate-spin text-violet-500 dark:text-violet-400`} />
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
+              <p className={`text-sm font-medium text-violet-700 dark:text-violet-300`}>
                 Summarizing {syncProgress.current}/{syncProgress.total}...
               </p>
               {syncProgress.currentTitle && (
-                <p className={`text-xs truncate mt-1 ${isDark ? 'text-violet-400/70' : 'text-violet-500/80'}`}>
+                <p className={`text-xs truncate mt-1 text-violet-500/80 dark:text-violet-400/70`}>
                   {syncProgress.currentTitle}
                 </p>
               )}
             </div>
           </div>
-          <div className={`mt-2 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-white/5' : 'bg-violet-100'}`}>
+          <div className={`mt-2 h-1.5 rounded-full overflow-hidden bg-violet-100 dark:bg-white/5`}>
             <div
               className="h-full bg-violet-500 rounded-full transition-all duration-500"
               style={{ width: `${(syncProgress.current / syncProgress.total) * 100}%` }}
@@ -748,21 +741,21 @@ export function Feed() {
           {filteredArticles.length === 0 ? (
             filter === 'unread' ? (
               <div className={`rounded-2xl p-8 text-center ${
-                isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
+                'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
               }`}>
-                <CheckCircle2 className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
-                <h3 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>All caught up!</h3>
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <CheckCircle2 className={`w-10 h-10 mx-auto mb-3 text-emerald-500 dark:text-emerald-400`} />
+                <h3 className={`font-semibold mb-1 text-slate-800 dark:text-white`}>All caught up!</h3>
+                <p className={`text-sm text-slate-500 dark:text-gray-400`}>
                   No unread articles. Take a break or check back later.
                 </p>
               </div>
             ) : (
               <div className={`rounded-2xl p-8 text-center ${
-                isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
+                'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
               }`}>
-                <Newspaper className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-slate-300'}`} />
-                <h3 className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>No articles yet</h3>
-                <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                <Newspaper className={`w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-gray-600`} />
+                <h3 className={`font-semibold mb-1 text-slate-800 dark:text-white`}>No articles yet</h3>
+                <p className={`text-sm mb-4 text-slate-500 dark:text-gray-400`}>
                   Add your first RSS feed or paste an article URL to get started
                 </p>
                 <div className="flex items-center justify-center gap-2">
@@ -775,7 +768,7 @@ export function Feed() {
                   <button
                     onClick={() => { setShowSaveURL(true); setShowAddFeed(false); }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
                     }`}
                   >
                     <Link size={16} /> Save URL
@@ -795,9 +788,9 @@ export function Feed() {
                   data-focus-id={article.id}
                   className={`group rounded-2xl transition-all ${
                     isSelected
-                      ? isDark ? 'bg-violet-500/10 border border-violet-500/30' : 'bg-violet-50/60 border border-violet-200'
+                      ? 'bg-violet-50/60 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30'
                       : article.read
-                        ? isDark ? 'bg-white/[0.02] border border-white/5' : 'bg-slate-50/50 border border-slate-100'
+                        ? 'bg-slate-50/50 border border-slate-100 dark:bg-white/[0.02] dark:border-white/5'
                         : isDark ? 'bg-white/[0.04] border border-white/10 hover:bg-white/[0.06]' : 'bg-white border border-slate-200 hover:shadow-md'
                   }`}
                 >
@@ -824,8 +817,8 @@ export function Feed() {
                           onClick={() => { if (!article.read) toggleRead(article.id, true); }}
                           className={`text-sm sm:text-base font-semibold leading-snug hover:underline decoration-violet-500/40 underline-offset-2 ${
                             article.read
-                              ? isDark ? 'text-gray-400' : 'text-slate-500'
-                              : isDark ? 'text-white' : 'text-slate-800'
+                              ? 'text-slate-500 dark:text-gray-400'
+                              : 'text-slate-800 dark:text-white'
                           }`}
                         >
                           {article.title || article.source_url}
@@ -834,7 +827,7 @@ export function Feed() {
 
                         {/* Meta row */}
                         <div className={`flex items-center gap-2 mt-1 flex-wrap text-xs ${
-                          isDark ? 'text-gray-500' : 'text-slate-400'
+                          'text-slate-400 dark:text-gray-500'
                         }`}>
                           {sub?.title && <span>{sub.title}</span>}
                           {article.published_at && (
@@ -847,17 +840,17 @@ export function Feed() {
                             <>
                               <span>·</span>
                               <span className={`inline-flex items-center gap-1 ${
-                                isDark ? 'text-blue-400/70' : 'text-blue-500/80'
+                                'text-blue-500/80 dark:text-blue-400/70'
                               }`}>
                                 <Clock size={9} /> {article.reading_time_minutes}m
                               </span>
                             </>
                           )}
                           {article.relevance_score != null && (
-                            <RelevanceBadge score={article.relevance_score} isDark={isDark} />
+                            <RelevanceBadge score={article.relevance_score} />
                           )}
                           {article.content_type && (
-                            <ContentTypePill type={article.content_type} isDark={isDark} />
+                            <ContentTypePill type={article.content_type} />
                           )}
                         </div>
                       </div>
@@ -869,7 +862,7 @@ export function Feed() {
                         onClick={() => toggleRead(article.id, !article.read)}
                         title={article.read ? 'Mark unread' : 'Mark read'}
                         className={`p-2 rounded-lg transition-colors ${
-                          isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
+                          'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-600 dark:hover:text-gray-300'
                         }`}
                       >
                         {article.read ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -879,8 +872,8 @@ export function Feed() {
                         title={article.bookmarked ? 'Remove bookmark' : 'Bookmark'}
                         className={`p-2 rounded-lg transition-colors ${
                           article.bookmarked
-                            ? isDark ? 'text-amber-400 hover:bg-amber-500/15' : 'text-amber-500 hover:bg-amber-50'
-                            : isDark ? 'hover:bg-white/10 text-gray-600 hover:text-gray-300' : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600'
+                            ? 'text-amber-500 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/15'
+                            : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-600 dark:hover:text-gray-300'
                         }`}
                       >
                         {article.bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
@@ -892,8 +885,8 @@ export function Feed() {
                           title="Link to Goal"
                           className={`w-20 sm:w-24 text-xs py-1 pl-2 pr-6 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
                             article.goalId
-                              ? isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-50 text-violet-600'
-                              : isDark ? 'bg-white/5 text-gray-600 hover:text-gray-300' : 'bg-slate-50 text-slate-400 hover:text-slate-600'
+                              ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                              : 'bg-slate-50 text-slate-400 hover:text-slate-600 dark:bg-white/5 dark:text-gray-600 dark:hover:text-gray-300'
                           }`}
                           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")" }}
                         >
@@ -908,7 +901,7 @@ export function Feed() {
                         title="Delete"
                         aria-label="Delete"
                         className={`p-2 rounded-lg transition-colors ${
-                          isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
+                          'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-600 dark:hover:text-red-400'
                         }`}
                       >
                         <Trash2 size={14} />
@@ -925,15 +918,15 @@ export function Feed() {
                             {analysis.tier && (
                               <span className={`flex-shrink-0 mt-1 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${
                                 analysis.tier === 3
-                                  ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
                                   : analysis.tier === 2
-                                    ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
-                                    : isDark ? 'bg-white/10 text-gray-500' : 'bg-slate-100 text-slate-500'
+                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                                    : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-500'
                               }`}>
                                 T{analysis.tier}
                               </span>
                             )}
-                            <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                            <p className={`text-sm leading-relaxed text-slate-700 dark:text-gray-300`}>
                               {analysis.surface_claim}
                             </p>
                           </div>
@@ -942,10 +935,10 @@ export function Feed() {
                           {analysis.source_credibility && (
                             <span className={`inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider ${
                               analysis.source_credibility === 'high'
-                                ? isDark ? 'text-emerald-400' : 'text-emerald-600'
+                                ? 'text-emerald-600 dark:text-emerald-400'
                                 : analysis.source_credibility === 'medium'
-                                  ? isDark ? 'text-amber-400' : 'text-amber-600'
-                                  : isDark ? 'text-gray-500' : 'text-slate-400'
+                                  ? 'text-amber-600 dark:text-amber-400'
+                                  : 'text-slate-400 dark:text-gray-500'
                             }`}>
                               {analysis.source_credibility === 'high' ? <Star size={10} /> : null}
                               {analysis.source_credibility} signal source
@@ -958,7 +951,7 @@ export function Feed() {
                               <button
                                 onClick={() => toggleTakeaways(article.id)}
                                 className={`flex items-center gap-2 text-xs font-medium transition-colors ${
-                                  isDark ? 'text-violet-400 hover:text-violet-300' : 'text-violet-500 hover:text-violet-600'
+                                  'text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300'
                                 }`}
                               >
                                 {takeawaysExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -967,10 +960,10 @@ export function Feed() {
                               </button>
                               {takeawaysExpanded && (
                                 <div className="mt-2 space-y-3">
-                                  <ul className={`space-y-2 ml-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                  <ul className={`space-y-2 ml-1 text-slate-600 dark:text-gray-400`}>
                                     {analysis.key_points.map((t, i) => (
                                       <li key={i} className="flex items-start gap-2 text-sm">
-                                        <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-violet-400' : 'bg-violet-500'}`} />
+                                        <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 bg-violet-500 dark:bg-violet-400`} />
                                         {t}
                                       </li>
                                     ))}
@@ -979,13 +972,13 @@ export function Feed() {
                                   {/* Implications */}
                                   {analysis.implications.length > 0 && (
                                     <div>
-                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-orange-400/70' : 'text-orange-500/80'}`}>
+                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 text-orange-500/80 dark:text-orange-400/70`}>
                                         Implications
                                       </p>
-                                      <ul className={`space-y-2 ml-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                      <ul className={`space-y-2 ml-1 text-slate-600 dark:text-gray-400`}>
                                         {analysis.implications.map((t, i) => (
                                           <li key={i} className="flex items-start gap-2 text-sm">
-                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-orange-400' : 'bg-orange-500'}`} />
+                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 bg-orange-500 dark:bg-orange-400`} />
                                             {t}
                                           </li>
                                         ))}
@@ -996,13 +989,13 @@ export function Feed() {
                                   {/* Open Questions */}
                                   {analysis.open_questions.length > 0 && (
                                     <div>
-                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-blue-400/70' : 'text-blue-500/80'}`}>
+                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 text-blue-500/80 dark:text-blue-400/70`}>
                                         Worth Watching
                                       </p>
-                                      <ul className={`space-y-2 ml-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                      <ul className={`space-y-2 ml-1 text-slate-600 dark:text-gray-400`}>
                                         {analysis.open_questions.map((t, i) => (
                                           <li key={i} className="flex items-start gap-2 text-sm">
-                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? 'bg-blue-400' : 'bg-blue-500'}`} />
+                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 bg-blue-500 dark:bg-blue-400`} />
                                             {t}
                                           </li>
                                         ))}
@@ -1027,9 +1020,7 @@ export function Feed() {
                             className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                               tagFilter === tag
                                 ? 'bg-violet-600 text-white'
-                                : isDark
-                                  ? 'bg-white/5 text-gray-500 hover:bg-white/10'
-                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
                             }`}
                           >
                             {tag}
@@ -1047,16 +1038,16 @@ export function Feed() {
         {/* Subscriptions sidebar — desktop only */}
         {showSidebar && (
           <div className={`hidden md:block w-[300px] flex-shrink-0 rounded-2xl h-fit sticky top-4 ${
-            isDark ? 'bg-white/[0.03] border border-white/10' : 'bg-white border border-slate-200'
+            'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
           }`}>
             <div className="px-4 py-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Subscriptions</h2>
-                <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{subscriptions.length}</span>
+                <h2 className={`text-sm font-semibold text-slate-800 dark:text-white`}>Subscriptions</h2>
+                <span className={`text-xs text-slate-400 dark:text-gray-500`}>{subscriptions.length}</span>
               </div>
 
               {subscriptions.length === 0 ? (
-                <p className={`text-xs text-center py-4 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                <p className={`text-xs text-center py-4 text-slate-400 dark:text-gray-600`}>
                   No feeds yet
                 </p>
               ) : (
@@ -1065,26 +1056,26 @@ export function Feed() {
                     <div
                       key={sub.id}
                       className={`group/sub rounded-xl px-3 py-3 transition-colors ${
-                        isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                        'hover:bg-slate-50 dark:hover:bg-white/5'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                            <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>
                               {sub.title || 'Untitled Feed'}
                             </p>
                             <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
-                              isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'
+                              'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500'
                             }`}>
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-600`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>
+                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-700`}>
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
@@ -1093,7 +1084,7 @@ export function Feed() {
                           aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
                           className={`p-1 rounded-lg opacity-0 group-hover/sub:opacity-100 transition-all ${
-                            isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
+                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-600 dark:hover:text-red-400'
                           }`}
                         >
                           <Trash2 size={13} />
@@ -1105,9 +1096,9 @@ export function Feed() {
               )}
 
               {/* Curated suggested feeds */}
-              <div className={`mt-4 pt-4 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
                 <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${
-                  isDark ? 'text-gray-500' : 'text-slate-400'
+                  'text-slate-400 dark:text-gray-500'
                 }`}>
                   Suggested Feeds
                 </h3>
@@ -1118,31 +1109,29 @@ export function Feed() {
                       <div
                         key={sf.url}
                         className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
-                          isDark ? 'bg-white/[0.03]' : 'bg-slate-50'
+                          'bg-slate-50 dark:bg-white/[0.03]'
                         }`}
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                            <p className={`text-xs font-medium truncate text-slate-600 dark:text-gray-400`}>
                               {sf.label}
                             </p>
                             <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
-                              isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-200/70 text-slate-400'
+                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-600'
                             }`}>
                               {sf.category}
                             </span>
                           </div>
                         </div>
                         {alreadySubscribed ? (
-                          <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+                          <CheckCircle2 size={14} className={'text-emerald-500 dark:text-emerald-400'} />
                         ) : (
                           <button
                             aria-label="Subscribe to feed"
                             onClick={() => addFeed(sf.url)}
                             className={`p-1 rounded-md transition-colors ${
-                              isDark
-                                ? 'hover:bg-violet-500/20 text-gray-500 hover:text-violet-400'
-                                : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'
+                              'hover:bg-violet-50 text-slate-400 hover:text-violet-600 dark:hover:bg-violet-500/20 dark:text-gray-500 dark:hover:text-violet-400'
                             }`}
                             title={`Add ${sf.label}`}
                           >
@@ -1156,14 +1145,12 @@ export function Feed() {
               </div>
 
               {/* Clear old read articles */}
-              <div className={`mt-4 pt-4 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
                 <button
                   onClick={handleClearOldRead}
                   disabled={clearingOld}
                   className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    isDark
-                      ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                    'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-300'
                   } disabled:opacity-50`}
                 >
                   {clearingOld ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
@@ -1180,22 +1167,21 @@ export function Feed() {
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
           <div className={`absolute inset-0 overflow-y-auto ${
-            isDark ? 'bg-gray-950' : 'bg-white'
+            'bg-white dark:bg-gray-950'
           }`}>
             <div className="px-4 py-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Subscriptions</h2>
-                <button
-                  aria-label="Close"
+                <h2 className={`text-lg font-semibold text-slate-800 dark:text-white`}>Subscriptions</h2>
+                <IconButton
+                  icon={X}
+                  label="Close"
+                  size="lg"
                   onClick={() => setMobileSidebarOpen(false)}
-                  className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
-                >
-                  <X size={20} />
-                </button>
+                />
               </div>
 
               {subscriptions.length === 0 ? (
-                <p className={`text-sm text-center py-8 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                <p className={`text-sm text-center py-8 text-slate-400 dark:text-gray-600`}>
                   No feeds yet
                 </p>
               ) : (
@@ -1204,26 +1190,26 @@ export function Feed() {
                     <div
                       key={sub.id}
                       className={`rounded-xl px-3 py-3 transition-colors ${
-                        isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'
+                        'hover:bg-slate-50 dark:hover:bg-white/5'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+                            <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>
                               {sub.title || 'Untitled Feed'}
                             </p>
                             <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
-                              isDark ? 'bg-white/5 text-gray-500' : 'bg-slate-100 text-slate-400'
+                              'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500'
                             }`}>
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-1 ${isDark ? 'text-gray-600' : 'text-slate-400'}`}>
+                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-600`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-700' : 'text-slate-300'}`}>
+                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-700`}>
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
@@ -1232,7 +1218,7 @@ export function Feed() {
                           aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
                           className={`p-2 rounded-lg transition-colors ${
-                            isDark ? 'hover:bg-red-500/15 text-gray-600 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-500'
+                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-600 dark:hover:text-red-400'
                           }`}
                         >
                           <Trash2 size={13} />
@@ -1244,9 +1230,9 @@ export function Feed() {
               )}
 
               {/* Curated suggested feeds */}
-              <div className={`mt-4 pt-4 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
                 <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${
-                  isDark ? 'text-gray-500' : 'text-slate-400'
+                  'text-slate-400 dark:text-gray-500'
                 }`}>
                   Suggested Feeds
                 </h3>
@@ -1257,31 +1243,29 @@ export function Feed() {
                       <div
                         key={sf.url}
                         className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
-                          isDark ? 'bg-white/[0.03]' : 'bg-slate-50'
+                          'bg-slate-50 dark:bg-white/[0.03]'
                         }`}
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className={`text-xs font-medium truncate ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                            <p className={`text-xs font-medium truncate text-slate-600 dark:text-gray-400`}>
                               {sf.label}
                             </p>
                             <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
-                              isDark ? 'bg-white/5 text-gray-600' : 'bg-slate-200/70 text-slate-400'
+                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-600'
                             }`}>
                               {sf.category}
                             </span>
                           </div>
                         </div>
                         {alreadySubscribed ? (
-                          <CheckCircle2 size={14} className={isDark ? 'text-emerald-400' : 'text-emerald-500'} />
+                          <CheckCircle2 size={14} className={'text-emerald-500 dark:text-emerald-400'} />
                         ) : (
                           <button
                             aria-label="Subscribe to feed"
                             onClick={() => addFeed(sf.url)}
                             className={`p-1 rounded-md transition-colors ${
-                              isDark
-                                ? 'hover:bg-violet-500/20 text-gray-500 hover:text-violet-400'
-                                : 'hover:bg-violet-50 text-slate-400 hover:text-violet-600'
+                              'hover:bg-violet-50 text-slate-400 hover:text-violet-600 dark:hover:bg-violet-500/20 dark:text-gray-500 dark:hover:text-violet-400'
                             }`}
                             title={`Add ${sf.label}`}
                           >
@@ -1295,14 +1279,12 @@ export function Feed() {
               </div>
 
               {/* Clear old read articles */}
-              <div className={`mt-4 pt-4 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
+              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
                 <button
                   onClick={handleClearOldRead}
                   disabled={clearingOld}
                   className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    isDark
-                      ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                    'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-300'
                   } disabled:opacity-50`}
                 >
                   {clearingOld ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
