@@ -251,8 +251,8 @@ export function BodyMetrics() {
                 {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
               <span className={`font-medium text-slate-800 dark:text-white`}>{entry.value} {entry.unit}</span>
-              {entry.note && <span className={`truncate text-slate-400 dark:text-gray-600`}>{entry.note}</span>}
-              <button type="button" onClick={() => handleDelete(entry.id)} className={`ml-auto p-1 rounded text-slate-400 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400`}>×</button>
+              {entry.note && <span className={`truncate text-slate-400 dark:text-gray-400`}>{entry.note}</span>}
+              <button type="button" onClick={() => handleDelete(entry.id)} className={`ml-auto p-1 rounded text-slate-400 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400`}>×</button>
             </div>
           ))}
         </div>

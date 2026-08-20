@@ -393,7 +393,7 @@ export function Stats() {
               ))}
             </div>
           ) : !aiLoading && (
-            <p className={`text-sm text-center py-6 text-slate-400 dark:text-gray-600`}>
+            <p className={`text-sm text-center py-6 text-slate-400 dark:text-gray-400`}>
               Click "Generate Analysis" to get AI-powered insights about your productivity patterns.
             </p>
           )}
@@ -408,7 +408,7 @@ export function Stats() {
             <p className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>This Week</p>
           </div>
           <div className={`text-2xl font-bold text-slate-800 dark:text-white`}>{weeklyStats.rate}%</div>
-          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>
+          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
             {weeklyStats.completed} of {weeklyStats.total} tasks completed
           </p>
           <div className={`h-1.5 rounded-full overflow-hidden mt-2 bg-slate-100 dark:bg-white/5`}>
@@ -423,10 +423,10 @@ export function Stats() {
           {productiveTime ? (
             <>
               <div className={`text-lg font-bold text-slate-800 dark:text-white`}>{productiveTime.time.split(' ')[0]}</div>
-              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>{productiveTime.count} tasks completed in this window</p>
+              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>{productiveTime.count} tasks completed in this window</p>
             </>
           ) : (
-            <p className={`text-sm text-slate-400 dark:text-gray-600`}>Complete tasks to see patterns</p>
+            <p className={`text-sm text-slate-400 dark:text-gray-400`}>Complete tasks to see patterns</p>
           )}
         </div>
         <div className="card rounded-2xl p-6">
@@ -437,17 +437,17 @@ export function Stats() {
           {habitAlerts.length > 0 ? (
             <>
               <div className="text-lg font-bold text-amber-500">{habitAlerts.length} at risk</div>
-              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>
+              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
                 {habitAlerts.map(h => h.name).join(', ')}
               </p>
             </>
           ) : habits.length > 0 ? (
             <>
               <div className={`text-lg font-bold text-emerald-600 dark:text-emerald-400`}>All good</div>
-              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>All habit streaks are safe today</p>
+              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>All habit streaks are safe today</p>
             </>
           ) : (
-            <p className={`text-sm text-slate-400 dark:text-gray-600`}>Create habits to track</p>
+            <p className={`text-sm text-slate-400 dark:text-gray-400`}>Create habits to track</p>
           )}
         </div>
       </div>
@@ -571,14 +571,14 @@ export function Stats() {
         <div className="card rounded-2xl p-6">
           <p className={`text-sm text-slate-500 dark:text-gray-500`}>High Priority Completed</p>
           <div className="text-2xl font-bold text-red-500 mt-1">{highPriorityCompleted}</div>
-          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>
+          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
             {completedTasks.length > 0 ? `${Math.round((highPriorityCompleted / completedTasks.length) * 100)}% of total` : 'No tasks yet'}
           </p>
         </div>
         <div className="card rounded-2xl p-6">
           <p className={`text-sm text-slate-500 dark:text-gray-500`}>High Effort Completed</p>
           <div className="text-2xl font-bold text-orange-500 mt-1">{highEffortCompleted}</div>
-          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>
+          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
             {completedTasks.length > 0 ? `${Math.round((highEffortCompleted / completedTasks.length) * 100)}% of total` : 'No tasks yet'}
           </p>
         </div>

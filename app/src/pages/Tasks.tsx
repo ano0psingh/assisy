@@ -574,7 +574,7 @@ export function Tasks() {
               </button>
             ))}
           </div>
-          <span className={`text-xs text-slate-400 dark:text-gray-600`}>
+          <span className={`text-xs text-slate-400 dark:text-gray-400`}>
             {filteredTasks.length}
           </span>
         </div>
@@ -661,7 +661,7 @@ export function Tasks() {
              were never set. */
           <div className="card rounded-2xl p-12 text-center">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-slate-100 dark:bg-white/5`}>
-              <LayoutList className={`w-8 h-8 text-slate-400 dark:text-gray-600`} />
+              <LayoutList className={`w-8 h-8 text-slate-400 dark:text-gray-400`} />
             </div>
             <p className={`font-medium text-slate-800 dark:text-white`}>No tasks yet</p>
             <p className={`text-sm mt-1 text-slate-500 dark:text-gray-500`}>
@@ -674,7 +674,7 @@ export function Tasks() {
         ) : (
           <div className="card rounded-2xl p-12 text-center">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-slate-100 dark:bg-white/5`}>
-              <ListFilter className={`w-8 h-8 text-slate-400 dark:text-gray-600`} />
+              <ListFilter className={`w-8 h-8 text-slate-400 dark:text-gray-400`} />
             </div>
             <p className={'text-slate-500 dark:text-gray-500'}>
               {normalisedQuery
@@ -810,7 +810,7 @@ export function Tasks() {
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').length === 0 ? (
-                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -835,7 +835,7 @@ export function Tasks() {
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').length === 0 ? (
-                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -860,7 +860,7 @@ export function Tasks() {
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').length === 0 ? (
-                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -885,7 +885,7 @@ export function Tasks() {
             </div>
             <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
               {filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').length === 0 ? (
-                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-600`}>No tasks</p>
+                <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
                   <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
@@ -1042,9 +1042,9 @@ export function Tasks() {
                           >
                             <div className="flex items-center space-x-3 pl-6">
                               {isSubExpanded ? (
-                                <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-gray-600`} />
+                                <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-gray-400`} />
                               ) : (
-                                <ChevronRight className={`w-4 h-4 text-slate-400 dark:text-gray-600`} />
+                                <ChevronRight className={`w-4 h-4 text-slate-400 dark:text-gray-400`} />
                               )}
                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                                 'bg-violet-50 dark:bg-violet-500/15'
@@ -1055,7 +1055,7 @@ export function Tasks() {
                                 <h4 className={`font-medium text-sm text-slate-700 dark:text-gray-300`}>
                                   {subGroup.goal.title}
                                 </h4>
-                                <p className={`text-xs text-slate-400 dark:text-gray-600`}>
+                                <p className={`text-xs text-slate-400 dark:text-gray-400`}>
                                   {subCompleted}/{subTotal} tasks
                                 </p>
                               </div>

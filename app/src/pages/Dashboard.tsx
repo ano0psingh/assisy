@@ -94,11 +94,11 @@ function BacklogPicker({ tasks, onAdd }: { tasks: Task[]; onAdd: (id: string) =>
           >
             <Plus size={12} className="flex-shrink-0" />
             <span className="truncate flex-1">{task.title}</span>
-            <span className={`text-xs flex-shrink-0 text-slate-400 dark:text-gray-600`}>{task.category}</span>
+            <span className={`text-xs flex-shrink-0 text-slate-400 dark:text-gray-400`}>{task.category}</span>
           </button>
         ))}
         {expanded && filtered.length === 0 && search && (
-          <p className={`text-xs py-2 text-center text-slate-400 dark:text-gray-600`}>No tasks match "{search}"</p>
+          <p className={`text-xs py-2 text-center text-slate-400 dark:text-gray-400`}>No tasks match "{search}"</p>
         )}
       </div>
     </div>
@@ -815,7 +815,7 @@ RULES:
 
           {/* Completed tasks — subtle, at bottom */}
           {(allTodayCompleted.length > 0 || todaysProjectTasks.filter(t => t.status === 'Done').length > 0) && (
-            <p className={`text-xs pt-2 text-slate-400 dark:text-gray-600`}>
+            <p className={`text-xs pt-2 text-slate-400 dark:text-gray-400`}>
               {allTodayCompleted.length + todaysProjectTasks.filter(t => t.status === 'Done').length} completed today
             </p>
           )}
@@ -918,7 +918,7 @@ RULES:
                     </div>
                   ))}
                   {group.tasks.length > 4 && (
-                    <p className={`text-xs pl-3 text-slate-400 dark:text-gray-600`}>+{group.tasks.length - 4} more in backlog</p>
+                    <p className={`text-xs pl-3 text-slate-400 dark:text-gray-400`}>+{group.tasks.length - 4} more in backlog</p>
                   )}
                 </div>
               </div>
@@ -941,7 +941,7 @@ RULES:
             </div>
             <div>
               <span className={`text-sm font-medium text-slate-700 dark:text-gray-300`}>This Week</span>
-              <span className={`text-xs ml-2 text-slate-400 dark:text-gray-600`}>
+              <span className={`text-xs ml-2 text-slate-400 dark:text-gray-400`}>
                 {weeklyProfessionalReview.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weeklyProfessionalReview.weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
             </div>

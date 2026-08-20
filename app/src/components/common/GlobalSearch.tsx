@@ -269,7 +269,7 @@ export function GlobalSearch() {
                     <p className={`text-xs truncate text-slate-500 dark:text-gray-500`}>{result.subtitle}</p>
                   )}
                 </div>
-                <span className={`text-xs uppercase tracking-wider text-slate-400 dark:text-gray-600`}>
+                <span className={`text-xs uppercase tracking-wider text-slate-400 dark:text-gray-400`}>
                   {result.type === 'project_task' ? 'Task' : result.type === 'feed' ? 'Article' : result.type}
                 </span>
                 {idx === selectedIndex && <ArrowRight size={12} className={'text-violet-500 dark:text-violet-400'} />}
@@ -279,7 +279,7 @@ export function GlobalSearch() {
 
           {/* Footer hint */}
           {!query && (
-            <div className={`px-4 py-3 border-t flex items-center gap-4 text-xs border-slate-100 text-slate-400 dark:border-white/10 dark:text-gray-600`}>
+            <div className={`px-4 py-3 border-t flex items-center gap-4 text-xs border-slate-100 text-slate-400 dark:border-white/10 dark:text-gray-400`}>
               <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>↑↓</kbd> navigate</span>
               <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>↵</kbd> select</span>
               <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>esc</kbd> close</span>

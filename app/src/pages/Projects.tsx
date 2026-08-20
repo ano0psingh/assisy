@@ -902,7 +902,7 @@ export function Projects() {
                           </div>
 
                           {!selection.active && (
-                            <ChevronRight className={`w-5 h-5 flex-shrink-0 text-slate-400 dark:text-gray-600`} />
+                            <ChevronRight className={`w-5 h-5 flex-shrink-0 text-slate-400 dark:text-gray-400`} />
                           )}
                         </div>
                       </div>
@@ -1170,7 +1170,7 @@ export function Projects() {
                                   <span className={`text-xs text-slate-400 dark:text-gray-500`}>{progress}%</span>
                                 </div>
                                 {!subProjectSelection.active && (
-                                  <ChevronRight size={16} className={`flex-shrink-0 text-slate-400 dark:text-gray-600`} />
+                                  <ChevronRight size={16} className={`flex-shrink-0 text-slate-400 dark:text-gray-400`} />
                                 )}
                               </div>
                             </div>
@@ -1397,7 +1397,7 @@ export function Projects() {
                     {aiPlanLoading ? 'Generating plan...' : 'AI: Generate Plan'}
                   </button>
                   {aiPlanError && <p className={`text-xs mt-2 text-red-500 dark:text-red-400`}>{aiPlanError}</p>}
-                  {!projectForm.title.trim() && <p className={`text-xs mt-1 text-slate-400 dark:text-gray-600`}>Enter a project title first</p>}
+                  {!projectForm.title.trim() && <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>Enter a project title first</p>}
                 </div>
               ) : (
                 <div>

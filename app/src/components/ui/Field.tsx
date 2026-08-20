@@ -42,7 +42,7 @@ function FieldShell({ id, label, error, hint, children }: FieldShellProps) {
         </p>
       ) : (
         hint && (
-          <p id={`${id}-hint`} className="text-xs text-slate-400 dark:text-gray-600">
+          <p id={`${id}-hint`} className="text-xs text-slate-400 dark:text-gray-400">
             {hint}
           </p>
         )

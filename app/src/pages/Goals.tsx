@@ -447,7 +447,7 @@ export function Goals() {
             </button>
           )}
         </div>
-        <span className={`text-xs text-slate-400 dark:text-gray-600`}>
+        <span className={`text-xs text-slate-400 dark:text-gray-400`}>
           {filteredGoals.length} goal{filteredGoals.length !== 1 ? 's' : ''}
         </span>
       </div>

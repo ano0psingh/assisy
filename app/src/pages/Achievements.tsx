@@ -883,7 +883,7 @@ function QuestLogRoadmap({
                             ? `bg-gradient-to-br ${colors.progress} text-white` 
                             : isCurrent
                               ? `${colors.bg} ${colors.text} ring-2 ring-current`
-                              : 'bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-gray-600'
+                              : 'bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-gray-400'
                         }`}
                         title={milestone.name}
                       >
@@ -954,7 +954,7 @@ function SeasonTeaser() {
               key={idx}
               className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/50 border border-violet-200 dark:bg-white/5 dark:border-white/10`}
             >
-              <Lock size={16} className={'text-slate-400 dark:text-gray-600'} />
+              <Lock size={16} className={'text-slate-400 dark:text-gray-400'} />
             </div>
           ))}
           <span className={`text-xs text-slate-500 dark:text-gray-500`}>
@@ -1159,7 +1159,7 @@ function AchievementCard({
             ) : isUnlocked ? (
               <Icon size={46} className={tierStyles.icon} />
             ) : (
-              <Lock size={38} className={'text-slate-400 dark:text-gray-600'} />
+              <Lock size={38} className={'text-slate-400 dark:text-gray-400'} />
             )}
           </div>
         </div>
@@ -1262,7 +1262,7 @@ function AchievementModal({
             {isUnlocked ? (
               <Icon size={48} className={tierStyles.icon} />
             ) : (
-              <Lock size={40} className={'text-slate-400 dark:text-gray-600'} />
+              <Lock size={40} className={'text-slate-400 dark:text-gray-400'} />
             )}
           </div>
 
@@ -1697,11 +1697,11 @@ export function Achievements() {
               return (
                 <div key={tier} className="text-center">
                   <div className={`w-12 h-12 mx-auto rounded-lg flex items-center justify-center mb-1 ${unlocked > 0 ? `bg-gradient-to-br ${tierStyles.bg} ${tierStyles.ring}` : 'bg-slate-100 dark:bg-white/5'}`}>
-                    {tier === 'legendary' && <Gem size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
-                    {tier === 'platinum' && <Star size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
-                    {tier === 'gold' && <Medal size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
-                    {tier === 'silver' && <Award size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
-                    {tier === 'bronze' && <Shield size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-600'} />}
+                    {tier === 'legendary' && <Gem size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
+                    {tier === 'platinum' && <Star size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
+                    {tier === 'gold' && <Medal size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
+                    {tier === 'silver' && <Award size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
+                    {tier === 'bronze' && <Shield size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
                   </div>
                   <p className={`text-xs font-bold text-slate-800 dark:text-white`}>{unlocked}/{total}</p>
                   <p className={`text-xs capitalize text-slate-500 dark:text-gray-500`}>{tier}</p>
@@ -1727,7 +1727,7 @@ export function Achievements() {
               </button>
             ))}
           </div>
-          <span className={`text-xs ml-auto text-slate-400 dark:text-gray-600`}>{sortedAchievements.length} achievements</span>
+          <span className={`text-xs ml-auto text-slate-400 dark:text-gray-400`}>{sortedAchievements.length} achievements</span>
         </div>
 
         {/* Achievement Grid */}

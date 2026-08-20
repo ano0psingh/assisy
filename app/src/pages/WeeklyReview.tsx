@@ -448,11 +448,11 @@ Respond ONLY with valid JSON matching this exact schema:
                       const done = dayDone.get(idx);
                       return (
                         <div key={dayLabel} className="flex flex-col items-center gap-1">
-                          <span className={`text-xs leading-none text-slate-400 dark:text-gray-600`}>{dayLabel[0]}</span>
+                          <span className={`text-xs leading-none text-slate-400 dark:text-gray-400`}>{dayLabel[0]}</span>
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                             done
                               ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/30 dark:text-emerald-400'
-                              : 'bg-slate-100 text-slate-300 dark:bg-white/5 dark:text-gray-700'
+                              : 'bg-slate-100 text-slate-300 dark:bg-white/5 dark:text-gray-500'
                           }`}>
                             {done ? <CheckCircle2 size={12} /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />}
                           </div>
@@ -516,7 +516,7 @@ Respond ONLY with valid JSON matching this exact schema:
             <span className={`text-sm text-slate-600 dark:text-gray-400`}>
               Read <strong className={'text-slate-800 dark:text-white'}>{feedSummary.readCount}</strong>
             </span>
-            <span className={'text-slate-300 dark:text-gray-600'}>·</span>
+            <span className={'text-slate-300 dark:text-gray-400'}>·</span>
             <span className={`text-sm text-slate-600 dark:text-gray-400`}>
               Bookmarked <strong className={'text-slate-800 dark:text-white'}>{feedSummary.bookmarkedCount}</strong>
             </span>

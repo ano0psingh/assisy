@@ -235,7 +235,7 @@ export function GoalCard({
           </div>
           
           {/* Arrow */}
-          <ChevronRight className={`w-5 h-5 text-slate-400 dark:text-gray-600`} />
+          <ChevronRight className={`w-5 h-5 text-slate-400 dark:text-gray-400`} />
         </div>
       </div>
     </div>

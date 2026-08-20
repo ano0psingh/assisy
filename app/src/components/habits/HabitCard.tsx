@@ -134,7 +134,7 @@ export function HabitCard({
           className={`inline-flex items-center px-2 py-2 rounded-r-full text-sm transition-all border-l-0 ${
             isCompleted
               ? 'bg-emerald-50 text-emerald-400 border border-emerald-300 hover:text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-500/50 dark:border-emerald-500/30 dark:hover:text-emerald-300'
-              : 'bg-white/60 text-slate-300 border border-slate-200 hover:text-slate-500 dark:bg-white/[0.06] dark:text-gray-600 dark:border-white/[0.1] dark:hover:text-gray-400'
+              : 'bg-white/60 text-slate-300 border border-slate-200 hover:text-slate-500 dark:bg-white/[0.06] dark:text-gray-400 dark:border-white/[0.1] dark:hover:text-gray-200'
           }`}
         >
           <MoreHorizontal size={14} />
@@ -192,7 +192,7 @@ export function HabitCard({
             className={`w-7 h-7 min-h-0 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
               isCompleted
                 ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(52,211,153,0.25)]'
-                : 'bg-black/[0.04] text-slate-400 border border-black/[0.06] dark:bg-white/[0.08] dark:text-gray-600 dark:border-white/[0.1]'
+                : 'bg-black/[0.04] text-slate-400 border border-black/[0.06] dark:bg-white/[0.08] dark:text-gray-400 dark:border-white/[0.1]'
             } ${habit.trackingType === 'boolean' ? 'cursor-pointer' : 'cursor-default'}`}
           >
             {isCompleted ? <Check size={14} strokeWidth={2.5} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}

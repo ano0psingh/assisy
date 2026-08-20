@@ -189,7 +189,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
           >
             {st.selected
               ? <CheckSquare size={15} className={'text-violet-600 dark:text-violet-400'} />
-              : <Square size={15} className={'text-slate-300 dark:text-gray-600'} />
+              : <Square size={15} className={'text-slate-300 dark:text-gray-400'} />
             }
             <span className="flex-1">{st.title}</span>
             <span className={`text-xs px-2 py-1 rounded-full ${
@@ -448,7 +448,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
               <span className={`text-sm text-slate-500 dark:text-gray-400`}>of every month</span>
             </div>
           )}
-          <p className={`text-xs text-slate-400 dark:text-gray-600`}>
+          <p className={`text-xs text-slate-400 dark:text-gray-400`}>
             {recurrencePattern === 'daily' ? 'Repeats every day' :
              recurrencePattern === 'weekly' ? 'Repeats every week on this day' :
              recurrencePattern === 'monthly' ? `Repeats on the ${monthDay}${monthDay === 1 ? 'st' : monthDay === 2 ? 'nd' : monthDay === 3 ? 'rd' : 'th'} of every month` :

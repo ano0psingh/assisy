@@ -353,7 +353,7 @@ export function Feed() {
                     Check for new
                   </span>
                   {lastRefreshedAt && (
-                    <span className={`text-xs leading-tight text-slate-400 dark:text-gray-600`}>
+                    <span className={`text-xs leading-tight text-slate-400 dark:text-gray-400`}>
                       Last checked {relativeTime(lastRefreshedAt)}
                     </span>
                   )}
@@ -753,7 +753,7 @@ export function Feed() {
               <div className={`rounded-2xl p-8 text-center ${
                 'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
               }`}>
-                <Newspaper className={`w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-gray-600`} />
+                <Newspaper className={`w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-gray-400`} />
                 <h3 className={`font-semibold mb-1 text-slate-800 dark:text-white`}>No articles yet</h3>
                 <p className={`text-sm mb-4 text-slate-500 dark:text-gray-400`}>
                   Add your first RSS feed or paste an article URL to get started
@@ -862,7 +862,7 @@ export function Feed() {
                         onClick={() => toggleRead(article.id, !article.read)}
                         title={article.read ? 'Mark unread' : 'Mark read'}
                         className={`p-2 rounded-lg transition-colors ${
-                          'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-600 dark:hover:text-gray-300'
+                          'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-400 dark:hover:text-gray-300'
                         }`}
                       >
                         {article.read ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -873,7 +873,7 @@ export function Feed() {
                         className={`p-2 rounded-lg transition-colors ${
                           article.bookmarked
                             ? 'text-amber-500 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/15'
-                            : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-600 dark:hover:text-gray-300'
+                            : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-400 dark:hover:text-gray-300'
                         }`}
                       >
                         {article.bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
@@ -886,7 +886,7 @@ export function Feed() {
                           className={`w-20 sm:w-24 text-xs py-1 pl-2 pr-6 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
                             article.goalId
                               ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
-                              : 'bg-slate-50 text-slate-400 hover:text-slate-600 dark:bg-white/5 dark:text-gray-600 dark:hover:text-gray-300'
+                              : 'bg-slate-50 text-slate-400 hover:text-slate-600 dark:bg-white/5 dark:text-gray-400 dark:hover:text-gray-300'
                           }`}
                           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")" }}
                         >
@@ -901,7 +901,7 @@ export function Feed() {
                         title="Delete"
                         aria-label="Delete"
                         className={`p-2 rounded-lg transition-colors ${
-                          'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-600 dark:hover:text-red-400'
+                          'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-400 dark:hover:text-red-400'
                         }`}
                       >
                         <Trash2 size={14} />
@@ -1047,7 +1047,7 @@ export function Feed() {
               </div>
 
               {subscriptions.length === 0 ? (
-                <p className={`text-xs text-center py-4 text-slate-400 dark:text-gray-600`}>
+                <p className={`text-xs text-center py-4 text-slate-400 dark:text-gray-400`}>
                   No feeds yet
                 </p>
               ) : (
@@ -1071,11 +1071,11 @@ export function Feed() {
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-600`}>
+                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-400`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-700`}>
+                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-500`}>
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
@@ -1084,7 +1084,7 @@ export function Feed() {
                           aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
                           className={`p-1 rounded-lg opacity-0 group-hover/sub:opacity-100 transition-all ${
-                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-600 dark:hover:text-red-400'
+                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-400 dark:hover:text-red-400'
                           }`}
                         >
                           <Trash2 size={13} />
@@ -1118,7 +1118,7 @@ export function Feed() {
                               {sf.label}
                             </p>
                             <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
-                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-600'
+                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-400'
                             }`}>
                               {sf.category}
                             </span>
@@ -1181,7 +1181,7 @@ export function Feed() {
               </div>
 
               {subscriptions.length === 0 ? (
-                <p className={`text-sm text-center py-8 text-slate-400 dark:text-gray-600`}>
+                <p className={`text-sm text-center py-8 text-slate-400 dark:text-gray-400`}>
                   No feeds yet
                 </p>
               ) : (
@@ -1205,11 +1205,11 @@ export function Feed() {
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-600`}>
+                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-400`}>
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-700`}>
+                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-500`}>
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
@@ -1218,7 +1218,7 @@ export function Feed() {
                           aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
                           className={`p-2 rounded-lg transition-colors ${
-                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-600 dark:hover:text-red-400'
+                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-400 dark:hover:text-red-400'
                           }`}
                         >
                           <Trash2 size={13} />
@@ -1252,7 +1252,7 @@ export function Feed() {
                               {sf.label}
                             </p>
                             <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
-                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-600'
+                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-400'
                             }`}>
                               {sf.category}
                             </span>

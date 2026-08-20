@@ -255,7 +255,7 @@ export function GoalDetail({
               <button
                 onClick={() => removeMilestone(goal.id, ms.id)}
                 className={`p-1 rounded-lg transition-colors flex-shrink-0 ${
-                  'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:text-gray-600 dark:hover:text-red-400 dark:hover:bg-red-500/20'
+                  'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-500/20'
                 }`}
                 title="Remove milestone"
                 aria-label="Remove milestone"
@@ -400,10 +400,10 @@ export function GoalDetail({
           <p>{completedMilestones} of {totalMilestones} milestones completed</p>
         )}
         {recurringCount > 0 && (
-          <p className={'text-slate-400 dark:text-gray-600'}>{recurringCount} recurring task{recurringCount > 1 ? 's' : ''} (ongoing, earn XP daily)</p>
+          <p className={'text-slate-400 dark:text-gray-400'}>{recurringCount} recurring task{recurringCount > 1 ? 's' : ''} (ongoing, earn XP daily)</p>
         )}
         {linkedHabits.length > 0 && (
-          <p className={'text-slate-400 dark:text-gray-600'}>{linkedHabits.length} habit{linkedHabits.length > 1 ? 's' : ''} linked (earn XP daily)</p>
+          <p className={'text-slate-400 dark:text-gray-400'}>{linkedHabits.length} habit{linkedHabits.length > 1 ? 's' : ''} linked (earn XP daily)</p>
         )}
       </div>
     </div>
@@ -456,7 +456,7 @@ export function GoalDetail({
 
       {linkedTasks.length === 0 ? (
         <div className={`text-center py-8 rounded-xl bg-slate-50 dark:bg-white/5`}>
-          <Target className={`w-10 h-10 mx-auto mb-3 text-slate-400 dark:text-gray-600`} />
+          <Target className={`w-10 h-10 mx-auto mb-3 text-slate-400 dark:text-gray-400`} />
           <p className={`text-sm text-slate-500 dark:text-gray-500`}>No tasks linked yet.</p>
         </div>
       ) : (
@@ -522,7 +522,7 @@ export function GoalDetail({
               }`}
             >
               <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
-                done ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-gray-600'
+                done ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-gray-400'
               }`}>
                 {done && <Check size={12} strokeWidth={3} />}
               </div>
@@ -531,7 +531,7 @@ export function GoalDetail({
                   {h.name}
                 </span>
                 {h.dailyTarget && h.trackingType !== 'boolean' && (
-                  <span className={`ml-2 text-xs tabular-nums text-slate-400 dark:text-gray-600`}>
+                  <span className={`ml-2 text-xs tabular-nums text-slate-400 dark:text-gray-400`}>
                     {todayVal}/{h.dailyTarget}{h.trackingType === 'duration' ? 'm' : ''}
                   </span>
                 )}
@@ -557,7 +557,7 @@ export function GoalDetail({
         <BookOpen size={14} /> Recommended Reading
       </label>
       {recommendedArticles.length === 0 ? (
-        <p className={`text-xs italic text-slate-400 dark:text-gray-600`}>No recommended articles yet</p>
+        <p className={`text-xs italic text-slate-400 dark:text-gray-400`}>No recommended articles yet</p>
       ) : (
         <div className="space-y-2">
           {recommendedArticles.map(article => (
@@ -574,7 +574,7 @@ export function GoalDetail({
                 <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>{article.title || 'Untitled'}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {article.source && (
-                    <span className={`text-xs text-slate-400 dark:text-gray-600`}>{article.source}</span>
+                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>{article.source}</span>
                   )}
                   {article.matched_goals?.some(g => g.toLowerCase() === goal.title.toLowerCase()) && (
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${
@@ -616,10 +616,10 @@ export function GoalDetail({
               <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>{article.title || 'Untitled'}</p>
               <div className="flex items-center gap-2 mt-1">
                 {article.reading_time_minutes && (
-                  <span className={`text-xs text-slate-400 dark:text-gray-600`}>{article.reading_time_minutes} min read</span>
+                  <span className={`text-xs text-slate-400 dark:text-gray-400`}>{article.reading_time_minutes} min read</span>
                 )}
                 {article.relevance_score && (
-                  <span className={`text-xs text-slate-400 dark:text-gray-600`}>{article.relevance_score}/10</span>
+                  <span className={`text-xs text-slate-400 dark:text-gray-400`}>{article.relevance_score}/10</span>
                 )}
               </div>
             </div>
@@ -627,7 +627,7 @@ export function GoalDetail({
           </a>
         ))}
       </div>
-      <p className={`text-xs mt-2 text-slate-400 dark:text-gray-600`}>
+      <p className={`text-xs mt-2 text-slate-400 dark:text-gray-400`}>
         Total reading: ~{linkedArticles.reduce((s, a) => s + (a.reading_time_minutes ?? 0), 0)} min across {linkedArticles.length} article{linkedArticles.length !== 1 ? 's' : ''}
       </p>
     </div>

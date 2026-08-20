@@ -634,7 +634,7 @@ export function Calendar() {
                       onDrop={(e) => handleDrop(e, dateStr)}
                       className={`
                         relative flex flex-col items-center h-12 md:h-16 py-2 md:py-2 rounded-xl transition-colors
-                        ${!isCurrentMonth ? ('text-slate-300 dark:text-gray-700') : ''}
+                        ${!isCurrentMonth ? ('text-slate-300 dark:text-gray-500') : ''}
                         ${isCurrentMonth && !isToday && !isSelected ? ('text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5') : ''}
                         ${isSelected && !isToday ? ('bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300') : ''}
                         ${isDragTarget ? ('ring-2 ring-violet-400/60 bg-violet-50 dark:bg-violet-500/10') : ''}
@@ -760,7 +760,7 @@ export function Calendar() {
                         </div>
                       ))}
                       {allUnique.length === 0 && (
-                        <p className={`text-xs text-slate-300 dark:text-gray-700`}>No tasks</p>
+                        <p className={`text-xs text-slate-300 dark:text-gray-500`}>No tasks</p>
                       )}
                     </div>
                   </div>
@@ -903,7 +903,7 @@ export function Calendar() {
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
                         <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
-                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-600`}>{t.status}</span>
+                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-400`}>{t.status}</span>
                       </li>
                     ))}
                   </ul>
@@ -922,7 +922,7 @@ export function Calendar() {
                       <li key={t.id} className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
                         <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
-                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-600`}>{t.status}</span>
+                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-400`}>{t.status}</span>
                       </li>
                     ))}
                   </ul>
@@ -1025,7 +1025,7 @@ export function Calendar() {
             Today&apos;s Schedule
           </h3>
           {todaysTasks.length === 0 ? (
-            <p className={`text-xs text-slate-400 dark:text-gray-600`}>No tasks planned for today</p>
+            <p className={`text-xs text-slate-400 dark:text-gray-400`}>No tasks planned for today</p>
           ) : (
             <ul className="space-y-2">
               {todaysTasks.map((t) => (
@@ -1033,7 +1033,7 @@ export function Calendar() {
                   <span className={`w-2 h-2 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
                   <span className={`text-xs truncate ${
                     t.status === 'Completed'
-                      ? 'text-slate-400 line-through dark:text-gray-600'
+                      ? 'text-slate-400 line-through dark:text-gray-400'
                       : 'text-slate-600 dark:text-gray-300'
                   }`}>
                     {t.title}

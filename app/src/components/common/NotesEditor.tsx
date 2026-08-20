@@ -289,7 +289,7 @@ export function NotesEditor({
 
           <div className={`mx-1 sm:mx-2 w-px h-4 bg-slate-200 dark:bg-white/10`} />
 
-          <span className={`text-xs tracking-wider uppercase font-medium hidden sm:inline text-slate-400 dark:text-gray-600`}>
+          <span className={`text-xs tracking-wider uppercase font-medium hidden sm:inline text-slate-400 dark:text-gray-400`}>
             Markdown
           </span>
         </div>
@@ -323,7 +323,7 @@ export function NotesEditor({
 
       {/* Footer: word count & shortcuts hint */}
       {showWordCount && (
-        <div className={`flex items-center justify-between px-3 py-2 text-slate-400 dark:text-gray-600`}>
+        <div className={`flex items-center justify-between px-3 py-2 text-slate-400 dark:text-gray-400`}>
           <div className="flex items-center gap-3">
             <span className="text-xs">
               {wordCount} {wordCount === 1 ? 'word' : 'words'} · {charCount} chars

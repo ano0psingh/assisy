@@ -178,7 +178,7 @@ export function LevelUpCelebration() {
           {totalXP.toLocaleString()} XP earned
         </p>
 
-        <p className={`mt-4 text-xs text-slate-400 dark:text-gray-600`}>
+        <p className={`mt-4 text-xs text-slate-400 dark:text-gray-400`}>
           Tap anywhere to continue
         </p>
       </div>

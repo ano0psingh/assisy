@@ -20,7 +20,7 @@ export function SelectionCheckbox({ selected, onToggle, label, className = '' }:
       className={`flex-shrink-0 transition-colors ${
         selected
           ? 'text-violet-600 dark:text-violet-400'
-          : 'text-slate-300 hover:text-slate-500 dark:text-gray-600 dark:hover:text-gray-400'
+          : 'text-slate-300 hover:text-slate-500 dark:text-gray-400 dark:hover:text-gray-200'
       } ${className}`}
     >
       {selected ? <CheckSquare2 size={16} /> : <Square size={16} />}
@@ -41,7 +41,7 @@ export function SelectionIndicator({ selected, className = '' }: { selected: boo
       className={`flex-shrink-0 inline-flex items-center justify-center transition-colors ${
         selected
           ? 'text-violet-600 dark:text-violet-400'
-          : 'text-slate-300 dark:text-gray-600'
+          : 'text-slate-300 dark:text-gray-400'
       } ${className}`}
     >
       {selected ? <CheckSquare2 size={16} /> : <Square size={16} />}

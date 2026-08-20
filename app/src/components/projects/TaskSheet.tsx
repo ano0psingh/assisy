@@ -46,7 +46,7 @@ function statusIcon(status: WorkItemStatus) {
     case 'In Progress':
       return <Play size={10} fill="currentColor" className={'text-blue-500 dark:text-blue-400'} />;
     default:
-      return <Circle size={14} className={'text-slate-400 dark:text-gray-600'} />;
+      return <Circle size={14} className={'text-slate-400 dark:text-gray-400'} />;
   }
 }
 
@@ -452,7 +452,7 @@ export function TaskSheet() {
                           className={`p-1 rounded-lg transition-colors ${
                             isToday
                               ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
-                              : 'text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:text-gray-600 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10'
+                              : 'text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10'
                           }`}
                           title={isToday ? 'Remove from Today' : 'Add to Today'}
                         >
@@ -523,7 +523,7 @@ export function TaskSheet() {
                             )}
                           </div>
                         ) : (
-                          <span className={'text-slate-300 dark:text-gray-600'}>—</span>
+                          <span className={'text-slate-300 dark:text-gray-400'}>—</span>
                         )}
                       </td>
 
@@ -538,7 +538,7 @@ export function TaskSheet() {
                         {task.completedAt ? (
                           <span className={'text-emerald-600 dark:text-emerald-400'}>{fmtDate(task.completedAt)}</span>
                         ) : (
-                          <span className={'text-slate-300 dark:text-gray-600'}>—</span>
+                          <span className={'text-slate-300 dark:text-gray-400'}>—</span>
                         )}
                       </td>
                     </tr>

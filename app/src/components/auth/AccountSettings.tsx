@@ -285,7 +285,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
           {user?.user_metadata?.full_name && (
             <p className={`text-xs truncate text-slate-400 dark:text-gray-500`}>{user.email}</p>
           )}
-          <div className={`flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-gray-600`}>
+          <div className={`flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-gray-400`}>
             <span className="flex items-center gap-1">
               <Mail size={10} /> {provider === 'google' ? 'Google' : 'Email'}
             </span>
@@ -301,7 +301,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
       {/* Security */}
       {provider !== 'google' && (
         <div>
-          <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-slate-400 dark:text-gray-600`}>Security</p>
+          <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-slate-400 dark:text-gray-400`}>Security</p>
           <button onClick={() => go('password')} className={itemCls}>
             <Lock size={16} className={'text-slate-400 dark:text-gray-500'} />
             Change Password
@@ -311,7 +311,7 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       {/* Data */}
       <div>
-        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-slate-400 dark:text-gray-600`}>Data</p>
+        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-slate-400 dark:text-gray-400`}>Data</p>
         <div className="space-y-1">
           <button onClick={handleDownloadCloudData} disabled={loading} className={itemCls}>
             <Download size={16} className={'text-slate-400 dark:text-gray-500'} />

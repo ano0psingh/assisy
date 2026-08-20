@@ -85,7 +85,7 @@ function ProgressRing({ completed, total, size = 76, strokeWidth = 6 }: { comple
         <span className={`text-xl font-black leading-none tabular-nums ${pct >= 1 ? 'text-emerald-500' : 'text-slate-800 dark:text-white'}`}>
           {completed}
         </span>
-        <span className={`text-xs leading-tight font-medium text-slate-400 dark:text-gray-600`}>
+        <span className={`text-xs leading-tight font-medium text-slate-400 dark:text-gray-400`}>
           /{total}
         </span>
       </div>
@@ -466,13 +466,13 @@ export function Habits() {
                     <span className={`text-sm font-semibold block truncate text-slate-700 dark:text-gray-200`}>
                       {goal.title}
                     </span>
-                    <span className={`text-xs text-slate-400 dark:text-gray-600`}>
+                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>
                       Lv.{goal.level} · {goalHabits.length} remaining
                     </span>
                   </div>
                   <ChevronDown
                     size={16}
-                    className={`transition-transform duration-200 text-slate-400 dark:text-gray-600 ${isCollapsed ? '-rotate-90' : ''}`}
+                    className={`transition-transform duration-200 text-slate-400 dark:text-gray-400 ${isCollapsed ? '-rotate-90' : ''}`}
                   />
                 </button>
 
@@ -523,13 +523,13 @@ export function Habits() {
                   <span className={`text-sm font-semibold block text-slate-500 dark:text-gray-400`}>
                     General Habits
                   </span>
-                  <span className={`text-xs text-slate-400 dark:text-gray-600`}>
+                  <span className={`text-xs text-slate-400 dark:text-gray-400`}>
                     Not linked to a goal · {unlinkedPending.length} remaining
                   </span>
                 </div>
                 <ChevronDown
                   size={16}
-                  className={`transition-transform duration-200 text-slate-400 dark:text-gray-600 ${collapsedGroups.has('__unlinked') ? '-rotate-90' : ''}`}
+                  className={`transition-transform duration-200 text-slate-400 dark:text-gray-400 ${collapsedGroups.has('__unlinked') ? '-rotate-90' : ''}`}
                 />
               </button>
 
@@ -668,7 +668,7 @@ export function Habits() {
           <div className="grid grid-cols-3 gap-3">
             <div className={`rounded-2xl p-4 relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 dark:from-amber-500/10 dark:to-orange-500/5 dark:border-amber-500/20`}>
               <Trophy size={14} className={`mb-2 ${currentStreak > 0 ? 'text-amber-500' : 'text-amber-300 dark:text-amber-500/30'}`} />
-              <div className={`text-xl font-black tabular-nums ${currentStreak > 0 ? 'text-amber-500' : 'text-slate-300 dark:text-gray-600'}`}>
+              <div className={`text-xl font-black tabular-nums ${currentStreak > 0 ? 'text-amber-500' : 'text-slate-300 dark:text-gray-400'}`}>
                 {currentStreak}<span className="text-xs font-semibold ml-1">d</span>
               </div>
               <div className={`text-xs mt-1 font-medium text-amber-600/50 dark:text-amber-500/50`}>Perfect streak</div>

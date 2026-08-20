@@ -219,7 +219,7 @@ export function BottomNav() {
                           selected
                             ? 'bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/30'
                             : disabled
-                              ? 'text-slate-400 opacity-50 dark:text-gray-600'
+                              ? 'text-slate-400 opacity-50 dark:text-gray-400'
                               : 'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-200'
                         }`}
                       >
@@ -237,7 +237,7 @@ export function BottomNav() {
                   className={`mt-4 w-full py-3 rounded-xl font-medium text-sm transition-colors ${
                     pendingSelection.length === 3
                       ? 'bg-violet-600 text-white hover:bg-violet-700 dark:hover:bg-violet-500'
-                      : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-600'
+                      : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-400'
                   }`}
                 >
                   Save

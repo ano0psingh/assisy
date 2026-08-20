@@ -89,7 +89,7 @@ export function QuoteOfTheDay() {
           </div>
 
           {/* Footer text */}
-          <p className={`text-center text-xs mt-6 text-slate-400 dark:text-gray-600`}>
+          <p className={`text-center text-xs mt-6 text-slate-400 dark:text-gray-400`}>
             New quote every day • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>

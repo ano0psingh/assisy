@@ -95,7 +95,7 @@ export function PlanYourDay({
                   <div key={task.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50/50 dark:bg-white/[0.02]`}>
                     <Check size={12} className={'text-emerald-500 dark:text-emerald-400'} />
                     <span className={`text-sm flex-1 truncate text-slate-700 dark:text-gray-300`}>{task.title}</span>
-                    <span className={`text-xs text-slate-400 dark:text-gray-600`}>
+                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>
                       {task.isRecurring ? 'recurring' : task.status === 'Carried Forward' ? 'carried' : 'due'}
                     </span>
                   </div>
@@ -151,22 +151,22 @@ export function PlanYourDay({
                     'hover:bg-violet-50 text-slate-600 hover:text-violet-600 dark:hover:bg-violet-500/10 dark:text-gray-300 dark:hover:text-violet-400'
                   }`}
                 >
-                  <Plus size={13} className={'text-slate-400 dark:text-gray-600'} />
+                  <Plus size={13} className={'text-slate-400 dark:text-gray-400'} />
                   <span className="text-sm flex-1 truncate">{task.title}</span>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {task.priority === 'High' && <Flame size={11} className="text-red-500" />}
                     {task.dueDate && (
-                      <span className={`text-xs flex items-center gap-1 text-slate-400 dark:text-gray-600`}>
+                      <span className={`text-xs flex items-center gap-1 text-slate-400 dark:text-gray-400`}>
                         <CalendarDays size={9} />
                         {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     )}
-                    <span className={`text-xs text-slate-400 dark:text-gray-600`}>{task.category}</span>
+                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>{task.category}</span>
                   </div>
                 </button>
               ))}
               {filteredSuggested.length === 0 && (
-                <p className={`text-sm py-4 text-center text-slate-400 dark:text-gray-600`}>
+                <p className={`text-sm py-4 text-center text-slate-400 dark:text-gray-400`}>
                   {search ? `No tasks match "${search}"` : 'All tasks are already planned!'}
                 </p>
               )}
