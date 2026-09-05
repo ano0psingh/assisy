@@ -3,6 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus, BulkPatch } from '../types';
 import { saveProjects, saveSubProjects, saveProjectTasks } from '../store/unifiedStore';
 import { collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
+import {
+  getLocalDateString,
+  isTaskScheduledOn,
+  normalizeDurationMinutes,
+  normalizeLocalDateString,
+  normalizeLocalTime,
+} from '../lib/dateUtils';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
 
@@ -99,6 +106,9 @@ interface ProjectContextType {
   // Today integration
   addTaskToToday: (taskId: string) => void;
   removeTaskFromToday: (taskId: string) => void;
+  scheduleProjectTask: (taskId: string, schedule: { date: string; time?: string; durationMinutes?: number }) => void;
+  unscheduleProjectTask: (taskId: string) => void;
+  setProjectTaskInbox: (taskId: string, inbox: boolean) => void;
   getTodaysProjectTasks: () => ProjectTask[];
 
   // Progress calculation
@@ -623,28 +633,62 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   // ============ Today Integration ============
 
-  const addTaskToToday = useCallback((taskId: string) => {
-    const d = new Date();
-    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const scheduleProjectTask = useCallback((
+    taskId: string,
+    schedule: { date: string; time?: string; durationMinutes?: number },
+  ) => {
+    const date = normalizeLocalDateString(schedule.date);
+    if (!date) return;
+    const today = getLocalDateString();
     setProjectTasks(prev => prev.map(t =>
       t.id === taskId
-        ? { ...t, isFocusedToday: true, focusedDate: today, updatedAt: new Date() }
+        ? {
+            ...t,
+            scheduledDate: date,
+            scheduledTime: normalizeLocalTime(schedule.time),
+            durationMinutes: schedule.durationMinutes == null
+              ? undefined
+              : normalizeDurationMinutes(schedule.durationMinutes),
+            isFocusedToday: date === today,
+            focusedDate: date,
+            inbox: false,
+            updatedAt: new Date(),
+          }
         : t
     ));
   }, []);
+
+  const unscheduleProjectTask = useCallback((taskId: string) => {
+    setProjectTasks(prev => prev.map(t =>
+      t.id === taskId
+        ? {
+            ...t,
+            scheduledDate: undefined,
+            scheduledTime: undefined,
+            durationMinutes: undefined,
+            isFocusedToday: false,
+            focusedDate: undefined,
+            updatedAt: new Date(),
+          }
+        : t
+    ));
+  }, []);
+
+  const setProjectTaskInbox = useCallback((taskId: string, inbox: boolean) => {
+    updateProjectTask(taskId, { inbox });
+  }, [updateProjectTask]);
+
+  const addTaskToToday = useCallback((taskId: string) => {
+    scheduleProjectTask(taskId, { date: getLocalDateString() });
+  }, [scheduleProjectTask]);
 
   const removeTaskFromToday = useCallback((taskId: string) => {
-    setProjectTasks(prev => prev.map(t =>
-      t.id === taskId
-        ? { ...t, isFocusedToday: false, focusedDate: undefined, updatedAt: new Date() }
-        : t
-    ));
-  }, []);
+    unscheduleProjectTask(taskId);
+  }, [unscheduleProjectTask]);
 
   const getTodaysProjectTasks = useCallback(() => {
-    // Show all tasks marked as focused today, regardless of the original date
-    // This ensures tasks added on previous days still appear if user wants them today
-    return projectTasks.filter(t => t.isFocusedToday && t.status !== 'Done');
+    const today = getLocalDateString();
+    return projectTasks.filter(t => t.status !== 'Done' && isTaskScheduledOn(t, today));
   }, [projectTasks]);
 
   // ============ Progress Calculation ============
@@ -719,6 +763,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     logTime,
     addTaskToToday,
     removeTaskFromToday,
+    scheduleProjectTask,
+    unscheduleProjectTask,
+    setProjectTaskInbox,
     getTodaysProjectTasks,
     getProjectProgress,
     getSubProjectProgress,

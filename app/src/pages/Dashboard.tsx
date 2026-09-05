@@ -20,6 +20,8 @@ import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { subscribeToPush } from '../lib/pushSubscription';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
+import { addLocalDays, getLocalDateString, getScheduledDate, getScheduledStartMinute } from '../lib/dateUtils';
+import { getProjectTaskId, useUnifiedTaskActions } from '../hooks/useUnifiedTaskActions';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { hapticMedium } from '../lib/haptics';
 import { useUndo } from '../components/common/UndoToast';
@@ -118,7 +120,6 @@ export function Dashboard() {
     deleteTask, 
     carryForwardTasks, 
     addToToday,
-    removeFromToday,
     getSuggestedTasks,
     hasSeenPlanYourDay,
     markPlanYourDaySeen,
@@ -130,7 +131,6 @@ export function Dashboard() {
     getTodaysProjectTasks, 
     updateTaskStatus, 
     updateProjectTask,
-    removeTaskFromToday: removeProjectTaskFromToday,
     getProject,
     getSubProject,
     subProjects,
@@ -138,6 +138,7 @@ export function Dashboard() {
     getTasksBySubProject,
   } = useProjectContext();
   const { theme } = useTheme();
+  const { schedule: scheduleUnifiedTask, unschedule: unscheduleUnifiedTask } = useUnifiedTaskActions();
   const { pushUndo } = useUndo();
   const { toast } = useToast();
   const {
@@ -570,6 +571,34 @@ RULES:
   // All today's tasks as a flat list sorted by priority
   const allTodayPending = todaysTasks.filter(t => t.status !== 'Completed');
   const allTodayCompleted = todaysTasks.filter(t => t.status === 'Completed');
+  const projectTaskById = new Map(todaysProjectTasks.map(task => [task.id, task]));
+  const projectTodayAsTasks = allTasksForStats.filter(
+    task => task.id.startsWith('pt-') && projectTaskById.has(getProjectTaskId(task.id)),
+  );
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const allTodayPendingCombined = [...allTodayPending, ...projectTodayAsTasks].sort((a, b) => {
+    const aStart = getScheduledStartMinute(a);
+    const bStart = getScheduledStartMinute(b);
+    if (aStart !== null && bStart !== null) return aStart - bStart;
+    if (aStart !== null) return -1;
+    if (bStart !== null) return 1;
+    const aOverdue = a.dueDate ? new Date(a.dueDate) < todayStart : false;
+    const bOverdue = b.dueDate ? new Date(b.dueDate) < todayStart : false;
+    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+    if (a.priority !== b.priority) return a.priority === 'High' ? -1 : 1;
+    if (a.effort !== b.effort) return a.effort === 'High' ? -1 : 1;
+    return 0;
+  });
+  const todayUnifiedTasks = [...todaysTasks, ...projectTodayAsTasks];
+  const todayUnifiedIds = new Set(todayUnifiedTasks.map(task => task.id));
+  const planBacklogTasks = allTasksForStats.filter(task =>
+    task.status !== 'Completed'
+    && task.inbox !== true
+    && !task.isRecurring
+    && !getScheduledDate(task)
+    && !todayUnifiedIds.has(task.id)
+  );
   const projectTasksDone = todaysProjectTasks.filter(t => t.status === 'Done').length;
   const totalTodayTasks = todaysTasks.length + todaysProjectTasks.length;
   const totalTodayDone = allTodayCompleted.length + projectTasksDone;
@@ -736,10 +765,29 @@ RULES:
         </div>
       ) : (
         <div className="space-y-2">
-          {/* Project tasks — compact inline */}
-          {todaysProjectTasks.filter(t => t.status !== 'Done').map((task) => {
-            const project = getProject(task.projectId);
-            const subProject = getSubProject(task.subProjectId);
+          {/* Timed regular and project work shares one chronological day list. */}
+          {allTodayPendingCombined.map((task) => {
+            if (!task.id.startsWith('pt-')) {
+              return (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onToggleComplete={handleToggleComplete}
+                  onDelete={handleDeleteWithUndo}
+                  onEdit={handleEdit}
+                  onScheduleTomorrow={(taskId) => scheduleUnifiedTask(taskId, {
+                    date: getLocalDateString(addLocalDays(new Date(), 1)),
+                  })}
+                  onRemoveFromToday={unscheduleUnifiedTask}
+                  isInTodayView={true}
+                />
+              );
+            }
+
+            const projectTask = projectTaskById.get(getProjectTaskId(task.id));
+            if (!projectTask) return null;
+            const project = getProject(projectTask.projectId);
+            const subProject = getSubProject(projectTask.subProjectId);
             return (
               <div
                 key={task.id}
@@ -753,39 +801,47 @@ RULES:
                   <button
                     onClick={() => {
                       const statusOrder: WorkItemStatus[] = ['Backlog', 'In Progress', 'Done'];
-                      const currentIndex = statusOrder.indexOf(task.status);
-                      updateTaskStatus(task.id, statusOrder[(currentIndex + 1) % statusOrder.length]);
+                      const currentIndex = statusOrder.indexOf(projectTask.status);
+                      updateTaskStatus(projectTask.id, statusOrder[(currentIndex + 1) % statusOrder.length]);
                     }}
                     className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
-                      task.status === 'In Progress'
+                      projectTask.status === 'In Progress'
                         ? 'bg-blue-100 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400'
                         : 'bg-slate-200 text-slate-400 dark:bg-gray-500/20 dark:text-gray-500'
                     }`}
-                    title={task.status}
+                    title={projectTask.status}
                   >
-                    {task.status === 'In Progress' ? <Play size={8} fill="currentColor" /> : <Circle size={12} />}
+                    {projectTask.status === 'In Progress' ? <Play size={8} fill="currentColor" /> : <Circle size={12} />}
                   </button>
-                  <h3
-                    onClick={() => handleEditProjectTask(task)}
-                    className={`flex-1 font-medium truncate cursor-pointer hover:opacity-80 text-slate-800 dark:text-white`}
-                  >
-                    {task.title}
-                  </h3>
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      onClick={() => handleEditProjectTask(projectTask)}
+                      className="font-medium truncate cursor-pointer hover:opacity-80 text-slate-800 dark:text-white"
+                    >
+                      {projectTask.title}
+                    </h3>
+                    {(projectTask.scheduledTime || projectTask.durationMinutes) && (
+                      <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                        Planned {projectTask.scheduledTime
+                          ? new Date(`2000-01-01T${projectTask.scheduledTime}`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                          : 'flexibly'}
+                        {projectTask.durationMinutes ? ` · ${projectTask.durationMinutes}m` : ''}
+                      </p>
+                    )}
+                  </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); navigate('/projects'); }}
-                    className={`text-xs px-2 py-1 rounded-full flex-shrink-0 cursor-pointer hover:ring-1 transition-all bg-violet-50 text-violet-600 hover:ring-violet-300 dark:bg-violet-500/15 dark:text-violet-400 dark:hover:ring-violet-500/40`}
+                    className="text-xs px-2 py-1 rounded-full flex-shrink-0 cursor-pointer hover:ring-1 transition-all bg-violet-50 text-violet-600 hover:ring-violet-300 dark:bg-violet-500/15 dark:text-violet-400 dark:hover:ring-violet-500/40"
                     title="Go to Projects"
                   >
                     {project?.title}{subProject ? ` → ${subProject.title}` : ''}
                   </button>
-                  {task.priority === 'High' && <Flame size={14} className="flex-shrink-0 text-red-500" />}
+                  {projectTask.priority === 'High' && <Flame size={14} className="flex-shrink-0 text-red-500" />}
                   <button
-                    onClick={(e) => { e.stopPropagation(); removeProjectTaskFromToday(task.id); }}
-                    className={`p-3 rounded-lg transition-all flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
-                      'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-500/20'
-                    }`}
-                    title="Remove from Today"
-                    aria-label={`Remove "${task.title}" from Today`}
+                    onClick={(e) => { e.stopPropagation(); unscheduleUnifiedTask(task.id); }}
+                    className="p-3 rounded-lg transition-all flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-500/20"
+                    title="Unschedule"
+                    aria-label={`Unschedule "${projectTask.title}"`}
                   >
                     <CalendarMinus size={14} />
                   </button>
@@ -794,23 +850,10 @@ RULES:
             );
           })}
 
-          {/* Regular tasks — flat list, no category grouping */}
-          {allTodayPending.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onToggleComplete={handleToggleComplete}
-              onDelete={handleDeleteWithUndo}
-              onEdit={handleEdit}
-              onRemoveFromToday={removeFromToday}
-              isInTodayView={true}
-            />
-          ))}
-
           {/* Quick add from backlog — expandable */}
           <BacklogPicker
             tasks={getSuggestedTasks()}
-            onAdd={addToToday}
+            onAdd={(taskId) => scheduleUnifiedTask(taskId, { date: getLocalDateString() })}
           />
 
           {/* Completed tasks — subtle, at bottom */}
@@ -908,7 +951,7 @@ RULES:
                       <span className={`text-sm truncate flex-1 text-slate-700 dark:text-gray-300`}>{task.title}</span>
                       <button
                         type="button"
-                        onClick={() => addToToday(task.id)}
+                        onClick={() => scheduleUnifiedTask(task.id, { date: getLocalDateString() })}
                         className={`text-xs font-medium px-3 py-1 rounded-lg flex-shrink-0 transition-colors ${
                           'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
                         }`}
@@ -1142,12 +1185,10 @@ RULES:
       <PlanYourDay
         isOpen={isPlanYourDayOpen}
         onClose={handleClosePlanYourDay}
-        todaysTasks={todaysTasks}
-        suggestedTasks={getSuggestedTasks()}
-        onAddToToday={addToToday}
-        onRemoveFromToday={removeFromToday}
-        todaysProjectTasks={todaysProjectTasks}
-        onRemoveProjectTaskFromToday={removeProjectTaskFromToday}
+        todaysTasks={todayUnifiedTasks}
+        suggestedTasks={planBacklogTasks}
+        onScheduleToday={(taskId) => scheduleUnifiedTask(taskId, { date: getLocalDateString() })}
+        onUnschedule={unscheduleUnifiedTask}
       />
 
       {/* Edit Project Task Modal */}

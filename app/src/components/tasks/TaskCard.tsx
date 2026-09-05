@@ -6,7 +6,7 @@ import { SelectionCheckbox } from '../common/SelectionControls';
 import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
 import { hapticLight, hapticMedium } from '../../lib/haptics';
 import { getRecurringCompletionRate } from '../../context/TaskContext';
-import { getLocalDateString } from '../../lib/dateUtils';
+import { getLocalDateString, getScheduledDate } from '../../lib/dateUtils';
 import { IconButton } from '../ui';
 
 interface TaskCardProps {
@@ -15,6 +15,7 @@ interface TaskCardProps {
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
   onAddToToday?: (taskId: string) => void;
+  onScheduleTomorrow?: (taskId: string) => void;
   onRemoveFromToday?: (taskId: string) => void;
   onMoveToProject?: (task: Task) => void;
   showTodayActions?: boolean;
@@ -131,6 +132,7 @@ export function TaskCard({
   onDelete,
   onEdit,
   onAddToToday,
+  onScheduleTomorrow,
   onRemoveFromToday,
   onMoveToProject,
   showTodayActions = false,
@@ -159,7 +161,8 @@ export function TaskCard({
   const metaCls = 'text-slate-400 dark:text-gray-500';
 
   const todayStr = getLocalDateString();
-  const isFocusedToday = task.isFocusedToday && task.focusedDate === todayStr;
+  const scheduledDate = getScheduledDate(task);
+  const isScheduledToday = scheduledDate === todayStr;
 
   const isDueToday = task.dueDate && (() => {
     const due = new Date(task.dueDate as Date);
@@ -177,7 +180,7 @@ export function TaskCard({
     return due < today;
   })();
 
-  const canRemoveFromToday = isFocusedToday && !isDueToday && !isOverdue && !task.isRecurring;
+  const canRemoveFromToday = isScheduledToday && !isDueToday && !isOverdue && !task.isRecurring;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -416,6 +419,14 @@ export function TaskCard({
                     </span>
                   );
                 })()}
+                {scheduledDate && (
+                  <span className="text-xs whitespace-nowrap text-blue-600 dark:text-blue-400">
+                    <CalendarCheck size={10} className="inline -mt-1 mr-1" />
+                    Planned
+                    {task.scheduledTime ? ` ${formatTimeOfDay(task.scheduledTime)}` : ''}
+                    {task.durationMinutes ? ` · ${task.durationMinutes}m` : ''}
+                  </span>
+                )}
                 {task.dueDate && (() => {
                   const { text, isOverdue: overdue } = formatDueDate(task.dueDate, task.dueTime);
                   return (
@@ -439,7 +450,7 @@ export function TaskCard({
         {/* Actions — edit always visible, rest in menu. Hidden while selecting. */}
         <div className={`flex items-center space-x-1 flex-shrink-0 ${selectionMode ? 'hidden' : ''}`}>
           {/* Focused today — always visible green indicator, click to remove */}
-          {isFocusedToday && !isCompleted && onRemoveFromToday && (
+          {isScheduledToday && !isCompleted && onRemoveFromToday && (
             <IconButton
               icon={CalendarCheck}
               onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); }}
@@ -449,7 +460,7 @@ export function TaskCard({
             />
           )}
           {/* Add to Today — hover only, when not already focused */}
-          {showTodayActions && !isFocusedToday && !isInTodayView && onAddToToday && !isCompleted && (
+          {showTodayActions && !isScheduledToday && !isInTodayView && onAddToToday && !isCompleted && (
             <IconButton
               icon={CalendarPlus}
               onClick={(e) => { e.stopPropagation(); onAddToToday(task.id); }}
@@ -603,9 +614,9 @@ export function TaskCard({
               <Check size={15} /> Complete
             </button>
           )}
-          {onAddToToday && !isCompleted && !isFocusedToday && (
+          {onScheduleTomorrow && !isCompleted && (
             <button
-              onClick={() => { onAddToToday(task.id); setQuickAction(null); }}
+              onClick={() => { onScheduleTomorrow(task.id); setQuickAction(null); }}
               className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
                 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10'
               }`}

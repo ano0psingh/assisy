@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { Task, ProjectTask } from '../../types';
+import type { Task } from '../../types';
 import { X, Search, Plus, Check, Flame, CalendarDays, Minus, FolderKanban } from 'lucide-react';
-import { getLocalDateString } from '../../lib/dateUtils';
+import { getLocalDateString, getScheduledDate, getScheduledStartMinute } from '../../lib/dateUtils';
 import { IconButton } from '../ui';
 
 interface PlanYourDayProps {
@@ -9,10 +9,8 @@ interface PlanYourDayProps {
   onClose: () => void;
   todaysTasks: Task[];
   suggestedTasks: Task[];
-  onAddToToday: (taskId: string) => void;
-  onRemoveFromToday: (taskId: string) => void;
-  todaysProjectTasks?: ProjectTask[];
-  onRemoveProjectTaskFromToday?: (taskId: string) => void;
+  onScheduleToday: (taskId: string) => void;
+  onUnschedule: (taskId: string) => void;
 }
 
 export function PlanYourDay({
@@ -20,10 +18,8 @@ export function PlanYourDay({
   onClose,
   todaysTasks,
   suggestedTasks,
-  onAddToToday,
-  onRemoveFromToday,
-  todaysProjectTasks = [],
-  onRemoveProjectTaskFromToday,
+  onScheduleToday,
+  onUnschedule,
 }: PlanYourDayProps) {
   const [search, setSearch] = useState('');
 
@@ -31,12 +27,19 @@ export function PlanYourDay({
 
   const todayStr = getLocalDateString();
 
-  const manualTasks = todaysTasks.filter(t => t.isFocusedToday && t.focusedDate === todayStr);
-  const autoTasks = todaysTasks.filter(t => !(t.isFocusedToday && t.focusedDate === todayStr));
+  const sortedTodayTasks = [...todaysTasks].sort((a, b) => {
+    const aStart = getScheduledStartMinute(a);
+    const bStart = getScheduledStartMinute(b);
+    if (aStart !== null && bStart !== null) return aStart - bStart;
+    if (aStart !== null) return -1;
+    if (bStart !== null) return 1;
+    return a.priority === b.priority ? 0 : a.priority === 'High' ? -1 : 1;
+  });
 
+  const backlogTasks = suggestedTasks.filter(t => t.inbox !== true && t.status !== 'Completed');
   const filteredSuggested = search.trim()
-    ? suggestedTasks.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
-    : suggestedTasks;
+    ? backlogTasks.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+    : backlogTasks;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -54,7 +57,7 @@ export function PlanYourDay({
             <h2 className={`font-semibold text-slate-800 dark:text-white`}>Plan Your Day</h2>
             <p className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-              {' · '}{todaysTasks.length + todaysProjectTasks.length} tasks today
+              {' · '}{todaysTasks.length} tasks today
             </p>
           </div>
           <IconButton
@@ -67,54 +70,38 @@ export function PlanYourDay({
 
         <div className="flex-1 overflow-y-auto">
           {/* Today's tasks */}
-          {(todaysTasks.length > 0 || todaysProjectTasks.length > 0) && (
+          {todaysTasks.length > 0 && (
             <div className={`px-6 py-3 border-b border-slate-50 dark:border-white/5`}>
               <p className={`text-xs font-medium mb-2 text-slate-400 dark:text-gray-500`}>
-                Today ({todaysTasks.length + todaysProjectTasks.length})
+                Scheduled today ({todaysTasks.length})
               </p>
               <div className="space-y-1">
-                {/* Project tasks */}
-                {todaysProjectTasks.map(task => (
+                {sortedTodayTasks.map(task => {
+                  const isExplicitlyScheduled = getScheduledDate(task) === todayStr;
+                  return (
                   <div key={task.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50/50 dark:bg-white/[0.02]`}>
-                    <FolderKanban size={12} className={'text-violet-500 dark:text-violet-400'} />
+                    {task.id.startsWith('pt-')
+                      ? <FolderKanban size={12} className="text-violet-500 dark:text-violet-400" />
+                      : <Check size={12} className="text-emerald-500 dark:text-emerald-400" />}
                     <span className={`text-sm flex-1 truncate text-slate-700 dark:text-gray-300`}>{task.title}</span>
-                    {onRemoveProjectTaskFromToday && (
+                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>
+                      {task.scheduledTime
+                        ? new Date(`2000-01-01T${task.scheduledTime}`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                        : task.isRecurring ? 'recurring' : task.status === 'Carried Forward' ? 'carried' : isExplicitlyScheduled ? 'flexible' : 'due'}
+                    </span>
+                    {isExplicitlyScheduled && (
                       <IconButton
                         icon={Minus}
-                        label="Remove from Today"
+                        label="Unschedule"
                         size="sm"
                         tone="danger"
                         className="-mr-1"
-                        onClick={() => onRemoveProjectTaskFromToday(task.id)}
+                        onClick={() => onUnschedule(task.id)}
                       />
                     )}
                   </div>
-                ))}
-                {/* Auto tasks (recurring, due, carried) */}
-                {autoTasks.map(task => (
-                  <div key={task.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50/50 dark:bg-white/[0.02]`}>
-                    <Check size={12} className={'text-emerald-500 dark:text-emerald-400'} />
-                    <span className={`text-sm flex-1 truncate text-slate-700 dark:text-gray-300`}>{task.title}</span>
-                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>
-                      {task.isRecurring ? 'recurring' : task.status === 'Carried Forward' ? 'carried' : 'due'}
-                    </span>
-                  </div>
-                ))}
-                {/* Manually added */}
-                {manualTasks.map(task => (
-                  <div key={task.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50/50 dark:bg-violet-500/5`}>
-                    <Plus size={12} className={'text-violet-500 dark:text-violet-400'} />
-                    <span className={`text-sm flex-1 truncate text-slate-700 dark:text-gray-300`}>{task.title}</span>
-                    <IconButton
-                      icon={Minus}
-                      label="Remove from Today"
-                      size="sm"
-                      tone="danger"
-                      className="-mr-1"
-                      onClick={() => onRemoveFromToday(task.id)}
-                    />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -123,11 +110,11 @@ export function PlanYourDay({
           <div className="px-6 py-3">
             <div className="flex items-center justify-between mb-2">
               <p className={`text-xs font-medium text-slate-400 dark:text-gray-500`}>
-                Backlog ({suggestedTasks.length})
+                Backlog ({backlogTasks.length})
               </p>
             </div>
 
-            {suggestedTasks.length > 5 && (
+            {backlogTasks.length > 5 && (
               <div className={`flex items-center gap-2 px-3 py-2 rounded-lg mb-2 ${
                 'bg-slate-50 border border-slate-100 dark:bg-white/5 dark:border-white/10'
               }`}>
@@ -146,7 +133,7 @@ export function PlanYourDay({
               {filteredSuggested.map(task => (
                 <button
                   key={task.id}
-                  onClick={() => onAddToToday(task.id)}
+                  onClick={() => onScheduleToday(task.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
                     'hover:bg-violet-50 text-slate-600 hover:text-violet-600 dark:hover:bg-violet-500/10 dark:text-gray-300 dark:hover:text-violet-400'
                   }`}

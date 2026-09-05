@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useProjectContext } from '../context/ProjectContext';
@@ -8,6 +8,7 @@ import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
+import { ClarifyTaskSheet, type ClarifyAction, type ClarifyTaskData } from '../components/tasks/ClarifyTaskSheet';
 import { useUndo } from '../components/common/UndoToast';
 import { useToast } from '../components/common/Toast';
 import { useBulkSelection } from '../hooks/useBulkSelection';
@@ -20,8 +21,8 @@ import { usePersistentSet, usePersistentState } from '../hooks/usePersistentStat
 import { staggerDelay } from '../lib/animation';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { hapticMedium } from '../lib/haptics';
-import { getLocalDateString } from '../lib/dateUtils';
-import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, Search, X } from 'lucide-react';
+import { addLocalDays, getLocalDateString } from '../lib/dateUtils';
+import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, Search, X, Inbox } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
 import { IconButton } from '../components/ui';
 
@@ -60,9 +61,10 @@ const TASK_BULK_FIELDS: BulkEditField[] = [
 type FilterStatus = 'all' | 'pending' | 'completed';
 type ViewMode = 'list' | 'grouped' | 'matrix';
 type SmartFilter = 'none' | 'overdue' | 'due_today' | 'due_week' | 'high_priority' | 'quick_wins' | 'in_today' | 'recurring';
+type TaskPageView = 'all' | 'inbox';
 
 export function Tasks() {
-  const { tasks, createTask, updateTask, updateTasks, revertTasks, completeTask, uncompleteTask, deleteTask, deleteTasks, restoreTasks, addToToday, removeFromToday, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
+  const { tasks, createTask, updateTask, updateTasks, revertTasks, completeTask, uncompleteTask, deleteTask, deleteTasks, restoreTasks, addToToday, removeFromToday, scheduleTask, unscheduleTask, setTaskInbox, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal, addXPToGoal } = useGoalContext();
   const { projects, createProjectTask, getSubProjectsByProject } = useProjectContext();
   const { recordTaskCompletion, updateStreak, checkAndUnlockAchievements, recordTaskCreated } = useGamification();
@@ -70,19 +72,28 @@ export function Tasks() {
   // Get tasks already in today to determine which show the "Add to Today" button
   const todaysTasks = getTodaysTasks();
   const todayTaskIds = new Set(todaysTasks.map(t => t.id));
+  const scheduleTomorrow = useCallback((taskId: string) => {
+    scheduleTask(taskId, { date: getLocalDateString(addLocalDays(new Date(), 1)) });
+  }, [scheduleTask]);
   const { pushUndo } = useUndo();
   const { toast } = useToast();
   const { refresh } = useDataVersion();
   const onRefresh = useCallback(async () => { refresh(); }, [refresh]);
   const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({ onRefresh });
-  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(() => {
+    const shouldOpen = sessionStorage.getItem('assisy_open_task_form') === '1';
+    if (shouldOpen) sessionStorage.removeItem('assisy_open_task_form');
+    return shouldOpen;
+  });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [clarifyingTask, setClarifyingTask] = useState<Task | null>(null);
   // Filters and view mode persist: losing them on every navigation (or stray
   // swipe between pages) was a constant tax on daily use.
   const [statusFilter, setStatusFilter] = usePersistentState<FilterStatus>('assisy_tasks_status', 'all');
   const [categoryFilter, setCategoryFilter] = usePersistentState<TaskCategory | 'all'>('assisy_tasks_category', 'all');
   const [smartFilter, setSmartFilter] = usePersistentState<SmartFilter>('assisy_tasks_smart', 'none');
   const [viewMode, setViewMode] = usePersistentState<ViewMode>('assisy_tasks_view', 'list');
+  const [pageView, setPageView] = usePersistentState<TaskPageView>('assisy_tasks_page_view', 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGoals, setExpandedGoals] = usePersistentSet('assisy_tasks_expanded', ['unlinked']);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
@@ -94,15 +105,26 @@ export function Tasks() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>('');
 
+  useEffect(() => {
+    const openFullTaskForm = () => {
+      sessionStorage.removeItem('assisy_open_task_form');
+      setEditingTask(null);
+      setIsTaskFormOpen(true);
+    };
+    window.addEventListener('assisy:open-task-form', openFullTaskForm);
+    return () => window.removeEventListener('assisy:open-task-form', openFullTaskForm);
+  }, []);
+
   // Arriving from global search: clear the filters that could be hiding the
   // task we are about to scroll to, then let the hook find it.
   const handleSearchFocus = useCallback(() => {
     setStatusFilter('all');
     setCategoryFilter('all');
     setSmartFilter('none');
+    setPageView('all');
     setSearchQuery('');
     setIsCompletedExpanded(true);
-  }, [setStatusFilter, setCategoryFilter, setSmartFilter]);
+  }, [setStatusFilter, setCategoryFilter, setSmartFilter, setPageView]);
   useFocusHighlight(handleSearchFocus);
 
   const goalMap = useMemo(() => {
@@ -159,8 +181,12 @@ export function Tasks() {
   const weekEnd = (() => { const d = new Date(nowDate); d.setDate(d.getDate() + 7); return d; })();
 
   const normalisedQuery = searchQuery.trim().toLowerCase();
+  const inboxCount = tasks.filter(task => task.inbox === true && task.status !== 'Completed').length;
 
   const filteredTasks = tasks
+    .filter(task => pageView === 'inbox'
+      ? task.inbox === true && task.status !== 'Completed'
+      : task.inbox !== true)
     .filter(task => {
       if (!normalisedQuery) return true;
       return (
@@ -169,6 +195,7 @@ export function Tasks() {
       );
     })
     .filter(task => {
+      if (pageView === 'inbox') return true;
       if (statusFilter === 'pending') {
         if (task.status === 'Completed') return false;
         if (task.isRecurring) {
@@ -194,6 +221,7 @@ export function Tasks() {
       return task.category === categoryFilter;
     })
     .filter(task => {
+      if (pageView === 'inbox') return true;
       if (smartFilter === 'none') return true;
       switch (smartFilter) {
         case 'overdue': {
@@ -436,6 +464,45 @@ export function Tasks() {
     setIsTaskFormOpen(true);
   };
 
+  const handleClarify = (task: Task) => {
+    setClarifyingTask(task);
+  };
+
+  const handleClarifySubmit = (action: ClarifyAction, data: ClarifyTaskData) => {
+    if (!clarifyingTask) return;
+    const oldGoalId = clarifyingTask.goalId;
+    if (oldGoalId && oldGoalId !== data.goalId) unlinkTaskFromGoal(oldGoalId, clarifyingTask.id);
+    if (data.goalId && data.goalId !== oldGoalId) linkTaskToGoal(data.goalId, clarifyingTask.id);
+
+    updateTask(clarifyingTask.id, {
+      title: data.title,
+      category: data.category,
+      priority: data.priority,
+      effort: data.effort,
+      goalId: data.goalId,
+      dueDate: data.dueDate,
+      dueTime: data.dueTime,
+      durationMinutes: data.durationMinutes,
+    });
+
+    if (action === 'today') {
+      scheduleTask(clarifyingTask.id, {
+        date: getLocalDateString(),
+        durationMinutes: data.durationMinutes,
+      });
+    } else if (action === 'schedule' && data.scheduledDate) {
+      scheduleTask(clarifyingTask.id, {
+        date: data.scheduledDate,
+        time: data.scheduledTime,
+        durationMinutes: data.durationMinutes,
+      });
+    } else {
+      unscheduleTask(clarifyingTask.id);
+      setTaskInbox(clarifyingTask.id, action === 'keep');
+    }
+    setClarifyingTask(null);
+  };
+
   const handleCloseForm = () => {
     setEditingTask(null);
     setIsTaskFormOpen(false);
@@ -446,7 +513,12 @@ export function Tasks() {
     if (!task) return;
     deleteTask(taskId);
     pushUndo(`"${task.title}" deleted`, () => {
-      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate, task.monthDay, task.dueTime);
+      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate, task.monthDay, task.dueTime, {
+        inbox: task.inbox,
+        scheduledDate: task.scheduledDate,
+        scheduledTime: task.scheduledTime,
+        durationMinutes: task.durationMinutes,
+      });
     });
   };
 
@@ -476,8 +548,12 @@ export function Tasks() {
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className={`text-xl md:text-2xl font-bold text-slate-800 dark:text-white`}>All Tasks</h1>
-          <p className={`mt-1 text-sm text-slate-500 dark:text-gray-500`}>{tasks.length} total tasks</p>
+          <h1 className={`text-xl md:text-2xl font-bold text-slate-800 dark:text-white`}>
+            {pageView === 'inbox' ? 'Inbox' : 'All Tasks'}
+          </h1>
+          <p className={`mt-1 text-sm text-slate-500 dark:text-gray-500`}>
+            {pageView === 'inbox' ? `${inboxCount} to clarify` : `${tasks.length} total tasks`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <SelectButton
@@ -490,6 +566,38 @@ export function Tasks() {
             <span>Add Task</span>
           </button>
         </div>
+      </div>
+
+      <div className="flex rounded-xl border border-slate-200 p-1 dark:border-white/10" role="tablist" aria-label="Task views">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={pageView === 'all'}
+          onClick={() => setPageView('all')}
+          className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
+            pageView === 'all'
+              ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+              : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+          }`}
+        >
+          <LayoutList size={16} />
+          Tasks
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={pageView === 'inbox'}
+          onClick={() => setPageView('inbox')}
+          className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
+            pageView === 'inbox'
+              ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+              : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+          }`}
+        >
+          <Inbox size={16} />
+          Inbox
+          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">{inboxCount}</span>
+        </button>
       </div>
 
       {/* Search — the page had only structured filters, so finding a known
@@ -689,6 +797,31 @@ export function Tasks() {
             </button>
           </div>
         )
+      ) : pageView === 'inbox' ? (
+        <div className="space-y-3">
+          {filteredTasks.map((task, index) => (
+            <div key={task.id} data-focus-id={task.id} className="animate-fade-in space-y-2" style={{ animationDelay: staggerDelay(index) }}>
+              <TaskCard
+                task={task}
+                onToggleComplete={handleToggleComplete}
+                onDelete={handleDeleteWithUndo}
+                onEdit={handleClarify}
+                onMoveToProject={handleOpenMoveToProject}
+                goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
+                {...selectionProps(task.id)}
+              />
+              {!selection.active && (
+                <button
+                  type="button"
+                  onClick={() => handleClarify(task)}
+                  className="min-h-11 w-full rounded-xl border border-violet-200 bg-violet-50 px-4 text-sm font-medium text-violet-700 hover:bg-violet-100 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
+                >
+                  Clarify task
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       ) : viewMode === 'list' ? (
         /* List View - Separate pending and completed */
         (() => {
@@ -708,6 +841,7 @@ export function Tasks() {
                         onDelete={handleDeleteWithUndo}
                         onEdit={handleEdit}
                         onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                        onScheduleTomorrow={scheduleTomorrow}
                         onRemoveFromToday={removeFromToday}
                         onMoveToProject={handleOpenMoveToProject}
                         showTodayActions={!todayTaskIds.has(task.id)}
@@ -813,7 +947,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onScheduleTomorrow={scheduleTomorrow} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -838,7 +972,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'High' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onScheduleTomorrow={scheduleTomorrow} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -863,7 +997,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'High').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onScheduleTomorrow={scheduleTomorrow} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -888,7 +1022,7 @@ export function Tasks() {
                 <p className={`text-sm text-center py-4 text-slate-400 dark:text-gray-400`}>No tasks</p>
               ) : (
                 filteredTasks.filter(t => t.priority === 'Low' && t.effort === 'Low').map(task => (
-                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
+                  <TaskCard key={task.id} task={task} onToggleComplete={handleToggleComplete} onDelete={handleDeleteWithUndo} onEdit={handleEdit} onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined} onScheduleTomorrow={scheduleTomorrow} onRemoveFromToday={removeFromToday} onMoveToProject={handleOpenMoveToProject} showTodayActions={!todayTaskIds.has(task.id)} goalName={task.goalId ? goalMap.get(task.goalId) : undefined} onSkipOccurrence={task.isRecurring ? skipOccurrence : undefined} onPauseRecurring={task.isRecurring ? pauseRecurring : undefined} onResumeRecurring={task.isRecurring ? resumeRecurring : undefined} {...selectionProps(task.id)} />
                 ))
               )}
             </div>
@@ -1010,6 +1144,7 @@ export function Tasks() {
                               onDelete={handleDeleteWithUndo}
                               onEdit={handleEdit}
                               onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                              onScheduleTomorrow={scheduleTomorrow}
                               onRemoveFromToday={removeFromToday}
                               onMoveToProject={handleOpenMoveToProject}
                               showTodayActions={!todayTaskIds.has(task.id)}
@@ -1090,6 +1225,7 @@ export function Tasks() {
                                     onDelete={handleDeleteWithUndo}
                                     onEdit={handleEdit}
                                     onAddToToday={!todayTaskIds.has(task.id) ? addToToday : undefined}
+                                    onScheduleTomorrow={scheduleTomorrow}
                                     onRemoveFromToday={removeFromToday}
                                     onMoveToProject={handleOpenMoveToProject}
                                     goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
@@ -1118,6 +1254,16 @@ export function Tasks() {
         goals={goals}
         editingTask={editingTask}
       />
+
+      {clarifyingTask && (
+        <ClarifyTaskSheet
+          key={clarifyingTask.id}
+          task={clarifyingTask}
+          goals={goals}
+          onClose={() => setClarifyingTask(null)}
+          onSubmit={handleClarifySubmit}
+        />
+      )}
 
       {/* Move to Project Modal */}
       {isMoveToProjectOpen && taskToMove && (

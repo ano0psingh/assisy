@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Zap, Sparkles, Home, CheckSquare, Target, Calendar, CalendarDays, Trophy, BarChart3, Sun, Moon, FolderKanban, Search, Timer, Download, LogIn, LogOut, Settings, Newspaper, Menu, X, ClipboardList, MoreHorizontal } from 'lucide-react';
 import { QuickAddTask } from '../tasks/QuickAddTask';
-import { useTaskContext } from '../../context/TaskContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useGamification } from '../../context/GamificationContext';
 import { DataExportImport } from '../common/DataPortability';
@@ -11,14 +10,12 @@ import { ExpandableModal } from '../common/ExpandableModal';
 import { LoginModal } from '../auth/LoginModal';
 import { AccountSettings } from '../auth/AccountSettings';
 import { useAuth } from '../../context/AuthContext';
-import type { TaskCategory, Priority, Effort } from '../../types';
 
 interface HeaderProps {
   onOpenFocusTimer?: () => void;
 }
 
 export function Header({ onOpenFocusTimer }: HeaderProps) {
-  const { createTask } = useTaskContext();
   const { theme, toggleTheme } = useTheme();
   const { getTotalXP, getTotalLevel } = useGamification();
   const totalXP = getTotalXP();
@@ -50,21 +47,6 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
     };
   }, [moreMenuOpen]);
   const { user, signOut, isConfigured } = useAuth();
-
-  const { addToToday: addTaskToToday } = useTaskContext();
-
-  const handleQuickAdd = (data: {
-    title: string;
-    category: TaskCategory;
-    priority: Priority;
-    effort: Effort;
-    addToToday?: boolean;
-  }) => {
-    const newTask = createTask(data.title, '', data.category, data.priority, data.effort);
-    if (data.addToToday) {
-      addTaskToToday(newTask.id);
-    }
-  };
 
   const triggerSearch = () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
@@ -222,7 +204,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               </button>
             )}
 
-            <QuickAddTask onSubmit={handleQuickAdd} />
+            <QuickAddTask />
 
             {/* XP/Level pill - desktop only. The bar lives on the Dashboard,
                 where there is room to say what it is progress toward. */}

@@ -2,19 +2,26 @@ import { useState, useMemo, useCallback, useRef, type DragEvent, type KeyboardEv
 import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus, BookOpen, Sparkles, X, Check, Loader2 } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
 import { useProjectContext } from '../context/ProjectContext';
+import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useDailyLogContext } from '../context/DailyLogContext';
 import { useTheme } from '../context/ThemeContext';
 import { askAIJson, isAIConfigured } from '../lib/ai';
 import type { Task } from '../types';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
-import { getLocalDateString } from '../lib/dateUtils';
+import { getLocalDateString, getScheduledDate, normalizeDurationMinutes, normalizeLocalTime } from '../lib/dateUtils';
+import { useUnifiedTaskActions } from '../hooks/useUnifiedTaskActions';
+import { CalendarTimeGrid } from '../components/calendar/CalendarTimeGrid';
+import { UnscheduledTaskSidebar } from '../components/calendar/UnscheduledTaskSidebar';
+import { ScheduleTaskSheet } from '../components/calendar/ScheduleTaskSheet';
 
 type ViewMode = 'month' | 'week';
 
 interface AIScheduleSuggestion {
   taskTitle: string;
   suggestedDay: string;
+  suggestedStartTime: string;
+  durationMinutes: number;
   reason: string;
   taskId?: string;
   dismissed?: boolean;
@@ -56,17 +63,14 @@ const CATEGORY_DOT_COLOR: Record<string, { dark: string; light: string }> = {
   Financial: { dark: 'bg-amber-400', light: 'bg-amber-500' },
 };
 
-const STATUS_ICON_COLOR: Record<string, { dark: string; light: string }> = {
-  Completed: { dark: 'text-emerald-400', light: 'text-emerald-500' },
-  Pending: { dark: 'text-gray-500', light: 'text-slate-400' },
-  'Carried Forward': { dark: 'text-amber-400', light: 'text-amber-500' },
-};
-
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function Calendar() {
-  const { tasks, createTask, updateTask, addToToday, getTodaysTasks } = useTaskContext();
+  const { tasks, createTask } = useTaskContext();
   const { getTasksBySubProject, subProjects, projects } = useProjectContext();
+  const { goals } = useGoalContext();
+  const { schedule, unschedule } = useUnifiedTaskActions();
   const { habits, getHabitLogs } = useHabitContext();
   const { dailyLogs, getRecentLogs } = useDailyLogContext();
 
@@ -78,13 +82,15 @@ export function Calendar() {
   const isDark = theme === 'dark';
 
   const today = new Date();
-  const todayStr = getLocalDateString(today);
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
   const [inlineCreateDate, setInlineCreateDate] = useState<string | null>(null);
+  const [inlineCreateTime, setInlineCreateTime] = useState<string | undefined>();
+  const [scheduleTask, setScheduleTask] = useState<Task | null>(null);
+  const [scheduleDefaultDate, setScheduleDefaultDate] = useState(getLocalDateString(today));
   const inlineInputRef = useRef<HTMLInputElement>(null);
 
   // ── AI Smart Scheduling state ──
@@ -92,14 +98,17 @@ export function Calendar() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
-  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
   const handleAISchedule = useCallback(async () => {
     setAiLoading(true);
     setAiPanelOpen(true);
     try {
       const pendingTasks = allTasks
-        .filter(t => t.status === 'Pending' && !t.isRecurring)
+        .filter(t =>
+          t.status === 'Pending'
+          && !t.isRecurring
+          && t.inbox !== true
+          && !getScheduledDate(t)
+        )
         .map(t => ({
           id: t.id,
           title: t.title,
@@ -126,10 +135,21 @@ export function Calendar() {
       }
 
       const wkDays = getWeekDays(selectedDate);
+      const scheduledBlocks = allTasks
+        .filter(t => {
+          const date = getScheduledDate(t);
+          return date && wkDays.some(day => getLocalDateString(day) === date);
+        })
+        .map(t => ({
+          title: t.title,
+          date: getScheduledDate(t),
+          startTime: t.scheduledTime ?? null,
+          durationMinutes: t.durationMinutes ?? null,
+        }));
       const weekDistribution = wkDays.map(d => {
         const key = getLocalDateString(d);
         const dayTasks = allTasks.filter(t => {
-          if (t.focusedDate === key) return true;
+          if (getScheduledDate(t) === key) return true;
           if (t.completedAt && getLocalDateString(new Date(t.completedAt)) === key) return true;
           if (getLocalDateString(new Date(t.createdAt)) === key) return true;
           return false;
@@ -137,20 +157,35 @@ export function Calendar() {
         return { day: DAY_NAMES[d.getDay()], taskCount: dayTasks.length };
       });
 
-      const prompt = `You are a productivity scheduling assistant. Based on the user's energy patterns and pending tasks, suggest optimal task scheduling for this week. Energy by day of week: ${JSON.stringify(energyData)}. Current week distribution: ${JSON.stringify(weekDistribution)}. Pending tasks: ${JSON.stringify(pendingTasks.slice(0, 20))}. Respond with JSON: {"suggestions": [{"taskTitle": string, "suggestedDay": string (day name), "reason": string}]}`;
+      const prompt = `You are a productivity scheduling assistant. Based on the user's energy patterns and pending tasks, suggest collision-free task blocks for this week. Energy by day of week: ${JSON.stringify(energyData)}. Current week distribution: ${JSON.stringify(weekDistribution)}. Existing scheduled blocks (do not overlap timed blocks): ${JSON.stringify(scheduledBlocks)}. Pending tasks: ${JSON.stringify(pendingTasks.slice(0, 20))}. Respond with JSON only: {"suggestions": [{"taskTitle": string, "suggestedDay": string (full day name), "suggestedStartTime": string (24-hour HH:MM), "durationMinutes": number (5-1440), "reason": string}]}`;
 
       const result = await askAIJson<{ suggestions: AIScheduleSuggestion[] }>(prompt, {
         temperature: 0.4,
       });
 
       const mapped = (result.suggestions ?? []).map(s => {
+        const taskTitle = typeof s.taskTitle === 'string' ? s.taskTitle.trim() : '';
+        if (!taskTitle) return null;
         const match = pendingTasks.find(
-          t => t.title.toLowerCase() === s.taskTitle.toLowerCase()
-            || t.title.toLowerCase().includes(s.taskTitle.toLowerCase())
-            || s.taskTitle.toLowerCase().includes(t.title.toLowerCase()),
+          t => t.title.toLowerCase() === taskTitle.toLowerCase()
+            || t.title.toLowerCase().includes(taskTitle.toLowerCase())
+            || taskTitle.toLowerCase().includes(t.title.toLowerCase()),
         );
-        return { ...s, taskId: match?.id, dismissed: false };
-      });
+        const suggestedDay = DAY_NAMES.find(
+          day => day.toLowerCase() === String(s.suggestedDay ?? '').trim().toLowerCase(),
+        ) ?? DAY_NAMES[wkDays[0].getDay()];
+        return {
+          taskTitle,
+          suggestedDay,
+          suggestedStartTime: normalizeLocalTime(
+            typeof s.suggestedStartTime === 'string' ? s.suggestedStartTime : undefined,
+          ) ?? '09:00',
+          durationMinutes: normalizeDurationMinutes(Number(s.durationMinutes), 30),
+          reason: typeof s.reason === 'string' ? s.reason : '',
+          taskId: match?.id,
+          dismissed: false,
+        };
+      }).filter((suggestion): suggestion is NonNullable<typeof suggestion> => suggestion !== null);
 
       setAiSuggestions(mapped);
     } catch (err) {
@@ -171,16 +206,16 @@ export function Calendar() {
     if (!targetDay) return;
 
     const dateStr = getLocalDateString(targetDay);
-    if (dateStr === todayStr) {
-      addToToday(suggestion.taskId);
-    } else {
-      updateTask(suggestion.taskId, { focusedDate: dateStr, isFocusedToday: false });
-    }
+    schedule(suggestion.taskId, {
+      date: dateStr,
+      time: normalizeLocalTime(suggestion.suggestedStartTime) ?? '09:00',
+      durationMinutes: normalizeDurationMinutes(suggestion.durationMinutes, 30),
+    });
 
     setAiSuggestions(prev =>
       prev.map(s => s.taskTitle === suggestion.taskTitle ? { ...s, dismissed: true } : s),
     );
-  }, [selectedDate, todayStr, addToToday, updateTask]);
+  }, [selectedDate, schedule]);
 
   const dismissSuggestion = useCallback((taskTitle: string) => {
     setAiSuggestions(prev =>
@@ -268,10 +303,11 @@ export function Calendar() {
   const tasksByFocusedDate = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const t of allTasks) {
-      if (t.focusedDate) {
-        const arr = map.get(t.focusedDate) ?? [];
+      const scheduledDate = getScheduledDate(t);
+      if (scheduledDate) {
+        const arr = map.get(scheduledDate) ?? [];
         arr.push(t);
-        map.set(t.focusedDate, arr);
+        map.set(scheduledDate, arr);
       }
     }
     return map;
@@ -336,45 +372,16 @@ export function Calendar() {
     return { completed, habitsLogged, due, planned };
   }, [daysInMonth, tasksByCompletedDate, tasksByDueDate, tasksByFocusedDate, habitLogsByDate]);
 
-  // ── Helpers: get all unique tasks for a day ──
-
-  const getAllTasksForDate = useCallback((dateStr: string): Task[] => {
-    const completed = tasksByCompletedDate.get(dateStr) ?? [];
-    const focused = tasksByFocusedDate.get(dateStr) ?? [];
-    const created = tasksByCreatedDate.get(dateStr) ?? [];
-    return [...new Map([...completed, ...focused, ...created].map(t => [t.id, t])).values()];
-  }, [tasksByCompletedDate, tasksByFocusedDate, tasksByCreatedDate]);
-
   // ── Selected day details ──
 
   const selectedDateStr = getLocalDateString(selectedDate);
   const selectedCompleted = tasksByCompletedDate.get(selectedDateStr) ?? [];
   const selectedDue = (tasksByDueDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
   const selectedFocused = (tasksByFocusedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed');
-  const selectedCreated = (tasksByCreatedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed' && !t.focusedDate);
+  const selectedCreated = (tasksByCreatedDate.get(selectedDateStr) ?? []).filter(t => t.status !== 'Completed' && !getScheduledDate(t));
   const selectedHabits = habitLogsByDate.get(selectedDateStr) ?? [];
   const selectedCheckIn = checkInByDate.get(selectedDateStr);
   const hasActivity = selectedCompleted.length > 0 || selectedDue.length > 0 || selectedFocused.length > 0 || selectedCreated.length > 0 || selectedHabits.length > 0 || !!selectedCheckIn;
-
-  // ── Today's schedule sidebar data ──
-
-  const todaysTasks = useMemo(() => {
-    const regularToday = getTodaysTasks();
-    const todayKey = getLocalDateString(today);
-    const projectToday = projectTasksToTasks(subProjects, projects, getTasksBySubProject)
-      .filter(t => {
-        if (t.focusedDate === todayKey) return true;
-        if (t.status === 'Completed' && t.completedAt && getLocalDateString(new Date(t.completedAt)) === todayKey) return true;
-        return false;
-      });
-    const seen = new Set(regularToday.map(t => t.id));
-    const merged = [...regularToday, ...projectToday.filter(t => !seen.has(t.id))];
-    return merged.sort((a, b) => {
-      if (a.status === 'Completed' && b.status !== 'Completed') return 1;
-      if (a.status !== 'Completed' && b.status === 'Completed') return -1;
-      return 0;
-    });
-  }, [getTodaysTasks, today, subProjects, projects, getTasksBySubProject]);
 
   // ── Navigation ──
 
@@ -423,24 +430,35 @@ export function Calendar() {
     const taskId = e.dataTransfer.getData('text/plain');
     if (!taskId) return;
 
-    if (dateStr === todayStr) {
-      addToToday(taskId);
-    } else {
-      updateTask(taskId, { focusedDate: dateStr, isFocusedToday: false });
-    }
+    schedule(taskId, { date: dateStr });
   };
 
   // ── Inline task creation ──
 
   const handleInlineCreate = (dateStr: string, title: string) => {
     if (!title.trim()) return;
-    const newTask = createTask(title.trim(), '', 'Personal', 'High', 'Low', false);
-    if (dateStr === todayStr) {
-      addToToday(newTask.id);
-    } else {
-      updateTask(newTask.id, { focusedDate: dateStr, isFocusedToday: false });
-    }
+    const newTask = createTask(
+      title.trim(),
+      '',
+      'Personal',
+      'High',
+      'Low',
+      false,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { inbox: false },
+    );
+    schedule(newTask.id, {
+      date: dateStr,
+      time: inlineCreateTime,
+      durationMinutes: inlineCreateTime ? 30 : undefined,
+    });
     setInlineCreateDate(null);
+    setInlineCreateTime(undefined);
   };
 
   const handleInlineKeyDown = (e: KeyboardEvent<HTMLInputElement>, dateStr: string) => {
@@ -448,12 +466,19 @@ export function Calendar() {
       handleInlineCreate(dateStr, (e.target as HTMLInputElement).value);
     } else if (e.key === 'Escape') {
       setInlineCreateDate(null);
+      setInlineCreateTime(undefined);
     }
   };
 
-  const openInlineCreate = (dateStr: string) => {
+  const openInlineCreate = (dateStr: string, time?: string) => {
     setInlineCreateDate(dateStr);
+    setInlineCreateTime(time);
     setTimeout(() => inlineInputRef.current?.focus(), 50);
+  };
+
+  const openScheduleTask = (task: Task, defaultDate = selectedDateStr) => {
+    setScheduleTask(task);
+    setScheduleDefaultDate(defaultDate);
   };
 
   // ── Inline creation input widget ──
@@ -465,7 +490,7 @@ export function Calendar() {
         <input
           ref={inlineInputRef}
           type="text"
-          placeholder="Task title…"
+          placeholder={inlineCreateTime ? `Task at ${inlineCreateTime}…` : 'Task title…'}
           className={`w-full text-xs px-2 py-1 rounded-lg border outline-none ${
             'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-violet-400 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 dark:placeholder-gray-600 dark:focus:border-violet-500/50'
           }`}
@@ -475,28 +500,13 @@ export function Calendar() {
               handleInlineCreate(dateStr, e.target.value);
             } else {
               setInlineCreateDate(null);
+              setInlineCreateTime(undefined);
             }
           }}
         />
       </div>
     );
   };
-
-  // ── Render: task card for week view ──
-
-  const TaskCard = ({ task }: { task: Task }) => (
-    <div className={`flex items-center gap-2 px-2 py-1 rounded-lg text-xs ${
-      'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10'
-    } transition-colors`}>
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[task.category]?.dark : CATEGORY_DOT_COLOR[task.category]?.light}`} />
-      <span className={`truncate text-slate-600 dark:text-gray-300`}>{task.title}</span>
-      {task.status === 'Completed' ? (
-        <CheckCircle2 className={`w-3 h-3 shrink-0 ml-auto ${isDark ? STATUS_ICON_COLOR.Completed.dark : STATUS_ICON_COLOR.Completed.light}`} />
-      ) : (
-        <Circle className={`w-3 h-3 shrink-0 ml-auto ${isDark ? STATUS_ICON_COLOR[task.status]?.dark : STATUS_ICON_COLOR[task.status]?.light}`} />
-      )}
-    </div>
-  );
 
   // ══════════════════════════════════════
   // RENDER
@@ -690,82 +700,32 @@ export function Calendar() {
 
           {/* ── WEEK VIEW ── */}
           {viewMode === 'week' && (
-            <div className="grid grid-cols-7 gap-2">
-              {weekDays.map((day) => {
-                const dateStr = getLocalDateString(day);
-                const isToday = isSameDay(day, today);
-                const isSelected = isSameDay(day, selectedDate);
-                const allTasksForDay = getAllTasksForDate(dateStr);
-                const dueTasks = tasksByDueDate.get(dateStr) ?? [];
-                const allUnique = [...new Map([...allTasksForDay, ...dueTasks].map(t => [t.id, t])).values()];
-
-                return (
-                  <div
-                    key={dateStr}
-                    onClick={() => setSelectedDate(day)}
-                    onDragOver={(e) => handleDragOver(e, dateStr)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, dateStr)}
-                    className={`
-                      rounded-xl p-2 min-h-[140px] cursor-pointer transition-colors border
-                      ${isToday
-                        ? 'border-violet-300 bg-violet-50/50 dark:border-violet-500/40 dark:bg-violet-500/5'
-                        : isSelected
-                          ? 'border-violet-200 bg-violet-50/30 dark:border-violet-500/25 dark:bg-white/[0.02]'
-                          : 'border-slate-100 hover:border-slate-200 dark:border-white/5 dark:hover:border-white/10'
-                      }
-                      ${dragOverDate === dateStr ? ('ring-2 ring-violet-400/60') : ''}
-                    `}
-                  >
-                    {/* Day header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium uppercase text-slate-400 dark:text-gray-500`}>
-                          {WEEKDAYS[weekDays.indexOf(day)]}
-                        </span>
-                        <span
-                          className={`
-                            w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium
-                            ${isToday ? 'bg-violet-500 text-white' : 'text-slate-600 dark:text-gray-300'}
-                          `}
-                        >
-                          {day.getDate()}
-                        </span>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openInlineCreate(dateStr); }}
-                        className={`w-5 h-5 flex items-center justify-center rounded-md transition-colors ${
-                          'hover:bg-slate-100 text-slate-400 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-500 dark:hover:text-gray-300'
-                        }`}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <InlineCreateInput dateStr={dateStr} />
-
-                    {/* Task cards */}
-                    <div className="space-y-1">
-                      {allUnique.map((task) => (
-                        <div
-                          key={task.id}
-                          draggable="true"
-                          onDragStart={(e: DragEvent<HTMLDivElement>) => {
-                            e.dataTransfer.setData('text/plain', task.id);
-                            e.dataTransfer.effectAllowed = 'move';
-                          }}
-                          className="cursor-grab active:cursor-grabbing"
-                        >
-                          <TaskCard task={task} />
-                        </div>
-                      ))}
-                      {allUnique.length === 0 && (
-                        <p className={`text-xs text-slate-300 dark:text-gray-500`}>No tasks</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="space-y-4">
+              <div className="lg:hidden">
+                <UnscheduledTaskSidebar
+                  tasks={allTasks}
+                  goals={goals}
+                  projects={projects}
+                  onOpenTask={(task) => openScheduleTask(task)}
+                />
+              </div>
+              <CalendarTimeGrid
+                days={weekDays}
+                tasks={allTasks}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                onOpenTask={openScheduleTask}
+                onSchedule={schedule}
+                onInlineCreate={openInlineCreate}
+              />
+              {inlineCreateDate && weekDays.some((day) => getLocalDateString(day) === inlineCreateDate) && (
+                <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/20 dark:bg-violet-500/10">
+                  <p className="mb-2 text-xs font-medium text-violet-700 dark:text-violet-300">
+                    New task · {inlineCreateDate}{inlineCreateTime ? ` at ${inlineCreateTime}` : ''}
+                  </p>
+                  <InlineCreateInput dateStr={inlineCreateDate} />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -812,7 +772,7 @@ export function Calendar() {
                         {suggestion.taskTitle}
                       </p>
                       <p className={`text-xs mt-1 text-amber-600 dark:text-amber-400/80`}>
-                        → {suggestion.suggestedDay}
+                        → {suggestion.suggestedDay} · {suggestion.suggestedStartTime} · {suggestion.durationMinutes}m
                       </p>
                       <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>
                         {suggestion.reason}
@@ -867,7 +827,7 @@ export function Calendar() {
             </button>
           </div>
 
-          <InlineCreateInput dateStr={selectedDateStr} />
+          {viewMode === 'month' && <InlineCreateInput dateStr={selectedDateStr} />}
 
           {!hasActivity && inlineCreateDate !== selectedDateStr ? (
             <p className={`text-sm text-slate-400 dark:text-gray-500`}>No activity</p>
@@ -1018,38 +978,26 @@ export function Calendar() {
         </div>
       </div>
 
-      {/* ── TODAY'S SCHEDULE SIDEBAR (desktop only) ── */}
-      <div className={`hidden md:block w-72 shrink-0`}>
-        <div className={`card rounded-2xl p-4 sticky top-6`}>
-          <h3 className={`text-sm font-semibold mb-3 text-slate-800 dark:text-white`}>
-            Today&apos;s Schedule
-          </h3>
-          {todaysTasks.length === 0 ? (
-            <p className={`text-xs text-slate-400 dark:text-gray-400`}>No tasks planned for today</p>
-          ) : (
-            <ul className="space-y-2">
-              {todaysTasks.map((t) => (
-                <li key={t.id} className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                  <span className={`text-xs truncate ${
-                    t.status === 'Completed'
-                      ? 'text-slate-400 line-through dark:text-gray-400'
-                      : 'text-slate-600 dark:text-gray-300'
-                  }`}>
-                    {t.title}
-                  </span>
-                  {t.status === 'Completed' && (
-                    <CheckCircle2 className={`w-3 h-3 shrink-0 ml-auto text-emerald-500 dark:text-emerald-400`} />
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className={`mt-3 pt-3 border-t text-xs border-slate-100 text-slate-400 dark:border-white/5 dark:text-gray-500`}>
-            {todaysTasks.filter(t => t.status === 'Completed').length}/{todaysTasks.length} completed
-          </div>
+      {/* ── UNSCHEDULED TASK SIDEBAR (desktop only) ── */}
+      <div className="hidden w-80 shrink-0 lg:block">
+        <div className="sticky top-6">
+          <UnscheduledTaskSidebar
+            tasks={allTasks}
+            goals={goals}
+            projects={projects}
+            onOpenTask={(task) => openScheduleTask(task)}
+          />
         </div>
       </div>
+
+      <ScheduleTaskSheet
+        key={scheduleTask?.id ?? 'closed'}
+        task={scheduleTask}
+        defaultDate={scheduleDefaultDate}
+        onClose={() => setScheduleTask(null)}
+        onSchedule={schedule}
+        onUnschedule={unschedule}
+      />
     </div>
   );
 }

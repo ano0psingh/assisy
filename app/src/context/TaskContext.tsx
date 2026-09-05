@@ -4,10 +4,29 @@ import { LocalStorage } from '../store/localStorage';
 import { saveTasks as saveTasksToStore } from '../store/unifiedStore';
 import { collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import { getTaskXPValue } from '../utils/xpCalculator';
-import { getLocalDateString } from '../lib/dateUtils';
+import {
+  getLocalDateString,
+  isTaskScheduledOn,
+  normalizeDurationMinutes,
+  normalizeLocalDateString,
+  normalizeLocalTime,
+} from '../lib/dateUtils';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
+
+export interface TaskScheduleInput {
+  date: string;
+  time?: string;
+  durationMinutes?: number;
+}
+
+export interface TaskCaptureOptions {
+  inbox?: boolean;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  durationMinutes?: number;
+}
 
 interface TaskContextType {
   tasks: Task[];
@@ -24,7 +43,8 @@ interface TaskContextType {
     goalId?: string,
     dueDate?: Date,
     monthDay?: number,
-    dueTime?: string
+    dueTime?: string,
+    options?: TaskCaptureOptions
   ) => Task;
   linkTaskToGoal: (taskId: string, goalId: string) => void;
   unlinkTaskFromGoal: (taskId: string) => void;
@@ -48,6 +68,9 @@ interface TaskContextType {
   getTotalXP: () => number;
   addToToday: (taskId: string) => void;
   removeFromToday: (taskId: string) => void;
+  scheduleTask: (taskId: string, schedule: TaskScheduleInput) => void;
+  unscheduleTask: (taskId: string) => void;
+  setTaskInbox: (taskId: string, inbox: boolean) => void;
   getSuggestedTasks: () => Task[];
   hasSeenPlanYourDay: () => boolean;
   markPlanYourDaySeen: () => void;
@@ -170,7 +193,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     goalId?: string,
     dueDate?: Date,
     monthDay?: number,
-    dueTime?: string
+    dueTime?: string,
+    options: TaskCaptureOptions = {}
   ): Task => {
     const xpValue = getTaskXPValue({
       category,
@@ -193,6 +217,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       goalId,
       dueDate,
       dueTime,
+      inbox: options.inbox,
+      scheduledDate: normalizeLocalDateString(options.scheduledDate),
+      scheduledTime: normalizeLocalTime(options.scheduledTime),
+      durationMinutes: options.durationMinutes == null
+        ? undefined
+        : normalizeDurationMinutes(options.durationMinutes),
       createdAt: new Date(),
       xpValue,
     };
@@ -364,9 +394,22 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           if (completedStr === todayStr) return true;
           // Fall through to recurring schedule check below
         }
+
+        // A recurring task never bypasses occurrence state merely because it also
+        // has an explicit calendar block.
+        if (task.isRecurring) {
+          if (task.pausedUntil && todayStr <= task.pausedUntil) return false;
+          if (task.skippedDates?.includes(todayStr)) return false;
+        }
+
+        // Inbox work is intentionally inert until it is clarified. A defensive
+        // exception keeps explicitly scheduled legacy data visible.
+        if (task.inbox === true && !isTaskScheduledOn(task, todayStr)) return false;
         
-        // 1. Manually focused for today
-        if (task.isFocusedToday && task.focusedDate === todayStr) {
+        // 1. Explicitly scheduled today (including legacy focusedDate data).
+        // Legacy dates do not require isFocusedToday: that flag was sticky and
+        // caused otherwise valid focusedDate values to disappear.
+        if (isTaskScheduledOn(task, todayStr)) {
           return true;
         }
         
@@ -394,11 +437,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         
         // 4. Recurring tasks (may be Pending or Completed-on-previous-day)
         if (task.isRecurring) {
-          // Skip if paused
-          if (task.pausedUntil && todayStr <= task.pausedUntil) return false;
-          // Skip if this date is in skippedDates
-          if (task.skippedDates?.includes(todayStr)) return false;
-
           if (task.recurrencePattern === 'daily') {
             return true;
           }
@@ -429,6 +467,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       .sort((a, b) => {
         const priorityOrder = { High: 0, Low: 1 };
         const effortOrder = { High: 0, Low: 1 };
+
+        // Calendar blocks lead the day in chronological order. Flexible tasks
+        // retain the existing overdue/priority/effort ordering below.
+        const aTimed = normalizeLocalTime(a.scheduledTime);
+        const bTimed = normalizeLocalTime(b.scheduledTime);
+        if (aTimed && bTimed && aTimed !== bTimed) return aTimed.localeCompare(bTimed);
+        if (aTimed) return -1;
+        if (bTimed) return 1;
         
         // Sort overdue first, then by priority, then effort
         const aOverdue = a.dueDate && new Date(a.dueDate) < new Date() ? -1 : 0;
@@ -460,6 +506,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (
           task.status === 'Pending' &&
           !task.isRecurring &&
+          task.inbox !== true &&
           taskDate !== todayStr
         ) {
           return { ...task, status: 'Carried Forward' as const };
@@ -485,21 +532,33 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       .reduce((sum, task) => sum + task.xpValue, 0);
   }, [tasks]);
 
-  const addToToday = useCallback((taskId: string) => {
-    const todayStr = getTodayStr();
+  const scheduleTask = useCallback((taskId: string, schedule: TaskScheduleInput) => {
+    const date = normalizeLocalDateString(schedule.date);
+    if (!date) return;
+    const todayStr = getLocalDateString();
     setTasks(prev => {
       const updated = updateTaskInArray(prev, taskId, {
-        isFocusedToday: true,
-        focusedDate: todayStr,
+        scheduledDate: date,
+        scheduledTime: normalizeLocalTime(schedule.time),
+        durationMinutes: schedule.durationMinutes == null
+          ? undefined
+          : normalizeDurationMinutes(schedule.durationMinutes),
+        // Dual-write the legacy fields while older screens are rolled forward.
+        isFocusedToday: date === todayStr,
+        focusedDate: date,
+        inbox: false,
       });
       saveTasksToStore(updated, userId);
       return updated;
     });
-  }, [getTodayStr, userId]);
+  }, [userId]);
 
-  const removeFromToday = useCallback((taskId: string) => {
+  const unscheduleTask = useCallback((taskId: string) => {
     setTasks(prev => {
       const updated = updateTaskInArray(prev, taskId, {
+        scheduledDate: undefined,
+        scheduledTime: undefined,
+        durationMinutes: undefined,
         isFocusedToday: false,
         focusedDate: undefined,
       });
@@ -507,6 +566,18 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return updated;
     });
   }, [userId]);
+
+  const setTaskInbox = useCallback((taskId: string, inbox: boolean) => {
+    updateTask(taskId, { inbox });
+  }, [updateTask]);
+
+  const addToToday = useCallback((taskId: string) => {
+    scheduleTask(taskId, { date: getLocalDateString() });
+  }, [scheduleTask]);
+
+  const removeFromToday = useCallback((taskId: string) => {
+    unscheduleTask(taskId);
+  }, [unscheduleTask]);
 
   // Get tasks suggested for "Plan Your Day" - pending tasks not already in today (exclude recurring; they auto-appear on scheduled days)
   const getSuggestedTasks = useCallback((): Task[] => {
@@ -516,6 +587,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return tasks
       .filter(task => {
         if (task.status === 'Completed') return false;
+        if (task.inbox === true) return false;
         if (task.isRecurring) return false; // recurring tasks auto-added to their scheduled day
         if (todayTaskIds.has(task.id)) return false;
         return true;
@@ -604,6 +676,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       getTasksByGoal,
       addToToday,
       removeFromToday,
+      scheduleTask,
+      unscheduleTask,
+      setTaskInbox,
       getSuggestedTasks,
       hasSeenPlanYourDay,
       markPlanYourDaySeen,

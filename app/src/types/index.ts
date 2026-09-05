@@ -35,6 +35,10 @@ export interface Task {
    * counting as overdue once the whole day has passed rather than at an hour.
    */
   dueTime?: string;
+  inbox?: boolean;
+  scheduledDate?: string; // Local YYYY-MM-DD; distinct from the due-date deadline
+  scheduledTime?: string; // Local HH:MM
+  durationMinutes?: number;
   xpValue: number;
   isFocusedToday?: boolean;
   focusedDate?: string; // YYYY-MM-DD
@@ -167,6 +171,10 @@ export interface ProjectTask {
   priority: 'High' | 'Medium' | 'Low';
   effort: 'High' | 'Medium' | 'Low';
   timeSpent?: number; // In minutes, optional
+  inbox?: boolean;
+  scheduledDate?: string; // Local YYYY-MM-DD; distinct from the deadline
+  scheduledTime?: string; // Local HH:MM
+  durationMinutes?: number;
   isFocusedToday?: boolean; // For daily dashboard integration
   focusedDate?: string; // Date when focused (YYYY-MM-DD)
   createdAt: Date;

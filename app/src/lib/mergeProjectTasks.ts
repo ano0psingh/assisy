@@ -1,4 +1,5 @@
 import type { Task, ProjectTask, Project, SubProject } from '../types';
+import { toUnifiedProjectTaskId } from './unifiedTaskIds';
 
 export function projectTasksToTasks(
   subProjects: SubProject[],
@@ -11,7 +12,7 @@ export function projectTasksToTasks(
     const project = projects.find(p => p.id === sp.projectId);
     for (const pt of pTasks) {
       items.push({
-        id: `pt-${pt.id}`,
+        id: toUnifiedProjectTaskId(pt.id),
         title: `${pt.title}${project ? ` (${project.title})` : ''}`,
         category: 'Professional',
         priority: pt.priority === 'Medium' ? 'High' : pt.priority as 'High' | 'Low',
@@ -20,6 +21,10 @@ export function projectTasksToTasks(
         completedAt: pt.completedAt,
         createdAt: pt.createdAt,
         dueDate: pt.deadline,
+        inbox: pt.inbox,
+        scheduledDate: pt.scheduledDate,
+        scheduledTime: pt.scheduledTime,
+        durationMinutes: pt.durationMinutes,
         focusedDate: pt.focusedDate,
         isFocusedToday: pt.isFocusedToday,
         isRecurring: false,
