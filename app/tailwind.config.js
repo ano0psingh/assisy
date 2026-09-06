@@ -16,21 +16,11 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        canvas: 'var(--canvas)',
-        surface: {
-          DEFAULT: 'var(--surface)',
-          raised: 'var(--surface-raised)',
-          subtle: 'var(--surface-subtle)',
-        },
-        border: 'var(--border)',
-        text: {
-          DEFAULT: 'var(--text)',
-          muted: 'var(--text-muted)',
-        },
+        // Aliased to Tailwind's violet scale, which is the accent the app
+        // actually uses in ~1,000 places. The previous values were a purple
+        // scale that nothing referenced, so `primary-*` and `violet-*` are now
+        // interchangeable and adopting the token is a rename, not a restyle.
         primary: {
-          DEFAULT: 'var(--primary)',
-          hover: 'var(--primary-hover)',
-          soft: 'var(--primary-soft)',
           50: '#f5f3ff',
           100: '#ede9fe',
           200: '#ddd6fe',
@@ -42,15 +32,18 @@ export default {
           800: '#5b21b6',
           900: '#4c1d95',
         },
-        success: 'var(--success)',
-        warning: 'var(--warning)',
-        danger: 'var(--danger)',
-        info: 'var(--info)',
+        surface: {
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#a3a3a3',
+        },
       },
       boxShadow: {
-        'soft': 'var(--shadow-soft)',
-        'medium': 'var(--shadow-medium)',
-        'elevated': 'var(--shadow-elevated)',
+        'soft': '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+        'medium': '0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
+        'elevated': '0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06)',
         'glow-violet': '0 0 20px rgba(139, 92, 246, 0.15), 0 0 40px rgba(139, 92, 246, 0.05)',
       },
       animation: {

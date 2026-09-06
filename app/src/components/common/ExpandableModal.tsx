@@ -202,14 +202,14 @@ function OpenExpandableModal({
   if (isFullScreen) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col">
-        <div className="absolute inset-0 bg-canvas" />
+        <div className="absolute inset-0 bg-[#f8f8fa] dark:bg-[#0c0c10]" />
         <div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="relative flex h-full w-full flex-col bg-canvas animate-fade-in outline-none"
+          className="relative flex h-full w-full flex-col bg-[#f8f8fa] animate-fade-in outline-none dark:bg-[#0c0c10]"
         >
           {header}
           <div className="flex-1 overflow-y-auto">
@@ -236,9 +236,9 @@ function OpenExpandableModal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`popover-surface relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden border outline-none shadow-elevated ${
+        className={`relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden outline-none ${
           dismissing ? '' : 'animate-slide-up'
-        }`}
+        } border border-white/60 bg-white/85 shadow-elevated backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#141418]/90`}
         style={{
           transform: `translateY(${dragY}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',

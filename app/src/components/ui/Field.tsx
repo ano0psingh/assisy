@@ -9,11 +9,12 @@ import { useId, type InputHTMLAttributes, type ReactNode, type Ref, type SelectH
  * cannot be left unlabelled or an error left unannounced.
  */
 const CONTROL_CLASSES =
-  'w-full h-12 px-3 rounded-xl text-sm transition-colors duration-150 border ' +
-  'bg-surface-raised text-text border-border placeholder:text-text-muted ' +
-  'focus:outline-none focus:border-primary';
+  'w-full px-3 py-3 rounded-xl text-sm transition-colors border ' +
+  'bg-white text-slate-900 border-slate-200 placeholder:text-slate-400 ' +
+  'dark:bg-white/5 dark:text-white dark:border-white/10 dark:placeholder:text-gray-600 ' +
+  'focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent';
 
-const INVALID_CLASSES = 'border-danger';
+const INVALID_CLASSES = 'border-red-400 dark:border-red-500/60';
 
 interface FieldShellProps {
   id: string;
@@ -30,18 +31,18 @@ function FieldShell({ id, label, error, hint, children }: FieldShellProps) {
   return (
     <div className="space-y-2">
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-text">
+        <label htmlFor={id} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
           {label}
         </label>
       )}
       {children}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="text-xs text-danger">
+        <p id={`${id}-error`} role="alert" className="text-xs text-red-500 dark:text-red-400">
           {error}
         </p>
       ) : (
         hint && (
-          <p id={`${id}-hint`} className="text-xs text-text-muted">
+          <p id={`${id}-hint`} className="text-xs text-slate-400 dark:text-gray-400">
             {hint}
           </p>
         )

@@ -83,14 +83,18 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
   return (
     <>
-      <header className="navigation-chrome sticky top-0 z-40 border-b transition-colors duration-150 safe-area-pt">
+      <header className={`sticky top-0 z-40 border-b transition-colors duration-300 safe-area-pt ${
+        'bg-white/60 backdrop-blur-2xl border-black/[0.04] dark:bg-[#0c0c10]/70 dark:border-white/[0.06]'
+      }`}>
         <div className="px-4 md:px-6 py-0 flex items-center justify-between h-14">
           {/* Left: Logo + hamburger on mobile */}
           <div className="flex items-center space-x-3 flex-shrink-0">
             {/* Hamburger - mobile only */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="h-12 w-12 -ml-2 inline-flex items-center justify-center rounded-lg md:hidden text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+              className={`p-3 -ml-1 rounded-lg md:hidden transition-colors ${
+                'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
+              }`}
               aria-label="Open menu"
             >
               <Menu size={20} />
@@ -99,7 +103,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
-            <span className="text-lg font-bold text-text">Assisy</span>
+            <span className={`text-lg font-bold text-slate-800 dark:text-white`}>Assisy</span>
           </div>
 
           {/* Desktop Navigation - hidden on mobile */}
@@ -109,10 +113,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex min-h-10 items-center space-x-2 px-3 rounded-lg text-xs font-medium transition-colors duration-150 ${
+                  `flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-primary-soft text-primary'
-                      : 'text-text-muted hover:text-text hover:bg-surface-subtle'
+                      ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
                   }`
                 }
               >
@@ -127,7 +131,9 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 aria-label="More destinations"
                 aria-expanded={moreMenuOpen}
                 aria-haspopup="menu"
-                className="flex min-h-10 items-center space-x-1 px-3 rounded-lg text-xs font-medium text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
+                }`}
               >
                 <MoreHorizontal size={15} />
                 <span className="hidden lg:inline">More</span>
@@ -136,7 +142,9 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               {moreMenuOpen && (
                 <div
                   role="menu"
-                  className="popover-surface absolute right-0 mt-1 w-48 rounded-xl border overflow-hidden z-50 shadow-medium"
+                  className={`absolute right-0 mt-1 w-48 rounded-xl border overflow-hidden z-50 ${
+                    'bg-white border-slate-200 dark:bg-[#14141a] dark:border-white/10'
+                  }`}
                 >
                   <div className="p-2 space-y-1">
                     {overflowNavItems.map((item) => (
@@ -146,10 +154,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                         role="menuitem"
                         onClick={() => setMoreMenuOpen(false)}
                         className={({ isActive }) =>
-                          `flex min-h-10 items-center gap-2 px-3 rounded-lg text-xs font-medium ${
+                          `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
                             isActive
-                              ? 'bg-primary-soft text-primary'
-                              : 'text-text hover:bg-surface-subtle'
+                              ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                              : 'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
                           }`
                         }
                       >
@@ -171,20 +179,24 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 by ⌘K, which a phone has no way to press. */}
             <button
               onClick={triggerSearch}
-              className="flex h-11 min-w-11 items-center justify-center gap-2 md:px-3 rounded-lg text-xs text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+              className={`flex items-center gap-2 p-2 md:px-3 md:py-2 rounded-lg text-xs transition-colors ${
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/5'
+              }`}
               title="Search (⌘K)"
               aria-label="Search"
             >
               <Search size={18} className="md:hidden" />
               <Search size={14} className="hidden md:block" />
-              <kbd className="text-xs px-1 py-1 rounded hidden md:inline bg-surface-subtle">⌘K</kbd>
+              <kbd className={`text-xs px-1 py-1 rounded hidden md:inline bg-slate-100 dark:bg-white/5`}>⌘K</kbd>
             </button>
 
             {/* Focus timer - desktop only */}
             {onOpenFocusTimer && (
               <button
                 onClick={onOpenFocusTimer}
-                className="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-lg text-text-muted hover:text-primary hover:bg-primary-soft transition-colors duration-150"
+                className={`hidden md:block p-2 rounded-lg transition-colors ${
+                  'text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:text-gray-400 dark:hover:text-violet-400 dark:hover:bg-violet-500/10'
+                }`}
                 title="Focus Timer"
                 aria-label="Focus Timer"
               >
@@ -208,7 +220,9 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             {/* Data export/import - desktop only */}
             <button
               onClick={() => setDataModalOpen(true)}
-                className="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-lg text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+              className={`hidden md:block p-2 rounded-lg transition-colors ${
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/10'
+              }`}
               title="Backup & Restore"
               aria-label="Backup & Restore"
             >
@@ -221,7 +235,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(p => !p)}
-                    className="rounded-full focus:outline-none"
+                    className="rounded-full focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-transparent"
                     title={user.email ?? 'Account'}
                   >
                     {user.user_metadata?.avatar_url ? (
@@ -240,17 +254,17 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                   {userMenuOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                      <div className="popover-surface absolute right-0 mt-2 w-52 rounded-xl z-50 shadow-elevated border">
-                        <div className="px-4 py-3 border-b border-border">
-                          <p className="text-xs font-medium truncate text-text">{user.user_metadata?.full_name || user.email}</p>
+                      <div className={`absolute right-0 mt-2 w-52 rounded-xl z-50 shadow-xl border bg-white border-slate-200 dark:bg-[#12121a] dark:border-white/10`}>
+                        <div className={`px-4 py-3 border-b border-slate-100 dark:border-white/10`}>
+                          <p className={`text-xs font-medium truncate text-slate-800 dark:text-white`}>{user.user_metadata?.full_name || user.email}</p>
                           {user.user_metadata?.full_name && (
-                            <p className="text-xs truncate mt-1 text-text-muted">{user.email}</p>
+                            <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-500`}>{user.email}</p>
                           )}
                         </div>
                         <div className="p-2 space-y-1">
                           <button
                             onClick={() => { setAccountModalOpen(true); setUserMenuOpen(false); }}
-                            className="w-full min-h-10 flex items-center gap-2 px-3 rounded-lg text-xs font-medium text-text hover:bg-surface-subtle"
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5`}
                           >
                             <Settings size={14} />
                             Account Settings
@@ -270,7 +284,9 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
               ) : (
                 <button
                   onClick={() => setLoginModalOpen(true)}
-                  className="hidden md:flex min-h-10 items-center gap-2 px-3 rounded-lg text-xs font-medium bg-primary-soft text-primary hover:bg-surface-subtle"
+                  className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
+                    'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
+                  }`}
                   title="Sign in to sync"
                 >
                   <LogIn size={14} />
@@ -282,7 +298,9 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
             {/* Theme Toggle - desktop only */}
             <button
               onClick={toggleTheme}
-              className="hidden md:inline-flex h-10 w-10 items-center justify-center rounded-lg text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+              className={`hidden md:block p-2 rounded-lg transition-colors ${
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
+              }`}
               aria-label="Toggle theme"
             >
               {isDark ? <Moon size={16} /> : <Sun size={16} />}
@@ -294,28 +312,30 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
       {/* ── Mobile Drawer ── */}
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 md:hidden ${
+        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
           mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={closeMobileMenu}
       />
       {/* Drawer panel */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-150 ease-in-out md:hidden border-r border-border bg-surface ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out md:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } bg-white border-r border-slate-200 dark:bg-[#0a0a0f] dark:border-white/10`}
       >
         {/* Drawer header */}
-        <div className="flex items-center justify-between px-4 h-14 border-b border-border">
+        <div className={`flex items-center justify-between px-4 h-14 border-b border-slate-200 dark:border-white/10`}>
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
               <Sparkles className="text-white w-4 h-4" />
             </div>
-            <span className="text-lg font-bold text-text">Assisy</span>
+            <span className={`text-lg font-bold text-slate-800 dark:text-white`}>Assisy</span>
           </div>
           <button
             onClick={closeMobileMenu}
-            className="h-12 w-12 inline-flex items-center justify-center rounded-lg text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+            className={`p-3 rounded-lg transition-colors ${
+              'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
+            }`}
             aria-label="Close menu"
           >
             <X size={20} />
@@ -344,10 +364,10 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
                 to={item.to}
                 onClick={closeMobileMenu}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 rounded-lg text-sm font-medium transition-colors duration-150 min-h-12 ${
+                  `flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                     isActive
-                      ? 'bg-primary-soft text-primary'
-                      : 'text-text-muted hover:text-text hover:bg-surface-subtle'
+                      ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
                   }`
                 }
               >
@@ -358,23 +378,27 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           </nav>
 
           {/* Divider */}
-          <div className="mx-4 my-2 border-t border-border" />
+          <div className={`mx-4 my-2 border-t border-slate-100 dark:border-white/10`} />
 
           {/* Action buttons */}
           <div className="px-3 space-y-1">
             <button
               onClick={() => { triggerSearch(); closeMobileMenu(); }}
-              className="w-full min-h-12 flex items-center space-x-3 px-3 rounded-lg text-sm font-medium text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+              className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
+              }`}
             >
               <Search size={18} />
               <span>Search</span>
-              <kbd className="ml-auto text-xs px-2 py-1 rounded bg-surface-subtle text-text-muted">⌘K</kbd>
+              <kbd className={`ml-auto text-xs px-2 py-1 rounded bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500`}>⌘K</kbd>
             </button>
 
             {onOpenFocusTimer && (
               <button
                 onClick={() => { onOpenFocusTimer(); closeMobileMenu(); }}
-                className="w-full min-h-12 flex items-center space-x-3 px-3 rounded-lg text-sm font-medium text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+                className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
+                }`}
               >
                 <Timer size={18} />
                 <span>Focus Timer</span>
@@ -383,7 +407,9 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
             <button
               onClick={() => { setDataModalOpen(true); closeMobileMenu(); }}
-              className="w-full min-h-12 flex items-center space-x-3 px-3 rounded-lg text-sm font-medium text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+              className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5'
+              }`}
             >
               <Download size={18} />
               <span>Backup & Restore</span>
@@ -394,11 +420,13 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
           <div className="flex-1" />
 
           {/* Bottom section: auth + theme */}
-          <div className="px-3 py-3 border-t border-border">
+          <div className={`px-3 py-3 border-t border-slate-100 dark:border-white/10`}>
             {isConfigured && !user && (
               <button
                 onClick={() => { setLoginModalOpen(true); closeMobileMenu(); }}
-                className="w-full min-h-12 flex items-center justify-center gap-2 px-3 mb-2 rounded-lg text-sm font-medium bg-primary-soft text-primary hover:bg-surface-subtle transition-colors duration-150"
+                className={`w-full flex items-center justify-center gap-2 px-3 py-3 mb-2 rounded-lg text-sm font-medium transition-colors ${
+                  'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
+                }`}
               >
                 <LogIn size={16} />
                 Sign in
@@ -407,7 +435,9 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
 
             <button
               onClick={() => { toggleTheme(); }}
-              className="w-full min-h-12 flex items-center space-x-3 px-3 rounded-lg text-sm font-medium text-text-muted hover:text-text hover:bg-surface-subtle transition-colors duration-150"
+              className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
+              }`}
             >
               {isDark ? <Moon size={18} /> : <Sun size={18} />}
               <span>{isDark ? 'Dark mode' : 'Light mode'}</span>
@@ -421,7 +451,7 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
         isOpen={dataModalOpen}
         onClose={() => setDataModalOpen(false)}
         title="Backup & Restore"
-        icon={<Download className="w-5 h-5 text-primary" />}
+        icon={<Download className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
       >
         {() => (
           <div className="p-6">
@@ -435,8 +465,8 @@ export function Header({ onOpenFocusTimer }: HeaderProps) {
       {/* Account Settings Modal */}
       {accountModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setAccountModalOpen(false)} />
-          <div className="popover-surface relative rounded-2xl shadow-elevated w-full max-w-sm overflow-hidden animate-slide-up border">
+          <div className={`absolute inset-0 backdrop-blur-sm bg-slate-900/20 dark:bg-black/60`} onClick={() => setAccountModalOpen(false)} />
+          <div className={`relative rounded-2xl shadow-elevated w-full max-w-sm overflow-hidden animate-slide-up bg-white dark:bg-[#12121a] dark:border dark:border-white/10`}>
             <AccountSettings onClose={() => setAccountModalOpen(false)} />
           </div>
         </div>

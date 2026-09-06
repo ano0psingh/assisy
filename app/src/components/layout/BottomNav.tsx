@@ -21,10 +21,12 @@ import { hapticLight } from '../../lib/haptics';
 import { IconButton } from '../ui';
 
 const STORAGE_KEY = 'assisy_bottom_nav_config';
-const REQUIRED_ROUTE = '/calendar';
-// Calendar is required so it remains a predictable primary destination on
-// mobile; two other slots remain customisable and every route stays in More.
-const DEFAULT_CONFIG: string[] = ['/tasks', REQUIRED_ROUTE, '/habits'];
+// Mirrors the header's primary destinations, so the same five places are
+// reachable on a phone as on a desktop. This previously pointed at /goals, which
+// meant the grouping into Plan and Progress only ever landed on desktop and the
+// two navigations disagreed about what the app's main sections were.
+// Only affects people who never customised the bar; a saved config wins.
+const DEFAULT_CONFIG: string[] = ['/tasks', '/calendar', '/habits'];
 
 const PAGE_REGISTRY: Record<string, { icon: LucideIcon; label: string }> = {
   '/tasks': { icon: CheckSquare, label: 'Tasks' },
@@ -49,12 +51,7 @@ function loadNavConfig(): string[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length === 3 && parsed.every((p: unknown) => typeof p === 'string' && PAGE_REGISTRY[p as string])) {
-        const valid = [...new Set(parsed as string[])];
-        if (valid.length === 3) {
-          return valid.includes(REQUIRED_ROUTE)
-            ? valid
-            : [valid[0], REQUIRED_ROUTE, valid[1]];
-        }
+        return parsed;
       }
     }
   } catch { /* use default */ }
@@ -105,7 +102,6 @@ export function BottomNav() {
   }, [navConfig]);
 
   const toggleSelection = (path: string) => {
-    if (path === REQUIRED_ROUTE) return;
     setPendingSelection((prev) => {
       if (prev.includes(path)) return prev.filter((p) => p !== path);
       if (prev.length >= 3) return prev;
@@ -121,16 +117,18 @@ export function BottomNav() {
   };
 
   const linkCls = (active: boolean) =>
-    `flex flex-col items-center justify-center gap-1 py-2 min-w-0 flex-1 min-h-12 transition-colors duration-150 ${
+    `flex flex-col items-center justify-center gap-1 py-3 min-w-0 flex-1 min-h-[48px] transition-colors ${
       active
-        ? 'text-primary'
-        : 'text-text-muted hover:text-text'
+        ? 'text-violet-600 dark:text-violet-400'
+        : 'text-slate-500 dark:text-gray-500'
     }`;
 
   return (
     <>
       <nav
-        className="navigation-chrome bottom-nav-bar md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t"
+        className={`bottom-nav-bar md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t ${
+          'bg-white/60 backdrop-blur-2xl border-black/[0.04] dark:bg-[#0c0c10]/70 dark:border-white/[0.06]'
+        }`}
       >
         <div className="flex items-stretch">
           <NavLink
@@ -171,10 +169,12 @@ export function BottomNav() {
             aria-hidden
           />
           <div
-            className="popover-surface md:hidden fixed bottom-0 left-0 right-0 z-[61] rounded-t-2xl shadow-elevated animate-slide-up border-t"
+            className={`md:hidden fixed bottom-0 left-0 right-0 z-[61] rounded-t-2xl shadow-elevated animate-slide-up ${
+              'bg-white border-t border-slate-200 dark:bg-[#12121a] dark:border-white/10'
+            }`}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <span className="text-sm font-semibold text-text">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+              <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>
                 {customizing ? 'Customize Nav' : 'More'}
               </span>
               <div className="flex items-center gap-1">
@@ -200,33 +200,32 @@ export function BottomNav() {
 
             {customizing ? (
               <div className="p-3 pb-8 max-h-[60vh] overflow-y-auto">
-                <p className="text-xs mb-3 px-1 text-text-muted">
-                  Calendar stays in the bar. Select 2 more pages ({pendingSelection.length - 1}/2)
+                <p className={`text-xs mb-3 px-1 text-slate-500 dark:text-gray-400`}>
+                  Select exactly 3 pages for your nav bar ({pendingSelection.length}/3)
                 </p>
                 <div className="space-y-1">
                   {ALL_CONFIGURABLE_ROUTES.map((path) => {
                     const page = PAGE_REGISTRY[path];
                     const Icon = page.icon;
                     const selected = pendingSelection.includes(path);
-                    const required = path === REQUIRED_ROUTE;
-                    const disabled = required || (!selected && pendingSelection.length >= 3);
+                    const disabled = !selected && pendingSelection.length >= 3;
                     return (
                       <button
                         key={path}
                         type="button"
                         onClick={() => toggleSelection(path)}
                         disabled={disabled}
-                        className={`w-full min-h-12 flex items-center gap-3 px-4 rounded-xl text-left transition-colors duration-150 ${
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
                           selected
-                            ? 'bg-primary-soft text-primary ring-1 ring-primary'
+                            ? 'bg-violet-50 text-violet-700 ring-1 ring-violet-200 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/30'
                             : disabled
-                              ? 'text-text-muted opacity-50'
-                              : 'hover:bg-surface-subtle text-text'
+                              ? 'text-slate-400 opacity-50 dark:text-gray-400'
+                              : 'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-200'
                         }`}
                       >
                         <Icon size={20} className="flex-shrink-0" />
                         <span className="text-sm font-medium flex-1">{page.label}</span>
-                        {selected && <Check size={16} className="text-primary" />}
+                        {selected && <Check size={16} className={'text-violet-600 dark:text-violet-400'} />}
                       </button>
                     );
                   })}
@@ -235,10 +234,10 @@ export function BottomNav() {
                   type="button"
                   onClick={saveCustomization}
                   disabled={pendingSelection.length !== 3}
-                  className={`mt-4 w-full min-h-12 rounded-xl font-medium text-sm transition-colors duration-150 ${
+                  className={`mt-4 w-full py-3 rounded-xl font-medium text-sm transition-colors ${
                     pendingSelection.length === 3
-                      ? 'bg-primary text-canvas hover:bg-primary-hover'
-                      : 'bg-surface-subtle text-text-muted'
+                      ? 'bg-violet-600 text-white hover:bg-violet-700 dark:hover:bg-violet-500'
+                      : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-400'
                   }`}
                 >
                   Save
@@ -249,7 +248,9 @@ export function BottomNav() {
                 <button
                   type="button"
                   onClick={openCustomize}
-                  className="w-full min-h-12 flex items-center gap-3 px-4 rounded-xl text-left text-primary hover:bg-primary-soft border border-border transition-colors duration-150 mb-1"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors mb-1 ${
+                    'hover:bg-violet-50 text-violet-600 border border-slate-200 dark:hover:bg-white/5 dark:text-violet-400 dark:border-white/10'
+                  }`}
                 >
                   <Settings size={20} className="flex-shrink-0" />
                   <span className="text-sm font-medium">Customize Nav</span>
@@ -260,7 +261,9 @@ export function BottomNav() {
                       key={item.to}
                       type="button"
                       onClick={() => handleMoreNav(item.to)}
-                      className="flex min-h-12 items-center gap-3 px-4 rounded-xl text-left text-text hover:bg-surface-subtle transition-colors duration-150"
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                        'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-200'
+                      }`}
                     >
                       <item.icon size={20} className="flex-shrink-0" />
                       <span className="text-sm font-medium">{item.label}</span>

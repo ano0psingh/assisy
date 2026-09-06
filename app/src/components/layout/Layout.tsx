@@ -66,7 +66,7 @@ export function Layout({ children }: LayoutProps) {
       : 'animate-fade-in';
 
   return (
-    <div className="min-h-screen flex flex-col bg-canvas text-text">
+    <div className="min-h-screen flex flex-col dark:dark">
       <Header onOpenFocusTimer={handleTimerToggle} />
       <main
         className="flex-1 px-4 pt-4 pb-20 md:px-6 md:pt-8 md:pb-8 overflow-x-hidden"
@@ -78,8 +78,8 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </main>
 
-      <footer className="hidden md:block border-t py-4 px-4 md:px-6 border-border bg-surface">
-        <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-text-muted">
+      <footer className="hidden md:block border-t py-4 px-4 md:px-6 border-slate-200 dark:border-white/10">
+        <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-slate-500 dark:text-gray-500">
           <span>Assisy</span>
           <span>Built for productivity</span>
         </div>

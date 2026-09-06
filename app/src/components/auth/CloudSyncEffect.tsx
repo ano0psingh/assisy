@@ -127,11 +127,11 @@ export function CloudSyncEffect() {
   return (
     <div
       role="alert"
-      className="fixed inset-x-4 top-4 z-[100] mx-auto flex max-w-xl flex-col gap-3 rounded-2xl border border-border bg-surface-raised p-4 text-text shadow-elevated sm:flex-row sm:items-center"
+      className="card fixed inset-x-4 top-4 z-[100] mx-auto flex max-w-xl flex-col gap-3 rounded-2xl p-4 text-slate-800 shadow-elevated dark:text-white sm:flex-row sm:items-center"
     >
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">Assisy is ready to update</p>
-        <p className="mt-1 text-xs text-text-muted">
+        <p className="mt-1 text-xs text-slate-500 dark:text-gray-400">
           We’ll save pending changes before reloading.
         </p>
       </div>
@@ -139,7 +139,7 @@ export function CloudSyncEffect() {
         <Button variant="secondary" onClick={() => setUpdateAvailable(false)}>
           Later
         </Button>
-        <Button onClick={() => void applyUpdate()} disabled={applyingUpdate}>
+        <Button variant="primary" onClick={() => void applyUpdate()} disabled={applyingUpdate}>
           {applyingUpdate ? 'Saving…' : 'Update now'}
         </Button>
       </div>
