@@ -55,6 +55,8 @@ export function CalendarTimeGrid({
   onInlineCreate,
 }: CalendarTimeGridProps) {
   const [dragTarget, setDragTarget] = useState<string | null>(null);
+  const gridTemplateColumns = `64px repeat(${days.length}, minmax(${days.length === 1 ? '220px' : '108px'}, 1fr))`;
+  const minimumWidth = days.length === 1 ? '100%' : '840px';
 
   const tasksById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
 
@@ -141,12 +143,17 @@ export function CalendarTimeGrid({
 
   return (
     <section aria-label="Weekly time schedule">
-      <p className="mb-3 text-xs text-slate-400 dark:text-gray-500 lg:hidden">
-        Swipe horizontally to see the full week.
-      </p>
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10">
-        <div className="min-w-[840px]">
-          <div className="grid grid-cols-[64px_repeat(7,minmax(108px,1fr))] border-b border-slate-200 dark:border-white/10">
+      {days.length > 1 && (
+        <p className="mb-3 text-xs text-slate-400 dark:text-gray-500 lg:hidden">
+          Scroll horizontally to see the full week. Tap any task to edit its time or duration.
+        </p>
+      )}
+      <div
+        className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10"
+        style={{ overscrollBehaviorX: 'contain' }}
+      >
+        <div style={{ minWidth: minimumWidth }}>
+          <div className="grid border-b border-slate-200 dark:border-white/10" style={{ gridTemplateColumns }}>
             <div className="border-r border-slate-200 dark:border-white/10" />
             {days.map((day) => {
               const date = getLocalDateString(day);
@@ -174,7 +181,7 @@ export function CalendarTimeGrid({
             })}
           </div>
 
-          <div className="grid grid-cols-[64px_repeat(7,minmax(108px,1fr))] border-b border-slate-200 dark:border-white/10">
+          <div className="grid border-b border-slate-200 dark:border-white/10" style={{ gridTemplateColumns }}>
             <div className="border-r border-slate-200 px-2 py-3 text-[10px] font-semibold uppercase text-slate-400 dark:border-white/10 dark:text-gray-500">
               Flexible
             </div>
@@ -233,7 +240,7 @@ export function CalendarTimeGrid({
             })}
           </div>
 
-          <div className="grid grid-cols-[64px_repeat(7,minmax(108px,1fr))]">
+          <div className="grid" style={{ gridTemplateColumns }}>
             <div className="relative border-r border-slate-200 dark:border-white/10" style={{ height: SLOTS.length * SLOT_HEIGHT }}>
               {SLOTS.map((minute, index) => (
                 <div

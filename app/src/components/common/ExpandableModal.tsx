@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, useId, type ReactNode } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { X, Maximize2, Minimize2 } from 'lucide-react';
 
@@ -15,8 +14,56 @@ interface ExpandableModalProps {
 
 const DISMISS_THRESHOLD = 100;
 const VELOCITY_THRESHOLD = 0.5;
+const FLOATING_NAV_SELECTOR = '.bottom-nav-bar, [data-floating-navigation]';
+let openOverlayCount = 0;
+const hiddenNavigation = new Map<HTMLElement, {
+  ariaHidden: string | null;
+  inert: boolean;
+  visibility: string;
+  pointerEvents: string;
+}>();
 
-export function ExpandableModal({
+function setOverlayEnvironment(open: boolean) {
+  if (open) {
+    openOverlayCount += 1;
+    if (openOverlayCount > 1) return;
+    document.documentElement.setAttribute('data-modal-open', 'true');
+    document.body.setAttribute('data-overlay-open', 'true');
+    document.querySelectorAll<HTMLElement>(FLOATING_NAV_SELECTOR).forEach((element) => {
+      hiddenNavigation.set(element, {
+        ariaHidden: element.getAttribute('aria-hidden'),
+        inert: element.inert,
+        visibility: element.style.visibility,
+        pointerEvents: element.style.pointerEvents,
+      });
+      element.setAttribute('aria-hidden', 'true');
+      element.inert = true;
+      element.style.visibility = 'hidden';
+      element.style.pointerEvents = 'none';
+    });
+    return;
+  }
+
+  openOverlayCount = Math.max(0, openOverlayCount - 1);
+  if (openOverlayCount > 0) return;
+  document.documentElement.removeAttribute('data-modal-open');
+  document.body.removeAttribute('data-overlay-open');
+  hiddenNavigation.forEach((previous, element) => {
+    if (previous.ariaHidden === null) element.removeAttribute('aria-hidden');
+    else element.setAttribute('aria-hidden', previous.ariaHidden);
+    element.inert = previous.inert;
+    element.style.visibility = previous.visibility;
+    element.style.pointerEvents = previous.pointerEvents;
+  });
+  hiddenNavigation.clear();
+}
+
+export function ExpandableModal(props: ExpandableModalProps) {
+  if (!props.isOpen) return null;
+  return <OpenExpandableModal {...props} />;
+}
+
+function OpenExpandableModal({
   isOpen,
   onClose,
   title,
@@ -25,29 +72,27 @@ export function ExpandableModal({
   children,
   footer,
 }: ExpandableModalProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const dialogRef = useDialogFocus<HTMLDivElement>(isOpen);
   const titleId = `dialog-title-${useId()}`;
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dismissing, setDismissing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef<{ y: number; time: number } | null>(null);
   const dragging = useRef(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setIsFullScreen(false);
-      setDragY(0);
-      setDismissing(false);
-    }
-    if (isOpen) {
-      document.documentElement.setAttribute('data-modal-open', 'true');
-    } else {
-      document.documentElement.removeAttribute('data-modal-open');
-    }
-    return () => document.documentElement.removeAttribute('data-modal-open');
-  }, [isOpen]);
+    setOverlayEnvironment(true);
+    return () => setOverlayEnvironment(false);
+  }, []);
+
+  useEffect(() => {
+    // Fullscreen swaps the panel element while the modal remains mounted.
+    // Restore focus into the replacement so the existing document-level trap
+    // continues from inside the active dialog.
+    const frame = window.requestAnimationFrame(() => dialogRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [dialogRef, isFullScreen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -68,6 +113,7 @@ export function ExpandableModal({
     if (isFullScreen) return;
     dragStart.current = { y: e.touches[0].clientY, time: Date.now() };
     dragging.current = true;
+    setIsDragging(true);
   }, [isFullScreen]);
 
   const handleDragMove = useCallback((e: React.TouchEvent) => {
@@ -79,6 +125,7 @@ export function ExpandableModal({
   const handleDragEnd = useCallback(() => {
     if (!dragging.current || !dragStart.current) return;
     dragging.current = false;
+    setIsDragging(false);
     const velocity = dragY / Math.max(1, Date.now() - dragStart.current.time);
 
     if (dragY > DISMISS_THRESHOLD || velocity > VELOCITY_THRESHOLD) {
@@ -90,8 +137,6 @@ export function ExpandableModal({
     }
     dragStart.current = null;
   }, [dragY, onClose]);
-
-  if (!isOpen) return null;
 
   const dragHandle = (
     <div
@@ -157,16 +202,14 @@ export function ExpandableModal({
   if (isFullScreen) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col">
-        <div className={`absolute inset-0 bg-[#f8f8fa] dark:bg-[#0c0c10]`} />
+        <div className="absolute inset-0 bg-canvas" />
         <div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className={`relative flex flex-col h-full w-full animate-fade-in outline-none ${
-            'bg-[#f8f8fa] dark:bg-[#0c0c10]'
-          }`}
+          className="relative flex h-full w-full flex-col bg-canvas animate-fade-in outline-none"
         >
           {header}
           <div className="flex-1 overflow-y-auto">
@@ -193,15 +236,12 @@ export function ExpandableModal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden outline-none ${
+        className={`popover-surface relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden border outline-none shadow-elevated ${
           dismissing ? '' : 'animate-slide-up'
-        } bg-white/85 border border-white/60 backdrop-blur-2xl dark:bg-[#141418]/90 dark:border-white/[0.1]`}
+        }`}
         style={{
           transform: `translateY(${dragY}px)`,
-          transition: dragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          boxShadow: isDark
-            ? '0 -4px 40px rgba(0,0,0,0.4), inset 0 0 0 0.5px rgba(255,255,255,0.08)'
-            : '0 -4px 40px rgba(0,0,0,0.08), inset 0 0 0 0.5px rgba(255,255,255,0.8)',
+          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         {dragHandle}

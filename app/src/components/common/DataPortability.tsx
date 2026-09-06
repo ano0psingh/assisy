@@ -1,14 +1,15 @@
 import { useState, useRef } from 'react';
 import { Download, Upload, AlertCircle, CheckCircle2, History } from 'lucide-react';
-import { ALL_DATA_KEYS } from '../../store/storageKeys';
-import { listSnapshots, restoreSnapshot, takeSnapshot } from '../../store/syncMeta';
+import { ALL_DATA_KEYS, SYNC_COLLECTIONS } from '../../store/storageKeys';
+import { listSnapshots, markDirty, restoreSnapshot, takeSnapshot } from '../../store/syncMeta';
 import { getLocalDateString } from '../../lib/dateUtils';
 
 // Sourced from the store so an export can never again silently omit a key. The
 // hardcoded list here had drifted and was excluding all gamification data.
 const ALL_KEYS = ALL_DATA_KEYS;
 
-export function DataExportImport({ onClose: _onClose }: { onClose: () => void }) {
+export function DataExportImport({ onClose }: { onClose: () => void }) {
+  void onClose;
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -55,13 +56,14 @@ export function DataExportImport({ onClose: _onClose }: { onClose: () => void })
         });
 
         if (restored === 0) throw new Error('No valid data found in file');
+        SYNC_COLLECTIONS.forEach(markDirty);
 
         setStatus('success');
         setMessage(`Restored ${restored} data sets. Reload the page to see changes.`);
         setSnapshots(listSnapshots());
-      } catch (err: any) {
+      } catch (err: unknown) {
         setStatus('error');
-        setMessage(err.message || 'Failed to import data');
+        setMessage(err instanceof Error ? err.message : 'Failed to import data');
       }
     };
     reader.readAsText(file);

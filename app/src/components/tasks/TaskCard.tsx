@@ -275,9 +275,8 @@ export function TaskCard({
       onToggleComplete(task.id);
     } else if (swipeOffset <= -SWIPE_THRESHOLD) {
       didSwipe.current = true;
-      if (typeof window !== 'undefined' && window.confirm?.('Delete this task?')) {
-        onDelete(task.id);
-      }
+      hapticLight();
+      onDelete(task.id);
     }
     setSwipeOffset(0);
   };
@@ -352,16 +351,18 @@ export function TaskCard({
           {/* Title + inline indicators */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3
+              <button
+                type="button"
                 onClick={() => selectionMode ? onSelectToggle?.(task.id) : onEdit(task)}
-                className={`font-medium cursor-pointer hover:opacity-80 line-clamp-2 ${
+                className={`line-clamp-2 text-left font-medium hover:opacity-80 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 ${
                   isCompleted
                     ? 'line-through text-slate-400 dark:text-gray-500'
                     : 'text-slate-800 dark:text-white'
                 }`}
+                aria-label={selectionMode ? `Select "${task.title}"` : `Edit "${task.title}"`}
               >
                 {task.title}
-              </h3>
+              </button>
               {task.priority === 'High' && !isCompleted && (
                 <Flame size={14} className="flex-shrink-0 text-red-500" />
               )}
@@ -395,7 +396,10 @@ export function TaskCard({
                 {task.isRecurring && task.completedAt && (
                   <span className="text-xs whitespace-nowrap">
                     Last: {(() => {
-                      const days = Math.floor((Date.now() - new Date(task.completedAt).getTime()) / 86400000);
+                      const todayStart = new Date(`${getLocalDateString()}T00:00:00`).getTime();
+                      const completionDay = new Date(task.completedAt);
+                      completionDay.setHours(0, 0, 0, 0);
+                      const days = Math.floor((todayStart - completionDay.getTime()) / 86400000);
                       if (days === 0) return 'today';
                       if (days === 1) return 'yesterday';
                       return `${days}d ago`;
@@ -572,7 +576,7 @@ export function TaskCard({
                 )}
                 {/* Delete */}
                 <button
-                  onClick={(e) => { e.stopPropagation(); if (confirm('Delete this task?')) { onDelete(task.id); } setMenuOpen(false); }}
+                  onClick={(e) => { e.stopPropagation(); onDelete(task.id); setMenuOpen(false); }}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
                     'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
                   }`}
@@ -634,7 +638,7 @@ export function TaskCard({
           </button>
           <div className={`my-1 border-t border-slate-100 dark:border-white/10`} />
           <button
-            onClick={() => { if (confirm('Delete this task?')) onDelete(task.id); setQuickAction(null); }}
+            onClick={() => { onDelete(task.id); setQuickAction(null); }}
             className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
               'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
             }`}

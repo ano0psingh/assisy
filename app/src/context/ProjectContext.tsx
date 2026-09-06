@@ -1,4 +1,13 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus, BulkPatch } from '../types';
 import { saveProjects, saveSubProjects, saveProjectTasks } from '../store/unifiedStore';
@@ -123,10 +132,39 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { dataVersion } = useDataVersion();
   const userId = user?.id ?? null;
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [subProjects, setSubProjects] = useState<SubProject[]>([]);
-  const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
+  const [projects, setProjectsState] = useState<Project[]>([]);
+  const [subProjects, setSubProjectsState] = useState<SubProject[]>([]);
+  const [projectTasks, setProjectTasksState] = useState<ProjectTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef(userId);
+  const projectsRef = useRef(projects);
+  const subProjectsRef = useRef(subProjects);
+  const projectTasksRef = useRef(projectTasks);
+  userIdRef.current = userId;
+  projectsRef.current = projects;
+  subProjectsRef.current = subProjects;
+  projectTasksRef.current = projectTasks;
+
+  // Persist only explicit context actions. Effects used to rewrite all three
+  // arrays after cloud hydration, auth changes, and unrelated renders.
+  const setProjects = useCallback((action: SetStateAction<Project[]>) => {
+    const next = typeof action === 'function' ? action(projectsRef.current) : action;
+    projectsRef.current = next;
+    setProjectsState(next);
+    saveProjects(next, userIdRef.current);
+  }, []);
+  const setSubProjects = useCallback((action: SetStateAction<SubProject[]>) => {
+    const next = typeof action === 'function' ? action(subProjectsRef.current) : action;
+    subProjectsRef.current = next;
+    setSubProjectsState(next);
+    saveSubProjects(next, userIdRef.current);
+  }, []);
+  const setProjectTasks = useCallback((action: SetStateAction<ProjectTask[]>) => {
+    const next = typeof action === 'function' ? action(projectTasksRef.current) : action;
+    projectTasksRef.current = next;
+    setProjectTasksState(next);
+    saveProjectTasks(next, userIdRef.current);
+  }, []);
 
   // Load from localStorage
   useEffect(() => {
@@ -136,31 +174,37 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       const storedTasks = localStorage.getItem(PROJECT_TASKS_KEY);
 
       if (storedProjects) {
-        setProjects(JSON.parse(storedProjects).map((p: Project) => ({
+        const loadedProjects = JSON.parse(storedProjects).map((p: Project) => ({
           ...p,
           createdAt: new Date(p.createdAt),
           updatedAt: new Date(p.updatedAt),
           deadline: p.deadline ? new Date(p.deadline) : undefined,
-        })));
+        }));
+        projectsRef.current = loadedProjects;
+        setProjectsState(loadedProjects);
       }
 
       if (storedSubProjects) {
-        setSubProjects(JSON.parse(storedSubProjects).map((sp: SubProject) => ({
+        const loadedSubProjects = JSON.parse(storedSubProjects).map((sp: SubProject) => ({
           ...sp,
           createdAt: new Date(sp.createdAt),
           updatedAt: new Date(sp.updatedAt),
           deadline: sp.deadline ? new Date(sp.deadline) : undefined,
-        })));
+        }));
+        subProjectsRef.current = loadedSubProjects;
+        setSubProjectsState(loadedSubProjects);
       }
 
       if (storedTasks) {
-        setProjectTasks(JSON.parse(storedTasks).map((t: ProjectTask) => ({
+        const loadedTasks = JSON.parse(storedTasks).map((t: ProjectTask) => ({
           ...t,
           createdAt: new Date(t.createdAt),
           updatedAt: new Date(t.updatedAt),
           completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
           deadline: t.deadline ? new Date(t.deadline) : undefined,
-        })));
+        }));
+        projectTasksRef.current = loadedTasks;
+        setProjectTasksState(loadedTasks);
       }
     } catch (error) {
       console.error('Error loading project data:', error);
@@ -168,19 +212,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, [dataVersion]);
-
-  // Save to store (local or cloud)
-  useEffect(() => {
-    if (!loading) saveProjects(projects, userId);
-  }, [projects, loading, userId]);
-
-  useEffect(() => {
-    if (!loading) saveSubProjects(subProjects, userId);
-  }, [subProjects, loading, userId]);
-
-  useEffect(() => {
-    if (!loading) saveProjectTasks(projectTasks, userId);
-  }, [projectTasks, loading, userId]);
 
   // ============ Project CRUD ============
 
@@ -204,13 +235,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     };
     setProjects(prev => [...prev, newProject]);
     return newProject;
-  }, []);
+  }, [setProjects]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     setProjects(prev => prev.map(p =>
       p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p
     ));
-  }, []);
+  }, [setProjects]);
 
   const deleteProject = useCallback((id: string) => {
     // Get all sub-projects of this project
@@ -225,7 +256,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     
     // Delete project
     setProjects(prev => prev.filter(p => p.id !== id));
-  }, [subProjects]);
+  }, [subProjects, setProjectTasks, setProjects, setSubProjects]);
 
   const getProject = useCallback((id: string) => {
     return projects.find(p => p.id === id);
@@ -262,13 +293,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     ));
     
     return newSubProject;
-  }, []);
+  }, [setProjects, setSubProjects]);
 
   const updateSubProject = useCallback((id: string, updates: Partial<SubProject>) => {
     setSubProjects(prev => prev.map(sp =>
       sp.id === id ? { ...sp, ...updates, updatedAt: new Date() } : sp
     ));
-  }, []);
+  }, [setSubProjects]);
 
   const deleteSubProject = useCallback((id: string) => {
     const subProject = subProjects.find(sp => sp.id === id);
@@ -286,7 +317,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     
     // Delete sub-project
     setSubProjects(prev => prev.filter(sp => sp.id !== id));
-  }, [subProjects]);
+  }, [subProjects, setProjectTasks, setProjects, setSubProjects]);
 
   const getSubProject = useCallback((id: string) => {
     return subProjects.find(sp => sp.id === id);
@@ -346,13 +377,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
 
     return newTask;
-  }, [subProjects]);
+  }, [subProjects, setProjectTasks, setSubProjects]);
 
   const updateProjectTask = useCallback((id: string, updates: Partial<ProjectTask>) => {
     setProjectTasks(prev => prev.map(t =>
       t.id === id ? { ...t, ...updates, updatedAt: new Date() } : t
     ));
-  }, []);
+  }, [setProjectTasks]);
 
   const updateProjectTasks = useCallback((ids: string[], updates: Partial<ProjectTask>): BulkPatch<ProjectTask>[] => {
     // updatedAt is stamped alongside the edit, so capture it or undo would
@@ -364,12 +395,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       targets.has(t.id) ? { ...t, ...updates, updatedAt: new Date() } : t
     ));
     return patches;
-  }, [projectTasks]);
+  }, [projectTasks, setProjectTasks]);
 
   const revertProjectTasks = useCallback((patches: BulkPatch<ProjectTask>[]) => {
     if (patches.length === 0) return;
     setProjectTasks(prev => revertBulkUpdate(prev, patches));
-  }, []);
+  }, [setProjectTasks]);
 
   const deleteProjectTask = useCallback((id: string) => {
     const task = projectTasks.find(t => t.id === id);
@@ -402,7 +433,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
     // Delete the task
     setProjectTasks(prev => prev.filter(t => t.id !== id));
-  }, [projectTasks]);
+  }, [projectTasks, setProjectTasks, setSubProjects]);
 
   // ============ Bulk delete / restore ============
 
@@ -452,7 +483,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         )
       );
     }
-  }, []);
+  }, [setProjectTasks, setProjects, setSubProjects]);
 
   const deleteProjects = useCallback((ids: string[]): ProjectSnapshot => {
     const projectIds = new Set(ids);
@@ -546,7 +577,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         return { ...task, subTaskIds: Array.from(new Set([...task.subTaskIds, ...children])) };
       }));
     }
-  }, []);
+  }, [setProjectTasks, setProjects, setSubProjects]);
 
   const getProjectTask = useCallback((id: string) => {
     return projectTasks.find(t => t.id === id);
@@ -573,19 +604,19 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           }
         : t
     ));
-  }, []);
+  }, [setProjectTasks]);
 
   const updateSubProjectStatus = useCallback((subProjectId: string, status: WorkItemStatus) => {
     setSubProjects(prev => prev.map(sp =>
       sp.id === subProjectId ? { ...sp, status, updatedAt: new Date() } : sp
     ));
-  }, []);
+  }, [setSubProjects]);
 
   const updateProjectStatus = useCallback((projectId: string, status: ProjectStatus) => {
     setProjects(prev => prev.map(p =>
       p.id === projectId ? { ...p, status, updatedAt: new Date() } : p
     ));
-  }, []);
+  }, [setProjects]);
 
   // ============ Tags ============
 
@@ -595,7 +626,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         ? { ...t, tags: [...t.tags, tag], updatedAt: new Date() }
         : t
     ));
-  }, []);
+  }, [setProjectTasks]);
 
   const removeTagFromTask = useCallback((taskId: string, tag: string) => {
     setProjectTasks(prev => prev.map(t =>
@@ -603,7 +634,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         ? { ...t, tags: t.tags.filter(tg => tg !== tag), updatedAt: new Date() }
         : t
     ));
-  }, []);
+  }, [setProjectTasks]);
 
   const addTagToSubProject = useCallback((subProjectId: string, tag: string) => {
     setSubProjects(prev => prev.map(sp =>
@@ -611,7 +642,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         ? { ...sp, tags: [...sp.tags, tag], updatedAt: new Date() }
         : sp
     ));
-  }, []);
+  }, [setSubProjects]);
 
   const removeTagFromSubProject = useCallback((subProjectId: string, tag: string) => {
     setSubProjects(prev => prev.map(sp =>
@@ -619,7 +650,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         ? { ...sp, tags: sp.tags.filter(tg => tg !== tag), updatedAt: new Date() }
         : sp
     ));
-  }, []);
+  }, [setSubProjects]);
 
   // ============ Time Tracking ============
 
@@ -629,7 +660,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         ? { ...t, timeSpent: (t.timeSpent || 0) + minutes, updatedAt: new Date() }
         : t
     ));
-  }, []);
+  }, [setProjectTasks]);
 
   // ============ Today Integration ============
 
@@ -656,7 +687,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           }
         : t
     ));
-  }, []);
+  }, [setProjectTasks]);
 
   const unscheduleProjectTask = useCallback((taskId: string) => {
     setProjectTasks(prev => prev.map(t =>
@@ -672,7 +703,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           }
         : t
     ));
-  }, []);
+  }, [setProjectTasks]);
 
   const setProjectTaskInbox = useCallback((taskId: string, inbox: boolean) => {
     updateProjectTask(taskId, { inbox });

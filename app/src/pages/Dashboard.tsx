@@ -7,7 +7,8 @@ import { useDailyLogContext } from '../context/DailyLogContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useGamification } from '../context/GamificationContext';
-import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, CheckCircle2, ListTodo, Circle, Play, Pencil, Trophy, Crown, AlertTriangle, CalendarMinus, Target, RefreshCw, Bot } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, CheckCircle2, ListTodo, Circle, Play, Pencil, Trophy, Crown, AlertTriangle, CalendarMinus, Target, RefreshCw, Bot, Inbox, ChevronDown } from 'lucide-react';
 import { askAI, isAIConfigured } from '../lib/ai';
 import { formatAIText } from '../lib/formatAIText';
 import { isOnboardingComplete } from '../lib/onboarding';
@@ -27,6 +28,7 @@ import { hapticMedium } from '../lib/haptics';
 import { useUndo } from '../components/common/UndoToast';
 import { useToast } from '../components/common/Toast';
 import { DashboardSkeleton } from '../components/common/Skeleton';
+import { Button } from '../components/ui';
 import { getQuoteOfTheDay } from '../data/quotes';
 import { DailyCheckIn } from '../components/habits/DailyCheckIn';
 import type { Task, ProjectTask, WorkItemStatus, RecurrencePattern } from '../types';
@@ -109,6 +111,7 @@ function BacklogPicker({ tasks, onAdd }: { tasks: Task[]; onAdd: (id: string) =>
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { 
     tasks, 
     getTodaysTasks, 
@@ -181,6 +184,7 @@ export function Dashboard() {
   const [projectTaskForm, setProjectTaskForm] = useState({ title: '', description: '' });
   const [morningBriefing, setMorningBriefing] = useState<string | null>(null);
   const [briefingLoading, setBriefingLoading] = useState(false);
+  const [briefingError, setBriefingError] = useState<string | null>(null);
 
   const handlePullRefresh = useCallback(() => {
     window.location.reload();
@@ -228,6 +232,7 @@ export function Dashboard() {
     if (!isAIConfigured()) return;
 
     setBriefingLoading(true);
+    setBriefingError(null);
     try {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
@@ -316,10 +321,11 @@ RULES:
       localStorage.setItem(cacheKey, result);
     } catch {
       setMorningBriefing(null);
+      setBriefingError('The briefing could not be generated. Check your connection or AI settings.');
     } finally {
       setBriefingLoading(false);
     }
-  }, [tasks, getTodaysTasks, getRecentLogs, habits, goals]);
+  }, [tasks, getTodaysTasks, getRecentLogs, habits, goals, getTotalLevel, userStats.currentStreak]);
 
   useEffect(() => {
     if (!loading) {
@@ -442,7 +448,7 @@ RULES:
     });
   }, [tasks, deleteTask, createTask, pushUndo]);
 
-  const todayTaskIds = useMemo(() => new Set(getTodaysTasks().map(t => t.id)), [getTodaysTasks, tasks]);
+  const todayTaskIds = useMemo(() => new Set(getTodaysTasks().map(t => t.id)), [getTodaysTasks]);
   const activeGoalIds = useMemo(() => new Set(goals.filter(g => g.status === 'Active').map(g => g.id)), [goals]);
   const suggestionGroups = useMemo(() => {
     const notToday = (t: Task) => !todayTaskIds.has(t.id) && t.status !== 'Completed';
@@ -609,6 +615,13 @@ RULES:
     if (hour < 17) return '☀️';
     return '🌙';
   })();
+  const profileName = (
+    user?.user_metadata?.full_name
+    || user?.user_metadata?.name
+    || user?.email?.split('@')[0]
+    || ''
+  ).trim().split(/\s+/)[0];
+  const inboxCount = tasks.filter(task => task.inbox === true && task.status !== 'Completed').length;
 
   return (
     <div ref={containerRef} className="space-y-6">
@@ -714,7 +727,7 @@ RULES:
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>
-            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, Kage {greetingEmoji}
+            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}{profileName ? `, ${profileName}` : ''} {greetingEmoji}
           </h1>
           <p className={`mt-1 text-sm text-slate-500 dark:text-gray-400`}>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -724,29 +737,36 @@ RULES:
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={handleOpenPlanYourDay}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm transition-colors ${
-              isDark
-                ? 'bg-white/5 text-gray-300 hover:bg-white/10'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-            }`}
+          <Button
+            variant="secondary"
+            icon={Inbox}
+            onClick={() => navigate('/tasks?view=inbox')}
+            aria-label={`Open Inbox${inboxCount > 0 ? `, ${inboxCount} tasks to clarify` : ''}`}
           >
-            <ListPlus size={16} />
+            Inbox{inboxCount > 0 ? ` ${inboxCount}` : ''}
+          </Button>
+          <Button variant="secondary" icon={Calendar} onClick={() => navigate('/calendar')}>
+            Calendar
+          </Button>
+          <Button
+            variant="secondary"
+            icon={ListPlus}
+            onClick={handleOpenPlanYourDay}
+          >
             <span>Plan Day</span>
             {getSuggestedTasks().length > 0 && (
               <span className={`ml-1 px-2 py-1 text-xs font-bold rounded-full ${
                 'bg-violet-200 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
               }`}>{getSuggestedTasks().length}</span>
             )}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            icon={Plus}
             onClick={() => setIsTaskFormOpen(true)}
-            className="btn-primary px-4 py-2 rounded-xl flex items-center space-x-2 text-sm"
           >
-            <Plus size={16} />
             <span>New Task</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -865,6 +885,12 @@ RULES:
         </div>
       )}
 
+      <details className="card group rounded-2xl">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
+          <span>Insights, suggestions and weekly progress</span>
+          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="space-y-6 border-t border-slate-100 p-4 dark:border-white/10">
       {/* ── STATS STRIP: compact on mobile, detailed on md+ ── */}
       <div className={`rounded-2xl border p-3 bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.08]`}>
         <div className="grid grid-cols-4 gap-2 sm:gap-3">
@@ -1037,6 +1063,18 @@ RULES:
               <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
               <p className={`text-sm text-slate-500 dark:text-gray-400`}>Generating your morning briefing...</p>
             </div>
+          ) : briefingError ? (
+            <div>
+              <p className="text-sm text-red-600 dark:text-red-400">{briefingError}</p>
+              <button
+                type="button"
+                onClick={() => generateBriefing(true)}
+                className="mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+              >
+                <RefreshCw size={10} />
+                Try again
+              </button>
+            </div>
           ) : morningBriefing ? (
             <>
               <div
@@ -1066,6 +1104,8 @@ RULES:
           )}
         </div>
       </div>
+        </div>
+      </details>
 
       <TaskForm
         isOpen={isTaskFormOpen}

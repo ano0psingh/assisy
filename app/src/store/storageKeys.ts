@@ -51,6 +51,9 @@ export const JSON_SETTINGS_KEYS = {
   assisy_pomodoro_today: 'assisy_pomodoro_today',
 } as const;
 
+/** Durable reconciliation state. Included in backups so deletions stay deleted. */
+export const SYNC_META_KEY = 'assisy_sync_meta';
+
 /** Every independently synced unit, used to key dirty flags and tombstones. */
 export const SYNC_COLLECTIONS: string[] = [
   ...ENTITY_COLLECTIONS.map(c => c.payloadKey),
@@ -66,6 +69,7 @@ export const ALL_DATA_KEYS: string[] = [
   ...Object.values(GAMIFICATION_KEYS),
   ...Object.values(SETTINGS_KEYS),
   ...Object.values(JSON_SETTINGS_KEYS),
+  SYNC_META_KEY,
 ];
 
 export function safeParse<T>(value: string | null, fallback: T): T {

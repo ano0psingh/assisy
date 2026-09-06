@@ -1,5 +1,5 @@
 import {
-  loadUserData,
+  loadCloudState,
   saveUserData,
   saveUserDataOnUnload,
   writePayloadToLocalStorage,
@@ -12,24 +12,34 @@ import {
   HABIT_LOGS_KEY,
   JSON_SETTINGS_KEYS,
   SETTINGS_KEYS,
+  SYNC_COLLECTIONS,
   type EntityCollection,
 } from './storageKeys';
 import { mergeEntities, mergeLogMaps, mergeGamification } from './merge';
 import {
+  getAllTombstones,
   getTombstones,
   isDirty,
   markDirty,
   markSynced,
+  mergeTombstones,
   recordDeletions,
+  setSyncTransport,
   takeSnapshot,
 } from './syncMeta';
+import {
+  countMutations,
+  enqueueMutation,
+  listMutations,
+  removeMutation,
+} from './outbox';
 
 export type StoreSource = 'local' | 'cloud';
 
 interface PendingSave {
   userId: string;
   collection: string;
-  build: () => Partial<UserDataPayload>;
+  payload: Partial<UserDataPayload>;
 }
 
 let saveDebounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -48,17 +58,74 @@ function scheduleCloudSave(
 ): void {
   const timerKey = `${userId}-${collection}`;
   if (saveDebounceTimers[timerKey]) clearTimeout(saveDebounceTimers[timerKey]);
-  pendingSaves[timerKey] = { userId, collection, build };
+  let payload: Partial<UserDataPayload>;
+  try {
+    payload = {
+      ...build(),
+      sync_meta: { tombstones: getAllTombstones() },
+    };
+  } catch {
+    setSyncTransport({ error: `Could not prepare ${collection} for sync` });
+    return;
+  }
+  pendingSaves[timerKey] = { userId, collection, payload };
+  void enqueueMutation(userId, collection, payload).then(() => refreshPendingCount(userId));
 
   saveDebounceTimers[timerKey] = setTimeout(() => {
-    const pending = pendingSaves[timerKey];
     delete saveDebounceTimers[timerKey];
     delete pendingSaves[timerKey];
-    if (!pending) return;
-    void saveUserData(pending.userId, pending.build()).then(({ error }) => {
-      if (!error) markSynced(pending.collection);
-    });
+    void retryPendingSync(userId);
   }, DEBOUNCE_MS);
+}
+
+async function refreshPendingCount(userId?: string): Promise<void> {
+  setSyncTransport({ pendingMutations: await countMutations(userId) });
+}
+
+let activeFlush: Promise<void> | null = null;
+
+/** Drain durable writes. Safe to call from reconnect, refresh, and intervals. */
+export function retryPendingSync(userId?: string): Promise<void> {
+  if (activeFlush) return activeFlush;
+  const run = (async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      await refreshPendingCount(userId);
+      return;
+    }
+    setSyncTransport({ syncing: true, error: undefined });
+    try {
+      const mutations = await listMutations(userId);
+      for (const mutation of mutations) {
+        const { error } = await saveUserData(
+          mutation.userId,
+          mutation.payload,
+          mutation.revision,
+        );
+        if (error) throw error;
+        await removeMutation(mutation.id, mutation.revision);
+        const remaining = await listMutations(mutation.userId);
+        if (mutation.collection === 'reconciliation') {
+          for (const collection of SYNC_COLLECTIONS) {
+            if (!remaining.some(item => item.collection === collection)) markSynced(collection);
+          }
+        } else if (!remaining.some(item => item.collection === mutation.collection)) {
+          markSynced(mutation.collection);
+        }
+      }
+      await refreshPendingCount(userId);
+    } catch (error) {
+      setSyncTransport({
+        error: error instanceof Error ? error.message : 'Cloud sync failed',
+      });
+      await refreshPendingCount(userId);
+    } finally {
+      setSyncTransport({ syncing: false });
+    }
+  })();
+  activeFlush = run.finally(() => {
+    activeFlush = null;
+  });
+  return activeFlush;
 }
 
 /**
@@ -82,11 +149,7 @@ export function flushPendingSaves(): void {
   const byUser = new Map<string, Partial<UserDataPayload>>();
   for (const save of pending) {
     const payload = byUser.get(save.userId) ?? {};
-    try {
-      Object.assign(payload, save.build());
-    } catch {
-      // Skip a collection we cannot serialise rather than lose the whole flush.
-    }
+    Object.assign(payload, save.payload);
     byUser.set(save.userId, payload);
   }
 
@@ -94,7 +157,11 @@ export function flushPendingSaves(): void {
   // these collections stay dirty and win the next merge. Being wrongly treated
   // as newer is harmless; being wrongly treated as saved is not.
   for (const [userId, payload] of byUser) {
-    saveUserDataOnUnload(userId, payload);
+    // Keepalive cannot perform the compatibility retry used by the normal
+    // client, so only send columns guaranteed to exist before Phase 2.
+    const legacyCompatible = { ...payload };
+    delete legacyCompatible.sync_meta;
+    saveUserDataOnUnload(userId, legacyCompatible);
   }
 }
 
@@ -202,13 +269,16 @@ function collection(payloadKey: EntityCollection['payloadKey']): EntityCollectio
  * away any work whose cloud write had not landed yet.
  */
 export async function loadAll(userId: string | null): Promise<UserDataPayload> {
-  const local = readLocalPayload();
-  if (!userId) return local;
+  if (!userId) return readLocalPayload();
 
-  const cloud = await loadUserData(userId);
-  if (!cloud) return local;
+  const cloud = await loadCloudState(userId);
+  // Deliberately read after the network wait. Edits made while login fetches
+  // must participate in this merge instead of being overwritten by its result.
+  const currentLocal = readLocalPayload();
+  if (!cloud) return currentLocal;
 
-  return mergePayloads(local, cloud);
+  mergeTombstones(cloud.tombstones);
+  return mergePayloads(currentLocal, cloud.payload);
 }
 
 export function mergePayloads(local: UserDataPayload, cloud: UserDataPayload): UserDataPayload {
@@ -267,12 +337,12 @@ function changesLocalData(payload: UserDataPayload): boolean {
  * dirty flags that merge decisions were based on.
  */
 export async function pushMergedToCloud(userId: string, payload: UserDataPayload): Promise<void> {
-  const { error } = await saveUserData(userId, payload);
-  if (error) return;
-  for (const spec of ENTITY_COLLECTIONS) markSynced(spec.payloadKey);
-  markSynced('habit_logs');
-  markSynced('gamification');
-  markSynced('settings');
+  await enqueueMutation(userId, 'reconciliation', {
+    ...payload,
+    sync_meta: { tombstones: getAllTombstones() },
+  });
+  await refreshPendingCount(userId);
+  await retryPendingSync(userId);
 }
 
 export function saveTasks(tasks: unknown[], userId: string | null): void {

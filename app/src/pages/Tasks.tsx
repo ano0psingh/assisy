@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTaskContext } from '../context/TaskContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useProjectContext } from '../context/ProjectContext';
@@ -6,6 +7,7 @@ import { useGamification } from '../context/GamificationContext';
 import { useDataVersion } from '../context/DataVersionContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
+import { ExpandableModal } from '../components/common/ExpandableModal';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { ClarifyTaskSheet, type ClarifyAction, type ClarifyTaskData } from '../components/tasks/ClarifyTaskSheet';
@@ -24,7 +26,7 @@ import { hapticMedium } from '../lib/haptics';
 import { addLocalDays, getLocalDateString } from '../lib/dateUtils';
 import { Plus, ListFilter, LayoutList, FolderKanban, Target, ChevronDown, ChevronRight, Grid2X2, Flame, Zap, CalendarClock, Coffee, CheckCircle2, Search, X, Inbox } from 'lucide-react';
 import type { Task, TaskCategory, Goal, RecurrencePattern } from '../types';
-import { IconButton } from '../components/ui';
+import { Button } from '../components/ui';
 
 const TASK_BULK_FIELDS: BulkEditField[] = [
   {
@@ -64,6 +66,7 @@ type SmartFilter = 'none' | 'overdue' | 'due_today' | 'due_week' | 'high_priorit
 type TaskPageView = 'all' | 'inbox';
 
 export function Tasks() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { tasks, createTask, updateTask, updateTasks, revertTasks, completeTask, uncompleteTask, deleteTask, deleteTasks, restoreTasks, addToToday, removeFromToday, scheduleTask, unscheduleTask, setTaskInbox, getTodaysTasks, skipOccurrence, pauseRecurring, resumeRecurring } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal, addXPToGoal } = useGoalContext();
   const { projects, createProjectTask, getSubProjectsByProject } = useProjectContext();
@@ -93,7 +96,13 @@ export function Tasks() {
   const [categoryFilter, setCategoryFilter] = usePersistentState<TaskCategory | 'all'>('assisy_tasks_category', 'all');
   const [smartFilter, setSmartFilter] = usePersistentState<SmartFilter>('assisy_tasks_smart', 'none');
   const [viewMode, setViewMode] = usePersistentState<ViewMode>('assisy_tasks_view', 'list');
-  const [pageView, setPageView] = usePersistentState<TaskPageView>('assisy_tasks_page_view', 'all');
+  const pageView: TaskPageView = searchParams.get('view') === 'inbox' ? 'inbox' : 'all';
+  const setPageView = useCallback((nextView: TaskPageView) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextView === 'inbox') next.set('view', 'inbox');
+    else next.delete('view');
+    setSearchParams(next);
+  }, [searchParams, setSearchParams]);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGoals, setExpandedGoals] = usePersistentSet('assisy_tasks_expanded', ['unlinked']);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
@@ -596,7 +605,9 @@ export function Tasks() {
         >
           <Inbox size={16} />
           Inbox
-          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">{inboxCount}</span>
+          {inboxCount > 0 && (
+            <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">{inboxCount}</span>
+          )}
         </button>
       </div>
 
@@ -630,7 +641,8 @@ export function Tasks() {
         )}
       </div>
 
-      {/* Filter bar */}
+      {/* Filter and layout controls do not apply to the clarification queue. */}
+      {pageView === 'all' && (
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <button
@@ -687,7 +699,8 @@ export function Tasks() {
           </span>
         </div>
       </div>
-      {filtersOpen && (
+      )}
+      {pageView === 'all' && filtersOpen && (
         <div className={`card rounded-xl p-3 space-y-3 animate-fade-in`}>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
@@ -764,7 +777,24 @@ export function Tasks() {
       )}
 
       {filteredTasks.length === 0 ? (
-        tasks.length === 0 ? (
+        pageView === 'inbox' && !normalisedQuery ? (
+          <div className="card rounded-2xl p-12 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10">
+              <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+            </div>
+            <p className="font-medium text-slate-800 dark:text-white">Inbox is clear</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-gray-500">
+              New quick captures will wait here until you clarify them.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPageView('all')}
+              className="mt-4 text-sm font-medium text-violet-500 hover:text-violet-400"
+            >
+              View all tasks
+            </button>
+          </div>
+        ) : tasks.length === 0 ? (
           /* Genuinely no data — offer to create, not to clear filters that
              were never set. */
           <div className="card rounded-2xl p-12 text-center">
@@ -810,15 +840,6 @@ export function Tasks() {
                 goalName={task.goalId ? goalMap.get(task.goalId) : undefined}
                 {...selectionProps(task.id)}
               />
-              {!selection.active && (
-                <button
-                  type="button"
-                  onClick={() => handleClarify(task)}
-                  className="min-h-11 w-full rounded-xl border border-violet-200 bg-violet-50 px-4 text-sm font-medium text-violet-700 hover:bg-violet-100 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
-                >
-                  Clarify task
-                </button>
-              )}
             </div>
           ))}
         </div>
@@ -1265,24 +1286,29 @@ export function Tasks() {
         />
       )}
 
-      {/* Move to Project Modal */}
-      {isMoveToProjectOpen && taskToMove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className={`w-full max-w-md rounded-2xl p-6 bg-white dark:bg-[#12121a]`}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-lg font-semibold text-slate-800 dark:text-white`}>
-                Move to Project
-              </h2>
-              <IconButton
-                icon={X}
-                label="Close"
-                size="lg"
-                onClick={() => setIsMoveToProjectOpen(false)}
-              />
-            </div>
-
+      <ExpandableModal
+        isOpen={isMoveToProjectOpen && Boolean(taskToMove)}
+        onClose={() => setIsMoveToProjectOpen(false)}
+        title="Move to Project"
+        icon={<FolderKanban className="h-5 w-5 text-violet-600 dark:text-violet-400" />}
+        maxWidth="max-w-md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setIsMoveToProjectOpen(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              onClick={handleMoveToProject}
+              disabled={!selectedProjectId || !selectedSubProjectId}
+            >
+              Move Task
+            </Button>
+          </div>
+        }
+      >
+        {() => taskToMove ? (
+          <div className="space-y-4 p-6">
             {/* Task being moved */}
-            <div className={`p-3 rounded-xl mb-4 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+            <div className={`p-3 rounded-xl bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
               <p className={`text-sm font-medium text-slate-800 dark:text-white`}>
                 {taskToMove.title}
               </p>
@@ -1354,26 +1380,9 @@ export function Tasks() {
               </div>
             )}
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setIsMoveToProjectOpen(false)}
-                className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleMoveToProject}
-                disabled={!selectedProjectId || !selectedSubProjectId}
-                className={`btn-primary px-4 py-2 rounded-xl ${
-                  (!selectedProjectId || !selectedSubProjectId) ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                Move Task
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        ) : null}
+      </ExpandableModal>
 
       <BulkActionBar
         count={selection.count}

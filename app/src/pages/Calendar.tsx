@@ -15,7 +15,7 @@ import { CalendarTimeGrid } from '../components/calendar/CalendarTimeGrid';
 import { UnscheduledTaskSidebar } from '../components/calendar/UnscheduledTaskSidebar';
 import { ScheduleTaskSheet } from '../components/calendar/ScheduleTaskSheet';
 
-type ViewMode = 'month' | 'week';
+type ViewMode = 'month' | 'week' | 'day';
 
 interface AIScheduleSuggestion {
   taskTitle: string;
@@ -66,6 +66,12 @@ const CATEGORY_DOT_COLOR: Record<string, { dark: string; light: string }> = {
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+function getInitialViewMode(): ViewMode {
+  if (typeof window === 'undefined') return 'month';
+  if (!window.matchMedia('(pointer: coarse)').matches) return 'month';
+  return window.matchMedia('(max-width: 767px)').matches ? 'day' : 'week';
+}
+
 export function Calendar() {
   const { tasks, createTask } = useTaskContext();
   const { getTasksBySubProject, subProjects, projects } = useProjectContext();
@@ -85,7 +91,7 @@ export function Calendar() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date>(today);
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
   const [inlineCreateDate, setInlineCreateDate] = useState<string | null>(null);
   const [inlineCreateTime, setInlineCreateTime] = useState<string | undefined>();
@@ -97,10 +103,12 @@ export function Calendar() {
   const [aiSuggestions, setAiSuggestions] = useState<AIScheduleSuggestion[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const handleAISchedule = useCallback(async () => {
     setAiLoading(true);
     setAiPanelOpen(true);
+    setAiError(null);
     try {
       const pendingTasks = allTasks
         .filter(t =>
@@ -191,6 +199,7 @@ export function Calendar() {
     } catch (err) {
       console.error('AI scheduling failed:', err);
       setAiSuggestions([]);
+      setAiError('Could not generate a schedule. Check your connection or AI settings, then try again.');
     } finally {
       setAiLoading(false);
     }
@@ -271,6 +280,12 @@ export function Calendar() {
     const fmt = (d: Date) => d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
     return `${fmt(start)} – ${fmt(end)}, ${end.getFullYear()}`;
   }, [weekDays]);
+  const visibleScheduleDays = viewMode === 'day' ? [selectedDate] : weekDays;
+  const periodLabel = viewMode === 'month'
+    ? monthLabel
+    : viewMode === 'day'
+      ? selectedDate.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })
+      : weekLabel;
 
   // ── Pre-index tasks by date ──
 
@@ -399,6 +414,20 @@ export function Calendar() {
     setCurrentMonth(next.getMonth());
   };
 
+  const navigateDay = (dir: -1 | 1) => {
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() + dir);
+    setSelectedDate(next);
+    setCurrentYear(next.getFullYear());
+    setCurrentMonth(next.getMonth());
+  };
+
+  const navigatePeriod = (dir: -1 | 1) => {
+    if (viewMode === 'month') navigateMonth(dir);
+    else if (viewMode === 'week') navigateWeek(dir);
+    else navigateDay(dir);
+  };
+
   const goToToday = () => {
     const now = new Date();
     setCurrentYear(now.getFullYear());
@@ -513,7 +542,11 @@ export function Calendar() {
   // ══════════════════════════════════════
 
   return (
-    <div className="flex gap-6">
+    <div
+      className="flex gap-6"
+      onTouchStart={(event) => event.stopPropagation()}
+      onTouchEnd={(event) => event.stopPropagation()}
+    >
       {/* Main content */}
       <div className="flex-1 min-w-0 space-y-6">
         {/* Page header */}
@@ -534,7 +567,7 @@ export function Calendar() {
           <div className="flex items-center justify-between mb-4">
             <button
               aria-label="Previous period"
-              onClick={() => viewMode === 'month' ? navigateMonth(-1) : navigateWeek(-1)}
+              onClick={() => navigatePeriod(-1)}
               className={`p-2 rounded-xl transition-colors hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
             >
               <ChevronLeft className="w-5 h-5" />
@@ -542,7 +575,7 @@ export function Calendar() {
 
             <div className="flex items-center gap-3">
               <span className={`text-lg font-semibold text-slate-800 dark:text-white`}>
-                {viewMode === 'month' ? monthLabel : weekLabel}
+                {periodLabel}
               </span>
               <button
                 onClick={goToToday}
@@ -554,6 +587,16 @@ export function Calendar() {
               </button>
               {/* View mode toggle */}
               <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+                <button
+                  onClick={() => setViewMode('day')}
+                  className={`text-xs font-medium px-3 py-1 transition-colors ${
+                    viewMode === 'day'
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
+                      : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                  }`}
+                >
+                  Day
+                </button>
                 <button
                   onClick={() => setViewMode('month')}
                   className={`text-xs font-medium px-3 py-1 transition-colors ${
@@ -591,7 +634,7 @@ export function Calendar() {
 
             <button
               aria-label="Next period"
-              onClick={() => viewMode === 'month' ? navigateMonth(1) : navigateWeek(1)}
+              onClick={() => navigatePeriod(1)}
               className={`p-2 rounded-xl transition-colors hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
             >
               <ChevronRight className="w-5 h-5" />
@@ -699,7 +742,7 @@ export function Calendar() {
           )}
 
           {/* ── WEEK VIEW ── */}
-          {viewMode === 'week' && (
+          {viewMode !== 'month' && (
             <div className="space-y-4">
               <div className="lg:hidden">
                 <UnscheduledTaskSidebar
@@ -710,7 +753,7 @@ export function Calendar() {
                 />
               </div>
               <CalendarTimeGrid
-                days={weekDays}
+                days={visibleScheduleDays}
                 tasks={allTasks}
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
@@ -718,7 +761,7 @@ export function Calendar() {
                 onSchedule={schedule}
                 onInlineCreate={openInlineCreate}
               />
-              {inlineCreateDate && weekDays.some((day) => getLocalDateString(day) === inlineCreateDate) && (
+              {inlineCreateDate && visibleScheduleDays.some((day) => getLocalDateString(day) === inlineCreateDate) && (
                 <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/20 dark:bg-violet-500/10">
                   <p className="mb-2 text-xs font-medium text-violet-700 dark:text-violet-300">
                     New task · {inlineCreateDate}{inlineCreateTime ? ` at ${inlineCreateTime}` : ''}
@@ -755,6 +798,17 @@ export function Calendar() {
               <div className="flex items-center justify-center py-8 gap-2">
                 <Loader2 className={`w-5 h-5 animate-spin text-amber-500 dark:text-amber-400`} />
                 <span className={`text-sm text-slate-500 dark:text-gray-400`}>Analyzing your energy patterns and tasks…</span>
+              </div>
+            ) : aiError ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center dark:border-red-500/20 dark:bg-red-500/10">
+                <p className="text-sm text-red-700 dark:text-red-300">{aiError}</p>
+                <button
+                  type="button"
+                  onClick={handleAISchedule}
+                  className="mt-3 rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-200"
+                >
+                  Try again
+                </button>
               </div>
             ) : aiSuggestions.filter(s => !s.dismissed).length === 0 ? (
               <p className={`text-sm py-4 text-center text-slate-400 dark:text-gray-500`}>

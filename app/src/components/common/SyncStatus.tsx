@@ -27,10 +27,23 @@ function useOnline(): boolean {
   return online;
 }
 
-/** Unpacks the `count:names:lastSyncedAt` snapshot from the store. */
-function parsePending(summary: string): string[] {
-  const names = summary.split(':')[1] ?? '';
-  return names ? names.split(',') : [];
+interface SyncSummary {
+  pending: string[];
+  outbox: number;
+  syncing: boolean;
+  error: string;
+}
+
+function parseSummary(summary: string): SyncSummary {
+  try {
+    return JSON.parse(summary) as SyncSummary;
+  } catch {
+    return { pending: [], outbox: 0, syncing: false, error: '' };
+  }
+}
+
+function requestSync(): void {
+  window.dispatchEvent(new Event('assisy:sync-request'));
 }
 
 function formatSyncedAt(iso: string | undefined): string {
@@ -53,15 +66,24 @@ export function SyncStatus() {
   // Nothing to report for local-only use: there is no cloud to be behind.
   if (!user?.id) return null;
 
-  const pending = parsePending(summary);
-  const hasPending = pending.length > 0;
+  const stateSummary = parseSummary(summary);
+  const pending = stateSummary.pending;
+  const pendingCount = Math.max(pending.length, stateSummary.outbox);
+  const hasPending = pendingCount > 0;
 
-  const state = !online
+  const state = stateSummary.error && online
+    ? {
+        Icon: TriangleAlert,
+        text: 'Sync issue',
+        title: `${stateSummary.error}. Your data remains saved on this device.`,
+        tone: 'text-red-600 dark:text-red-400',
+      }
+    : !online
     ? {
         Icon: CloudOff,
         text: 'Offline',
         title: hasPending
-          ? `Saved on this device. ${pending.length} change set${pending.length === 1 ? '' : 's'} will sync when you reconnect.`
+          ? `Saved on this device. ${pendingCount} change set${pendingCount === 1 ? '' : 's'} will sync when you reconnect.`
           : 'Saved on this device. Will sync when you reconnect.',
         tone: 'text-amber-600 dark:text-amber-400',
       }
@@ -87,7 +109,7 @@ export function SyncStatus() {
       title={title}
       aria-live="polite"
     >
-      <Icon size={13} className={hasPending && online ? 'animate-spin' : undefined} />
+      <Icon size={13} className={stateSummary.syncing ? 'animate-spin' : undefined} />
       <span className="hidden sm:inline">{text}</span>
       <span className="sr-only">{title}</span>
     </span>
@@ -102,8 +124,9 @@ export function SyncStatusDetail() {
 
   if (!user?.id) return null;
 
-  const pending = parsePending(summary);
-  if (pending.length === 0) {
+  const stateSummary = parseSummary(summary);
+  const pendingCount = Math.max(stateSummary.pending.length, stateSummary.outbox);
+  if (pendingCount === 0 && !stateSummary.error) {
     return (
       <p className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
         <Check size={13} />
@@ -113,13 +136,25 @@ export function SyncStatusDetail() {
   }
 
   return (
-    <p className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+    <div className={`flex items-start gap-2 text-xs ${
+      stateSummary.error ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
+    }`}>
       <TriangleAlert size={13} className="mt-1 flex-shrink-0" />
       <span>
-        {pending.length} change set{pending.length === 1 ? '' : 's'} not yet confirmed in the cloud
-        ({pending.join(', ')}). Your data is saved on this device and will be reconciled on the next
-        sync{online ? '' : ', once you reconnect'}.
+        {stateSummary.error
+          ? `Cloud sync failed: ${stateSummary.error}. Your data is still saved on this device.`
+          : `${pendingCount} change set${pendingCount === 1 ? '' : 's'} not yet confirmed in the cloud.`
+        }
+        {' '}
+        <button
+          type="button"
+          onClick={requestSync}
+          disabled={!online || stateSummary.syncing}
+          className="underline disabled:opacity-50"
+        >
+          {stateSummary.syncing ? 'Retrying…' : 'Retry now'}
+        </button>
       </span>
-    </p>
+    </div>
   );
 }

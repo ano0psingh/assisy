@@ -12,35 +12,38 @@
  * rather than final.
  */
 
-import { ALL_DATA_KEYS, SYNC_COLLECTIONS, safeParse } from './storageKeys';
+import { ALL_DATA_KEYS, SYNC_COLLECTIONS, SYNC_META_KEY, safeParse } from './storageKeys';
 import type { TombstoneMap } from './merge';
 
-const META_KEY = 'assisy_sync_meta';
 const SNAPSHOTS_KEY = 'assisy_snapshots';
 const MAX_SNAPSHOTS = 2;
-/** Deletions older than this are assumed to have propagated everywhere. */
-const TOMBSTONE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
-interface SyncMeta {
+export interface SyncMeta {
   tombstones: Record<string, TombstoneMap>;
   dirty: Record<string, boolean>;
   lastSyncedAt?: string;
+  pendingMutations?: number;
+  syncing?: boolean;
+  error?: string;
 }
 
 const EMPTY_META: SyncMeta = { tombstones: {}, dirty: {} };
 
 function readMeta(): SyncMeta {
-  const meta = safeParse<SyncMeta>(localStorage.getItem(META_KEY), EMPTY_META);
+  const meta = safeParse<SyncMeta>(localStorage.getItem(SYNC_META_KEY), EMPTY_META);
   return {
     tombstones: meta.tombstones ?? {},
     dirty: meta.dirty ?? {},
     lastSyncedAt: meta.lastSyncedAt,
+    pendingMutations: meta.pendingMutations ?? 0,
+    syncing: meta.syncing ?? false,
+    error: meta.error,
   };
 }
 
 function writeMeta(meta: SyncMeta): void {
   try {
-    localStorage.setItem(META_KEY, JSON.stringify(meta));
+    localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
   } catch {
     // Out of quota. Losing this bookkeeping degrades merge accuracy but the
     // union still protects the data itself, so carry on.
@@ -77,7 +80,13 @@ export function subscribeSyncMeta(listener: Listener): () => void {
 export function getPendingSummary(): string {
   const meta = readMeta();
   const pending = Object.keys(meta.dirty).sort();
-  return `${pending.length}:${pending.join(',')}:${meta.lastSyncedAt ?? ''}`;
+  return JSON.stringify({
+    pending,
+    outbox: meta.pendingMutations ?? 0,
+    syncing: meta.syncing ?? false,
+    error: meta.error ?? '',
+    lastSyncedAt: meta.lastSyncedAt ?? '',
+  });
 }
 
 export function getPendingCollections(): string[] {
@@ -86,6 +95,23 @@ export function getPendingCollections(): string[] {
 
 export function getTombstones(collection: string): TombstoneMap {
   return readMeta().tombstones[collection] ?? {};
+}
+
+export function getAllTombstones(): Record<string, TombstoneMap> {
+  return readMeta().tombstones;
+}
+
+export function mergeTombstones(incoming: Record<string, TombstoneMap> | undefined): void {
+  if (!incoming) return;
+  const meta = readMeta();
+  for (const [collection, tombstones] of Object.entries(incoming)) {
+    const current = meta.tombstones[collection] ?? {};
+    for (const [id, tombstone] of Object.entries(tombstones ?? {})) {
+      if (!current[id] || current[id].deletedAt < tombstone.deletedAt) current[id] = tombstone;
+    }
+    meta.tombstones[collection] = current;
+  }
+  writeMeta(meta);
 }
 
 export function isDirty(collection: string): boolean {
@@ -118,23 +144,28 @@ export function markSynced(collection: string): void {
   const meta = readMeta();
   delete meta.dirty[collection];
 
-  const tombstones = meta.tombstones[collection];
-  if (tombstones) {
-    const cutoff = Date.now() - TOMBSTONE_TTL_MS;
-    const kept: TombstoneMap = {};
-    for (const [id, tombstone] of Object.entries(tombstones)) {
-      if (new Date(tombstone.deletedAt).getTime() >= cutoff) kept[id] = tombstone;
-    }
-    if (Object.keys(kept).length > 0) meta.tombstones[collection] = kept;
-    else delete meta.tombstones[collection];
-  }
-
   meta.lastSyncedAt = new Date().toISOString();
+  meta.error = undefined;
   writeMeta(meta);
 }
 
 export function getLastSyncedAt(): string | undefined {
   return readMeta().lastSyncedAt;
+}
+
+export function getSyncState(): Pick<SyncMeta, 'pendingMutations' | 'syncing' | 'error'> {
+  const { pendingMutations, syncing, error } = readMeta();
+  return { pendingMutations, syncing, error };
+}
+
+export function setSyncTransport(
+  update: Pick<SyncMeta, 'pendingMutations' | 'syncing' | 'error'>,
+): void {
+  const meta = readMeta();
+  if (update.pendingMutations !== undefined) meta.pendingMutations = update.pendingMutations;
+  if (update.syncing !== undefined) meta.syncing = update.syncing;
+  if ('error' in update) meta.error = update.error;
+  writeMeta(meta);
 }
 
 export interface Snapshot {

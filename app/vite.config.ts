@@ -43,7 +43,8 @@ export default defineConfig({
     react(),
     localProxyPlugin(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: null,
       includeAssets: ['vite.svg', 'icon-192.svg', 'icon-512.svg'],
       manifest: {
         name: 'Assisy - Level Up Your Life',
@@ -66,8 +67,9 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'supabase-cache', expiration: { maxEntries: 50, maxAgeSeconds: 300 } },
+            // User data, auth, and realtime responses are mutable and must never
+            // be replayed from a service-worker cache.
+            handler: 'NetworkOnly',
           },
         ],
       },
