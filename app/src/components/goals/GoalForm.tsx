@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import type { TaskCategory, Goal } from '../../types';
 import { Target, Pencil } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
@@ -18,24 +18,18 @@ interface GoalFormProps {
   availableParentGoals?: Goal[];
 }
 
-export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParentGoals = [] }: GoalFormProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<TaskCategory>('Personal');
-  const [parentGoalId, setParentGoalId] = useState<string>('');
+export function GoalForm(props: GoalFormProps) {
+  if (!props.isOpen) return null;
+  return <OpenGoalForm key={props.editingGoal?.id ?? 'new-goal'} {...props} />;
+}
+
+function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParentGoals = [] }: GoalFormProps) {
+  const [title, setTitle] = useState(editingGoal?.title ?? '');
+  const [description, setDescription] = useState(editingGoal?.description ?? '');
+  const [category, setCategory] = useState<TaskCategory>(editingGoal?.category ?? 'Personal');
+  const [parentGoalId, setParentGoalId] = useState<string>(editingGoal?.parentGoalId ?? '');
   const [titleError, setTitleError] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editingGoal) {
-      setTitle(editingGoal.title);
-      setDescription(editingGoal.description || '');
-      setCategory(editingGoal.category);
-      setParentGoalId(editingGoal.parentGoalId || '');
-    } else {
-      resetForm();
-    }
-  }, [editingGoal]);
 
   const resetForm = () => {
     setTitle('');
@@ -79,7 +73,7 @@ export function GoalForm({ onSubmit, onCancel, isOpen, editingGoal, availablePar
   const titleField = (
     <TextField
       ref={titleInputRef}
-      label="Goal Title *"
+      label="Goal name *"
       type="text"
       value={title}
       onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}

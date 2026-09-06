@@ -5,10 +5,11 @@ import { askAI, isAIConfigured } from '../../lib/ai';
 import { GoalTree } from './GoalTree';
 import {
   Target, Plus, Link2, Unlink, Check, BookOpen, ExternalLink,
-  X, Sparkles, Loader2, Trophy, Flame,
+  X, Sparkles, Loader2, Trophy, Flame, Pencil,
 } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { TiptapEditor } from '../common/TiptapEditor';
+import { TextField } from '../ui';
 
 const THEME_OPTIONS: { value: GoalTheme; color: string; label: string }[] = [
   { value: 'forest', color: '#22C55E', label: 'Forest' },
@@ -55,6 +56,7 @@ export function GoalDetail({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(goal.title);
   const [editDescription, setEditDescription] = useState(goal.description || '');
+  const [editTitleError, setEditTitleError] = useState('');
 
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
   const [msTitle, setMsTitle] = useState('');
@@ -103,13 +105,33 @@ export function GoalDetail({
         })
         .slice(0, 5);
     } catch { return []; }
-  }, [goal.id, goal.title, goal.description, linkedArticles]);
+  }, [goal.title, goal.description, linkedArticles]);
 
   const handleSaveEdit = () => {
+    const title = editTitle.trim();
+    if (!title) {
+      setEditTitleError('Enter a name for this goal.');
+      return;
+    }
     onUpdateGoal(goal.id, {
-      title: editTitle.trim(),
+      title,
       description: editDescription.trim(),
     });
+    setEditTitleError('');
+    setIsEditing(false);
+  };
+
+  const startEditing = () => {
+    setEditTitle(goal.title);
+    setEditDescription(goal.description || '');
+    setEditTitleError('');
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditTitle(goal.title);
+    setEditDescription(goal.description || '');
+    setEditTitleError('');
     setIsEditing(false);
   };
 
@@ -635,7 +657,7 @@ export function GoalDetail({
 
   const editButtons = isEditing ? (
     <div className="flex justify-end space-x-2">
-      <button onClick={() => setIsEditing(false)} className={`px-4 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}>Cancel</button>
+      <button onClick={cancelEditing} className={`px-4 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}>Cancel</button>
       <button onClick={handleSaveEdit} className="btn-primary px-4 py-2 rounded-lg text-sm">Save Changes</button>
     </div>
   ) : null;
@@ -655,20 +677,37 @@ export function GoalDetail({
             <div className={`flex-1 flex flex-col p-8 space-y-6 border-r overflow-y-auto border-slate-200 dark:border-white/10`}>
               {treeSection}
               {themeSelector}
-              <div>
+              <div className="flex items-center justify-between gap-3">
                 <p className={`text-sm mb-1 text-slate-500 dark:text-gray-500`}>{goal.category} &bull; {goal.status}</p>
+                {!isEditing && (
+                  <button
+                    type="button"
+                    onClick={startEditing}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                  >
+                    <Pencil size={13} />
+                    Rename goal
+                  </button>
+                )}
               </div>
               <div className="flex-1">
-                <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
+                {!isEditing && (
+                  <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
+                )}
                 {isEditing ? (
                   <>
-                    <input
-                      type="text"
+                    <TextField
+                      label="Goal name"
                       value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      className={`w-full px-4 py-3 mb-4 rounded-xl border outline-none bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white`}
+                      onChange={(e) => {
+                        setEditTitle(e.target.value);
+                        if (editTitleError) setEditTitleError('');
+                      }}
+                      error={editTitleError || undefined}
+                      className="mb-4"
                       autoFocus
                     />
+                    <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
                     <TiptapEditor
                       content={editDescription}
                       onChange={setEditDescription}
@@ -679,7 +718,7 @@ export function GoalDetail({
                 ) : (
                   <p
                     className={`cursor-pointer hover:opacity-80 whitespace-pre-wrap text-slate-700 dark:text-gray-300`}
-                    onClick={() => setIsEditing(true)}
+                    onClick={startEditing}
                   >
                     {goal.description || 'Click to add a description...'}
                   </p>
@@ -702,20 +741,37 @@ export function GoalDetail({
           <div className="p-6 space-y-6">
             {treeSection}
             {themeSelector}
-            <div>
+            <div className="flex items-center justify-between gap-3">
               <p className={`text-sm mb-1 text-slate-500 dark:text-gray-500`}>{goal.category} &bull; {goal.status}</p>
+              {!isEditing && (
+                <button
+                  type="button"
+                  onClick={startEditing}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                >
+                  <Pencil size={13} />
+                  Rename goal
+                </button>
+              )}
             </div>
             <div>
-              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
+              {!isEditing && (
+                <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
+              )}
               {isEditing ? (
                 <>
-                  <input
-                    type="text"
+                  <TextField
+                    label="Goal name"
                     value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className={`w-full px-4 py-3 mb-3 rounded-xl border outline-none bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white`}
+                    onChange={(e) => {
+                      setEditTitle(e.target.value);
+                      if (editTitleError) setEditTitleError('');
+                    }}
+                    error={editTitleError || undefined}
+                    className="mb-3"
                     autoFocus
                   />
+                  <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Description</label>
                   <TiptapEditor
                     content={editDescription}
                     onChange={setEditDescription}
@@ -726,7 +782,7 @@ export function GoalDetail({
               ) : (
                 <p
                   className={`cursor-pointer hover:opacity-80 whitespace-pre-wrap text-slate-700 dark:text-gray-300`}
-                  onClick={() => setIsEditing(true)}
+                  onClick={startEditing}
                 >
                   {goal.description || 'Click to add a description...'}
                 </p>
