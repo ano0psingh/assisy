@@ -29,7 +29,7 @@ async function callGroq(
   messages.push({ role: 'user', content: prompt });
 
   const body: Record<string, unknown> = {
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-20b',
     messages,
     temperature,
   };
@@ -66,7 +66,7 @@ async function callGemini(
   if (jsonMode) config.responseMimeType = 'application/json';
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-lite',
+    model: 'gemini-3.5-flash-lite',
     contents: prompt,
     config,
   });
@@ -103,19 +103,20 @@ export async function askAI(
         msg.includes('RESOURCE_EXHAUSTED') ||
         msg.includes('rate_limit');
 
+      // A configured fallback should be attempted immediately for provider
+      // outages, retired models, and exhausted quotas alike.
+      if (GROQ_KEY && GEMINI_KEY) {
+        try {
+          return await callGemini(prompt, options);
+        } catch {
+          // Both failed; retain the primary provider's error and retry policy.
+        }
+      }
+
       if (isRateLimit && attempt < maxRetries) {
         const waitSec = GROQ_KEY ? 10 : 60;
         await delay(waitSec * 1000);
         continue;
-      }
-
-      // If Groq failed (non-rate-limit) and Gemini is available, try Gemini
-      if (GROQ_KEY && GEMINI_KEY && !isRateLimit) {
-        try {
-          return await callGemini(prompt, options);
-        } catch {
-          // Both failed, throw the original
-        }
       }
 
       throw err;

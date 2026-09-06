@@ -115,7 +115,7 @@ async function summarizeViaGroq(content: string, title: string, source: string, 
       'Authorization': `Bearer ${GROQ_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-20b',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: buildPrompt(title, source, content, goalTitles) },
@@ -140,7 +140,7 @@ async function summarizeViaGemini(content: string, title: string, source: string
   const ai = new GoogleGenAI({ apiKey: GEMINI_KEY! });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-lite',
+    model: 'gemini-3.5-flash-lite',
     contents: buildPrompt(title, source, content, goalTitles),
     config: {
       systemInstruction: SYSTEM_PROMPT,
@@ -171,6 +171,15 @@ export async function summarizeArticle(
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('rate_limit');
+      if (GROQ_KEY && GEMINI_KEY) {
+        try {
+          return mapToLegacy(
+            await summarizeViaGemini(content, title, source, goalTitles),
+          );
+        } catch {
+          // Both providers failed; continue with the primary retry policy.
+        }
+      }
       if (isRateLimit && attempt < maxRetries) {
         const waitSec = GROQ_KEY ? 10 : 60;
         console.log(`Rate limited, waiting ${waitSec}s before retry (attempt ${attempt + 1}/${maxRetries})...`);
