@@ -89,14 +89,14 @@ export function HabitCard({
 
   if (compact && habit.trackingType === 'boolean') {
     return (
-      <div className="relative inline-flex items-center" ref={menuRef} data-focus-id={habit.id}>
+      <div className="relative inline-flex min-w-[11rem] items-stretch" ref={menuRef} data-focus-id={habit.id}>
         <button
           type="button"
           onClick={selectionMode ? () => onSelectToggle?.(habit.id) : handleBooleanToggle}
           {...(selectionMode
             ? { role: 'checkbox' as const, 'aria-checked': isSelected, 'aria-label': `Select "${habit.name}"` }
             : {})}
-          className={`inline-flex min-h-11 items-center gap-2 rounded-l-[var(--radius-md)] border-r-0 py-2 pl-3 pr-2 text-sm font-medium transition-colors duration-200 select-none ${
+          className={`inline-flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-l-[var(--radius-sm)] border-r-0 py-2 pl-3 pr-2 text-left text-sm font-medium transition-colors duration-200 select-none ${
             selectionMode && isSelected
               ? 'bg-[var(--action-soft)] text-[var(--action)] border border-[var(--action)]'
               : isCompleted
@@ -107,15 +107,15 @@ export function HabitCard({
           {selectionMode ? (
             <SelectionIndicator selected={isSelected} className="w-4 h-4" />
           ) : (
-            <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+            <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] border transition-colors ${
               isCompleted
-                ? 'bg-[var(--success)] text-[var(--ink-inverse)]'
-                : 'bg-[var(--surface-inset)]'
+                ? 'border-[var(--success)] bg-[var(--success)] text-[var(--ink-inverse)]'
+                : 'border-[var(--rule-strong)] bg-[var(--surface-inset)] text-[var(--ink-muted)]'
             }`}>
-              {isCompleted && <Check size={10} strokeWidth={3} />}
+              {isCompleted ? <Check size={12} strokeWidth={3} /> : <span className="h-1.5 w-1.5 bg-current" />}
             </span>
           )}
-          {habit.name}
+          <span className="truncate">{habit.name}</span>
           {habit.streakCount > 0 && (
             <span className={`text-xs font-bold ${habit.streakCount >= 7 ? 'text-[var(--warning)]' : 'text-[var(--warning)]'}`}>
               <Flame size={10} className="inline" />{habit.streakCount}
@@ -128,7 +128,7 @@ export function HabitCard({
           aria-label={`More actions for ${habit.name}`}
           aria-expanded={menuOpen}
           aria-haspopup="true"
-          className={`inline-flex min-h-11 items-center rounded-r-[var(--radius-md)] border-l-0 px-2 py-2 text-sm transition-colors ${
+          className={`inline-flex min-h-11 min-w-10 items-center justify-center rounded-r-[var(--radius-sm)] border-l-0 px-2 py-2 text-sm transition-colors ${
             isCompleted
               ? 'bg-[var(--success-soft)] text-[var(--success)] border border-[var(--success)] hover:text-[var(--success)]'
               : 'border border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--ink)]'
@@ -137,22 +137,16 @@ export function HabitCard({
           <MoreHorizontal size={14} />
         </button>
         {menuOpen && (
-          <div className={`absolute left-0 top-full mt-1 z-50 rounded-md overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.18)] min-w-[120px] ${
-            'bg-[var(--surface)] border border-[var(--rule)]'
-          }`}>
+          <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] overflow-hidden rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] shadow-[var(--shadow-elevated)]">
             <button
               onClick={() => { onEdit(habit); setMenuOpen(false); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                'text-[var(--ink-secondary)] hover:bg-[var(--surface)]'
-              }`}
+              className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
             >
               <Pencil size={14} /> Edit
             </button>
             <button
               onClick={() => { onDelete(habit.id); setMenuOpen(false); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                'text-[var(--danger)] hover:bg-[var(--danger-soft)]'
-              }`}
+              className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-sm text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
             >
               <Trash2 size={14} /> Delete
             </button>
@@ -166,13 +160,13 @@ export function HabitCard({
     <div
       data-focus-id={habit.id}
       onClick={selectionMode ? () => onSelectToggle?.(habit.id) : undefined}
-      className={`border p-3 transition-colors duration-200 ${selectionMode ? 'cursor-pointer' : ''} ${
+      className={`border px-3 py-2 transition-colors duration-200 ${selectionMode ? 'cursor-pointer' : ''} ${
         isSelected
           ? 'bg-[var(--selected)] border border-[var(--action)]'
           : `border-[var(--rule)] bg-[var(--surface-raised)] ${isCompleted ? 'border-[var(--success)] bg-[var(--success-soft)]' : 'hover:bg-[var(--state-hover)]'}`
       }`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-h-12 items-center gap-3">
         {selectionMode ? (
           <SelectionCheckbox
             selected={isSelected}
@@ -184,10 +178,10 @@ export function HabitCard({
           <button
             type="button"
             onClick={habit.trackingType === 'boolean' ? handleBooleanToggle : undefined}
-            className={`w-7 h-7 min-h-0 rounded-sm flex items-center justify-center flex-shrink-0 transition-all ${
+            className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] border transition-colors ${
               isCompleted
-                ? 'bg-[var(--success)] text-[var(--ink-inverse)]'
-                : 'border border-[var(--rule-strong)] bg-[var(--surface-inset)] text-[var(--ink-muted)]'
+                ? 'border-[var(--success)] bg-[var(--success)] text-[var(--ink-inverse)]'
+                : 'border-[var(--rule-strong)] bg-[var(--surface-inset)] text-[var(--ink-muted)] hover:border-[var(--action)] hover:bg-[var(--action-soft)] hover:text-[var(--action)]'
             } ${habit.trackingType === 'boolean' ? 'cursor-pointer' : 'cursor-default'}`}
           >
             {isCompleted ? <Check size={14} strokeWidth={2.5} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
@@ -223,34 +217,36 @@ export function HabitCard({
         </div>
 
         {habit.trackingType !== 'boolean' && !selectionMode && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <IconButton
-              icon={Minus}
+          <div className="flex flex-shrink-0 items-stretch overflow-hidden rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface)]">
+            <button
+              type="button"
               onClick={handleDecrement}
-              label={`Decrease ${habit.name}`}
-              className="bg-[var(--surface-subtle)] hover:bg-[var(--surface-inset)]"
-            />
+              aria-label={`Decrease ${habit.name}`}
+              className="flex min-h-11 min-w-11 items-center justify-center text-[var(--ink-muted)] transition-colors hover:bg-[var(--state-hover)] hover:text-[var(--ink)]"
+            >
+              <Minus size={16} />
+            </button>
             <div className="relative">
               <input
                 type="number"
                 value={inputValue}
                 onChange={handleInputChange}
                 aria-label={`${habit.name} progress today`}
-                className={`w-11 h-9 text-center rounded-sm text-sm font-medium ${
-                  'bg-[var(--surface-subtle)] text-[var(--ink)] border border-[var(--rule)]'
-                } outline-none`}
+                className="h-11 w-14 border-x border-[var(--rule)] bg-[var(--surface-inset)] text-center font-mono text-sm font-semibold tabular-nums text-[var(--ink)] outline-none focus:bg-[var(--surface-raised)]"
                 min="0"
               />
               {habit.trackingType === 'duration' && (
                 <span className={`absolute right-0.5 top-1/2 -translate-y-1/2 text-xs text-[var(--ink-muted)]`}>m</span>
               )}
             </div>
-            <IconButton
-              icon={Plus}
+            <button
+              type="button"
               onClick={handleIncrement}
-              label={`Increase ${habit.name}`}
-              className="bg-[var(--surface-subtle)] hover:bg-[var(--surface-inset)]"
-            />
+              aria-label={`Increase ${habit.name}`}
+              className="flex min-h-11 min-w-11 items-center justify-center bg-[var(--action-soft)] text-[var(--action)] transition-colors hover:bg-[var(--selected)]"
+            >
+              <Plus size={16} />
+            </button>
           </div>
         )}
 
@@ -263,22 +259,16 @@ export function HabitCard({
             aria-haspopup="true"
           />
           {menuOpen && (
-            <div className={`absolute right-0 top-full mt-1 z-50 rounded-md overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.18)] min-w-[120px] ${
-              'bg-[var(--surface)] border border-[var(--rule)]'
-            }`}>
+            <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] overflow-hidden rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] shadow-[var(--shadow-elevated)]">
               <button
                 onClick={() => { onEdit(habit); setMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                  'text-[var(--ink-secondary)] hover:bg-[var(--surface)]'
-                }`}
+                className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
               >
                 <Pencil size={14} /> Edit
               </button>
               <button
                 onClick={() => { onDelete(habit.id); setMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                  'text-[var(--danger)] hover:bg-[var(--danger-soft)]'
-                }`}
+                className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-sm text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
               >
                 <Trash2 size={14} /> Delete
               </button>

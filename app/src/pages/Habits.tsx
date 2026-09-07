@@ -375,7 +375,7 @@ export function Habits() {
         </div>
         <div className="mt-3 flex items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden bg-[var(--surface-inset)]" role="progressbar" aria-label="Today's habit progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={todayProgress}>
-            <div className="h-full bg-[var(--warning)] transition-[width]" style={{ width: `${todayProgress}%` }} />
+            <div className="h-full bg-[var(--action)] transition-[width]" style={{ width: `${todayProgress}%` }} />
           </div>
           <span className="w-10 text-right font-mono text-xs tabular-nums text-[var(--ink-muted)]">{todayProgress}%</span>
         </div>
@@ -409,19 +409,19 @@ export function Habits() {
             const trackedHabits = goalHabits.filter(h => h.trackingType !== 'boolean');
 
             return (
-              <div key={goal.id} className="space-y-2">
+              <section key={goal.id} className="space-y-2">
                 <button
                   onClick={() => toggleGroup(goal.id)}
-                  className="w-full flex items-center gap-3 px-1 py-1"
+                  className="flex min-h-14 w-full items-center gap-3 border-y border-[var(--rule)] bg-[var(--surface-subtle)] px-3 py-2 text-left transition-colors hover:bg-[var(--state-hover)]"
                 >
                   <div className="w-8 h-8 flex-shrink-0">
                     <GoalTreeThumbnail level={goal.level} theme={goal.theme} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <span className={`text-sm font-semibold block truncate text-[var(--ink-secondary)]`}>
+                    <span className="block truncate text-sm font-semibold text-[var(--ink)]">
                       {goal.title}
                     </span>
-                    <span className={`text-xs text-[var(--ink-muted)]`}>
+                    <span className="font-mono text-xs text-[var(--ink-muted)]">
                       Lv.{goal.level} · {goalHabits.length} remaining
                     </span>
                   </div>
@@ -432,7 +432,7 @@ export function Habits() {
                 </button>
 
                 {!isCollapsed && (
-                  <div className="space-y-2 pl-1">
+                  <div className="space-y-2">
                     {booleanHabits.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-1">
                         {booleanHabits.map(habit => (
@@ -460,25 +460,25 @@ export function Habits() {
                     ))}
                   </div>
                 )}
-              </div>
+              </section>
             );
           })}
 
           {/* Unlinked habits (no goal) */}
           {unlinkedPending.length > 0 && (
-            <div className="space-y-2">
+            <section className="space-y-2">
               <button
                 onClick={() => toggleGroup('__unlinked')}
-                className="w-full flex items-center gap-3 px-1 py-1"
+                className="flex min-h-14 w-full items-center gap-3 border-y border-[var(--rule)] bg-[var(--surface-subtle)] px-3 py-2 text-left transition-colors hover:bg-[var(--state-hover)]"
               >
                 <div className={`w-8 h-8 rounded-sm flex items-center justify-center flex-shrink-0 bg-[var(--surface-subtle)]`}>
                   <Layers size={14} className={'text-[var(--ink-muted)]'} />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <span className={`text-sm font-semibold block text-[var(--ink-muted)]`}>
+                  <span className="block text-sm font-semibold text-[var(--ink)]">
                     General Habits
                   </span>
-                  <span className={`text-xs text-[var(--ink-muted)]`}>
+                  <span className="font-mono text-xs text-[var(--ink-muted)]">
                     Not linked to a goal · {unlinkedPending.length} remaining
                   </span>
                 </div>
@@ -489,7 +489,7 @@ export function Habits() {
               </button>
 
               {!collapsedGroups.has('__unlinked') && (
-                <div className="space-y-2 pl-1">
+                <div className="space-y-2">
                   {unlinkedPending.filter(h => h.trackingType === 'boolean').length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-1">
                       {unlinkedPending.filter(h => h.trackingType === 'boolean').map(habit => (
@@ -517,15 +517,15 @@ export function Habits() {
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           )}
 
           {/* Completed section */}
           {completedHabits.length > 0 && (
-            <div>
+            <section>
               <button
                 onClick={() => setShowCompleted(!showCompleted)}
-                className="w-full flex items-center gap-3 px-1 py-1"
+                className="flex min-h-14 w-full items-center gap-3 border-y border-[var(--success)] bg-[var(--success-soft)] px-3 py-2 text-left transition-colors hover:bg-[var(--state-hover)]"
               >
                 <div className={`w-8 h-8 rounded-sm flex items-center justify-center flex-shrink-0 bg-[var(--success-soft)]`}>
                   <CheckCircle2 size={14} className={'text-[var(--success)]'} />
@@ -543,7 +543,7 @@ export function Habits() {
               </button>
 
               {showCompleted && (
-                <div className="space-y-2 pl-1 mt-2">
+                <div className="mt-2 space-y-2">
                   {completedHabits.filter(h => h.trackingType === 'boolean').length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-1">
                       {completedHabits.filter(h => h.trackingType === 'boolean').map(habit => (
@@ -571,7 +571,7 @@ export function Habits() {
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           )}
 
           {/* All-done celebration */}
