@@ -18,6 +18,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { SelectButton } from '../components/common/SelectionControls';
+import { Button } from '../components/ui';
 import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
 import { pluralise } from '../lib/bulkUpdate';
@@ -333,33 +334,37 @@ export function Habits() {
     <div ref={containerRef} className="space-y-5">
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
 
-      <div className="border-b-2 border-[var(--ink)] pb-3">
+      <header className="border-b-2 border-[var(--ink)] pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-lg font-bold tracking-[-0.015em] text-[var(--ink)]">Habits</h2>
-            <p className="mt-1 font-mono text-xs tabular-nums text-[var(--ink-muted)]">
-              {todayCompletedCount}/{totalHabits} FILED TODAY
+            <h1 className="text-2xl font-bold tracking-[-0.025em] text-[var(--ink)]">Habit desk</h1>
+            <p className="mt-1 text-sm text-[var(--ink-secondary)]">
+              Keep today’s practices moving, then review the pattern.
+            </p>
+            <p className="mt-2 font-mono text-xs tabular-nums text-[var(--ink-muted)]">
+              TODAY · {todayCompletedCount}/{totalHabits} FILED
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
+            <Button
+              variant="secondary"
+              icon={BookOpen}
               onClick={() => setIsCheckInOpen(true)}
-              className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
+              className={`${
                 checkedInToday
-                  ? 'border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)]'
-                  : 'btn-secondary'
+                  ? '!border-[var(--success)] !bg-[var(--success-soft)] !text-[var(--success)]'
+                  : ''
               }`}
             >
-              <BookOpen size={14} />
               {checkedInToday ? 'Update Check-In' : 'Daily Check-In'}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              icon={Plus}
               onClick={() => setIsHabitFormOpen(true)}
-              className="btn-primary flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium"
             >
-              <Plus size={14} />
               New Habit
-            </button>
+            </Button>
             {habits.length > 0 && (
               <SelectButton
                 active={selection.active}
@@ -374,7 +379,7 @@ export function Habits() {
           </div>
           <span className="w-10 text-right font-mono text-xs tabular-nums text-[var(--ink-muted)]">{todayProgress}%</span>
         </div>
-      </div>
+      </header>
 
       {/* Habits grouped by goal */}
       {habits.length === 0 ? (
@@ -615,143 +620,150 @@ export function Habits() {
         }
 
         return (
-          <div className="grid grid-cols-3 divide-x divide-[var(--rule)] border-y border-[var(--rule-strong)] bg-[var(--surface)]">
-            <div className="bg-[var(--warning-soft)] p-4">
-              <Trophy size={14} className={`mb-2 ${currentStreak > 0 ? 'text-[var(--warning)]' : 'text-[var(--warning)]'}`} />
+          <section aria-label="Habit performance" className="grid grid-cols-3 divide-x divide-[var(--rule)] border border-[var(--rule-strong)] bg-[var(--surface-raised)]">
+            <div className="border-t-2 border-[var(--warning)] p-4">
+              <Trophy size={16} className="mb-3 text-[var(--warning)]" />
               <div className={`text-xl font-black tabular-nums ${currentStreak > 0 ? 'text-[var(--warning)]' : 'text-[var(--ink-disabled)]'}`}>
                 {currentStreak}<span className="text-xs font-semibold ml-1">d</span>
               </div>
-              <div className={`text-xs mt-1 font-medium text-[var(--warning)]/50`}>Perfect streak</div>
+              <div className="mt-1 text-xs font-medium text-[var(--ink-muted)]">Perfect streak</div>
             </div>
-            <div className="p-4">
-              <Calendar size={14} className="mb-2 text-[var(--action)]" />
+            <div className="border-t-2 border-[var(--action)] p-4">
+              <Calendar size={16} className="mb-3 text-[var(--action)]" />
               <div className={`text-xl font-black tabular-nums ${rate7 >= 80 ? 'text-[var(--success)]' : rate7 >= 50 ? 'text-[var(--action)]' : 'text-[var(--ink-muted)]'}`}>
                 {rate7}<span className="text-xs font-semibold ml-1">%</span>
               </div>
               <div className="mt-1 text-xs font-medium text-[var(--ink-muted)]">Last 7 days</div>
             </div>
-            <div className="bg-[var(--success-soft)] p-4">
-              <TrendingUp size={14} className={`mb-2 text-[var(--success)]`} />
-              <div className={`text-xl font-black tabular-nums ${rate30 >= 80 ? 'text-[var(--success)]' : rate30 >= 50 ? ('text-[var(--success)]') : ('text-[var(--ink-muted)]')}`}>
+            <div className="border-t-2 border-[var(--success)] p-4 max-sm:pr-14">
+              <TrendingUp size={16} className="mb-3 text-[var(--success)]" />
+              <div className={`text-xl font-black tabular-nums ${rate30 >= 50 ? 'text-[var(--success)]' : 'text-[var(--ink-muted)]'}`}>
                 {rate30}<span className="text-xs font-semibold ml-1">%</span>
               </div>
-              <div className={`text-xs mt-1 font-medium text-[var(--success)]/50`}>Last 30 days</div>
+              <div className="mt-1 text-xs font-medium text-[var(--ink-muted)]">Last 30 days</div>
             </div>
-          </div>
+          </section>
         );
       })()}
 
-      {/* Activity heatmap */}
+      {/* Activity and consistency */}
       {habits.length > 0 && (
-        <div className="space-y-4 border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-            <h2 className={`font-semibold text-[var(--ink)]`}>
-              Activity
-            </h2>
-            <select
-              value={activityFilter}
-              onChange={(e) => setActivityFilter(e.target.value)}
-              className="px-3 py-2 text-sm input rounded-sm"
-            >
-              <option value="">All Habits</option>
-              {goalGroupsForFilter.length > 0 && (
-                <optgroup label="By Goal">
-                  {goalGroupsForFilter.map(([goalId, { title, count }]) => (
-                    <option key={goalId} value={`goal:${goalId}`}>{title} ({count})</option>
+        <section aria-label="Habit history" className="grid gap-4 lg:grid-cols-[minmax(22rem,0.9fr)_minmax(0,1.1fr)]">
+          <div className="border border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-5">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--ink)]">Activity record</h2>
+                <p className="mt-1 text-xs text-[var(--ink-muted)]">Eighteen weeks of completed practice.</p>
+              </div>
+              <select
+                aria-label="Filter activity record"
+                value={activityFilter}
+                onChange={(e) => setActivityFilter(e.target.value)}
+                className="input px-3 py-2 text-sm"
+              >
+                <option value="">All Habits</option>
+                {goalGroupsForFilter.length > 0 && (
+                  <optgroup label="By Goal">
+                    {goalGroupsForFilter.map(([goalId, { title, count }]) => (
+                      <option key={goalId} value={`goal:${goalId}`}>{title} ({count})</option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="Individual Habits">
+                  {habits.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
                   ))}
                 </optgroup>
-              )}
-              <optgroup label="Individual Habits">
-                {habits.map(h => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
-                ))}
-              </optgroup>
-            </select>
-          </div>
-          <ContributionGraph 
-            logs={allHabitLogs} 
-            weeks={12}
-            maxValue={filteredHabitsForGraph.length === 1 ? undefined : filteredHabitsForGraph.length}
-          />
-        </div>
-      )}
-
-      {/* Per-habit 30-day completion bars */}
-      {habits.length > 0 && (
-        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
-          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-[var(--ink-muted)]`}>
-            30-day consistency
-          </h3>
-          <div className="space-y-3">
-            {[...habits]
-              .map(h => {
-                const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
-                const last30 = h.logs.filter(l => new Date(l.date) >= cutoff);
-                const threshold = h.dailyTarget || 1;
-                const completedDays = last30.filter(l => l.value >= threshold).length;
-                return { h, pct: Math.round((completedDays / 30) * 100), completedDays };
-              })
-              .sort((a, b) => b.pct - a.pct)
-              .map(({ h, pct, completedDays }) => (
-                <div key={h.id} className="flex items-center gap-3">
-                  <span className={`text-xs w-28 truncate flex-shrink-0 text-[var(--ink-secondary)]`}>{h.name}</span>
-                  <div className={`flex-1 h-2.5 rounded-full overflow-hidden bg-[var(--surface-subtle)]`}>
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${
-                        // A habit with nothing logged has no track record to judge, so
-                        // it reads as neutral. It was previously red, which told anyone
-                        // who had just created a habit they were already failing it.
-                        completedDays === 0
-                          ? ('bg-[var(--rule-strong)]')
-                          : pct >= 80 ? 'bg-[var(--success)]' : pct >= 50 ? 'bg-[var(--warning)]' : pct >= 20 ? 'bg-[var(--warning-soft)]0' : 'bg-[var(--warning-soft)]0/60'
-                      }`}
-                      style={{ width: `${Math.max(pct, 2)}%` }}
-                    />
-                  </div>
-                  <span className={`text-xs font-semibold tabular-nums w-12 text-right flex-shrink-0 ${
-                    pct >= 80 ? 'text-[var(--success)]' : pct >= 50 ? ('text-[var(--warning)]') : ('text-[var(--ink-muted)]')
-                  }`}>{completedDays}/30</span>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
-      {/* AI Habit Insights */}
-      {isAIConfigured() && habits.length > 0 && (
-        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
-          {/* No bottom margin until there is something below it, so the card is a
-              single row until insights are actually generated. */}
-          <div className={`flex items-center justify-between ${aiInsights || insightsError || insightsLoading ? 'mb-4' : ''}`}>
-            <h2 className={`font-semibold flex items-center gap-2 text-[var(--ink)]`}>
-              <Sparkles size={18} className="text-[var(--action)]" />
-              AI Habit Insights
-            </h2>
-            <button
-              onClick={handleGenerateInsights}
-              disabled={insightsLoading}
-              className="flex items-center gap-2 rounded-md border border-[var(--action)] bg-[var(--action-soft)] px-4 py-2 text-sm font-medium text-[var(--action)] transition-colors hover:bg-[var(--selected)] disabled:opacity-50"
-            >
-              {insightsLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-              {insightsLoading ? 'Analyzing...' : 'Generate Insights'}
-            </button>
-          </div>
-          {insightsError && (
-            <div className={`flex items-center gap-2 text-sm p-3 rounded-sm bg-[var(--danger-soft)] text-[var(--danger)]`}>
-              <AlertTriangle size={14} />
-              {insightsError}
+              </select>
             </div>
-          )}
-          {aiInsights && (
-            <div
-              className={`text-sm leading-relaxed space-y-1 text-[var(--ink-secondary)]`}
-              dangerouslySetInnerHTML={{ __html: formatAIText(aiInsights) }}
+            <ContributionGraph
+              logs={allHabitLogs}
+              weeks={18}
+              maxValue={filteredHabitsForGraph.length === 1 ? undefined : filteredHabitsForGraph.length}
             />
-          )}
-          {/* The removed line here told the reader to click the button sitting
-              next to it, which the heading and the button label already convey. */}
-        </div>
+          </div>
+
+          <div className="border border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-5">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-[var(--ink)]">30-day consistency</h2>
+              <p className="mt-1 text-xs text-[var(--ink-muted)]">Days each habit met its daily target.</p>
+            </div>
+            <div className="divide-y divide-[var(--rule)]">
+              {[...habits]
+                .map(h => {
+                  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+                  const last30 = h.logs.filter(l => new Date(l.date) >= cutoff);
+                  const threshold = h.dailyTarget || 1;
+                  const completedDays = last30.filter(l => l.value >= threshold).length;
+                  return { h, pct: Math.round((completedDays / 30) * 100), completedDays };
+                })
+                .sort((a, b) => b.pct - a.pct)
+                .map(({ h, pct, completedDays }) => (
+                  <div key={h.id} className="grid min-h-11 grid-cols-[minmax(7rem,10rem)_1fr_auto] items-center gap-3 py-2">
+                    <span className="truncate text-sm font-medium text-[var(--ink-secondary)]">{h.name}</span>
+                    <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-inset)]">
+                      <div
+                        className={`h-full rounded-full transition-[width] duration-700 ${
+                          completedDays === 0
+                            ? 'bg-[var(--rule-strong)]'
+                            : pct >= 80
+                              ? 'bg-[var(--success)]'
+                              : pct >= 50
+                                ? 'bg-[var(--action)]'
+                                : 'bg-[var(--warning)]'
+                        }`}
+                        style={{ width: `${Math.max(pct, 2)}%` }}
+                      />
+                    </div>
+                    <span className={`w-12 flex-shrink-0 text-right font-mono text-xs font-semibold tabular-nums ${
+                      pct >= 80 ? 'text-[var(--success)]' : pct >= 50 ? 'text-[var(--action)]' : 'text-[var(--ink-muted)]'
+                    }`}>{completedDays}/30</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </section>
       )}
+
+      <section aria-label="Habit coaching and metrics" className={`grid gap-4 ${isAIConfigured() && habits.length > 0 ? 'lg:grid-cols-2' : ''}`}>
+        {/* AI Habit Insights */}
+        {isAIConfigured() && habits.length > 0 && (
+          <div className="border border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-5">
+            <div className={`flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center ${aiInsights || insightsError || insightsLoading ? 'mb-4' : ''}`}>
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--ink)]">
+                  <Sparkles size={18} className="text-[var(--action)]" />
+                  Coach’s desk
+                </h2>
+                <p className="mt-1 text-xs text-[var(--ink-muted)]">Pattern-based suggestions from your recent logs.</p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleGenerateInsights}
+                disabled={insightsLoading}
+              >
+                {insightsLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {insightsLoading ? 'Analyzing...' : 'Generate insights'}
+              </Button>
+            </div>
+            {insightsError && (
+              <div className="flex items-center gap-2 rounded-sm bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">
+                <AlertTriangle size={14} />
+                {insightsError}
+              </div>
+            )}
+            {aiInsights && (
+              <div
+                className="space-y-1 text-sm leading-relaxed text-[var(--ink-secondary)]"
+                dangerouslySetInnerHTML={{ __html: formatAIText(aiInsights) }}
+              />
+            )}
+          </div>
+        )}
+
+        <BodyMetrics />
+      </section>
 
       {/* Mood Trend Sparkline */}
       {moodScores.length >= 2 && (
@@ -788,9 +800,6 @@ export function Habits() {
           </div>
         </div>
       )}
-
-      {/* Body Metrics */}
-      <BodyMetrics />
 
       {/* Recent Check-ins Summary */}
       {recentLogs.length > 0 && (

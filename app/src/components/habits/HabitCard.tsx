@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Habit } from '../../types';
-import { useTheme } from '../../context/ThemeContext';
 import { Flame, Trash2, Plus, Minus, Check, Pencil, MoreHorizontal } from 'lucide-react';
 import { hapticLight } from '../../lib/haptics';
 import { SelectionCheckbox, SelectionIndicator } from '../common/SelectionControls';
@@ -39,8 +38,6 @@ export function HabitCard({
   isSelected = false,
   onSelectToggle,
 }: HabitCardProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [inputValue, setInputValue] = useState(todaysValue.toString());
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -99,12 +96,12 @@ export function HabitCard({
           {...(selectionMode
             ? { role: 'checkbox' as const, 'aria-checked': isSelected, 'aria-label': `Select "${habit.name}"` }
             : {})}
-          className={`inline-flex items-center gap-2 pl-3 pr-2 py-2 rounded-l-full text-sm font-medium transition-all duration-200 select-none border-r-0 ${
+          className={`inline-flex min-h-11 items-center gap-2 rounded-l-[var(--radius-md)] border-r-0 py-2 pl-3 pr-2 text-sm font-medium transition-colors duration-200 select-none ${
             selectionMode && isSelected
               ? 'bg-[var(--action-soft)] text-[var(--action)] border border-[var(--action)]'
               : isCompleted
                 ? 'bg-[var(--success-soft)] text-[var(--success)] border border-[var(--success)]'
-                : 'bg-[var(--surface)]/60 text-[var(--ink-secondary)] border border-[var(--rule)] hover:bg-[var(--surface)]'
+                : 'border border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
           }`}
         >
           {selectionMode ? (
@@ -112,7 +109,7 @@ export function HabitCard({
           ) : (
             <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
               isCompleted
-                ? 'bg-[var(--success)] text-white'
+                ? 'bg-[var(--success)] text-[var(--ink-inverse)]'
                 : 'bg-[var(--surface-inset)]'
             }`}>
               {isCompleted && <Check size={10} strokeWidth={3} />}
@@ -131,10 +128,10 @@ export function HabitCard({
           aria-label={`More actions for ${habit.name}`}
           aria-expanded={menuOpen}
           aria-haspopup="true"
-          className={`inline-flex items-center px-2 py-2 rounded-r-full text-sm transition-all border-l-0 ${
+          className={`inline-flex min-h-11 items-center rounded-r-[var(--radius-md)] border-l-0 px-2 py-2 text-sm transition-colors ${
             isCompleted
               ? 'bg-[var(--success-soft)] text-[var(--success)] border border-[var(--success)] hover:text-[var(--success)]'
-              : 'bg-[var(--surface)]/60 text-[var(--ink-disabled)] border border-[var(--rule)] hover:text-[var(--ink-muted)]'
+              : 'border border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--ink)]'
           }`}
         >
           <MoreHorizontal size={14} />
@@ -169,12 +166,10 @@ export function HabitCard({
     <div
       data-focus-id={habit.id}
       onClick={selectionMode ? () => onSelectToggle?.(habit.id) : undefined}
-      className={`rounded-md p-3 transition-all duration-200 ${selectionMode ? 'cursor-pointer' : ''} ${
+      className={`border p-3 transition-colors duration-200 ${selectionMode ? 'cursor-pointer' : ''} ${
         isSelected
           ? 'bg-[var(--selected)] border border-[var(--action)]'
-          : isDark
-            ? `bg-[var(--surface)] border border-[var(--rule)] ${isCompleted ? 'border-[var(--success)] bg-[var(--success)]/[0.06]' : ''}`
-            : `bg-[var(--surface)] border border-[var(--rule)] ${isCompleted ? 'border-[var(--success)] bg-[var(--success-soft)]/40' : ''}`
+          : `border-[var(--rule)] bg-[var(--surface-raised)] ${isCompleted ? 'border-[var(--success)] bg-[var(--success-soft)]' : 'hover:bg-[var(--state-hover)]'}`
       }`}
     >
       <div className="flex items-center gap-3">
@@ -191,8 +186,8 @@ export function HabitCard({
             onClick={habit.trackingType === 'boolean' ? handleBooleanToggle : undefined}
             className={`w-7 h-7 min-h-0 rounded-sm flex items-center justify-center flex-shrink-0 transition-all ${
               isCompleted
-                ? 'bg-[var(--success)] text-white shadow-[0_0_10px_rgba(52,211,153,0.25)]'
-                : 'bg-black/[0.04] text-[var(--ink-muted)] border border-black/[0.06]'
+                ? 'bg-[var(--success)] text-[var(--ink-inverse)]'
+                : 'border border-[var(--rule-strong)] bg-[var(--surface-inset)] text-[var(--ink-muted)]'
             } ${habit.trackingType === 'boolean' ? 'cursor-pointer' : 'cursor-default'}`}
           >
             {isCompleted ? <Check size={14} strokeWidth={2.5} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}

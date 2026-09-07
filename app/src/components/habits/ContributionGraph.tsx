@@ -84,11 +84,11 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
     const intensity = Math.min(value / calculatedMax, 1);
     
     if (intensity <= 0.25) {
-      return 'bg-[var(--success-soft)] dark:bg-emerald-900/50';
+      return 'bg-[var(--success)] opacity-25';
     } else if (intensity <= 0.5) {
-      return 'bg-emerald-300 dark:bg-emerald-700/60';
+      return 'bg-[var(--success)] opacity-50';
     } else if (intensity <= 0.75) {
-      return 'bg-[var(--success)]';
+      return 'bg-[var(--success)] opacity-75';
     } else {
       return 'bg-[var(--success)]';
     }
@@ -97,14 +97,14 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto pb-1" role="img" aria-label={`${weeks} week habit activity heatmap`}>
       <div className="inline-block min-w-fit">
         {/* Month labels */}
         <div className="flex ml-8 mb-1">
           {months.map((m, i) => (
             <div
               key={i}
-              className={`text-xs text-[var(--ink-muted)]`}
+              className="font-mono text-[11px] text-[var(--ink-muted)]"
               style={{ 
                 position: 'relative',
                 left: `${m.column * 14}px`,
@@ -124,9 +124,7 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
             {dayLabels.map((day, i) => (
               <div
                 key={day}
-                className={`text-xs h-[12px] flex items-center justify-end pr-1 ${
-                  'text-[var(--ink-muted)]'
-                }`}
+                className="flex h-[12px] items-center justify-end pr-1 font-mono text-[10px] text-[var(--ink-muted)]"
                 style={{ visibility: i % 2 === 1 ? 'visible' : 'hidden' }}
               >
                 {day}
@@ -165,13 +163,13 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
         
         {/* Legend */}
         <div className="flex items-center justify-end gap-1 mt-2">
-          <span className={`text-xs mr-1 text-[var(--ink-muted)]`}>Less</span>
-          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--surface-subtle)]`} />
-          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--success-soft)] dark:bg-emerald-900/50`} />
-          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-300 dark:bg-emerald-700/60`} />
-          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--success)]`} />
-          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--success)]`} />
-          <span className={`text-xs ml-1 text-[var(--ink-muted)]`}>More</span>
+          <span className="mr-1 text-xs text-[var(--ink-muted)]">Less</span>
+          <div className="h-[12px] w-[12px] rounded-sm bg-[var(--surface-subtle)]" />
+          <div className="h-[12px] w-[12px] rounded-sm bg-[var(--success)] opacity-25" />
+          <div className="h-[12px] w-[12px] rounded-sm bg-[var(--success)] opacity-50" />
+          <div className="h-[12px] w-[12px] rounded-sm bg-[var(--success)] opacity-75" />
+          <div className="h-[12px] w-[12px] rounded-sm bg-[var(--success)]" />
+          <span className="ml-1 text-xs text-[var(--ink-muted)]">More</span>
         </div>
       </div>
     </div>

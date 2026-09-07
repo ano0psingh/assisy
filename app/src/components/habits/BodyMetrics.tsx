@@ -9,7 +9,6 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { Plus, Activity, TrendingDown, TrendingUp, Minus, X } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 import type { MetricEntry } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { getLocalDateString } from '../../lib/dateUtils';
@@ -25,7 +24,7 @@ const PRESET_METRICS = [
   { type: 'Calories', unit: 'kcal', placeholder: '2000' },
 ];
 
-const CHART_COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#06b6d4'];
+const CHART_COLORS = ['var(--action)', 'var(--success)', 'var(--warning)', 'var(--info)', 'var(--danger)', 'var(--ink-secondary)'];
 
 function loadMetrics(): MetricEntry[] {
   try {
@@ -48,8 +47,6 @@ function saveMetrics(entries: MetricEntry[]) {
 }
 
 export function BodyMetrics() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [entries, setEntries] = useState<MetricEntry[]>(loadMetrics);
   const [showForm, setShowForm] = useState(false);
   const [selectedType, setSelectedType] = useState('Weight');
@@ -110,23 +107,22 @@ export function BodyMetrics() {
     saveMetrics(next);
   };
 
-  const inputCls = `w-full px-3 py-2 rounded-sm border text-sm outline-none transition-colors ${
-    'bg-[var(--surface)] border-[var(--rule)] text-[var(--ink)] focus:border-[var(--action)]'
-  }`;
+  const inputCls = 'input w-full px-3 py-2 text-sm';
 
   return (
-    <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+    <div className="border border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Activity size={18} className={'text-[var(--action)]'} />
-          <h2 className={`font-semibold text-[var(--ink)]`}>Metrics</h2>
+        <div>
+          <div className="flex items-center gap-2">
+            <Activity size={18} className="text-[var(--action)]" />
+            <h2 className="text-lg font-bold text-[var(--ink)]">Health signals</h2>
+          </div>
+          <p className="mt-1 text-xs text-[var(--ink-muted)]">Private measurements and trend lines.</p>
         </div>
         <button
           type="button"
           onClick={() => setShowForm(prev => !prev)}
-          className={`px-3 py-2 rounded-sm text-xs font-medium flex items-center gap-1 transition-colors ${
-            'bg-[var(--surface-subtle)] text-[var(--ink-secondary)] hover:bg-[var(--surface-inset)]'
-          }`}
+          className="flex min-h-11 items-center gap-1 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
         >
           {showForm ? <X size={14} /> : <Plus size={14} />} {showForm ? 'Cancel' : 'Log'}
         </button>
@@ -171,6 +167,12 @@ export function BodyMetrics() {
             <button type="button" onClick={handleAdd} className="btn-primary px-4 py-2 rounded-sm text-sm flex-shrink-0">Save</button>
           </div>
         </div>
+      )}
+
+      {entries.length === 0 && !showForm && (
+        <p className="border-t border-[var(--rule)] pt-3 text-sm text-[var(--ink-muted)]">
+          Log a health signal to start a private trend line.
+        </p>
       )}
 
       {/* Metric type tabs */}
@@ -224,10 +226,10 @@ export function BodyMetrics() {
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-              <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-              <Tooltip contentStyle={isDark ? { background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)' } : {}} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--rule)" />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--ink-muted)' }} stroke="var(--rule-strong)" />
+              <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 10, fill: 'var(--ink-muted)' }} stroke="var(--rule-strong)" />
+              <Tooltip contentStyle={{ background: 'var(--surface-raised)', border: '1px solid var(--rule-strong)', color: 'var(--ink)' }} />
               <Line type="monotone" dataKey="value" stroke={CHART_COLORS[metricTypes.indexOf(viewMetric) % CHART_COLORS.length]} strokeWidth={2} dot={{ r: 3 }} name={viewMetric} />
             </LineChart>
           </ResponsiveContainer>
