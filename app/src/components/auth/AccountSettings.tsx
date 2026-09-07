@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { hasLocalData, resetCloudData, downloadCloudData } from '../../store/cloudStore';
 import { SyncStatusDetail } from '../common/SyncStatus';
 import { getLocalDateString } from '../../lib/dateUtils';
-import { User, Lock, Trash2, AlertTriangle, Check, Mail, Database, CloudOff, Download, RotateCcw } from 'lucide-react';
+import { User, Lock, Trash2, AlertTriangle, Check, Mail, Database, CloudOff, Download, RotateCcw, Bell, RefreshCw, Send } from 'lucide-react';
+import { requestPermission } from '../../lib/notifications';
+import { getPushDiagnostics, sendTestPush, subscribeToPush, type PushDiagnostics } from '../../lib/pushSubscription';
 
 const LOCAL_KEYS = [
   'life-rpg-tasks', 'life-rpg-goals', 'life-rpg-habits', 'life-rpg-habit-logs',
@@ -28,12 +30,43 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [dangerConfirm, setDangerConfirm] = useState('');
+  const [pushDiagnostics, setPushDiagnostics] = useState<PushDiagnostics | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
 
   const joinedDate = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   }) : 'Unknown';
 
   const provider = user?.app_metadata?.provider ?? 'email';
+
+  const refreshPushDiagnostics = useCallback(async () => {
+    setPushDiagnostics(await getPushDiagnostics());
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refreshPushDiagnostics(), 0);
+    return () => window.clearTimeout(timer);
+  }, [refreshPushDiagnostics]);
+
+  const handleEnablePush = async () => {
+    setPushBusy(true);
+    const granted = await requestPermission();
+    const bound = granted && await subscribeToPush();
+    await refreshPushDiagnostics();
+    setPushBusy(false);
+    setMessage(bound
+      ? { type: 'success', text: 'Notifications are enabled for this account.' }
+      : { type: 'error', text: granted ? 'Could not bind this browser to your account.' : 'Notification permission was not granted.' });
+  };
+
+  const handleTestPush = async () => {
+    setPushBusy(true);
+    const sent = await sendTestPush();
+    setPushBusy(false);
+    setMessage(sent
+      ? { type: 'success', text: 'Test notification sent. Delivery can take a few seconds.' }
+      : { type: 'error', text: 'Test delivery failed. Refresh diagnostics and check browser or OS notification settings.' });
+  };
 
   const go = (s: Section) => { setSection(s); setMessage(null); setDangerConfirm(''); };
 
@@ -296,6 +329,37 @@ export function AccountSettings({ onClose }: AccountSettingsProps) {
 
       <div className={`p-4 rounded-xl bg-slate-50 dark:bg-white/5`}>
         <SyncStatusDetail />
+      </div>
+
+      <div>
+        <p className={`text-xs uppercase tracking-wider font-semibold mb-1 px-4 text-slate-400 dark:text-gray-400`}>Notifications</p>
+        <div className="rounded-xl bg-slate-50 p-4 dark:bg-white/5">
+          <div className="flex items-start gap-3">
+            <Bell size={16} className="mt-0.5 text-violet-500" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-slate-700 dark:text-gray-200">
+                {pushDiagnostics?.serverBound ? 'Push delivery ready' : 'Push delivery needs attention'}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-gray-400">
+                Permission: {pushDiagnostics?.permission ?? 'checking'} · Service worker: {pushDiagnostics?.serviceWorkerReady ? 'ready' : 'not ready'} · Account binding: {pushDiagnostics?.serverBound ? 'ready' : 'missing'}
+              </p>
+              {pushDiagnostics?.error && <p className="mt-1 text-xs text-red-500">{pushDiagnostics.error}</p>}
+            </div>
+            <button type="button" onClick={() => void refreshPushDiagnostics()} aria-label="Refresh notification diagnostics" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
+              <RefreshCw size={14} />
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {!pushDiagnostics?.serverBound && (
+              <button type="button" disabled={pushBusy || !user} onClick={handleEnablePush} className="min-h-10 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white disabled:opacity-50">
+                Enable notifications
+              </button>
+            )}
+            <button type="button" disabled={pushBusy || !pushDiagnostics?.serverBound} onClick={handleTestPush} className="min-h-10 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-white/10 dark:text-gray-300">
+              <Send size={13} className="mr-1 inline" /> Send test
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Security */}

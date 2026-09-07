@@ -1,138 +1,120 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTaskContext } from '../context/TaskContext';
+import {
+  AlertTriangle,
+  Calendar,
+  CalendarClock,
+  Check,
+  ChevronDown,
+  Clock3,
+  Inbox,
+  ListPlus,
+  Pencil,
+  Plus,
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useDataVersion } from '../context/DataVersionContext';
+import { useGamification } from '../context/GamificationContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
-import { useDailyLogContext } from '../context/DailyLogContext';
 import { useProjectContext } from '../context/ProjectContext';
-import { useTheme } from '../context/ThemeContext';
-import { useGamification } from '../context/GamificationContext';
-import { useAuth } from '../context/AuthContext';
-import { CheckSquare, Plus, Zap, Sparkles, Quote, Flame, ListPlus, Calendar, CheckCircle2, ListTodo, Circle, Play, Pencil, Trophy, Crown, AlertTriangle, CalendarMinus, Target, RefreshCw, Bot, Inbox, ChevronDown } from 'lucide-react';
-import { askAI, isAIConfigured } from '../lib/ai';
-import { formatAIText } from '../lib/formatAIText';
-import { isOnboardingComplete } from '../lib/onboarding';
+import { useTaskContext } from '../context/TaskContext';
+import { ProjectAssignmentRow } from '../components/dashboard/ProjectAssignmentRow';
+import { ExpandableModal } from '../components/common/ExpandableModal';
+import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
+import { DashboardSkeleton } from '../components/common/Skeleton';
+import { TiptapEditor } from '../components/common/TiptapEditor';
+import { useToast } from '../components/common/Toast';
+import { useUndo } from '../components/common/UndoToast';
+import { PlanYourDay } from '../components/tasks/PlanYourDay';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
-import { PlanYourDay } from '../components/tasks/PlanYourDay';
-import { TiptapEditor } from '../components/common/TiptapEditor';
-import { isNotificationSupported, requestPermission, sendNotification, startDailyPlanningReminder, getPermissionStatus } from '../lib/notifications';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
-import { subscribeToPush } from '../lib/pushSubscription';
-import { projectTasksToTasks } from '../lib/mergeProjectTasks';
-import { addLocalDays, getLocalDateString, getScheduledDate, getScheduledStartMinute } from '../lib/dateUtils';
-import { getProjectTaskId, useUnifiedTaskActions } from '../hooks/useUnifiedTaskActions';
-import { ExpandableModal } from '../components/common/ExpandableModal';
-import { hapticMedium } from '../lib/haptics';
-import { useUndo } from '../components/common/UndoToast';
-import { useToast } from '../components/common/Toast';
-import { DashboardSkeleton } from '../components/common/Skeleton';
 import { Button } from '../components/ui';
-import { getQuoteOfTheDay } from '../data/quotes';
-import { DailyCheckIn } from '../components/habits/DailyCheckIn';
-import type { Task, ProjectTask, WorkItemStatus, RecurrencePattern } from '../types';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { getProjectTaskId, useUnifiedTaskActions } from '../hooks/useUnifiedTaskActions';
+import { addLocalDays, getLocalDateString, getScheduledDate, getScheduledStartMinute } from '../lib/dateUtils';
+import { hapticMedium } from '../lib/haptics';
+import {
+  getPermissionStatus,
+  isNotificationSupported,
+  requestPermission,
+  sendNotification,
+  startDailyPlanningReminder,
+} from '../lib/notifications';
+import { isOnboardingComplete } from '../lib/onboarding';
+import { projectTasksToTasks } from '../lib/mergeProjectTasks';
+import { subscribeToPush } from '../lib/pushSubscription';
+import type {
+  ProjectTask,
+  RecurrencePattern,
+  RecurrenceRule,
+  ReminderOffsetMinutes,
+  Task,
+} from '../types';
 
-// XP Animation Component
-function XPAnimation({ xp, onComplete }: { xp: number; onComplete: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onComplete, 1500);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
-      <div className="animate-xp-float text-2xl sm:text-3xl font-bold text-amber-400 drop-shadow-lg flex items-center gap-2">
-        <Zap className="w-8 h-8" />
-        +{xp} XP
-      </div>
-    </div>
-  );
-}
-
-function BacklogPicker({ tasks, onAdd }: { tasks: Task[]; onAdd: (id: string) => void; }) {
+function BacklogPicker({ tasks, onAdd }: { tasks: Task[]; onAdd: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
-  const [search, setSearch] = useState('');
+  const visible = expanded ? tasks : tasks.slice(0, 4);
 
   if (tasks.length === 0) return null;
 
-  const filtered = search.trim()
-    ? tasks.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
-    : tasks;
-  const visible = expanded ? filtered : filtered.slice(0, 4);
-
   return (
-    <div className={`mt-3 pt-3 border-t border-slate-100 dark:border-white/5`}>
-      <div className="flex items-center justify-between mb-2">
-        <p className={`text-xs text-slate-400 dark:text-gray-500`}>
-          Add from backlog ({tasks.length})
-        </p>
+    <details className="border-t border-[var(--rule)] bg-[var(--surface)]">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-medium text-[var(--ink-secondary)]">
+        <span>Add an assignment from the desk ({tasks.length})</span>
+        <ChevronDown className="h-4 w-4" />
+      </summary>
+      <div className="border-t border-[var(--rule)] px-3 py-2">
+        {visible.map((task) => (
+          <div key={task.id} className="flex min-h-11 items-center gap-3 border-b border-[var(--rule)] py-2 last:border-0">
+            <span className="min-w-0 flex-1 truncate text-sm text-[var(--ink)]">{task.title}</span>
+            <button
+              type="button"
+              onClick={() => onAdd(task.id)}
+              className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-[var(--action)] hover:bg-[var(--action-soft)]"
+            >
+              <Plus size={13} />
+              Run today
+            </button>
+          </div>
+        ))}
         {tasks.length > 4 && (
           <button
-            onClick={() => setExpanded(!expanded)}
-            className={`text-xs text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300`}
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            className="mt-1 min-h-10 text-xs font-semibold text-[var(--action)]"
           >
-            {expanded ? 'Show less' : 'Show all'}
+            {expanded ? 'Show fewer assignments' : `Show ${tasks.length - 4} more`}
           </button>
         )}
       </div>
-      {expanded && tasks.length > 6 && (
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search backlog..."
-          className={`w-full px-3 py-2 mb-2 rounded-lg text-xs outline-none ${
-            'bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder-gray-600'
-          }`}
-        />
-      )}
-      <div className={`space-y-1 ${expanded ? 'max-h-60 overflow-y-auto' : ''}`}>
-        {visible.map(task => (
-          <button
-            key={task.id}
-            onClick={() => onAdd(task.id)}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left transition-colors ${
-              'text-slate-500 hover:bg-violet-50 hover:text-violet-600 dark:text-gray-400 dark:hover:bg-violet-500/10 dark:hover:text-violet-400'
-            }`}
-          >
-            <Plus size={12} className="flex-shrink-0" />
-            <span className="truncate flex-1">{task.title}</span>
-            <span className={`text-xs flex-shrink-0 text-slate-400 dark:text-gray-400`}>{task.category}</span>
-          </button>
-        ))}
-        {expanded && filtered.length === 0 && search && (
-          <p className={`text-xs py-2 text-center text-slate-400 dark:text-gray-400`}>No tasks match "{search}"</p>
-        )}
-      </div>
-    </div>
+    </details>
   );
 }
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    tasks, 
-    getTodaysTasks, 
-    loading, 
-    createTask, 
-    updateTask, 
-    completeTask, 
-    uncompleteTask, 
-    deleteTask, 
-    carryForwardTasks, 
-    addToToday,
+  const { refresh } = useDataVersion();
+  const {
+    tasks,
+    getTodaysTasks,
+    loading,
+    createTask,
+    updateTask,
+    completeTask,
+    uncompleteTask,
+    deleteTask,
+    carryForwardTasks,
     getSuggestedTasks,
     hasSeenPlanYourDay,
     markPlanYourDaySeen,
   } = useTaskContext();
   const { goals, linkTaskToGoal, unlinkTaskFromGoal, addXPToGoal } = useGoalContext();
-  const { habits, getTodaysLog: getTodaysHabitLog } = useHabitContext();
-  const { getTodaysLog: getTodaysDailyLog, createOrUpdateLog, getRecentLogs } = useDailyLogContext();
-  const { 
-    getTodaysProjectTasks, 
-    updateTaskStatus, 
+  const { habits } = useHabitContext();
+  const {
+    getTodaysProjectTasks,
+    updateTaskStatus,
     updateProjectTask,
     getProject,
     getSubProject,
@@ -140,339 +122,199 @@ export function Dashboard() {
     projects,
     getTasksBySubProject,
   } = useProjectContext();
-  const { theme } = useTheme();
   const { schedule: scheduleUnifiedTask, unschedule: unscheduleUnifiedTask } = useUnifiedTaskActions();
   const { pushUndo } = useUndo();
   const { toast } = useToast();
   const {
     recordTaskCompletion,
-    updateStreak, 
+    updateStreak,
     checkAndUnlockAchievements,
-    recentUnlocks,
-    clearRecentUnlocks,
-    getTotalLevel,
-    getLevelProgress,
-    getTitle,
-    userStats,
-    getUnlockedAchievements,
     recordDailyLogin,
     recordTaskCreated,
     hasClaimedDailyLogin,
   } = useGamification();
-  const isDark = theme === 'dark';
-  const levelProgress = getLevelProgress();
+
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [hasCarriedForward, setHasCarriedForward] = useState(false);
+  const [isPlanYourDayOpen, setIsPlanYourDayOpen] = useState(false);
+  const hasCarriedForward = useRef(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
+  const [editingProjectTask, setEditingProjectTask] = useState<ProjectTask | null>(null);
+  const [projectTaskForm, setProjectTaskForm] = useState({ title: '', description: '' });
 
   useEffect(() => {
     const status = getPermissionStatus();
     if (status === 'granted') {
       startDailyPlanningReminder(9);
-    } else if (isNotificationSupported() && status !== 'unsupported') {
-      const timer = setTimeout(() => setShowNotifBanner(true), 3000);
-      return () => clearTimeout(timer);
+      return;
+    }
+    if (isNotificationSupported() && status !== 'unsupported') {
+      const timer = window.setTimeout(() => setShowNotifBanner(true), 3000);
+      return () => window.clearTimeout(timer);
     }
   }, []);
-  const [xpAnimation, setXpAnimation] = useState<{ show: boolean; xp: number }>({ show: false, xp: 0 });
-  const [isPlanYourDayOpen, setIsPlanYourDayOpen] = useState(false);
-  const [dailyBonusResult, setDailyBonusResult] = useState<{ show: boolean; xp: number; streak: number; multiplier: number } | null>(null);
-  const [isCheckInOpen, setIsCheckInOpen] = useState(false);
-  const [statsExpanded, setStatsExpanded] = useState(false);
-  const [editingProjectTask, setEditingProjectTask] = useState<ProjectTask | null>(null);
-  const [projectTaskForm, setProjectTaskForm] = useState({ title: '', description: '' });
-  const [morningBriefing, setMorningBriefing] = useState<string | null>(null);
-  const [briefingLoading, setBriefingLoading] = useState(false);
-  const [briefingError, setBriefingError] = useState<string | null>(null);
-
-  const handlePullRefresh = useCallback(() => {
-    window.location.reload();
-  }, []);
-
-  const { pullDistance, isRefreshing, containerRef } = usePullToRefresh({
-    onRefresh: handlePullRefresh,
-  });
-
-  // Get today's project tasks
-  const todaysProjectTasks = getTodaysProjectTasks();
-
-  // Handle editing project task
-  const handleEditProjectTask = (task: ProjectTask) => {
-    setEditingProjectTask(task);
-    setProjectTaskForm({ title: task.title, description: task.description || '' });
-  };
-
-  const handleSaveProjectTask = () => {
-    if (!editingProjectTask || !projectTaskForm.title.trim()) return;
-    updateProjectTask(editingProjectTask.id, {
-      title: projectTaskForm.title,
-      description: projectTaskForm.description,
-    });
-    setEditingProjectTask(null);
-  };
-
-  const habitCheckInStats = useMemo(() => {
-    const todayCompletedCount = habits.filter(h => getTodaysHabitLog(h.id) > 0).length;
-    return { todayCompletedCount, totalHabits: habits.length };
-  }, [habits, getTodaysHabitLog]);
-
-  const generateBriefing = useCallback(async (force = false) => {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const cacheKey = `assisy_morning_briefing_${todayStr}`;
-
-    if (!force) {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        setMorningBriefing(cached);
-        return;
-      }
-    }
-
-    if (!isAIConfigured()) return;
-
-    setBriefingLoading(true);
-    setBriefingError(null);
-    try {
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const overdueTasks = tasks.filter(t => {
-        if (t.status === 'Completed' || !t.dueDate) return false;
-        const due = new Date(t.dueDate);
-        due.setHours(0, 0, 0, 0);
-        return due < now;
-      });
-
-      const todayTasks = getTodaysTasks();
-      const highPriority = todayTasks.filter(t => t.priority === 'High' && t.status !== 'Completed');
-
-      const recentLogs = getRecentLogs(3);
-      const energyLevels = recentLogs
-        .filter(l => l.energyLevel != null)
-        .map(l => ({ date: l.date, energy: l.energyLevel }));
-
-      const streaksAtRisk = habits
-        .filter(h => h.streakCount > 0)
-        .map(h => ({ name: h.name, streak: h.streakCount }));
-
-      const threeDaysFromNow = new Date(now);
-      threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-      const upcomingDeadlines = tasks
-        .filter(t => {
-          if (t.status === 'Completed' || !t.dueDate) return false;
-          const due = new Date(t.dueDate);
-          due.setHours(0, 0, 0, 0);
-          return due >= now && due <= threeDaysFromNow;
-        })
-        .map(t => ({ title: t.title, dueDate: t.dueDate, priority: t.priority }));
-
-      const activeGoals = goals
-        .filter(g => g.status === 'Active')
-        .map(g => ({ title: g.title, progress: g.progress }));
-
-      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const dayName = dayNames[new Date().getDay()];
-      const hour = new Date().getHours();
-      const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-
-      const yesterdayCompleted = tasks.filter(t => {
-        if (t.status !== 'Completed' || !t.completedAt) return false;
-        const comp = new Date(t.completedAt);
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        comp.setHours(0, 0, 0, 0);
-        return comp.getTime() === yesterday.getTime();
-      }).length;
-
-      const briefingData = {
-        dayOfWeek: dayName,
-        timeOfDay,
-        overdueTasks: overdueTasks.length,
-        overdueTaskTitles: overdueTasks.slice(0, 3).map(t => t.title),
-        todayTasksCount: todayTasks.length,
-        todayPending: todayTasks.filter(t => t.status !== 'Completed').length,
-        highPriorityTasks: highPriority.map(t => t.title),
-        recentEnergyLevels: energyLevels,
-        streaksAtRisk,
-        upcomingDeadlines,
-        activeGoals,
-        yesterdayCompleted,
-        currentStreak: userStats.currentStreak,
-        totalLevel: getTotalLevel(),
-      };
-
-      const result = await askAI(JSON.stringify(briefingData), {
-        systemPrompt: `You are a sharp productivity strategist (not a cheerleader). Today is ${dayName}, ${timeOfDay}.
-
-RULES:
-- Synthesize patterns, don't list stats back. Connect dots the user might miss.
-- Each point must contain a SPECIFIC action with a time estimate or deadline.
-- Use implementation intentions for at least one point: "When [trigger], do [action]" format.
-- If energy data exists, match task difficulty to energy levels (hard tasks when energy peaks).
-- NEVER say "Great job!", "Keep it up!", "You've got this!", or any generic encouragement. Be direct and tactical.
-- If there's nothing urgent, suggest one proactive move toward a goal.
-- If it's ${dayName === 'Monday' ? 'Monday — set the tone for the week' : dayName === 'Friday' ? 'Friday — focus on closing out the week' : 'midweek — maintain momentum'}.
-- Max 4 bullets. Under 120 words total. No greetings, no sign-offs, no filler.`,
-        temperature: 0.8,
-      });
-
-      setMorningBriefing(result);
-      localStorage.setItem(cacheKey, result);
-    } catch {
-      setMorningBriefing(null);
-      setBriefingError('The briefing could not be generated. Check your connection or AI settings.');
-    } finally {
-      setBriefingLoading(false);
-    }
-  }, [tasks, getTodaysTasks, getRecentLogs, habits, goals, getTotalLevel, userStats.currentStreak]);
 
   useEffect(() => {
-    if (!loading) {
-      generateBriefing();
-    }
-  }, [loading, generateBriefing]);
+    if (loading || hasCarriedForward.current) return;
+    const initializationTimer = window.setTimeout(() => {
+      if (hasCarriedForward.current) return;
+      hasCarriedForward.current = true;
+      carryForwardTasks();
 
-  // All hooks must be called before any early returns
+      if (!hasClaimedDailyLogin()) {
+        const result = recordDailyLogin();
+        if (result.isNewDay && result.xpEarned > 0) {
+          window.setTimeout(() => checkAndUnlockAchievements(), 200);
+        }
+      }
+
+      if (!hasSeenPlanYourDay() && isOnboardingComplete()) {
+        window.setTimeout(() => setIsPlanYourDayOpen(true), 500);
+      }
+    }, 0);
+    return () => window.clearTimeout(initializationTimer);
+  }, [
+    loading,
+    carryForwardTasks,
+    hasClaimedDailyLogin,
+    recordDailyLogin,
+    checkAndUnlockAchievements,
+    hasSeenPlanYourDay,
+  ]);
+
+  const handlePullRefresh = useCallback(async () => {
+    refresh();
+  }, [refresh]);
+  const { pullDistance, isRefreshing, containerRef } = usePullToRefresh({ onRefresh: handlePullRefresh });
+
+  const allProjectTasks = useMemo(
+    () => subProjects.flatMap((subProject) => getTasksBySubProject(subProject.id)),
+    [subProjects, getTasksBySubProject],
+  );
+  const allUnifiedTasks = useMemo(
+    () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
+    [tasks, subProjects, projects, getTasksBySubProject],
+  );
+  const todaysProjectTasks = getTodaysProjectTasks();
+  const todaysTasks = getTodaysTasks();
+  const todayString = getLocalDateString();
+
+  const completedToday = useMemo(
+    () => tasks.filter((task) => task.status === 'Completed'
+      && task.completedAt
+      && getLocalDateString(new Date(task.completedAt)) === todayString),
+    [tasks, todayString],
+  );
+  const completedProjectToday = useMemo(
+    () => allProjectTasks.filter((task) => task.status === 'Done'
+      && task.completedAt
+      && getLocalDateString(new Date(task.completedAt)) === todayString),
+    [allProjectTasks, todayString],
+  );
+
+  const pendingRegular = todaysTasks.filter((task) => task.status !== 'Completed');
+  const projectTaskById = new Map(todaysProjectTasks.map((task) => [task.id, task]));
+  const projectTodayAsTasks = allUnifiedTasks.filter(
+    (task) => task.id.startsWith('pt-') && projectTaskById.has(getProjectTaskId(task.id)),
+  );
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const pendingRundown = [...pendingRegular, ...projectTodayAsTasks].sort((a, b) => {
+    const aStart = getScheduledStartMinute(a);
+    const bStart = getScheduledStartMinute(b);
+    if (aStart !== null && bStart !== null) return aStart - bStart;
+    if (aStart !== null) return -1;
+    if (bStart !== null) return 1;
+    const aOverdue = a.dueDate ? new Date(a.dueDate) < todayStart : false;
+    const bOverdue = b.dueDate ? new Date(b.dueDate) < todayStart : false;
+    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+    if (a.priority !== b.priority) return a.priority === 'High' ? -1 : 1;
+    return a.effort === 'High' ? -1 : 1;
+  });
+
+  const pendingIds = new Set(pendingRundown.map((task) => task.id));
+  const planBacklogTasks = allUnifiedTasks.filter((task) =>
+    task.status !== 'Completed'
+    && task.inbox !== true
+    && !task.isRecurring
+    && !getScheduledDate(task)
+    && !pendingIds.has(task.id));
+  const suggestedTasks = getSuggestedTasks();
+  const inboxCount = tasks.filter((task) => task.inbox === true && task.status !== 'Completed').length;
+  const overdueCount = allUnifiedTasks.filter((task) => {
+    if (task.status === 'Completed' || !task.dueDate) return false;
+    const due = new Date(task.dueDate);
+    due.setHours(0, 0, 0, 0);
+    return due < todayStart;
+  }).length;
+  const completedCount = completedToday.length + completedProjectToday.length;
+  const totalToday = pendingRundown.length + completedCount;
+  const progress = totalToday === 0 ? 0 : Math.round((completedCount / totalToday) * 100);
+  const activeAssignment = pendingRundown[0];
+  const remainingAssignments = pendingRundown.slice(1);
+
+  const profileName = (
+    user?.user_metadata?.full_name
+    || user?.user_metadata?.name
+    || user?.email?.split('@')[0]
+    || ''
+  ).trim().split(/\s+/)[0];
+
   const handleToggleComplete = useCallback((taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
+    const task = tasks.find((candidate) => candidate.id === taskId);
     if (task?.status === 'Completed') {
       uncompleteTask(taskId);
       return;
     }
     hapticMedium();
-    if (task && task.category !== 'Professional' && task.xpValue > 0) {
-      setXpAnimation({ show: true, xp: task.xpValue });
-    }
     completeTask(taskId);
-    
-    if (task) {
-      recordTaskCompletion(task.category, task.xpValue);
-      updateStreak();
-      if (task.goalId && !task.isRecurring) {
-        addXPToGoal(task.goalId, task.xpValue || 10);
-      }
-      if (task.xpValue > 0 && task.category !== 'Professional') {
-        toast({ message: `Task done! +${task.xpValue} XP`, type: 'success', duration: 2000 });
-      }
-      setTimeout(() => {
-        checkAndUnlockAchievements();
-      }, 100);
+    if (!task) return;
+
+    recordTaskCompletion(task.category, task.xpValue);
+    updateStreak();
+    if (task.goalId && !task.isRecurring) addXPToGoal(task.goalId, task.xpValue || 10);
+    toast({ message: `Completed: ${task.title}`, type: 'success', duration: 1800 });
+    window.setTimeout(() => checkAndUnlockAchievements(), 100);
+  }, [
+    tasks,
+    uncompleteTask,
+    completeTask,
+    recordTaskCompletion,
+    updateStreak,
+    addXPToGoal,
+    toast,
+    checkAndUnlockAchievements,
+  ]);
+
+  const handleProjectTaskStatus = useCallback((task: ProjectTask, status: ProjectTask['status']) => {
+    hapticMedium();
+    updateTaskStatus(task.id, status);
+    if (status === 'Done') {
+      toast({ message: `Completed: ${task.title}`, type: 'success', duration: 1800 });
     }
-  }, [tasks, completeTask, uncompleteTask, recordTaskCompletion, updateStreak, checkAndUnlockAchievements, addXPToGoal, toast]);
-
-  // Get week boundaries for weekly review
-  const getWeekBounds = useCallback(() => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    monday.setHours(0, 0, 0, 0);
-    
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-    
-    return { monday, sunday };
-  }, []);
-
-  // Weekly review — all tasks, not just Professional
-  const allTasksForStats = useMemo(
-    () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
-    [tasks, subProjects, projects, getTasksBySubProject],
-  );
-
-  const weeklyProfessionalReview = useMemo(() => {
-    const { monday, sunday } = getWeekBounds();
-    
-    const completedThisWeek = allTasksForStats.filter(t => {
-      if (t.status !== 'Completed' || !t.completedAt) return false;
-      const completedDate = new Date(t.completedAt);
-      return completedDate >= monday && completedDate <= sunday;
-    });
-    
-    const backlog = allTasksForStats.filter(t => 
-      t.status === 'Pending' || t.status === 'Carried Forward'
-    );
-    
-    const carriedForward = allTasksForStats.filter(t => 
-      t.status === 'Carried Forward'
-    );
-    
-    return {
-      completed: completedThisWeek,
-      backlog,
-      carriedForward,
-      weekStart: monday,
-      weekEnd: sunday,
-    };
-  }, [allTasksForStats, getWeekBounds]);
-
-  useEffect(() => {
-    if (!loading && !hasCarriedForward) {
-      carryForwardTasks();
-      setHasCarriedForward(true);
-      
-      // Claim daily login bonus
-      if (!hasClaimedDailyLogin()) {
-        const result = recordDailyLogin();
-        if (result.isNewDay && result.xpEarned > 0) {
-          setDailyBonusResult({
-            show: true,
-            xp: result.xpEarned,
-            streak: userStats.dailyLoginStreak + 1,
-            multiplier: result.streakMultiplier,
-          });
-          // Auto-dismiss after 4s
-          setTimeout(() => setDailyBonusResult(null), 4000);
-          // Check achievements after login
-          setTimeout(() => checkAndUnlockAchievements(), 200);
-        }
-      }
-      
-      // Show Plan Your Day modal if not seen today. Not while the onboarding
-      // tour is still up, or a first-time user meets two modals at once.
-      if (!hasSeenPlanYourDay() && isOnboardingComplete()) {
-        // Delay slightly so daily bonus shows first
-        setTimeout(() => setIsPlanYourDayOpen(true), 500);
-      }
-    }
-  }, [loading, hasCarriedForward, carryForwardTasks, hasSeenPlanYourDay, hasClaimedDailyLogin, recordDailyLogin, userStats.dailyLoginStreak, checkAndUnlockAchievements]);
+  }, [toast, updateTaskStatus]);
 
   const handleDeleteWithUndo = useCallback((taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
+    const task = tasks.find((candidate) => candidate.id === taskId);
     if (!task) return;
     deleteTask(taskId);
     pushUndo(`"${task.title}" deleted`, () => {
-      createTask(task.title, task.description, task.category, task.priority, task.effort, task.isRecurring, task.recurrencePattern, task.specificDays, task.goalId, task.dueDate, task.monthDay, task.dueTime);
+      createTask(
+        task.title,
+        task.description,
+        task.category,
+        task.priority,
+        task.effort,
+        task.isRecurring,
+        task.recurrencePattern,
+        task.specificDays,
+        task.goalId,
+        task.dueDate,
+        task.monthDay,
+        task.dueTime,
+      );
     });
-  }, [tasks, deleteTask, createTask, pushUndo]);
-
-  const todayTaskIds = useMemo(() => new Set(getTodaysTasks().map(t => t.id)), [getTodaysTasks]);
-  const activeGoalIds = useMemo(() => new Set(goals.filter(g => g.status === 'Active').map(g => g.id)), [goals]);
-  const suggestionGroups = useMemo(() => {
-    const notToday = (t: Task) => !todayTaskIds.has(t.id) && t.status !== 'Completed';
-    const notRecurring = (t: Task) => !t.isRecurring; // recurring tasks auto-appear on their scheduled day
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const overdue = tasks.filter(t => notToday(t) && notRecurring(t) && t.dueDate && new Date(t.dueDate) < now);
-    const fromGoals = tasks.filter(t => notToday(t) && notRecurring(t) && t.goalId && activeGoalIds.has(t.goalId));
-    const fromGoalsExcludingOverdue = fromGoals.filter(t => !overdue.includes(t));
-    const suggested = getSuggestedTasks();
-    const otherTasks = suggested.filter(t => !overdue.some(o => o.id === t.id) && !fromGoalsExcludingOverdue.some(f => f.id === t.id));
-    return [
-      { label: 'Overdue', tasks: overdue, icon: AlertTriangle },
-      { label: 'From your goals', tasks: fromGoalsExcludingOverdue, icon: Target },
-      { label: 'Other tasks', tasks: otherTasks, icon: ListTodo },
-    ].filter(g => g.tasks.length > 0);
-  }, [tasks, todayTaskIds, activeGoalIds, getSuggestedTasks]);
-  
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
-
-  const todaysTasks = getTodaysTasks();
-  const quote = getQuoteOfTheDay();
+  }, [tasks, deleteTask, pushUndo, createTask]);
 
   const handleCreateTask = (data: {
     title: string;
@@ -482,8 +324,13 @@ RULES:
     effort: 'High' | 'Low';
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
+    recurrenceRule?: RecurrenceRule;
+    specificDays?: number[];
+    monthDay?: number;
     goalId?: string;
     dueDate?: Date;
+    dueTime?: string;
+    dueReminderOffsets?: ReminderOffsetMinutes[];
     addToToday?: boolean;
   }) => {
     const newTask = createTask(
@@ -494,22 +341,17 @@ RULES:
       data.effort,
       data.isRecurring,
       data.recurrencePattern,
-      undefined,
+      data.specificDays,
       data.goalId,
-      data.dueDate
+      data.dueDate,
+      data.monthDay,
+      data.dueTime,
+      { recurrenceRule: data.recurrenceRule, dueReminderOffsets: data.dueReminderOffsets },
     );
-    
-    if (data.goalId) {
-      linkTaskToGoal(data.goalId, newTask.id);
-    }
-
-    if (data.addToToday) {
-      addToToday(newTask.id);
-    }
-    
+    if (data.goalId) linkTaskToGoal(data.goalId, newTask.id);
+    if (data.addToToday) scheduleUnifiedTask(newTask.id, { date: todayString });
     recordTaskCreated();
-    setTimeout(() => checkAndUnlockAchievements(), 100);
-    
+    window.setTimeout(() => checkAndUnlockAchievements(), 100);
     setIsTaskFormOpen(false);
   };
 
@@ -521,789 +363,498 @@ RULES:
     effort: 'High' | 'Low';
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
+    recurrenceRule?: RecurrenceRule;
+    specificDays?: number[];
+    monthDay?: number;
     goalId?: string;
     dueDate?: Date;
     dueTime?: string;
+    dueReminderOffsets?: ReminderOffsetMinutes[];
   }) => {
     if (!editingTask) return;
-
-    const oldGoalId = editingTask.goalId;
-    const newGoalId = data.goalId;
-
-    if (oldGoalId && oldGoalId !== newGoalId) {
-      unlinkTaskFromGoal(oldGoalId, editingTask.id);
+    if (editingTask.goalId && editingTask.goalId !== data.goalId) {
+      unlinkTaskFromGoal(editingTask.goalId, editingTask.id);
     }
-
-    if (newGoalId && newGoalId !== oldGoalId) {
-      linkTaskToGoal(newGoalId, editingTask.id);
+    if (data.goalId && data.goalId !== editingTask.goalId) {
+      linkTaskToGoal(data.goalId, editingTask.id);
     }
+    updateTask(editingTask.id, data);
+    setEditingTask(null);
+    setIsTaskFormOpen(false);
+  };
 
-    updateTask(editingTask.id, {
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      priority: data.priority,
-      effort: data.effort,
-      isRecurring: data.isRecurring,
-      recurrencePattern: data.recurrencePattern,
-      goalId: data.goalId,
-      dueDate: data.dueDate,
-      dueTime: data.dueTime,
+  const handleEditProjectTask = (task: ProjectTask) => {
+    setEditingProjectTask(task);
+    setProjectTaskForm({ title: task.title, description: task.description || '' });
+  };
+  const handleSaveProjectTask = () => {
+    if (!editingProjectTask || !projectTaskForm.title.trim()) return;
+    updateProjectTask(editingProjectTask.id, {
+      title: projectTaskForm.title.trim(),
+      description: projectTaskForm.description,
     });
-    
-    setEditingTask(null);
-    setIsTaskFormOpen(false);
+    setEditingProjectTask(null);
   };
-
-  const handleEdit = (task: Task) => {
-    setEditingTask(task);
-    setIsTaskFormOpen(true);
-  };
-
-  const handleCloseForm = () => {
-    setEditingTask(null);
-    setIsTaskFormOpen(false);
-  };
-
-  const handleClosePlanYourDay = () => {
+  const closePlanYourDay = () => {
     markPlanYourDaySeen();
     setIsPlanYourDayOpen(false);
   };
 
-  const handleOpenPlanYourDay = () => {
-    setIsPlanYourDayOpen(true);
-  };
+  if (loading) return <DashboardSkeleton />;
 
-  // All today's tasks as a flat list sorted by priority
-  const allTodayPending = todaysTasks.filter(t => t.status !== 'Completed');
-  const allTodayCompleted = todaysTasks.filter(t => t.status === 'Completed');
-  const projectTaskById = new Map(todaysProjectTasks.map(task => [task.id, task]));
-  const projectTodayAsTasks = allTasksForStats.filter(
-    task => task.id.startsWith('pt-') && projectTaskById.has(getProjectTaskId(task.id)),
-  );
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const allTodayPendingCombined = [...allTodayPending, ...projectTodayAsTasks].sort((a, b) => {
-    const aStart = getScheduledStartMinute(a);
-    const bStart = getScheduledStartMinute(b);
-    if (aStart !== null && bStart !== null) return aStart - bStart;
-    if (aStart !== null) return -1;
-    if (bStart !== null) return 1;
-    const aOverdue = a.dueDate ? new Date(a.dueDate) < todayStart : false;
-    const bOverdue = b.dueDate ? new Date(b.dueDate) < todayStart : false;
-    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
-    if (a.priority !== b.priority) return a.priority === 'High' ? -1 : 1;
-    if (a.effort !== b.effort) return a.effort === 'High' ? -1 : 1;
-    return 0;
-  });
-  const todayUnifiedTasks = [...todaysTasks, ...projectTodayAsTasks];
-  const todayUnifiedIds = new Set(todayUnifiedTasks.map(task => task.id));
-  const planBacklogTasks = allTasksForStats.filter(task =>
-    task.status !== 'Completed'
-    && task.inbox !== true
-    && !task.isRecurring
-    && !getScheduledDate(task)
-    && !todayUnifiedIds.has(task.id)
-  );
-  const projectTasksDone = todaysProjectTasks.filter(t => t.status === 'Done').length;
-  const totalTodayTasks = todaysTasks.length + todaysProjectTasks.length;
-  const totalTodayDone = allTodayCompleted.length + projectTasksDone;
-
-  const greetingEmoji = (() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return '🌅';
-    if (hour < 17) return '☀️';
-    return '🌙';
-  })();
-  const profileName = (
-    user?.user_metadata?.full_name
-    || user?.user_metadata?.name
-    || user?.email?.split('@')[0]
-    || ''
-  ).trim().split(/\s+/)[0];
-  const inboxCount = tasks.filter(task => task.inbox === true && task.status !== 'Completed').length;
+  const notificationStatus = getPermissionStatus();
 
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div ref={containerRef} className="space-y-5">
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-      {/* Notification status */}
-      {(() => {
-        const status = getPermissionStatus();
-        if (status === 'unsupported') return null;
-        if (status === 'granted' && !showNotifBanner) return null;
-        return (
-          <div className={`rounded-xl px-4 py-3 flex items-center justify-between gap-3 ${
-            status === 'denied'
-              ? 'bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/20'
-              : 'bg-violet-50 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20'
+
+      {notificationStatus !== 'unsupported'
+        && !(notificationStatus === 'granted' && !showNotifBanner)
+        && showNotifBanner && (
+          <aside className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 ${
+            notificationStatus === 'denied'
+              ? 'border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)]'
+              : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink)]'
           }`}>
             <div>
-              <p className={`text-sm font-medium ${
-                status === 'denied'
-                  ? 'text-red-700 dark:text-red-300'
-                  : 'text-violet-700 dark:text-violet-300'
-              }`}>
-                {status === 'denied'
-                  ? 'Notifications blocked'
-                  : 'Enable notifications for habit reminders'}
+              <p className="text-sm font-semibold">
+                {notificationStatus === 'denied' ? 'Notifications are blocked' : 'Put reminders on the wire'}
               </p>
-              {status === 'denied' && (
-                <p className={`text-xs mt-1 text-red-500/60 dark:text-red-400/60`}>
-                  Open browser settings → Site settings → Notifications → Allow for this site
-                </p>
-              )}
+              <p className="mt-0.5 text-xs opacity-80">
+                {notificationStatus === 'denied'
+                  ? 'Allow notifications in browser site settings.'
+                  : 'Get habit and planning reminders when Assisy is closed.'}
+              </p>
             </div>
-            <div className="flex gap-2 flex-shrink-0">
-              {status === 'default' && (
-                <>
-                  <button
-                    onClick={async () => {
-                      const granted = await requestPermission();
-                      if (granted) {
-                        startDailyPlanningReminder(9);
-                        const reminders = habits.filter(h => h.reminderTime).map(h => ({ name: h.name, time: h.reminderTime! }));
-                        await subscribeToPush('local', reminders);
-                        await sendNotification('Notifications enabled!', { body: 'You\'ll receive habit reminders even when the app is closed.' });
-                      }
-                      setShowNotifBanner(false);
-                    }}
-                    className="px-3 py-2 rounded-lg text-xs font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-                  >
-                    Enable
-                  </button>
-                  <button
-                    onClick={() => setShowNotifBanner(false)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
-                  >
-                    Later
-                  </button>
-                </>
-              )}
-              {status === 'granted' && (
-                <button
+            {notificationStatus === 'default' ? (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="primary"
                   onClick={async () => {
-                    await sendNotification('Test notification', { body: 'Notifications are working!' });
+                    const granted = await requestPermission();
+                    if (granted) {
+                      startDailyPlanningReminder(9);
+                      const reminders = habits
+                        .filter((habit) => habit.reminderTime)
+                        .map((habit) => ({ name: habit.name, time: habit.reminderTime! }));
+                      await subscribeToPush(reminders);
+                      await sendNotification('Notifications enabled', { body: 'Your assignment reminders are ready.' });
+                    }
                     setShowNotifBanner(false);
                   }}
-                  className="px-3 py-2 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                 >
-                  Test
-                </button>
+                  Enable
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowNotifBanner(false)}>Later</Button>
+              </div>
+            ) : (
+              <Button size="sm" variant="ghost" onClick={() => setShowNotifBanner(false)}>Dismiss</Button>
+            )}
+          </aside>
+        )}
+
+      <header className="border-y border-[var(--rule-strong)] py-4">
+        <div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.025em] text-[var(--ink)]">
+              Today{profileName ? `, ${profileName}` : ''}
+            </h1>
+            <p className="mt-1 text-sm text-[var(--ink-secondary)]">
+              {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+              {' · '}
+              <span className="tabular-nums">{completedCount} filed, {pendingRundown.length} on the desk</span>
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <div
+            className="h-1.5 flex-1 overflow-hidden bg-[var(--surface-inset)]"
+            role="progressbar"
+            aria-label="Today's assignment progress"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div className="h-full bg-[var(--action)] transition-[width]" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="min-w-10 text-right font-mono text-xs tabular-nums text-[var(--ink-muted)]">{progress}%</span>
+        </div>
+      </header>
+
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-7">
+        <div className="min-w-0 space-y-7">
+          {overdueCount > 0 && (
+            <button
+              type="button"
+              onClick={() => document.getElementById('rundown-title')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex min-h-14 w-full items-center gap-3 border-y border-[var(--danger)] bg-[var(--danger-soft)] px-4 text-left text-[var(--danger)] hover:brightness-95"
+            >
+              <AlertTriangle size={17} />
+              <span className="flex-1 text-sm font-semibold">{overdueCount} overdue assignment{overdueCount === 1 ? '' : 's'}</span>
+              <span className="text-xs font-semibold">Review rundown</span>
+            </button>
+          )}
+
+          <section aria-labelledby="active-assignment-title">
+            <div className="flex items-end justify-between border-b border-[var(--rule-strong)] pb-2">
+              <div>
+                <h2 id="active-assignment-title" className="text-xl font-bold tracking-[-0.015em] text-[var(--ink)]">
+                  Active assignment
+                </h2>
+                <p className="text-xs text-[var(--ink-muted)]">The next commitment on today’s desk.</p>
+              </div>
+              {activeAssignment && (
+                <span className="font-mono text-xs tabular-nums text-[var(--ink-muted)]">1 / {pendingRundown.length}</span>
               )}
             </div>
-          </div>
-        );
-      })()}
 
-      {/* ── OVERDUE WARNING ───────────────────────────── */}
-      {(() => {
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        const overdueTasks = tasks.filter(t => {
-          if (t.status === 'Completed' || !t.dueDate) return false;
-          const due = new Date(t.dueDate);
-          due.setHours(0, 0, 0, 0);
-          return due < now;
-        });
-        if (overdueTasks.length === 0) return null;
-        return (
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
-            'bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/20'
-          }`}>
-            <AlertTriangle className={`w-4 h-4 flex-shrink-0 text-red-500 dark:text-red-400`} />
-            <div className="flex-1">
-              <span className={`text-sm font-medium text-red-600 dark:text-red-400`}>
-                {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}
-              </span>
-              <span className={`text-xs ml-2 text-red-500/60 dark:text-red-400/60`}>
-                {overdueTasks.slice(0, 3).map(t => t.title).join(', ')}{overdueTasks.length > 3 ? ` +${overdueTasks.length - 3} more` : ''}
-              </span>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* ── GREETING: date, progress, actions ───────────── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>
-            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}{profileName ? `, ${profileName}` : ''} {greetingEmoji}
-          </h1>
-          <p className={`mt-1 text-sm text-slate-500 dark:text-gray-400`}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            {totalTodayTasks > 0 && (
-              <span className={'text-violet-600 dark:text-violet-400'}> · {totalTodayDone} of {totalTodayTasks} done</span>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant="secondary"
-            icon={Inbox}
-            onClick={() => navigate('/tasks?view=inbox')}
-            aria-label={`Open Inbox${inboxCount > 0 ? `, ${inboxCount} tasks to clarify` : ''}`}
-          >
-            Inbox{inboxCount > 0 ? ` ${inboxCount}` : ''}
-          </Button>
-          <Button variant="secondary" icon={Calendar} onClick={() => navigate('/calendar')}>
-            Calendar
-          </Button>
-          <Button
-            variant="secondary"
-            icon={ListPlus}
-            onClick={handleOpenPlanYourDay}
-          >
-            <span>Plan Day</span>
-            {getSuggestedTasks().length > 0 && (
-              <span className={`ml-1 px-2 py-1 text-xs font-bold rounded-full ${
-                'bg-violet-200 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
-              }`}>{getSuggestedTasks().length}</span>
-            )}
-          </Button>
-          <Button
-            variant="primary"
-            icon={Plus}
-            onClick={() => setIsTaskFormOpen(true)}
-          >
-            <span>New Task</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* ── TODAY'S TASKS — the hero section ───────────────── */}
-      {todaysTasks.length === 0 && todaysProjectTasks.length === 0 ? (
-        <div className={`card rounded-2xl p-6 sm:p-8 text-center`}>
-          <Sparkles className={`w-10 h-10 mx-auto mb-3 text-emerald-500 dark:text-emerald-400`} />
-          <h3 className={`font-semibold mb-1 text-slate-800 dark:text-white`}>All clear!</h3>
-          <p className={`text-sm mb-4 text-slate-500 dark:text-gray-400`}>No tasks for today.</p>
-          <button
-            onClick={() => setIsTaskFormOpen(true)}
-            className="btn-primary px-4 py-2 rounded-xl text-sm inline-flex items-center gap-2"
-          >
-            <Plus size={16} /> Add Task
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {/* Timed regular and project work shares one chronological day list. */}
-          {allTodayPendingCombined.map((task) => {
-            if (!task.id.startsWith('pt-')) {
+            {!activeAssignment ? (
+              <div className="border-y-2 border-[var(--ink)] bg-[var(--surface-raised)] px-5 py-8 sm:px-7">
+                <h3 className="text-2xl font-bold tracking-[-0.025em] text-[var(--ink)]">The desk is clear.</h3>
+                <p className="mt-2 max-w-xl text-sm text-[var(--ink-secondary)]">
+                  Build today’s plan from the assignments already waiting in your workspace.
+                </p>
+                <Button className="mt-5" icon={ListPlus} onClick={() => setIsPlanYourDayOpen(true)}>Plan day</Button>
+              </div>
+            ) : activeAssignment.id.startsWith('pt-') ? (() => {
+              const projectTask = projectTaskById.get(getProjectTaskId(activeAssignment.id));
+              if (!projectTask) return null;
               return (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggleComplete={handleToggleComplete}
-                  onDelete={handleDeleteWithUndo}
-                  onEdit={handleEdit}
-                  onScheduleTomorrow={(taskId) => scheduleUnifiedTask(taskId, {
-                    date: getLocalDateString(addLocalDays(new Date(), 1)),
-                  })}
-                  onRemoveFromToday={unscheduleUnifiedTask}
-                  isInTodayView={true}
+                <ProjectAssignmentRow
+                  task={projectTask}
+                  projectName={getProject(projectTask.projectId)?.title}
+                  subProjectName={getSubProject(projectTask.subProjectId)?.title}
+                  onAdvanceStatus={(status) => handleProjectTaskStatus(projectTask, status)}
+                  onEdit={() => handleEditProjectTask(projectTask)}
+                  onOpenProject={() => navigate('/projects')}
+                  onRemoveFromToday={() => unscheduleUnifiedTask(activeAssignment.id)}
+                  featured
                 />
               );
-            }
-
-            const projectTask = projectTaskById.get(getProjectTaskId(task.id));
-            if (!projectTask) return null;
-            const project = getProject(projectTask.projectId);
-            const subProject = getSubProject(projectTask.subProjectId);
-            return (
-              <div
-                key={task.id}
-                className={`group rounded-xl px-4 py-3 transition-all ${
-                  isDark
-                    ? 'bg-white/[0.03] border border-white/10 hover:bg-white/[0.06]'
-                    : 'bg-white border border-slate-200 hover:shadow-md'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => {
-                      const statusOrder: WorkItemStatus[] = ['Backlog', 'In Progress', 'Done'];
-                      const currentIndex = statusOrder.indexOf(projectTask.status);
-                      updateTaskStatus(projectTask.id, statusOrder[(currentIndex + 1) % statusOrder.length]);
-                    }}
-                    className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
-                      projectTask.status === 'In Progress'
-                        ? 'bg-blue-100 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400'
-                        : 'bg-slate-200 text-slate-400 dark:bg-gray-500/20 dark:text-gray-500'
-                    }`}
-                    title={projectTask.status}
-                  >
-                    {projectTask.status === 'In Progress' ? <Play size={8} fill="currentColor" /> : <Circle size={12} />}
-                  </button>
+            })() : (
+              <article className="border-y-2 border-[var(--ink)] bg-[var(--surface-raised)] px-5 py-6 sm:px-7 sm:py-8">
+                <div className="flex flex-wrap items-start justify-between gap-5">
                   <div className="min-w-0 flex-1">
-                    <h3
-                      onClick={() => handleEditProjectTask(projectTask)}
-                      className="font-medium truncate cursor-pointer hover:opacity-80 text-slate-800 dark:text-white"
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold text-[var(--ink-muted)]">
+                      <span>{activeAssignment.category}</span>
+                      {activeAssignment.priority === 'High' && <span className="text-[var(--danger)]">Urgent</span>}
+                      {activeAssignment.goalId && (
+                        <span>{goals.find((goal) => goal.id === activeAssignment.goalId)?.title || 'Goal-linked'}</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingTask(activeAssignment);
+                        setIsTaskFormOpen(true);
+                      }}
+                      className="mt-3 max-w-3xl font-[var(--font-display)] text-left text-2xl font-bold leading-tight tracking-[-0.025em] text-[var(--ink)] hover:text-[var(--action)] sm:text-3xl"
                     >
-                      {projectTask.title}
-                    </h3>
-                    {(projectTask.scheduledTime || projectTask.durationMinutes) && (
-                      <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                        Planned {projectTask.scheduledTime
-                          ? new Date(`2000-01-01T${projectTask.scheduledTime}`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-                          : 'flexibly'}
-                        {projectTask.durationMinutes ? ` · ${projectTask.durationMinutes}m` : ''}
-                      </p>
-                    )}
+                      {activeAssignment.title}
+                    </button>
+                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--ink-secondary)]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock3 size={15} className="text-[var(--action)]" />
+                        {activeAssignment.scheduledTime
+                          ? new Date(`2000-01-01T${activeAssignment.scheduledTime}`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                          : 'Any time today'}
+                        {activeAssignment.durationMinutes ? ` · ${activeAssignment.durationMinutes} min` : ''}
+                      </span>
+                      {activeAssignment.dueDate && (
+                        <span>
+                          Due {new Date(activeAssignment.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          {activeAssignment.dueTime ? ` at ${activeAssignment.dueTime}` : ''}
+                        </span>
+                      )}
+                      {activeAssignment.isRecurring && <span>Recurring assignment</span>}
+                    </div>
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); navigate('/projects'); }}
-                    className="text-xs px-2 py-1 rounded-full flex-shrink-0 cursor-pointer hover:ring-1 transition-all bg-violet-50 text-violet-600 hover:ring-violet-300 dark:bg-violet-500/15 dark:text-violet-400 dark:hover:ring-violet-500/40"
-                    title="Go to Projects"
+                    type="button"
+                    onClick={() => handleToggleComplete(activeAssignment.id)}
+                    className="inline-flex min-h-12 items-center gap-2 bg-[var(--action)] px-5 text-sm font-bold text-[var(--ink-inverse)] hover:brightness-95"
                   >
-                    {project?.title}{subProject ? ` → ${subProject.title}` : ''}
-                  </button>
-                  {projectTask.priority === 'High' && <Flame size={14} className="flex-shrink-0 text-red-500" />}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); unscheduleUnifiedTask(task.id); }}
-                    className="p-3 rounded-lg transition-all flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-500/20"
-                    title="Unschedule"
-                    aria-label={`Unschedule "${projectTask.title}"`}
-                  >
-                    <CalendarMinus size={14} />
+                    <Check size={17} strokeWidth={2.5} />
+                    Complete
                   </button>
                 </div>
-              </div>
-            );
-          })}
-
-          {/* Quick add from backlog — expandable */}
-          <BacklogPicker
-            tasks={getSuggestedTasks()}
-            onAdd={(taskId) => scheduleUnifiedTask(taskId, { date: getLocalDateString() })}
-          />
-
-          {/* Completed tasks — subtle, at bottom */}
-          {(allTodayCompleted.length > 0 || todaysProjectTasks.filter(t => t.status === 'Done').length > 0) && (
-            <p className={`text-xs pt-2 text-slate-400 dark:text-gray-400`}>
-              {allTodayCompleted.length + todaysProjectTasks.filter(t => t.status === 'Done').length} completed today
-            </p>
-          )}
-        </div>
-      )}
-
-      <details className="card group rounded-2xl">
-        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-300">
-          <span>Insights, suggestions and weekly progress</span>
-          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-        </summary>
-        <div className="space-y-6 border-t border-slate-100 p-4 dark:border-white/10">
-      {/* ── STATS STRIP: compact on mobile, detailed on md+ ── */}
-      <div className={`rounded-2xl border p-3 bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.08]`}>
-        <div className="grid grid-cols-4 gap-2 sm:gap-3">
-          <div
-            className="flex flex-col items-center gap-1 text-center"
-            title={`You earn XP by completing tasks, logging habits and progressing goals. Every ${levelProgress.xpPerLevel} XP is one level.`}
-          >
-            <Crown className={`w-4 h-4 text-violet-500 dark:text-violet-400`} />
-            <span className={`text-lg font-bold text-violet-700 dark:text-violet-300`}>{getTotalLevel()}</span>
-            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Level</span>
-            <div className={`w-full ${statsExpanded ? '' : 'hidden'} md:block`}>
-              <div
-                className={`mt-1 h-1 rounded-full overflow-hidden bg-violet-200 dark:bg-violet-500/20`}
-                role="progressbar"
-                aria-valuenow={Math.round(levelProgress.percent)}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label={`${levelProgress.xpToNextLevel} XP to level ${getTotalLevel() + 1}`}
-              >
-                <div
-                  className={`h-full rounded-full transition-[width] duration-500 bg-violet-500 dark:bg-violet-400`}
-                  style={{ width: `${levelProgress.percent}%` }}
-                />
-              </div>
-              <p className={`text-xs mt-1 text-violet-500/60 dark:text-violet-400/50`}>{getTitle()}</p>
-              <p className={`text-xs text-violet-500/60 dark:text-violet-400/50`}>
-                {levelProgress.xpToNextLevel} XP to level {getTotalLevel() + 1}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-1 text-center">
-            <CheckSquare className={`w-4 h-4 text-blue-500 dark:text-blue-400`} />
-            <span className={`text-lg font-bold text-blue-700 dark:text-blue-300`}>{totalTodayDone}/{totalTodayTasks}</span>
-            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Tasks</span>
-            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block text-blue-500/60 dark:text-blue-400/50`}>done today</p>
-          </div>
-          <div className="flex flex-col items-center gap-1 text-center">
-            <Flame className={`w-4 h-4 text-orange-500 dark:text-orange-400`} />
-            <span className={`text-lg font-bold text-orange-700 dark:text-orange-300`}>{userStats.currentStreak}</span>
-            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Streak</span>
-            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block text-orange-500/60 dark:text-orange-400/50`}>days</p>
-          </div>
-          <div className="flex flex-col items-center gap-1 text-center">
-            <Trophy className={`w-4 h-4 text-amber-500 dark:text-amber-400`} />
-            <span className={`text-lg font-bold text-amber-700 dark:text-amber-300`}>{getUnlockedAchievements().length}</span>
-            <span className={`text-xs text-slate-500 dark:text-gray-500`}>Badges</span>
-            <p className={`text-xs ${statsExpanded ? '' : 'hidden'} md:block text-amber-500/60 dark:text-amber-400/50`}>unlocked</p>
-          </div>
-        </div>
-        {habitCheckInStats.totalHabits > 0 && (
-          <p className={`mt-3 text-center text-xs text-slate-500 dark:text-gray-500`}>
-            {habitCheckInStats.todayCompletedCount}/{habitCheckInStats.totalHabits} habits done today
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => setStatsExpanded(prev => !prev)}
-          className={`md:hidden w-full mt-2 text-xs font-medium text-slate-500 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400`}
-        >
-          {statsExpanded ? '▲ Less' : '▼ More'}
-        </button>
-      </div>
-
-      {/* ── SUGGESTED FOR YOU (pattern-based) ───────────────── */}
-      {suggestionGroups.length > 0 && (
-        <div className={`rounded-xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.03] dark:border-white/10`}>
-          <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-            <Sparkles size={18} className={'text-amber-500 dark:text-amber-400'} />
-            <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>Suggested for you</span>
-          </div>
-          <div className="divide-y divide-white/5">
-            {suggestionGroups.map((group) => (
-              <div key={group.label} className="p-3">
-                <p className={`text-xs font-medium mb-2 flex items-center gap-2 text-slate-500 dark:text-gray-500`}>
-                  <group.icon size={12} />
-                  {group.label} ({group.tasks.length})
-                </p>
-                <div className="space-y-2">
-                  {group.tasks.slice(0, 4).map((task) => (
-                    <div
-                      key={task.id}
-                      className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 bg-slate-50 dark:bg-white/5`}
-                    >
-                      <span className={`text-sm truncate flex-1 text-slate-700 dark:text-gray-300`}>{task.title}</span>
+                <div className="mt-6 flex flex-wrap gap-2 border-t border-[var(--rule)] pt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingTask(activeAssignment);
+                      setIsTaskFormOpen(true);
+                    }}
+                    className="min-h-11 px-2 text-sm font-semibold text-[var(--action)] hover:underline"
+                  >
+                    Edit assignment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scheduleUnifiedTask(activeAssignment.id, {
+                      date: getLocalDateString(addLocalDays(new Date(), 1)),
+                    })}
+                    className="hidden min-h-11 px-2 text-sm text-[var(--ink-secondary)] hover:text-[var(--action)] sm:inline-flex sm:items-center"
+                  >
+                    Move to tomorrow
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => unscheduleUnifiedTask(activeAssignment.id)}
+                    className="hidden min-h-11 px-2 text-sm text-[var(--ink-secondary)] hover:text-[var(--action)] sm:inline-flex sm:items-center"
+                  >
+                    Remove from Today
+                  </button>
+                  <details className="relative sm:hidden">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1 px-2 text-sm font-medium text-[var(--ink-secondary)]">
+                      More <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                    </summary>
+                    <div className="absolute bottom-full left-0 z-20 mb-1 min-w-48 border border-[var(--rule-strong)] bg-[var(--surface-raised)] p-1 shadow-[var(--shadow-elevated)]">
                       <button
                         type="button"
-                        onClick={() => scheduleUnifiedTask(task.id, { date: getLocalDateString() })}
-                        className={`text-xs font-medium px-3 py-1 rounded-lg flex-shrink-0 transition-colors ${
-                          'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
-                        }`}
+                        onClick={() => scheduleUnifiedTask(activeAssignment.id, {
+                          date: getLocalDateString(addLocalDays(new Date(), 1)),
+                        })}
+                        className="flex min-h-11 w-full items-center px-3 text-left text-sm text-[var(--ink-secondary)] hover:bg-[var(--state-hover)] hover:text-[var(--action)]"
                       >
-                        Add to Today
+                        Move to tomorrow
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => unscheduleUnifiedTask(activeAssignment.id)}
+                        className="flex min-h-11 w-full items-center px-3 text-left text-sm text-[var(--ink-secondary)] hover:bg-[var(--state-hover)] hover:text-[var(--danger)]"
+                      >
+                        Remove from Today
                       </button>
                     </div>
-                  ))}
-                  {group.tasks.length > 4 && (
-                    <p className={`text-xs pl-3 text-slate-400 dark:text-gray-400`}>+{group.tasks.length - 4} more in backlog</p>
-                  )}
+                  </details>
                 </div>
+              </article>
+            )}
+          </section>
+
+          <section aria-labelledby="rundown-title">
+            <div className="flex items-end justify-between border-b-2 border-[var(--ink)] pb-2">
+              <div>
+                <h2 id="rundown-title" className="text-xl font-bold tracking-[-0.015em] text-[var(--ink)]">Next in the rundown</h2>
+                <p className="text-xs text-[var(--ink-muted)]">Timed work leads; urgent and high-effort work follows.</p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <span className="font-mono text-xs tabular-nums text-[var(--ink-muted)]">{remainingAssignments.length} WAITING</span>
+            </div>
 
-      {/* ── WEEKLY REVIEW (richer summary) ──────────── */}
-      <div
-        onClick={() => navigate('/review')}
-        className={`rounded-xl px-4 py-3 cursor-pointer transition-all ${
-          isDark ? 'bg-slate-500/5 border border-white/5 hover:border-white/10 hover:bg-slate-500/10' : 'bg-slate-50 border border-slate-100 hover:border-slate-200 hover:shadow-sm'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-slate-200/70 dark:bg-slate-500/15`}>
-              <Calendar className={`w-3.5 h-3.5 text-slate-500 dark:text-gray-400`} />
-            </div>
-            <div>
-              <span className={`text-sm font-medium text-slate-700 dark:text-gray-300`}>This Week</span>
-              <span className={`text-xs ml-2 text-slate-400 dark:text-gray-400`}>
-                {weeklyProfessionalReview.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weeklyProfessionalReview.weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-            </div>
-          </div>
-          <span className={`text-xs font-medium px-2 py-1 rounded-full bg-slate-200/70 text-slate-500 dark:bg-white/5 dark:text-gray-500`}>View full review →</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-xs">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={12} className={'text-emerald-500 dark:text-emerald-400'} />
-            <span className={'text-slate-600 dark:text-gray-400'}>
-              <span className={`font-semibold text-emerald-600 dark:text-emerald-400`}>{weeklyProfessionalReview.completed.length}</span> completed
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ListTodo size={12} className={'text-blue-500 dark:text-blue-400'} />
-            <span className={'text-slate-600 dark:text-gray-400'}>
-              <span className={`font-semibold text-blue-600 dark:text-blue-400`}>{weeklyProfessionalReview.backlog.length}</span> pending
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Flame size={12} className={'text-orange-500 dark:text-orange-400'} />
-            <span className={'text-slate-600 dark:text-gray-400'}>
-              <span className={`font-semibold text-orange-600 dark:text-orange-400`}>{userStats.currentStreak}</span> day streak
-            </span>
-          </div>
-          {projects.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Zap size={12} className={'text-violet-500 dark:text-violet-400'} />
-              <span className={`truncate text-slate-600 dark:text-gray-400`}>
-                {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+            <div className="border-x border-b border-[var(--rule)] bg-[var(--surface-raised)]">
+              {remainingAssignments.map((task) => {
+                if (!task.id.startsWith('pt-')) {
+                  return (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onToggleComplete={handleToggleComplete}
+                      onDelete={handleDeleteWithUndo}
+                      onEdit={(selected) => {
+                        setEditingTask(selected);
+                        setIsTaskFormOpen(true);
+                      }}
+                      onScheduleTomorrow={(taskId) => scheduleUnifiedTask(taskId, {
+                        date: getLocalDateString(addLocalDays(new Date(), 1)),
+                      })}
+                      onRemoveFromToday={unscheduleUnifiedTask}
+                      isInTodayView
+                    />
+                  );
+                }
 
-      {/* ── BRIEFING / QUOTE OF THE DAY — quiet closing line ── */}
-      <div className={`flex items-start gap-3 text-slate-600 dark:text-gray-300`}>
-        <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-1 ${
-          'bg-violet-50 dark:bg-violet-500/10'
-        }`}>
-          {morningBriefing || briefingLoading
-            ? <Bot className={`w-4 h-4 text-violet-500 dark:text-violet-400`} />
-            : <Quote className={`w-4 h-4 text-violet-500 dark:text-violet-400`} />
-          }
-        </div>
-        <div className="flex-1 min-w-0">
-          {briefingLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-              <p className={`text-sm text-slate-500 dark:text-gray-400`}>Generating your morning briefing...</p>
-            </div>
-          ) : briefingError ? (
-            <div>
-              <p className="text-sm text-red-600 dark:text-red-400">{briefingError}</p>
-              <button
-                type="button"
-                onClick={() => generateBriefing(true)}
-                className="mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
-              >
-                <RefreshCw size={10} />
-                Try again
-              </button>
-            </div>
-          ) : morningBriefing ? (
-            <>
-              <div
-                className={`text-sm leading-relaxed space-y-1 text-slate-600 dark:text-gray-300`}
-                dangerouslySetInnerHTML={{ __html: formatAIText(morningBriefing) }}
+                const projectTask = projectTaskById.get(getProjectTaskId(task.id));
+                if (!projectTask) return null;
+                return (
+                  <ProjectAssignmentRow
+                    key={task.id}
+                    task={projectTask}
+                    projectName={getProject(projectTask.projectId)?.title}
+                    subProjectName={getSubProject(projectTask.subProjectId)?.title}
+                    onAdvanceStatus={(status) => handleProjectTaskStatus(projectTask, status)}
+                    onEdit={() => handleEditProjectTask(projectTask)}
+                    onOpenProject={() => navigate('/projects')}
+                    onRemoveFromToday={() => unscheduleUnifiedTask(task.id)}
+                  />
+                );
+              })}
+
+              <BacklogPicker
+                tasks={suggestedTasks}
+                onAdd={(taskId) => scheduleUnifiedTask(taskId, { date: todayString })}
               />
-              <div className="flex items-center gap-3 mt-2">
-                <p className={`text-xs text-violet-500/80 dark:text-violet-400/70`}>— AI Coach</p>
-                <button
-                  onClick={() => generateBriefing(true)}
-                  className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
-                    'text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:text-gray-500 dark:hover:text-violet-400 dark:hover:bg-violet-500/10'
-                  }`}
-                >
-                  <RefreshCw size={10} />
-                  Regenerate
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className={`text-sm leading-relaxed italic text-slate-600 dark:text-gray-300`}>
-                "{quote.text}"
-              </p>
-              <p className={`text-xs mt-1 text-violet-500/80 dark:text-violet-400/70`}>— {quote.author}</p>
-            </>
-          )}
+
+              {completedCount > 0 && (
+                <details className="border-t border-[var(--rule-strong)] bg-[var(--surface)]">
+                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold text-[var(--success)]">
+                    <span className="inline-flex items-center gap-2"><Check size={15} /> Completed today</span>
+                    <span className="font-mono text-xs tabular-nums">{completedCount}</span>
+                  </summary>
+                  <div className="border-t border-[var(--rule)]">
+                    {completedToday.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onToggleComplete={handleToggleComplete}
+                        onDelete={handleDeleteWithUndo}
+                        onEdit={(selected) => {
+                          setEditingTask(selected);
+                          setIsTaskFormOpen(true);
+                        }}
+                        isInTodayView
+                      />
+                    ))}
+                    {completedProjectToday.map((task) => (
+                      <ProjectAssignmentRow
+                        key={task.id}
+                        task={task}
+                        projectName={getProject(task.projectId)?.title}
+                        subProjectName={getSubProject(task.subProjectId)?.title}
+                        onAdvanceStatus={(status) => handleProjectTaskStatus(task, status)}
+                        onEdit={() => handleEditProjectTask(task)}
+                        onOpenProject={() => navigate('/projects')}
+                        onRemoveFromToday={() => unscheduleUnifiedTask(`pt-${task.id}`)}
+                      />
+                    ))}
+                  </div>
+                </details>
+              )}
+            </div>
+          </section>
         </div>
+
+        <aside aria-labelledby="day-tools-title" className="border-t border-[var(--rule-strong)] pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+          <div className="flex items-baseline justify-between border-b border-[var(--rule-strong)] pb-2">
+            <h2 id="day-tools-title" className="text-sm font-bold text-[var(--ink)]">Day tools</h2>
+            <span className="text-xs text-[var(--ink-muted)]">Utilities</span>
+          </div>
+          <nav aria-label="Today utilities" className="divide-y divide-[var(--rule)]">
+            <button
+              type="button"
+              onClick={() => setIsPlanYourDayOpen(true)}
+              className="flex min-h-16 w-full items-center gap-3 text-left text-sm font-semibold text-[var(--action)] hover:bg-[var(--action-soft)]"
+            >
+              <ListPlus size={17} />
+              <span className="flex-1">Plan day</span>
+              {suggestedTasks.length > 0 && <span className="font-mono text-xs tabular-nums">{suggestedTasks.length}</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/tasks/inbox')}
+              className="flex min-h-16 w-full items-center gap-3 text-left text-sm font-semibold text-[var(--action)] hover:bg-[var(--action-soft)]"
+            >
+              <Inbox size={17} />
+              <span className="flex-1">Inbox</span>
+              <span className="font-mono text-xs tabular-nums">{inboxCount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/calendar')}
+              className="flex min-h-16 w-full items-center gap-3 text-left text-sm font-semibold text-[var(--action)] hover:bg-[var(--action-soft)]"
+            >
+              <Calendar size={17} />
+              <span className="flex-1">Calendar</span>
+            </button>
+          </nav>
+        </aside>
       </div>
-        </div>
-      </details>
 
       <TaskForm
         isOpen={isTaskFormOpen}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
-        onCancel={handleCloseForm}
+        onCancel={() => {
+          setEditingTask(null);
+          setIsTaskFormOpen(false);
+        }}
         goals={goals}
         editingTask={editingTask}
-        defaultAddToToday={true}
+        defaultAddToToday
       />
 
-      <DailyCheckIn
-        isOpen={isCheckInOpen}
-        existingLog={getTodaysDailyLog()}
-        onSubmit={(data) => {
-          createOrUpdateLog(new Date(), data);
-          setIsCheckInOpen(false);
-        }}
-        onCancel={() => setIsCheckInOpen(false)}
-      />
-
-      {/* XP Animation */}
-      {xpAnimation.show && (
-        <XPAnimation 
-          xp={xpAnimation.xp} 
-          onComplete={() => setXpAnimation({ show: false, xp: 0 })} 
-        />
-      )}
-
-      {/* Daily Login Bonus Notification */}
-      {dailyBonusResult?.show && (
-        <div
-          className="fixed below-header inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[70] animate-slide-down"
-          onClick={() => setDailyBonusResult(null)}
-        >
-          <div 
-            className={`flex items-center space-x-3 p-4 rounded-2xl shadow-elevated max-w-sm mx-auto ${
-              'bg-white/95 backdrop-blur border border-violet-200 dark:bg-[#1a1a2e]/95 dark:border-violet-500/30'
-            }`}
-          >
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
-              'bg-violet-100 dark:bg-violet-500/20'
-            }`}>
-              🌅
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-xs font-medium text-violet-600 dark:text-violet-400`}>
-                Welcome Back! Daily Bonus
-              </p>
-              <h4 className={`text-lg font-bold text-slate-800 dark:text-white`}>
-                +{dailyBonusResult.xp} XP
-              </h4>
-              <div className="flex items-center space-x-2">
-                <span className={`text-xs text-slate-500 dark:text-gray-400`}>
-                  🔥 {dailyBonusResult.streak} day streak
-                </span>
-                {dailyBonusResult.multiplier > 1 && (
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'
-                  }`}>
-                    {dailyBonusResult.multiplier}x bonus
-                  </span>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={() => setDailyBonusResult(null)}
-              className={`p-2 rounded-lg transition-colors ${
-                'hover:bg-slate-100 text-slate-400 dark:hover:bg-white/10 dark:text-gray-400'
-              }`}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Achievement Unlock Notification */}
-      {recentUnlocks.length > 0 && (
-        <div className="fixed bottom-24 right-4 md:bottom-4 z-50 space-y-2 animate-slide-up">
-          {recentUnlocks.map((achievement) => (
-            <div 
-              key={achievement.id}
-              className={`flex items-center space-x-3 p-4 rounded-2xl shadow-elevated max-w-sm ${
-                'bg-amber-50 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30'
-              }`}
-            >
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
-                'bg-amber-100 dark:bg-amber-500/20'
-              }`}>
-                {achievement.icon}
-              </div>
-              <div className="flex-1">
-                <p className={`text-xs font-medium text-amber-600 dark:text-amber-400`}>
-                  🎉 Achievement Unlocked!
-                </p>
-                <h4 className={`font-semibold text-slate-800 dark:text-white`}>
-                  {achievement.name}
-                </h4>
-                <p className={`text-xs text-slate-500 dark:text-gray-400`}>
-                  +{achievement.xpReward} XP
-                </p>
-              </div>
-              <button
-                onClick={clearRecentUnlocks}
-                className={`p-2 rounded-lg transition-colors ${
-                  'hover:bg-slate-100 text-slate-400 dark:hover:bg-white/10 dark:text-gray-400'
-                }`}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Plan Your Day Modal */}
       <PlanYourDay
         isOpen={isPlanYourDayOpen}
-        onClose={handleClosePlanYourDay}
-        todaysTasks={todayUnifiedTasks}
+        onClose={closePlanYourDay}
+        todaysTasks={[...pendingRegular, ...projectTodayAsTasks]}
         suggestedTasks={planBacklogTasks}
-        onScheduleToday={(taskId) => scheduleUnifiedTask(taskId, { date: getLocalDateString() })}
+        onScheduleToday={(taskId) => scheduleUnifiedTask(taskId, { date: todayString })}
         onUnschedule={unscheduleUnifiedTask}
       />
 
-      {/* Edit Project Task Modal */}
       <ExpandableModal
         isOpen={!!editingProjectTask}
         onClose={() => setEditingProjectTask(null)}
-        title="Edit Task"
-        icon={<Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
-        footer={
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={() => setEditingProjectTask(null)}
-              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
-            >
-              Cancel
-            </button>
-            <button onClick={handleSaveProjectTask} className="btn-primary px-4 py-2 rounded-xl">Save</button>
+        title="Edit project assignment"
+        icon={<Pencil className="h-5 w-5 text-[var(--action)]" />}
+        footer={(
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setEditingProjectTask(null)}>Cancel</Button>
+            <Button variant="primary" onClick={handleSaveProjectTask}>Save assignment</Button>
           </div>
-        }
+        )}
       >
-        {(isFS) => {
+        {(isFullscreen) => {
           if (!editingProjectTask) return null;
-          const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-            'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
-          }`;
-          const titleInput = (
-            <div>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
-              <input type="text" value={projectTaskForm.title} onChange={(e) => setProjectTaskForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} autoFocus />
-            </div>
-          );
-          const notesInput = (
-            <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes</label>
-              <TiptapEditor content={projectTaskForm.description} onChange={(val) => setProjectTaskForm(prev => ({ ...prev, description: val }))} placeholder="Add notes, checklists, or details..." />
-            </div>
-          );
-          const statusSelector = (
-            <div>
-              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Status</label>
-              <div className={`flex rounded-xl overflow-hidden border border-slate-200 dark:border-white/10`}>
-                {(['Backlog', 'In Progress', 'Done'] as const).map((status) => (
-                  <button key={status} onClick={() => updateTaskStatus(editingProjectTask.id, status)} className={`flex-1 px-3 py-2 text-xs font-medium transition-all ${editingProjectTask.status === status ? status === 'Done' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : status === 'In Progress' ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' : 'bg-slate-100 text-slate-700 dark:bg-gray-500/20 dark:text-gray-300' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>{status}</button>
-                ))}
+          const fields = (
+            <>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-[var(--ink-secondary)]">Headline</span>
+                <input
+                  type="text"
+                  value={projectTaskForm.title}
+                  onChange={(event) => setProjectTaskForm((current) => ({ ...current, title: event.target.value }))}
+                  className="input w-full rounded-md px-4 py-3"
+                  autoFocus
+                />
+              </label>
+              <div className={isFullscreen ? 'flex min-h-0 flex-1 flex-col' : ''}>
+                <span className="mb-1 block text-sm font-medium text-[var(--ink-secondary)]">Notes</span>
+                <TiptapEditor
+                  content={projectTaskForm.description}
+                  onChange={(description) => setProjectTaskForm((current) => ({ ...current, description }))}
+                  placeholder="Add reporting notes, checklist items, or context…"
+                />
               </div>
-            </div>
+            </>
           );
-          const projectInfo = (
-            <div className={`p-3 rounded-xl bg-slate-50 dark:bg-white/5`}>
-              <p className={`text-xs text-slate-500 dark:text-gray-500`}>Project</p>
-              <p className={`text-sm font-medium text-slate-700 dark:text-gray-300`}>
-                {getProject(editingProjectTask.projectId)?.title} → {getSubProject(editingProjectTask.subProjectId)?.title}
-              </p>
+          const desk = (
+            <div className="space-y-4">
+              <div>
+                <p className="mb-2 text-sm font-medium text-[var(--ink-secondary)]">Desk status</p>
+                <div className="grid grid-cols-3 overflow-hidden rounded-md border border-[var(--rule)]">
+                  {(['Backlog', 'In Progress', 'Done'] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => updateTaskStatus(editingProjectTask.id, status)}
+                      className={`min-h-11 border-r border-[var(--rule)] px-2 text-xs font-semibold last:border-0 ${
+                        editingProjectTask.status === status
+                          ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                          : 'bg-[var(--surface-raised)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-[var(--rule)] pt-3 text-sm text-[var(--ink-secondary)]">
+                <CalendarClock size={15} className="mr-2 inline text-[var(--action)]" />
+                {getProject(editingProjectTask.projectId)?.title}
+                {' / '}
+                {getSubProject(editingProjectTask.subProjectId)?.title}
+              </div>
             </div>
           );
 
-          return isFS ? (
+          return isFullscreen ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
-                {titleInput}
-                {notesInput}
-              </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Details</h3>
-                {statusSelector}
-                {projectInfo}
-              </div>
+              <div className="flex flex-1 flex-col gap-4 p-8">{fields}</div>
+              <aside className="w-80 flex-shrink-0 border-l border-[var(--rule)] bg-[var(--surface)] p-6">{desk}</aside>
             </div>
           ) : (
-            <div className="p-6 space-y-4">
-              {titleInput}
-              {notesInput}
-              {statusSelector}
-              {projectInfo}
-            </div>
+            <div className="space-y-5 p-6">{fields}{desk}</div>
           );
         }}
       </ExpandableModal>

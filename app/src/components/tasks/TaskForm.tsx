@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern } from '../../types';
+import type { Task, TaskCategory, Priority, Effort, Goal, RecurrencePattern, RecurrenceRule, ReminderOffsetMinutes } from '../../types';
 import { Sparkles, Pencil, Loader2, Check, Square, CheckSquare } from 'lucide-react';
 import { TiptapEditor } from '../common/TiptapEditor';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { askAIJson, isAIConfigured } from '../../lib/ai';
 import { getLocalDateString } from '../../lib/dateUtils';
 import { Button, SelectField, TextField } from '../ui';
+import { ReminderOffsetPicker } from './ReminderOffsetPicker';
 
 interface SuggestedSubtask {
   title: string;
@@ -22,11 +23,13 @@ interface TaskFormProps {
     effort: Effort;
     isRecurring: boolean;
     recurrencePattern?: RecurrencePattern;
+    recurrenceRule?: RecurrenceRule;
     specificDays?: number[];
     monthDay?: number;
     goalId?: string;
     dueDate?: Date;
     dueTime?: string;
+    dueReminderOffsets?: ReminderOffsetMinutes[];
     addToToday?: boolean;
   }) => void;
   onCancel: () => void;
@@ -47,9 +50,16 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const [recurrencePattern, setRecurrencePattern] = useState<RecurrencePattern>('daily');
   const [specificDays, setSpecificDays] = useState<number[]>([]);
   const [monthDay, setMonthDay] = useState<number>(1);
+  const [monthEnd, setMonthEnd] = useState(false);
+  const [recurrenceInterval, setRecurrenceInterval] = useState(1);
+  const [recurrenceEnd, setRecurrenceEnd] = useState<'never' | 'date' | 'count'>('never');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
+  const [recurrenceCount, setRecurrenceCount] = useState(10);
+  const [recurrenceAdvanced, setRecurrenceAdvanced] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
   const [dueDate, setDueDate] = useState<string>('');
   const [dueTime, setDueTime] = useState<string>('');
+  const [dueReminderOffsets, setDueReminderOffsets] = useState<ReminderOffsetMinutes[]>([]);
 
   const [subtasks, setSubtasks] = useState<SuggestedSubtask[]>([]);
   const [decomposing, setDecomposing] = useState(false);
@@ -68,9 +78,17 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       setRecurrencePattern(editingTask.recurrencePattern || 'daily');
       setSpecificDays(editingTask.specificDays || []);
       setMonthDay(editingTask.monthDay ?? 1);
+      setMonthEnd(editingTask.recurrenceRule?.monthEnd ?? false);
+      setRecurrenceInterval(editingTask.recurrenceRule?.interval ?? 1);
+      setRecurrenceEnd(editingTask.recurrenceRule?.endDate ? 'date' : editingTask.recurrenceRule?.count ? 'count' : 'never');
+      setRecurrenceEndDate(editingTask.recurrenceRule?.endDate ?? '');
+      setRecurrenceCount(editingTask.recurrenceRule?.count ?? 10);
+      setRecurrenceAdvanced(Boolean(editingTask.recurrenceRule
+        && ((editingTask.recurrenceRule.interval ?? 1) > 1 || editingTask.recurrenceRule.endDate || editingTask.recurrenceRule.count)));
       setSelectedGoalId(editingTask.goalId || '');
       setDueDate(editingTask.dueDate ? getLocalDateString(new Date(editingTask.dueDate)) : '');
       setDueTime(editingTask.dueTime || '');
+      setDueReminderOffsets(editingTask.dueReminderOffsets || []);
     } else {
       resetForm();
     }
@@ -86,9 +104,16 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
     setRecurrencePattern('daily');
     setSpecificDays([]);
     setMonthDay(1);
+    setMonthEnd(false);
+    setRecurrenceInterval(1);
+    setRecurrenceEnd('never');
+    setRecurrenceEndDate('');
+    setRecurrenceCount(10);
+    setRecurrenceAdvanced(false);
     setSelectedGoalId('');
     setDueDate('');
     setDueTime('');
+    setDueReminderOffsets([]);
     setSubtasks([]);
     setDecomposeError(null);
     setTitleError(null);
@@ -132,6 +157,20 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       return;
     }
     setTitleError(null);
+    const frequency = recurrencePattern === 'specific_days' ? 'weekly' : recurrencePattern;
+    const startDate = editingTask?.recurrenceRule?.startDate
+      ?? (editingTask ? getLocalDateString(new Date(editingTask.createdAt)) : getLocalDateString());
+    const recurrenceRule: RecurrenceRule | undefined = isRecurring ? {
+      frequency,
+      interval: Math.max(1, recurrenceInterval),
+      startDate,
+      weekdays: frequency === 'weekly' ? specificDays : undefined,
+      monthDay: frequency === 'monthly' && !monthEnd ? monthDay : undefined,
+      monthEnd: frequency === 'monthly' ? monthEnd : undefined,
+      endDate: recurrenceEnd === 'date' ? recurrenceEndDate || undefined : undefined,
+      count: recurrenceEnd === 'count' ? Math.max(1, recurrenceCount) : undefined,
+      overrides: editingTask?.recurrenceRule?.overrides,
+    } : undefined;
     onSubmit({
       title: title.trim(),
       description: description.trim(),
@@ -140,13 +179,15 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       effort,
       isRecurring,
       recurrencePattern: isRecurring ? recurrencePattern : undefined,
-      specificDays: isRecurring && recurrencePattern === 'specific_days' ? specificDays : undefined,
-      monthDay: isRecurring && recurrencePattern === 'monthly' ? monthDay : undefined,
+      recurrenceRule,
+      specificDays: isRecurring && (recurrencePattern === 'specific_days' || recurrencePattern === 'weekly') ? specificDays : undefined,
+      monthDay: isRecurring && recurrencePattern === 'monthly' && !monthEnd ? monthDay : undefined,
       goalId: selectedGoalId || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       // A time without a date has nothing to attach to, so it is dropped rather
       // than saved as a value no view could place.
       dueTime: dueDate && dueTime ? dueTime : undefined,
+      dueReminderOffsets: dueDate && dueTime && dueReminderOffsets.length > 0 ? dueReminderOffsets : undefined,
       addToToday: !editingTask ? defaultAddToToday : undefined,
     });
     resetForm();
@@ -166,12 +207,14 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   };
 
   const isEditing = !!editingTask;
+  const recurrenceStartDate = editingTask?.recurrenceRule?.startDate
+    ?? (editingTask ? getLocalDateString(new Date(editingTask.createdAt)) : getLocalDateString());
 
   const showDecomposeButton = isAIConfigured() && title.trim().length > 30 && !editingTask;
 
   const subtaskSection = subtasks.length > 0 ? (
-    <div className={`mt-3 p-3 rounded-xl border bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20`}>
-      <div className={`flex items-center gap-2 text-sm font-medium mb-2 text-violet-700 dark:text-violet-300`}>
+    <div className="mt-3 rounded-[var(--radius-md)] border border-[var(--action)] bg-[var(--action-soft)] p-3">
+      <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[var(--action)]">
         <Sparkles size={14} />
         Suggested Sub-tasks
       </div>
@@ -183,19 +226,19 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             onClick={() => toggleSubtask(i)}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors ${
               st.selected
-                ? 'bg-violet-100 text-slate-800 dark:bg-violet-500/20 dark:text-white'
-                : 'bg-white text-slate-500 dark:bg-white/5 dark:text-gray-400'
+                ? 'bg-[var(--selected)] text-[var(--ink)]'
+                : 'bg-[var(--surface-raised)] text-[var(--ink-secondary)]'
             }`}
           >
             {st.selected
-              ? <CheckSquare size={15} className={'text-violet-600 dark:text-violet-400'} />
-              : <Square size={15} className={'text-slate-300 dark:text-gray-400'} />
+              ? <CheckSquare size={15} className="text-[var(--action)]" />
+              : <Square size={15} className="text-[var(--rule-strong)]" />
             }
             <span className="flex-1">{st.title}</span>
             <span className={`text-xs px-2 py-1 rounded-full ${
               st.effort === 'High'
-                ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'
-                : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                ? 'bg-[var(--warning-soft)] text-[var(--warning)]'
+                : 'bg-[var(--success-soft)] text-[var(--success)]'
             }`}>{st.effort}</span>
           </button>
         ))}
@@ -245,7 +288,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         </Button>
       )}
       {decomposeError && (
-        <p className={`mt-1 text-xs text-red-600 dark:text-red-400`}>{decomposeError}</p>
+        <p className="mt-1 text-xs text-[var(--danger)]">{decomposeError}</p>
       )}
       {subtaskSection}
     </div>
@@ -254,7 +297,7 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
 
   const notesField = (isFS: boolean) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
-      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Notes</label>
+      <label className="mb-2 block text-sm font-semibold text-[var(--ink-secondary)]">Notes</label>
       <TiptapEditor
         content={description}
         onChange={setDescription}
@@ -271,45 +314,56 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
    * never disagree.
    */
   const dueDateField = (
-    <div className={dueDate ? 'grid grid-cols-2 gap-3' : ''}>
-      <TextField
-        label="Due Date (optional)"
-        type="date"
-        value={dueDate}
-        onChange={(e) => {
-          setDueDate(e.target.value);
-          if (!e.target.value) setDueTime('');
-        }}
-        min={getLocalDateString()}
-      />
-      {dueDate && (
+    <div className="space-y-3">
+      <div className={dueDate ? 'grid grid-cols-2 gap-3' : ''}>
         <TextField
-          label="Time (optional)"
-          type="time"
-          value={dueTime}
-          onChange={(e) => setDueTime(e.target.value)}
+          label="Due Date (optional)"
+          type="date"
+          value={dueDate}
+          onChange={(e) => {
+            setDueDate(e.target.value);
+            if (!e.target.value) {
+              setDueTime('');
+              setDueReminderOffsets([]);
+            }
+          }}
+          min={getLocalDateString()}
         />
+        {dueDate && (
+          <TextField
+            label="Time (optional)"
+            type="time"
+            value={dueTime}
+            onChange={(e) => {
+              setDueTime(e.target.value);
+              if (!e.target.value) setDueReminderOffsets([]);
+            }}
+          />
+        )}
+      </div>
+      {dueDate && dueTime && (
+        <ReminderOffsetPicker label="Deadline reminders" value={dueReminderOffsets} onChange={setDueReminderOffsets} />
       )}
     </div>
   );
 
   const categoryField = (
     <div>
-      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Category</label>
+      <label className="mb-2 block text-sm font-semibold text-[var(--ink-secondary)]">Category</label>
       <div className="grid grid-cols-3 gap-2">
         {(['Personal', 'Financial', 'Professional'] as const).map((cat) => (
           <button
             key={cat}
             type="button"
             onClick={() => handleCategoryChange(cat)}
-            className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
+            className={`min-h-11 rounded-[var(--radius-md)] border px-3 py-3 text-sm font-medium transition-colors ${
               category === cat
                 ? cat === 'Personal'
-                  ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
+                  ? 'border-[var(--info)] bg-[var(--info-soft)] text-[var(--info)]'
                   : cat === 'Financial'
-                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
-                  : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-gray-500/20 dark:text-gray-300 dark:border-gray-500/30'
-                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
+                  ? 'border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)]'
+                  : 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
             }`}
           >
             {cat}
@@ -335,19 +389,19 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
   const priorityEffortField = (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Priority</label>
+        <label className="mb-2 block text-sm font-semibold text-[var(--ink-secondary)]">Priority</label>
         <div className="grid grid-cols-2 gap-2">
           {(['High', 'Low'] as const).map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setPriority(p)}
-              className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
+              className={`min-h-11 rounded-[var(--radius-md)] border px-3 py-3 text-sm font-medium transition-colors ${
                 priority === p
                   ? p === 'High'
-                    ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30'
-                    : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
+                    ? 'border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)]'
+                    : 'border-[var(--rule-strong)] bg-[var(--surface-subtle)] text-[var(--ink-secondary)]'
+                  : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
               }`}
             >
               {p}
@@ -356,19 +410,19 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Effort</label>
+        <label className="mb-2 block text-sm font-semibold text-[var(--ink-secondary)]">Effort</label>
         <div className="grid grid-cols-2 gap-2">
           {(['High', 'Low'] as const).map((e) => (
             <button
               key={e}
               type="button"
               onClick={() => setEffort(e)}
-              className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
+              className={`min-h-11 rounded-[var(--radius-md)] border px-3 py-3 text-sm font-medium transition-colors ${
                 effort === e
                   ? e === 'High'
-                    ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-500/30'
-                    : 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
+                    ? 'border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning)]'
+                    : 'border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)]'
+                  : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
               }`}
             >
               {e}
@@ -384,36 +438,37 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       <label className="flex items-center space-x-3 cursor-pointer group">
         <div className="relative">
           <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="sr-only" />
-          <div className={`w-10 h-6 rounded-full transition-all ${isRecurring ? 'bg-violet-500' : 'bg-slate-200 dark:bg-white/10'}`}>
-            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform ${isRecurring ? 'translate-x-5' : 'translate-x-1'} mt-1`} />
+          <div className={`h-6 w-10 rounded-full border transition-colors ${isRecurring ? 'border-[var(--action)] bg-[var(--action)]' : 'border-[var(--rule)] bg-[var(--surface-inset)]'}`}>
+            <div className={`mt-1 h-4 w-4 transform rounded-full bg-[var(--surface-raised)] shadow-[var(--shadow-soft)] transition-transform ${isRecurring ? 'translate-x-5' : 'translate-x-1'}`} />
           </div>
         </div>
-        <span className={`text-sm transition-colors text-slate-600 group-hover:text-slate-800 dark:text-gray-400 dark:group-hover:text-gray-200`}>Recurring task</span>
+        <span className="text-sm text-[var(--ink-secondary)] transition-colors group-hover:text-[var(--ink)]">Recurring task</span>
       </label>
       {isRecurring && (
         <div className="space-y-3 animate-fade-in">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             {([
               { value: 'daily' as const, label: 'Daily' },
               { value: 'weekly' as const, label: 'Weekly' },
               { value: 'monthly' as const, label: 'Monthly' },
+              { value: 'yearly' as const, label: 'Yearly' },
               { value: 'specific_days' as const, label: 'Custom' },
             ]).map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setRecurrencePattern(value)}
-                className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
+                className={`min-h-11 rounded-[var(--radius-md)] border px-3 py-3 text-sm font-medium transition-colors ${
                   recurrencePattern === value
-                    ? 'bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:border-violet-500/30'
-                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
+                    ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                    : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                 }`}
               >
                 {label}
               </button>
             ))}
           </div>
-          {recurrencePattern === 'specific_days' && (
+          {(recurrencePattern === 'specific_days' || recurrencePattern === 'weekly') && (
             <div className="flex gap-2 animate-fade-in">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
                 <button
@@ -422,10 +477,10 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
                   onClick={() => setSpecificDays(prev =>
                     prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i]
                   )}
-                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`min-h-11 flex-1 rounded-[var(--radius-sm)] border py-2 text-xs font-medium transition-colors ${
                     specificDays.includes(i)
-                      ? 'bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-500/30 dark:text-violet-300 dark:border-violet-500/40'
-                      : 'bg-slate-50 text-slate-400 border border-slate-200 dark:bg-white/5 dark:text-gray-500 dark:border-white/10'
+                      ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                      : 'border-[var(--rule)] bg-[var(--surface-subtle)] text-[var(--ink-muted)]'
                   }`}
                 >
                   {day}
@@ -434,24 +489,67 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
             </div>
           )}
           {recurrencePattern === 'monthly' && (
-            <div className="flex items-center gap-3 animate-fade-in">
-              <span className={`text-sm text-slate-500 dark:text-gray-400`}>On day</span>
+            <div className="flex flex-wrap items-center gap-3 animate-fade-in">
+              <span className="text-sm text-[var(--ink-muted)]">On day</span>
               <SelectField
                 aria-label="Day of month"
                 value={monthDay}
                 onChange={e => setMonthDay(Number(e.target.value))}
+                disabled={monthEnd}
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </SelectField>
-              <span className={`text-sm text-slate-500 dark:text-gray-400`}>of every month</span>
+              <span className="text-sm text-[var(--ink-muted)]">of every month</span>
+              <label className="flex items-center gap-2 text-sm text-[var(--ink-muted)]">
+                <input type="checkbox" checked={monthEnd} onChange={event => setMonthEnd(event.target.checked)} />
+                Last day
+              </label>
             </div>
           )}
-          <p className={`text-xs text-slate-400 dark:text-gray-400`}>
+          <button
+            type="button"
+            onClick={() => setRecurrenceAdvanced(value => !value)}
+            className="min-h-11 text-xs font-medium text-[var(--action)] hover:text-[var(--action-hover)]"
+          >
+            {recurrenceAdvanced ? 'Hide repeat options' : 'More repeat options'}
+          </button>
+          {recurrenceAdvanced && (
+            <div className="space-y-3 rounded-[var(--radius-md)] border border-[var(--rule)] bg-[var(--surface)] p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-[var(--ink-muted)]">Every</span>
+                <input
+                  aria-label="Repeat interval"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={recurrenceInterval}
+                  onChange={event => setRecurrenceInterval(Math.max(1, Number(event.target.value)))}
+                  className="input min-h-11 w-20 px-2"
+                />
+                <span className="text-sm text-[var(--ink-muted)]">
+                  {recurrencePattern === 'specific_days' ? 'weeks' : `${recurrencePattern}s`}
+                </span>
+              </div>
+              <SelectField label="Ends" value={recurrenceEnd} onChange={event => setRecurrenceEnd(event.target.value as typeof recurrenceEnd)}>
+                <option value="never">Never</option>
+                <option value="date">On a date</option>
+                <option value="count">After a number of occurrences</option>
+              </SelectField>
+              {recurrenceEnd === 'date' && (
+                <TextField label="Last occurrence date" type="date" value={recurrenceEndDate} min={recurrenceStartDate} onChange={event => setRecurrenceEndDate(event.target.value)} />
+              )}
+              {recurrenceEnd === 'count' && (
+                <TextField label="Number of occurrences" type="number" min={1} value={recurrenceCount} onChange={event => setRecurrenceCount(Number(event.target.value))} />
+              )}
+            </div>
+          )}
+          <p className="text-xs text-[var(--ink-muted)]">
             {recurrencePattern === 'daily' ? 'Repeats every day' :
              recurrencePattern === 'weekly' ? 'Repeats every week on this day' :
              recurrencePattern === 'monthly' ? `Repeats on the ${monthDay}${monthDay === 1 ? 'st' : monthDay === 2 ? 'nd' : monthDay === 3 ? 'rd' : 'th'} of every month` :
+             recurrencePattern === 'yearly' ? 'Repeats every year' :
              specificDays.length === 0 ? 'Select days' :
              `Every ${specificDays.sort().map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}`}
           </p>
@@ -477,20 +575,20 @@ export function TaskForm({ onSubmit, onCancel, isOpen, goals = [], editingTask, 
       onClose={handleCancel}
       title={isEditing ? 'Edit Task' : 'Create New Task'}
       icon={isEditing
-        ? <Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
-        : <Sparkles className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
+        ? <Pencil className="h-5 w-5" />
+        : <Sparkles className="h-5 w-5" />
       }
       footer={actionButtons}
     >
       {(isFS) =>
         isFS ? (
           <div className="flex flex-col sm:flex-row sm:h-full">
-            <div className={`flex-1 flex flex-col p-6 sm:p-8 space-y-6 sm:border-r border-slate-200 dark:border-white/10`}>
+            <div className="flex flex-1 flex-col space-y-6 border-[var(--rule)] p-6 sm:border-r sm:p-8">
               {titleField(true)}
               {notesField(true)}
             </div>
-            <div className={`flex-shrink-0 p-6 sm:p-6 space-y-6 sm:overflow-y-auto sm:w-80 border-t sm:border-t-0 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02]`}>
-              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Task details</h3>
+            <div className="flex-shrink-0 space-y-6 border-t border-[var(--rule)] bg-[var(--surface)] p-6 sm:w-80 sm:overflow-y-auto sm:border-t-0">
+              <h3 className="mb-4 font-mono text-xs font-semibold uppercase tracking-wider text-[var(--ink-muted)]">Task details</h3>
               {dueDateField}
               {categoryField}
               {goalField}

@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { QuickCapture } from '../tasks/QuickCapture';
 
 export function QuickCaptureFAB() {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(() => document.documentElement.hasAttribute('data-modal-open'));
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -13,6 +15,13 @@ export function QuickCaptureFAB() {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-modal-open'] });
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (wasOpenRef.current && !open) {
+      window.requestAnimationFrame(() => triggerRef.current?.focus());
+    }
+    wasOpenRef.current = open;
+  }, [open]);
 
   if (hidden) return null;
 
@@ -24,10 +33,11 @@ export function QuickCaptureFAB() {
     >
       {!open && (
         <button
+          ref={triggerRef}
           aria-label="Quick add a task"
           aria-haspopup="dialog"
           onClick={() => setOpen(true)}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-500 text-white shadow-lg transition-transform active:scale-95"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--action)] text-[var(--action-ink)] shadow-[var(--shadow-medium)] hover:bg-[var(--action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--canvas)]"
         >
           <Plus size={22} />
         </button>

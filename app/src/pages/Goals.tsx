@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Target, Plus, Filter, LayoutGrid, List, Pencil, CheckCircle, Archive, RotateCcw, Trash2 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useTaskContext } from '../context/TaskContext';
 import { useHabitContext } from '../context/HabitContext';
@@ -18,7 +17,6 @@ import { BulkActionBar } from '../components/common/BulkActionBar';
 import { BulkEditMenu, type BulkEditField } from '../components/common/BulkEditMenu';
 import { useFocusHighlight } from '../hooks/useFocusHighlight';
 import { usePersistentSet, usePersistentState } from '../hooks/usePersistentState';
-import { staggerDelay } from '../lib/animation';
 import { pluralise } from '../lib/bulkUpdate';
 
 const GOAL_BULK_FIELDS: BulkEditField[] = [
@@ -46,40 +44,23 @@ const GOAL_BULK_FIELDS: BulkEditField[] = [
   },
 ];
 import { SelectButton, SelectionCheckbox, SelectionIndicator } from '../components/common/SelectionControls';
-import type { Goal, TaskCategory, GoalStatus, GoalTheme } from '../types';
+import type { Goal, TaskCategory, GoalStatus } from '../types';
 import { IconButton } from '../components/ui';
+import { InlineGoalName } from '../components/goals/InlineGoalName';
+import { formatGoalTargetDate, isGoalOverdue } from '../lib/goalUtils';
 
 type FilterStatus = 'all' | 'Active' | 'Completed' | 'Archived';
 
-/**
- * Tailwind's opacity scale moves in steps of five, so the `/8` these carried
- * generated no CSS and the dark tints never rendered — a goal card in dark mode
- * had no background at all, which read as intentional because the page showed
- * through. Arbitrary values keep the intended 8% and are what the rest of the
- * app already uses for tints this faint.
- */
-const THEME_BG: Record<GoalTheme, string> = {
-  forest:   'bg-emerald-50 dark:bg-emerald-500/[0.08]',
-  mountain: 'bg-slate-50 dark:bg-slate-400/[0.08]',
-  ocean:    'bg-cyan-50 dark:bg-cyan-500/[0.08]',
-  space:    'bg-violet-50 dark:bg-violet-500/[0.08]',
-  garden:   'bg-pink-50 dark:bg-pink-500/[0.08]',
-};
-
 export function Goals() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const { 
     goals, 
     createGoal, 
     updateGoal,
     updateGoals,
     revertGoals,
-    deleteGoal, 
     deleteGoals,
     restoreGoals,
     completeGoal, 
-    archiveGoal, 
     reactivateGoal,
     linkTaskToGoal,
     unlinkTaskFromGoal,
@@ -87,7 +68,7 @@ export function Goals() {
     getSubGoals,
     addXPToGoal,
   } = useGoalContext();
-  const { tasks, deleteTask, completeTask, uncompleteTask, updateTask, updateTasks, revertTasks } = useTaskContext();
+  const { tasks, completeTask, uncompleteTask, updateTask, updateTasks, revertTasks } = useTaskContext();
   const { habits, updateHabits, revertHabits } = useHabitContext();
   const { recordGoalCompletion, recordTaskCompletion, updateStreak, checkAndUnlockAchievements } = useGamification();
   const { pushUndo } = useUndo();
@@ -226,18 +207,25 @@ export function Goals() {
     });
   };
 
-  const handleCreateGoal = (data: { title: string; description: string; category: TaskCategory; parentGoalId?: string }) => {
-    createGoal(data.title, data.description, data.category, data.parentGoalId);
+  const handleCreateGoal = (data: { title: string; description: string; category: TaskCategory; parentGoalId?: string; targetDate?: string; priority: Goal['priority']; nextAction?: string }) => {
+    createGoal(data.title, data.description, data.category, data.parentGoalId, undefined, {
+      targetDate: data.targetDate,
+      priority: data.priority,
+      nextAction: data.nextAction,
+    });
     setIsFormOpen(false);
   };
 
-  const handleUpdateGoal = (data: { title: string; description: string; category: TaskCategory; parentGoalId?: string }) => {
+  const handleUpdateGoal = (data: { title: string; description: string; category: TaskCategory; parentGoalId?: string; targetDate?: string; priority: Goal['priority']; nextAction?: string }) => {
     if (!editingGoal) return;
     updateGoal(editingGoal.id, {
       title: data.title,
       description: data.description,
       category: data.category,
       parentGoalId: data.parentGoalId,
+      targetDate: data.targetDate,
+      priority: data.priority,
+      nextAction: data.nextAction,
     });
     setEditingGoal(null);
     setIsFormOpen(false);
@@ -269,28 +257,23 @@ export function Goals() {
     return calculateGoalProgress(goal, completedTaskIds, goals, tasks);
   };
 
-  // Delete goal and all linked tasks (including sub-goals' tasks)
+  const handleArchiveGoal = (goalId: string) => {
+    const patches = updateGoals([goalId], { status: 'Archived' });
+    if (patches.length > 0) pushUndo('Goal archived', () => revertGoals(patches));
+  };
+
+  // Delete goals, retaining linked tasks and their goal references for undo.
   const handleDeleteGoal = (goalId: string) => {
-    const goalToDelete = goals.find(g => g.id === goalId);
-    if (!goalToDelete) return;
-
-    // Collect all goal IDs to delete (this goal + sub-goals)
-    const goalIdsToDelete = new Set<string>([goalId]);
-    const subGoals = goals.filter(g => g.parentGoalId === goalId);
-    subGoals.forEach(sg => goalIdsToDelete.add(sg.id));
-
-    // Find ALL tasks that have goalId pointing to any of the goals being deleted
-    const tasksToDelete = tasks.filter(task => 
-      task.goalId && goalIdsToDelete.has(task.goalId)
-    );
-
-    // Delete all linked tasks
-    tasksToDelete.forEach(task => {
-      deleteTask(task.id);
+    const removed = deleteGoals([goalId]);
+    if (removed.length === 0) return;
+    const removedIds = new Set(removed.map(goal => goal.id));
+    const taskPatches = updateTasks(tasks.filter(task => task.goalId && removedIds.has(task.goalId)).map(task => task.id), { goalId: undefined });
+    const habitPatches = updateHabits(habits.filter(habit => habit.goalId && removedIds.has(habit.goalId)).map(habit => habit.id), { goalId: undefined });
+    pushUndo(`${pluralise(removed.length, 'goal')} deleted`, () => {
+      restoreGoals(removed);
+      revertTasks(taskPatches);
+      revertHabits(habitPatches);
     });
-
-    // Delete the goal (this will also delete sub-goals via GoalContext)
-    deleteGoal(goalId);
   };
 
   // Complete goal and all linked tasks (including sub-goals' tasks)
@@ -363,28 +346,25 @@ export function Goals() {
     return { completed: ms.filter(m => m.isCompleted).length, total: ms.length };
   };
 
-  const getThemeBg = (goalTheme?: GoalTheme) => THEME_BG[goalTheme ?? 'space'];
-
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div ref={containerRef} className="space-y-5">
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 border-b-2 border-[var(--ink)] pb-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>Goals</h1>
-          <p className={`mt-1 text-slate-500 dark:text-gray-500`}>
-            {activeGoalsCount} active • {completedGoalsCount} completed • {totalLevels} total levels
+          <h2 className="text-lg font-bold tracking-[-0.015em] text-[var(--ink)]">Goals</h2>
+          <p className="mt-1 font-mono text-xs tabular-nums text-[var(--ink-muted)]">
+            {activeGoalsCount} ACTIVE · {completedGoalsCount} COMPLETED · {totalLevels} LEVELS
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+          <div className="flex overflow-hidden rounded-md border border-[var(--rule-strong)] bg-[var(--surface)]">
             <button
               onClick={() => setViewMode('garden')}
-              className={`px-3 py-2 flex items-center gap-2 text-sm font-medium transition-all ${
+              aria-pressed={viewMode === 'garden'}
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'garden'
-                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
-                  : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                  : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
               }`}
               title="Garden View"
             >
@@ -393,10 +373,11 @@ export function Goals() {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-2 flex items-center gap-2 text-sm font-medium transition-all ${
+              aria-pressed={viewMode === 'list'}
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
-                  : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                  : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
               }`}
               title="List View"
             >
@@ -406,7 +387,7 @@ export function Goals() {
           </div>
           <button
             onClick={() => setIsFormOpen(true)}
-            className="btn-primary px-4 py-2 sm:px-6 sm:py-3 rounded-xl flex items-center space-x-2"
+            className="btn-primary flex items-center space-x-2 rounded-md px-4 py-2 sm:px-5"
           >
             <Plus size={18} />
             <span>New Goal</span>
@@ -420,20 +401,20 @@ export function Goals() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex flex-wrap items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
+            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
               filtersOpen || statusFilter !== 'all' || categoryFilter !== 'all'
-                ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
+                ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                : 'border-[var(--rule)] bg-[var(--surface)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
             }`}
           >
             <Filter size={15} />
             <span>Filters</span>
             {(statusFilter !== 'all' || categoryFilter !== 'all') && (
-              <span className="w-4 h-4 rounded-full text-xs flex items-center justify-center bg-violet-500 text-white">
+              <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--action)] text-xs text-[var(--action-ink)]">
                 {(statusFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0)}
               </span>
             )}
@@ -441,33 +422,33 @@ export function Goals() {
           {(statusFilter !== 'all' || categoryFilter !== 'all') && (
             <button
               onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); }}
-              className={`text-xs px-2 py-1 rounded-lg text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300`}
+              className="rounded-sm px-2 py-1 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)]"
             >
               Clear
             </button>
           )}
         </div>
-        <span className={`text-xs text-slate-400 dark:text-gray-400`}>
+        <span className="font-mono text-xs tabular-nums text-[var(--ink-muted)]">
           {filteredGoals.length} goal{filteredGoals.length !== 1 ? 's' : ''}
         </span>
       </div>
       {filtersOpen && (
-        <div className={`card rounded-xl p-3 flex flex-wrap items-center gap-3 animate-fade-in`}>
+        <div className="flex flex-wrap items-center gap-3 border-y border-[var(--rule)] bg-[var(--surface)] p-3">
           <div className="flex items-center gap-2">
-            <label className={`text-xs text-slate-500 dark:text-gray-500`}>Status</label>
-            <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+            <label className="text-xs text-[var(--ink-muted)]">Status</label>
+            <div className="flex overflow-hidden rounded-md border border-[var(--rule)]">
               {(['all', 'Active', 'Completed', 'Archived'] as const).map((status) => (
-                <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-1 text-xs font-medium capitalize transition-all ${statusFilter === status ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
+                <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-1 text-xs font-medium capitalize transition-colors ${statusFilter === status ? 'bg-[var(--action-soft)] text-[var(--action)]' : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'}`}>
                   {status}
                 </button>
               ))}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <label className={`text-xs text-slate-500 dark:text-gray-500`}>Category</label>
-            <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+            <label className="text-xs text-[var(--ink-muted)]">Category</label>
+            <div className="flex overflow-hidden rounded-md border border-[var(--rule)]">
               {(['all', 'Personal', 'Financial', 'Professional'] as const).map((cat) => (
-                <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-3 py-1 text-xs font-medium transition-all ${categoryFilter === cat ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
+                <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-3 py-1 text-xs font-medium transition-colors ${categoryFilter === cat ? 'bg-[var(--action-soft)] text-[var(--action)]' : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'}`}>
                   {cat === 'all' ? 'All' : cat}
                 </button>
               ))}
@@ -478,14 +459,14 @@ export function Goals() {
 
       {/* Goals */}
       {filteredGoals.length === 0 ? (
-        <div className="card rounded-2xl p-6 sm:p-12 text-center">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-violet-50 dark:bg-violet-500/20`}>
-            <Target className={`w-8 h-8 text-violet-500 dark:text-violet-400`} />
+        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-6 text-center sm:p-10">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-[var(--action-soft)]">
+            <Target className="h-7 w-7 text-[var(--action)]" />
           </div>
-          <h3 className={`text-lg font-semibold mb-2 text-slate-800 dark:text-white`}>
+          <h3 className={`text-lg font-semibold mb-2 text-[var(--ink)]`}>
             {goals.length === 0 ? 'No goals yet' : 'No goals match filters'}
           </h3>
-          <p className={`mb-4 text-slate-500 dark:text-gray-500`}>
+          <p className={`mb-4 text-[var(--ink-muted)]`}>
             {goals.length === 0 
               ? 'Create your first goal to start tracking your progress!'
               : 'Try adjusting your filters to see more goals.'
@@ -494,7 +475,7 @@ export function Goals() {
           {goals.length === 0 && (
             <button
               onClick={() => setIsFormOpen(true)}
-              className="text-violet-500 hover:text-violet-400 font-medium"
+              className="font-medium text-[var(--action)] hover:underline"
             >
               + Create your first goal
             </button>
@@ -503,7 +484,7 @@ export function Goals() {
       ) : viewMode === 'garden' ? (
         /* ── Garden View ── */
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredGoals.map((goal, index) => {
+          {filteredGoals.map((goal) => {
             const ms = getMilestoneStats(goal);
             const xpPct = goal.xpToNextLevel > 0
               ? Math.round((goal.currentLevelXP / goal.xpToNextLevel) * 100)
@@ -512,24 +493,18 @@ export function Goals() {
             const isSelected = selection.isSelected(goal.id);
 
             return (
-              <button
+              <div
                 key={goal.id}
-                type="button"
+                data-focus-id={goal.id}
                 onClick={() => selection.active ? selection.toggle(goal.id) : setSelectedGoalId(goal.id)}
-                {...(selection.active
-                  ? { role: 'checkbox' as const, 'aria-checked': isSelected, 'aria-label': `Select "${goal.title}"` }
-                  : {})}
-                className={`relative rounded-2xl p-4 text-left transition-all duration-200 cursor-pointer
-                  hover:scale-[1.02] active:scale-[0.98] animate-fade-in
-                  ${getThemeBg(goal.theme)}
+                role={selection.active ? 'checkbox' : undefined}
+                aria-checked={selection.active ? isSelected : undefined}
+                className={`relative cursor-pointer rounded-md bg-[var(--surface)] p-4 text-left transition-colors
                   ${isSelected
-                    ? 'border-2 border-violet-500'
-                    : isDark
-                      ? 'border border-white/[0.07] hover:border-white/[0.14]'
-                      : 'border border-neutral-200 hover:shadow-medium hover:border-neutral-300'}
+                    ? 'border-2 border-[var(--action)] bg-[var(--selected)]'
+                    : 'border border-[var(--rule)] hover:border-[var(--rule-strong)] hover:bg-[var(--state-hover)]'}
                   ${goal.status !== 'Active' && !isSelected ? 'opacity-60' : ''}
                 `}
-                style={{ animationDelay: staggerDelay(index, 40) }}
               >
                 {selection.active && (
                   <span className="absolute top-2 right-2 z-10">
@@ -539,48 +514,50 @@ export function Goals() {
 
                 {/* Tree */}
                 <div className="flex justify-center mb-2">
-                  <GoalTree level={goal.level || 1} theme={goal.theme} size="md" animate />
+                  <GoalTree level={goal.level || 1} theme={goal.theme} size="md" animate={false} />
                 </div>
 
                 {/* Title */}
-                <h3 className={`font-semibold text-sm leading-tight line-clamp-2 mb-2 ${
-                  'text-slate-800 dark:text-white'
+                <h3 className={`font-semibold text-sm leading-tight mb-2 ${
+                  'text-[var(--ink)]'
                 }`}>
-                  {goal.title}
+                  <InlineGoalName name={goal.title} onSave={title => updateGoal(goal.id, { title })} onOpen={() => selection.active ? selection.toggle(goal.id) : setSelectedGoalId(goal.id)} />
                 </h3>
 
+                {goal.targetDate && <p role={isGoalOverdue(goal) ? 'alert' : undefined} className={`mb-2 text-xs ${isGoalOverdue(goal) ? 'font-semibold text-[var(--danger)]' : 'text-[var(--ink-muted)]'}`}>{isGoalOverdue(goal) ? 'Overdue ' : 'Target '}{formatGoalTargetDate(goal.targetDate)}</p>}
+                {goal.nextAction && <p className="mb-2 line-clamp-2 text-xs text-[var(--ink-muted)]"><span className="font-medium">Next:</span> {goal.nextAction}</p>}
+                {goal.healthCheckIns.at(-1) && <p className="mb-2 text-xs capitalize text-[var(--ink-muted)]">Health: {goal.healthCheckIns.at(-1)!.status.replace('-', ' ')}</p>}
+
                 {/* Level badge */}
-                <span className={`inline-block text-xs font-bold px-2 py-1 rounded-full mb-2 ${
-                  'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-gray-300'
-                }`}>
+                <span className="mb-2 inline-block rounded-sm border border-[var(--rule-strong)] bg-[var(--surface-subtle)] px-2 py-1 font-mono text-xs font-bold text-[var(--ink-secondary)]">
                   Lv.&nbsp;{goal.level || 1}
                 </span>
 
                 {/* XP progress bar */}
-                <div className={`h-1.5 rounded-full overflow-hidden mb-2 bg-slate-200 dark:bg-white/10`}>
+                <div className="mb-2 h-1.5 overflow-hidden bg-[var(--surface-inset)]">
                   <div
-                    className="h-full rounded-full bg-violet-500 transition-all duration-500"
+                    className="h-full rounded-full bg-[var(--warning)] transition-[width]"
                     style={{ width: `${xpPct}%` }}
                   />
                 </div>
-                <p className={`text-xs text-slate-400 dark:text-gray-500`}>
+                <p className={`text-xs text-[var(--ink-secondary)]`}>
                   {goal.currentLevelXP}/{goal.xpToNextLevel} XP
                 </p>
 
                 {/* Milestones */}
                 {ms.total > 0 && (
-                  <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>
+                  <p className={`text-xs mt-1 text-[var(--ink-secondary)]`}>
                     {ms.completed}/{ms.total} milestones
                   </p>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
       ) : (
         /* ── List View ── */
         <div className="space-y-4">
-          {filteredGoals.map((goal, index) => {
+          {filteredGoals.map((goal) => {
             const subGoals = getSubGoals(goal.id);
             const isExpanded = expandedGoals.has(goal.id);
             const hasChildren = subGoals.length > 0;
@@ -589,19 +566,13 @@ export function Goals() {
               : 100;
             
             return (
-              <div 
-                key={goal.id}
-                className="animate-fade-in"
-                style={{ animationDelay: staggerDelay(index, 50) }}
-              >
+              <div key={goal.id} data-focus-id={goal.id}>
                 {/* Augmented Goal Card wrapper */}
                 <div
-                  className={`group rounded-xl p-6 transition-all duration-200 ease-spring cursor-pointer active:scale-[0.99] ${
+                  className={`group cursor-pointer rounded-md border p-5 transition-colors ${
                     selection.isSelected(goal.id)
-                      ? 'bg-violet-50/60 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30'
-                      : isDark
-                        ? `bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.14] ${goal.status !== 'Active' ? 'opacity-60' : ''}`
-                        : `bg-white border border-neutral-200 hover:shadow-medium hover:border-neutral-300 ${goal.status !== 'Active' ? 'opacity-60 bg-neutral-50' : ''}`
+                      ? 'border-[var(--action)] bg-[var(--selected)]'
+                      : `border-[var(--rule)] bg-[var(--surface)] hover:border-[var(--rule-strong)] hover:bg-[var(--state-hover)] ${goal.status !== 'Active' ? 'opacity-60' : ''}`
                   }`}
                   onClick={() => selection.active ? selection.toggle(goal.id) : setSelectedGoalId(goal.id)}
                 >
@@ -625,22 +596,18 @@ export function Goals() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className={`font-semibold text-lg ${
                           goal.status !== 'Active'
-                            ? 'text-slate-400 dark:text-gray-500'
-                            : 'text-slate-800 dark:text-white'
+                            ? 'text-[var(--ink-muted)]'
+                            : 'text-[var(--ink)]'
                         }`}>
-                          {goal.title}
+                          <InlineGoalName name={goal.title} onSave={title => updateGoal(goal.id, { title })} onOpen={() => setSelectedGoalId(goal.id)} />
                         </h3>
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                          'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-gray-300'
-                        }`}>
+                        <span className="rounded-sm border border-[var(--rule-strong)] bg-[var(--surface-subtle)] px-2 py-1 font-mono text-xs font-bold text-[var(--ink-secondary)]">
                           Lv.&nbsp;{goal.level || 1}
                         </span>
                         {hasChildren && (
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleGoalExpanded(goal.id); }}
-                            className={`px-2 py-1 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${
-                              'bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200 dark:bg-violet-500/25 dark:text-violet-300 dark:border-violet-500/40 dark:hover:bg-violet-500/35'
-                            }`}
+                            className="flex items-center gap-1 rounded-sm border border-[var(--action)] bg-[var(--action-soft)] px-2 py-1 text-xs font-semibold text-[var(--action)]"
                           >
                             {subGoals.length} sub-goal{subGoals.length !== 1 ? 's' : ''}
                           </button>
@@ -648,7 +615,7 @@ export function Goals() {
                       </div>
 
                       {goal.description && (
-                        <p className={`text-sm mt-1 line-clamp-2 text-slate-500 dark:text-gray-500`}>
+                        <p className={`text-sm mt-1 line-clamp-2 text-[var(--ink-muted)]`}>
                           {goal.description}
                         </p>
                       )}
@@ -656,19 +623,19 @@ export function Goals() {
                       {/* XP bar */}
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className={'text-slate-500 dark:text-gray-400'}>
+                          <span className={'text-[var(--ink-muted)]'}>
                             {goal.currentLevelXP}/{goal.xpToNextLevel} XP
                           </span>
-                          <span className={`font-medium text-violet-600 dark:text-violet-400`}>
+                          <span className="font-medium text-[var(--warning)]">
                             {getGoalProgress(goal)}%
                           </span>
                         </div>
-                        <div className={`h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10`}>
+                        <div className="h-1.5 overflow-hidden bg-[var(--surface-inset)]">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
                               getGoalProgress(goal) === 100
-                                ? 'bg-emerald-500'
-                                : 'bg-violet-500'
+                                ? 'bg-[var(--success)]'
+                                : 'bg-[var(--warning)]'
                             }`}
                             style={{ width: `${xpPct}%` }}
                           />
@@ -689,9 +656,12 @@ export function Goals() {
                         }`}>
                           {goal.status}
                         </span>
-                        <span className={`text-xs text-slate-500 dark:text-gray-500`}>
+                        <span className={`text-xs text-[var(--ink-muted)]`}>
                           {getCompletedTasksCount(goal)}/{hasChildren ? subGoals.length : getLinkedTasks(goal).length} tasks
                         </span>
+                        <span className="text-xs text-[var(--ink-muted)]">{goal.priority} priority</span>
+                        {goal.targetDate && <span role={isGoalOverdue(goal) ? 'alert' : undefined} className={`text-xs ${isGoalOverdue(goal) ? 'font-semibold text-[var(--danger)]' : 'text-[var(--ink-muted)]'}`}>{isGoalOverdue(goal) ? 'Overdue ' : 'Target '}{formatGoalTargetDate(goal.targetDate)}</span>}
+                        {goal.healthCheckIns.at(-1) && <span className="text-xs capitalize text-[var(--ink-muted)]">Health: {goal.healthCheckIns.at(-1)!.status.replace('-', ' ')}</span>}
                       </div>
                     </div>
 
@@ -723,7 +693,7 @@ export function Goals() {
                             label="Archive"
                             size="sm"
                             tone="warning"
-                            onClick={() => archiveGoal(goal.id)}
+                            onClick={() => handleArchiveGoal(goal.id)}
                             title="Archive"
                           />
                         </>
@@ -752,26 +722,21 @@ export function Goals() {
                 
                 {/* Sub-goals (expanded) */}
                 {hasChildren && isExpanded && (
-                  <div className={`ml-8 mt-2 space-y-2 pl-4 border-l-2 ${
-                    'border-violet-200 dark:border-violet-500/30'
-                  }`}>
-                    {subGoals.map((subGoal, subIndex) => (
-                      <div 
-                        key={subGoal.id}
-                        className="animate-fade-in"
-                        style={{ animationDelay: `${subIndex * 30}ms` }}
-                      >
+                  <div className="ml-8 mt-2 space-y-2 border-l border-[var(--rule-strong)] pl-4">
+                    {subGoals.map((subGoal) => (
+                      <div key={subGoal.id}>
                         <GoalCard
                           goal={subGoal}
                           progress={getGoalProgress(subGoal)}
                           linkedTasksCount={getLinkedTasks(subGoal).length}
                           completedTasksCount={getCompletedTasksCount(subGoal)}
                           onComplete={handleCompleteGoal}
-                          onArchive={archiveGoal}
+                          onArchive={handleArchiveGoal}
                           onReactivate={reactivateGoal}
                           onDelete={handleDeleteGoal}
                           onClick={(g) => setSelectedGoalId(g.id)}
                           onEdit={handleEdit}
+                          onRename={(goalId, title) => updateGoal(goalId, { title })}
                           {...selectionProps(subGoal.id)}
                         />
                       </div>

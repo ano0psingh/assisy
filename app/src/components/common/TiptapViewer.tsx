@@ -43,6 +43,11 @@ export function TiptapViewer({
     ],
     content: html,
     editable: false,
+    editorProps: {
+      attributes: {
+        'aria-label': 'Rich text content',
+      },
+    },
   });
 
   if (!editor || !content) return null;
@@ -50,9 +55,9 @@ export function TiptapViewer({
   return (
     <div className={`tiptap-viewer ${className}`}>
       <div
-        className={`tiptap-content text-sm leading-relaxed overflow-hidden transition-all ${
+        className={`tiptap-content max-w-[65ch] overflow-hidden text-sm leading-relaxed ${
           collapsible && !expanded ? '' : ''
-        } text-slate-600 dark:text-gray-400`}
+        } text-[var(--ink-secondary)]`}
         style={collapsible && !expanded ? { maxHeight: `${maxHeight}px` } : undefined}
       >
         <EditorContent editor={editor} />
@@ -60,9 +65,7 @@ export function TiptapViewer({
       {collapsible && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className={`flex items-center gap-1 mt-1 text-xs font-medium ${
-            'text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300'
-          }`}
+          className="mt-1 flex min-h-11 items-center gap-1 text-xs font-medium text-[var(--action)] hover:text-[var(--action-hover)]"
         >
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           {expanded ? 'Show less' : 'Show more'}

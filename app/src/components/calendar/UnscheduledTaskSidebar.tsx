@@ -74,21 +74,21 @@ export function UnscheduledTaskSidebar({
   };
 
   return (
-    <aside className="card rounded-2xl p-4" aria-label="Unscheduled tasks">
+    <aside className="border-y border-[var(--rule)] bg-[var(--surface)] p-4" aria-label="Backlog tasks">
       <div className="mb-3">
-        <h2 className="text-sm font-semibold text-slate-800 dark:text-white">Unscheduled</h2>
-        <p className="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
-          Drag into the calendar or use Schedule.
+        <h2 className="text-sm font-semibold text-[var(--ink)]">Backlog</h2>
+        <p className="mt-0.5 text-xs text-[var(--ink-muted)]">
+          Tap Schedule. On desktop, you can also drag into the calendar.
         </p>
       </div>
 
       <div className={`mb-3 grid gap-2 ${contextOptions.length > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        <label className="text-xs font-medium text-slate-500 dark:text-gray-400">
+        <label className="text-xs font-medium text-[var(--ink-secondary)]">
           Domain
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value as CategoryFilter)}
-            className="mt-1 min-h-10 w-full rounded-xl border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:border-white/10 dark:bg-slate-800 dark:text-gray-200"
+            className="ui-field-control mt-1 min-h-10 w-full px-2 text-xs"
           >
             {(['All', 'Personal', 'Financial', 'Professional'] as const).map((value) => (
               <option key={value} value={value}>{value}</option>
@@ -96,12 +96,12 @@ export function UnscheduledTaskSidebar({
           </select>
         </label>
         {contextOptions.length > 0 && (
-          <label className="text-xs font-medium text-slate-500 dark:text-gray-400">
+          <label className="text-xs font-medium text-[var(--ink-secondary)]">
             Context
             <select
               value={context}
               onChange={(event) => setContext(event.target.value)}
-              className="mt-1 min-h-10 w-full rounded-xl border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:border-white/10 dark:bg-slate-800 dark:text-gray-200"
+              className="ui-field-control mt-1 min-h-10 w-full px-2 text-xs"
             >
               <option value="all">All contexts</option>
               {contextOptions.map((option) => (
@@ -113,37 +113,37 @@ export function UnscheduledTaskSidebar({
       </div>
 
       {unscheduledTasks.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center dark:border-white/10">
-          <CalendarPlus className="mx-auto mb-2 h-5 w-5 text-slate-300 dark:text-gray-500" />
-          <p className="text-xs text-slate-400 dark:text-gray-500">No matching clarified tasks</p>
+        <div className="border-t border-dashed border-[var(--rule)] px-3 py-6 text-center">
+          <CalendarPlus className="mx-auto mb-2 h-5 w-5 text-[var(--ink-muted)]" />
+          <p className="text-xs text-[var(--ink-muted)]">No matching Backlog tasks</p>
         </div>
       ) : (
-        <ul className="max-h-72 space-y-2 overflow-y-auto pr-1 lg:max-h-[36rem]">
+        <ul className="max-h-72 divide-y divide-[var(--rule)] overflow-y-auto pr-1 lg:max-h-[36rem]">
           {unscheduledTasks.map((task) => (
             <li key={task.id}>
               <div
                 draggable
                 onDragStart={(event) => startDrag(event, task.id)}
-                className="group rounded-xl border border-slate-100 bg-slate-50 p-3 transition hover:border-violet-200 hover:bg-violet-50/50 dark:border-white/5 dark:bg-white/[0.03] dark:hover:border-violet-500/30"
+                className="group py-3 hover:bg-[var(--state-hover)]"
               >
                 <div className="flex items-start gap-2">
                   <GripVertical
                     aria-hidden="true"
-                    className="mt-0.5 hidden h-4 w-4 shrink-0 cursor-grab text-slate-300 lg:block dark:text-gray-500"
+                    className="mt-0.5 hidden h-4 w-4 shrink-0 cursor-grab text-[var(--ink-muted)] lg:block"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium leading-5 text-slate-700 dark:text-gray-200">{task.title}</p>
+                    <p className="text-sm font-medium leading-5 text-[var(--ink)]">{task.title}</p>
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                      <span className="rounded-full bg-white px-2 py-0.5 text-slate-500 dark:bg-white/5 dark:text-gray-400">
+                      <span className="border border-[var(--rule)] bg-[var(--surface-subtle)] px-2 py-0.5 text-[var(--ink-secondary)]">
                         {task.category}
                       </span>
                       {task.priority === 'High' && (
-                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-red-600 dark:bg-red-500/10 dark:text-red-400">
+                        <span className="border border-[var(--danger)] bg-[var(--danger-soft)] px-2 py-0.5 text-[var(--danger)]">
                           High
                         </span>
                       )}
                       {task.dueDate && (
-                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                        <span className="flex items-center gap-1 text-[var(--warning)]">
                           <Clock3 className="h-3 w-3" />
                           {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </span>
@@ -153,7 +153,7 @@ export function UnscheduledTaskSidebar({
                   <button
                     type="button"
                     onClick={() => onOpenTask(task)}
-                    className="min-h-10 shrink-0 rounded-lg px-2 text-xs font-semibold text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/15"
+                    className="ui-control min-h-10 shrink-0 px-2 text-xs font-semibold text-[var(--action)] hover:bg-[var(--action-soft)]"
                     aria-label={`Schedule ${task.title}`}
                   >
                     Schedule

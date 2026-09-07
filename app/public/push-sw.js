@@ -9,7 +9,7 @@ self.addEventListener('push', (event) => {
     data = { title: 'Assisy', body: event.data.text() };
   }
 
-  const { title, body, tag } = data;
+  const { title, body, tag, url } = data;
 
   event.waitUntil(
     self.registration.showNotification(title || 'Assisy', {
@@ -18,7 +18,7 @@ self.addEventListener('push', (event) => {
       badge: '/icon-192.svg',
       tag: tag || 'assisy-push',
       vibrate: [200, 100, 200],
-      data: { url: '/' },
+      data: { url: typeof url === 'string' && url.startsWith('/') ? url : '/' },
     })
   );
 });
@@ -30,7 +30,7 @@ self.addEventListener('notificationclick', (event) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus();
+          return client.navigate(url).then(() => client.focus());
         }
       }
       return self.clients.openWindow(url);

@@ -159,15 +159,15 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
 
   const trackingTypeField = (
     <div>
-      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Tracking Type</label>
+      <label className="block text-sm font-medium mb-2 text-[var(--ink-secondary)]">Tracking Type</label>
       <div className="space-y-2">
         {TRACKING_TYPES.map((type) => (
           <label
             key={type.value}
-            className={`flex items-start p-3 rounded-xl cursor-pointer transition-all ${
+            className={`flex items-start p-3 rounded-md cursor-pointer transition-all ${
               trackingType === type.value
-                ? 'bg-violet-50 border border-violet-300 dark:bg-violet-500/20 dark:border-violet-500/50'
-                : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'
+                ? 'bg-[var(--action-soft)] border border-[var(--action)]'
+                : 'bg-[var(--surface)] border border-[var(--rule)] hover:bg-[var(--surface-subtle)]'
             }`}
           >
             <input
@@ -179,8 +179,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
               className="sr-only"
             />
             <div>
-              <div className={`font-medium text-slate-800 dark:text-white`}>{type.label}</div>
-              <div className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>{type.description}</div>
+              <div className={`font-medium text-[var(--ink)]`}>{type.label}</div>
+              <div className={`text-xs mt-1 text-[var(--ink-muted)]`}>{type.description}</div>
             </div>
           </label>
         ))}
@@ -190,9 +190,9 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
 
   const goalField = (
     <div>
-      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">
+      <label className="block text-sm font-medium mb-2 text-[var(--ink-secondary)]">
         <div className="flex items-center gap-2">
-          <Link2 size={16} className="text-violet-500" />
+          <Link2 size={16} className="text-[var(--action)]" />
           Linked Goal
         </div>
       </label>
@@ -201,10 +201,10 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
           {activeGoals.map(g => (
             <label
               key={g.id}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+              className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-all ${
                 goalId === g.id
-                  ? 'bg-violet-50 border border-violet-300 dark:bg-violet-500/20 dark:border-violet-500/50'
-                  : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'
+                  ? 'bg-[var(--action-soft)] border border-[var(--action)]'
+                  : 'bg-[var(--surface)] border border-[var(--rule)] hover:bg-[var(--surface-subtle)]'
               }`}
             >
               <input
@@ -219,8 +219,8 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
                 <GoalTreeThumbnail level={g.level} theme={g.theme} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{g.title}</div>
-                <div className={`text-xs text-slate-500 dark:text-gray-500`}>Lv.{g.level} · {g.category}</div>
+                <div className={`text-sm font-medium truncate text-[var(--ink)]`}>{g.title}</div>
+                <div className={`text-xs text-[var(--ink-muted)]`}>Lv.{g.level} · {g.category}</div>
               </div>
             </label>
           ))}
@@ -232,7 +232,7 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
         </div>
       ) : (
         <Surface level="inset" radius="xl">
-          <p className={`text-sm text-slate-500 dark:text-gray-500`}>
+          <p className={`text-sm text-[var(--ink-muted)]`}>
             No active goals yet. Create a goal first to link habits to it.
           </p>
         </Surface>
@@ -293,11 +293,11 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
         )}
       </div>
       {aiReason && (
-        <p className={`text-xs mt-2 px-3 py-2 rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400`}>
+        <p className={`text-xs mt-2 px-3 py-2 rounded-sm bg-[var(--action-soft)] text-[var(--action)]`}>
           {aiReason}
         </p>
       )}
-      <p className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>
+      <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>
         {reminderTime ? `You'll get a notification at ${reminderTime} daily.` : 'Set a time to get reminded about this habit.'}
       </p>
     </div>
@@ -336,20 +336,20 @@ export function HabitForm({ isOpen, onSubmit, onCancel, editingHabit }: HabitFor
       onClose={handleCancel}
       title={isEditing ? 'Edit Habit' : 'Create New Habit'}
       icon={isEditing
-        ? <Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
-        : <Heart className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
+        ? <Pencil className={`w-5 h-5 text-[var(--action)]`} />
+        : <Heart className={`w-5 h-5 text-[var(--action)]`} />
       }
       footer={actionButtons}
     >
       {(isFS) =>
         isFS ? (
           <div className="flex h-full">
-            <div className={`flex-1 p-8 space-y-6 border-r border-slate-200 dark:border-white/10`}>
+            <div className={`flex-1 p-8 space-y-6 border-r border-[var(--rule)]`}>
               {nameField}
               {trackingTypeField}
             </div>
-            <div className={`w-80 flex-shrink-0 p-6 space-y-6 overflow-y-auto bg-white dark:bg-white/[0.02]`}>
-              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Settings</h3>
+            <div className={`w-80 flex-shrink-0 p-6 space-y-6 overflow-y-auto bg-[var(--surface)]`}>
+              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-[var(--ink-muted)]`}>Settings</h3>
               {goalField}
               {categoryField}
               {targetField}

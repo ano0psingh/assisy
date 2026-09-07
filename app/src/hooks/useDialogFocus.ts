@@ -10,6 +10,16 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+let lastFocusedOutsideDialog: HTMLElement | null = null;
+if (typeof document !== 'undefined') {
+  document.addEventListener('focusin', event => {
+    const target = event.target as HTMLElement | null;
+    if (target && !target.closest('[role="dialog"][aria-modal="true"]')) {
+      lastFocusedOutsideDialog = target;
+    }
+  });
+}
+
 /**
  * Focus management for a modal overlay: moves focus in on open, keeps Tab
  * inside it, and returns focus to the trigger on close.
@@ -27,7 +37,9 @@ export function useDialogFocus<T extends HTMLElement = HTMLDivElement>(isOpen: b
   useEffect(() => {
     if (!isOpen) return;
 
-    const restoreTo = document.activeElement as HTMLElement | null;
+    // Descendant autoFocus runs before effects. Keep a document-level history
+    // so the trigger is retained even when an input has already taken focus.
+    const restoreTo = lastFocusedOutsideDialog;
 
     const visibleFocusable = () => {
       const container = containerRef.current;
@@ -62,8 +74,19 @@ export function useDialogFocus<T extends HTMLElement = HTMLDivElement>(isOpen: b
     document.addEventListener('keydown', handleKeyDown, true);
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true);
-      // No-op if the trigger has since unmounted.
-      restoreTo?.focus?.();
+      // React may remove an auto-focused field after effect cleanup, which can
+      // move focus back to body after a synchronous restore. Restore on the
+      // next frame once the dialog DOM is gone, without stealing focus if
+      // another control was intentionally focused in the meantime.
+      window.requestAnimationFrame(() => {
+        const currentDialog = document.querySelector('[role="dialog"][aria-modal="true"]');
+        if (
+          restoreTo?.isConnected &&
+          (!currentDialog || currentDialog.contains(restoreTo))
+        ) {
+          restoreTo.focus();
+        }
+      });
     };
   }, [isOpen]);
 

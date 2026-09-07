@@ -1,8 +1,7 @@
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
+import { askAIJson } from './ai';
 
 export function isGeminiConfigured(): boolean {
-  return !!(GROQ_KEY || GEMINI_KEY);
+  return true;
 }
 
 export interface ArticleSummary {
@@ -107,52 +106,6 @@ function mapToLegacy(result: ArticleSummary): ArticleSummary & {
   };
 }
 
-async function summarizeViaGroq(content: string, title: string, source: string, goalTitles?: string[]): Promise<ArticleSummary> {
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GROQ_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-oss-20b',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: buildPrompt(title, source, content, goalTitles) },
-      ],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Groq API error ${res.status}: ${err}`);
-  }
-
-  const data = await res.json();
-  const text = data.choices?.[0]?.message?.content ?? '';
-  return JSON.parse(text) as ArticleSummary;
-}
-
-async function summarizeViaGemini(content: string, title: string, source: string, goalTitles?: string[]): Promise<ArticleSummary> {
-  const { GoogleGenAI } = await import('@google/genai');
-  const ai = new GoogleGenAI({ apiKey: GEMINI_KEY! });
-
-  const response = await ai.models.generateContent({
-    model: 'gemini-3.5-flash-lite',
-    contents: buildPrompt(title, source, content, goalTitles),
-    config: {
-      systemInstruction: SYSTEM_PROMPT,
-      responseMimeType: 'application/json',
-      temperature: 0.3,
-    },
-  });
-
-  const text = response.text ?? '';
-  return JSON.parse(text) as ArticleSummary;
-}
-
 export async function summarizeArticle(
   content: string,
   title: string,
@@ -160,36 +113,15 @@ export async function summarizeArticle(
   maxRetries = 2,
   goalTitles?: string[],
 ): Promise<ArticleSummary & { summary: string; key_takeaways: string[]; content_type: string }> {
-  if (!GROQ_KEY && !GEMINI_KEY) throw new Error('No AI API key configured');
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const raw = GROQ_KEY
-        ? await summarizeViaGroq(content, title, source, goalTitles)
-        : await summarizeViaGemini(content, title, source, goalTitles);
-      return mapToLegacy(raw);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '';
-      const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('rate_limit');
-      if (GROQ_KEY && GEMINI_KEY) {
-        try {
-          return mapToLegacy(
-            await summarizeViaGemini(content, title, source, goalTitles),
-          );
-        } catch {
-          // Both providers failed; continue with the primary retry policy.
-        }
-      }
-      if (isRateLimit && attempt < maxRetries) {
-        const waitSec = GROQ_KEY ? 10 : 60;
-        console.log(`Rate limited, waiting ${waitSec}s before retry (attempt ${attempt + 1}/${maxRetries})...`);
-        await delay(waitSec * 1000);
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw new Error('Max retries exceeded');
+  const raw = await askAIJson<ArticleSummary>(
+    buildPrompt(title, source, content, goalTitles),
+    {
+      systemPrompt: SYSTEM_PROMPT,
+      temperature: 0.3,
+      maxRetries,
+    },
+  );
+  return mapToLegacy(raw);
 }
 
 export function delay(ms: number): Promise<void> {

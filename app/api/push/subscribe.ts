@@ -1,46 +1,44 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '',
-);
+import { authenticatePushRequest, createPushAdminClient, setPushApiHeaders } from '../../server/push-auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setPushApiHeaders(res);
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { subscription, userId, habitReminders, timezone } = req.body;
+  const user = await authenticatePushRequest(req);
+  if (!user) return res.status(401).json({ error: 'Authentication required' });
 
-  if (!subscription?.endpoint) {
+  const { subscription, habitReminders, timezone } = req.body ?? {};
+
+  if (
+    typeof subscription?.endpoint !== 'string'
+    || typeof subscription?.keys?.p256dh !== 'string'
+    || typeof subscription?.keys?.auth !== 'string'
+  ) {
     return res.status(400).json({ error: 'Missing subscription' });
   }
 
-  const uid = userId || 'anonymous';
-
   try {
+    if (timezone) new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format();
+    const supabase = createPushAdminClient();
+    const row: Record<string, unknown> = {
+      user_id: user.id,
+      endpoint: subscription.endpoint,
+      subscription,
+      timezone: timezone || 'UTC',
+      updated_at: new Date().toISOString(),
+    };
+    if (Array.isArray(habitReminders)) row.habit_reminders = habitReminders;
     const { error } = await supabase
       .from('push_subscriptions')
-      .upsert(
-        {
-          user_id: uid,
-          endpoint: subscription.endpoint,
-          subscription,
-          habit_reminders: habitReminders || [],
-          timezone: timezone || 'Asia/Kolkata',
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'endpoint' },
-      );
+      .upsert(row, { onConflict: 'endpoint' });
 
     if (error) throw error;
     return res.status(200).json({ ok: true });
   } catch (e) {
     console.error('Subscribe error:', e);
-    return res.status(500).json({ error: 'Failed to save subscription' });
+    return res.status(500).json({ error: 'Failed to save subscription or invalid timezone' });
   }
 }

@@ -78,19 +78,19 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
 
   const getColor = (value: number) => {
     if (value === 0) {
-      return 'bg-slate-100 dark:bg-white/5';
+      return 'bg-[var(--surface-subtle)]';
     }
     
     const intensity = Math.min(value / calculatedMax, 1);
     
     if (intensity <= 0.25) {
-      return 'bg-emerald-100 dark:bg-emerald-900/50';
+      return 'bg-[var(--success-soft)] dark:bg-emerald-900/50';
     } else if (intensity <= 0.5) {
       return 'bg-emerald-300 dark:bg-emerald-700/60';
     } else if (intensity <= 0.75) {
-      return 'bg-emerald-400 dark:bg-emerald-500/70';
+      return 'bg-[var(--success)]';
     } else {
-      return 'bg-emerald-500 dark:bg-emerald-400';
+      return 'bg-[var(--success)]';
     }
   };
 
@@ -104,7 +104,7 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
           {months.map((m, i) => (
             <div
               key={i}
-              className={`text-xs text-slate-500 dark:text-gray-500`}
+              className={`text-xs text-[var(--ink-muted)]`}
               style={{ 
                 position: 'relative',
                 left: `${m.column * 14}px`,
@@ -125,7 +125,7 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
               <div
                 key={day}
                 className={`text-xs h-[12px] flex items-center justify-end pr-1 ${
-                  'text-slate-500 dark:text-gray-500'
+                  'text-[var(--ink-muted)]'
                 }`}
                 style={{ visibility: i % 2 === 1 ? 'visible' : 'hidden' }}
               >
@@ -153,7 +153,7 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
                   return (
                     <div
                       key={dayIndex}
-                      className={`w-[12px] h-[12px] rounded-sm transition-all duration-150 hover:scale-150 hover:rounded cursor-default ${getColor(dayData.value)}`}
+                      className={`w-[12px] h-[12px] rounded-sm transition-colors cursor-default ${getColor(dayData.value)}`}
                       title={`${dayData.date}: ${dayData.value}`}
                     />
                   );
@@ -165,13 +165,13 @@ export function ContributionGraph({ logs, weeks = 12, maxValue }: ContributionGr
         
         {/* Legend */}
         <div className="flex items-center justify-end gap-1 mt-2">
-          <span className={`text-xs mr-1 text-slate-500 dark:text-gray-500`}>Less</span>
-          <div className={`w-[12px] h-[12px] rounded-sm bg-slate-100 dark:bg-white/5`} />
-          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-100 dark:bg-emerald-900/50`} />
+          <span className={`text-xs mr-1 text-[var(--ink-muted)]`}>Less</span>
+          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--surface-subtle)]`} />
+          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--success-soft)] dark:bg-emerald-900/50`} />
           <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-300 dark:bg-emerald-700/60`} />
-          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-400 dark:bg-emerald-500/70`} />
-          <div className={`w-[12px] h-[12px] rounded-sm bg-emerald-500 dark:bg-emerald-400`} />
-          <span className={`text-xs ml-1 text-slate-500 dark:text-gray-500`}>More</span>
+          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--success)]`} />
+          <div className={`w-[12px] h-[12px] rounded-sm bg-[var(--success)]`} />
+          <span className={`text-xs ml-1 text-[var(--ink-muted)]`}>More</span>
         </div>
       </div>
     </div>

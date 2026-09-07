@@ -1,5 +1,4 @@
 import { X } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 
 interface BulkActionBarProps {
   count: number;
@@ -26,26 +25,19 @@ export function BulkActionBar({
   onClear,
   children,
 }: BulkActionBarProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   if (count === 0) return null;
 
-  const neutralButton = `px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-    'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
-  }`;
-  const divider = `w-px h-5 bg-slate-200 dark:bg-white/10`;
+  const neutralButton = 'min-h-10 whitespace-nowrap rounded-[var(--radius-md)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]';
+  const divider = 'h-5 w-px bg-[var(--rule)]';
 
   return (
     <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[60] max-w-xl w-full px-4">
       <div
         role="toolbar"
         aria-label={`${count} ${itemLabel}${count === 1 ? '' : 's'} selected`}
-        className={`flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-xl ${
-          isDark ? 'bg-gray-900/90 border border-white/10' : 'bg-white/90 border border-slate-200 shadow-slate-200/50'
-        }`}
+        className="flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] px-4 py-3 shadow-[var(--shadow-elevated)]"
       >
-        <span className={`text-sm font-medium mr-1 whitespace-nowrap text-slate-800 dark:text-white`}>
+        <span className="mr-1 whitespace-nowrap text-sm font-medium text-[var(--ink)]">
           {count} selected
         </span>
 
@@ -62,7 +54,7 @@ export function BulkActionBar({
 
         <button
           onClick={onDelete}
-          className="px-3 py-2 rounded-lg text-xs font-medium bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors whitespace-nowrap"
+          className="min-h-10 whitespace-nowrap rounded-[var(--radius-md)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-medium text-[var(--danger)] transition-colors hover:bg-[var(--danger)] hover:text-[var(--ink-inverse)]"
         >
           Delete
         </button>
@@ -72,9 +64,7 @@ export function BulkActionBar({
         <button
           onClick={onClear}
           aria-label="Cancel selection"
-          className={`p-2 rounded-lg transition-colors ${
-            'hover:bg-slate-100 text-slate-400 dark:hover:bg-white/10 dark:text-gray-400'
-          }`}
+          className="flex min-h-10 min-w-10 items-center justify-center rounded-[var(--radius-md)] text-[var(--ink-muted)] transition-colors hover:bg-[var(--state-hover)] hover:text-[var(--ink)]"
         >
           <X size={14} />
         </button>

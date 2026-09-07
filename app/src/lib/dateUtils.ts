@@ -125,27 +125,5 @@ export function scheduledTasksOverlap(
   return firstStart < secondEnd && secondStart < firstEnd;
 }
 
-/** Local-date recurrence matching, useful to avoid UTC day shifts. */
-export function isRecurrenceDate(
-  dateString: string,
-  recurrence: {
-    recurrencePattern?: 'daily' | 'weekly' | 'specific_days' | 'monthly';
-    specificDays?: number[];
-    monthDay?: number;
-    pausedUntil?: string;
-    skippedDates?: string[];
-  },
-): boolean {
-  const date = parseLocalDate(dateString);
-  if (!date) return false;
-  if (recurrence.pausedUntil && dateString <= recurrence.pausedUntil) return false;
-  if (recurrence.skippedDates?.includes(dateString)) return false;
-  if (recurrence.recurrencePattern === 'daily') return true;
-  if (recurrence.recurrencePattern === 'weekly' || recurrence.recurrencePattern === 'specific_days') {
-    return recurrence.specificDays?.includes(date.getDay()) ?? false;
-  }
-  if (recurrence.recurrencePattern === 'monthly') {
-    return date.getDate() === (recurrence.monthDay ?? 1);
-  }
-  return false;
-}
+// Compatibility export for older callers; recurrence logic lives in one module.
+export { isRecurrenceDate } from './recurrence';

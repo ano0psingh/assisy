@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ComponentType } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Skeleton } from './components/common/Skeleton';
@@ -20,14 +20,21 @@ const Plan = namedRoute(() => import('./pages/Plan'), 'Plan');
 const Progress = namedRoute(() => import('./pages/Progress'), 'Progress');
 
 const Tasks = namedRoute(() => import('./pages/Tasks'), 'Tasks');
-const Goals = namedRoute(() => import('./pages/Goals'), 'Goals');
-const Habits = namedRoute(() => import('./pages/Habits'), 'Habits');
-const Projects = namedRoute(() => import('./pages/Projects'), 'Projects');
-const Achievements = namedRoute(() => import('./pages/Achievements'), 'Achievements');
-const Stats = namedRoute(() => import('./pages/Stats'), 'Stats');
-const WeeklyReview = namedRoute(() => import('./pages/WeeklyReview'), 'WeeklyReview');
 const Calendar = namedRoute(() => import('./pages/Calendar'), 'Calendar');
 const Feed = namedRoute(() => import('./pages/Feed'), 'Feed');
+
+function LegacyGroupedRedirect({
+  pathname,
+  view,
+}: {
+  pathname: '/plan' | '/progress';
+  view: string;
+}) {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  params.set('view', view);
+  return <Navigate replace to={{ pathname, search: params.toString() }} />;
+}
 
 function PageFallback() {
   return (
@@ -54,18 +61,17 @@ function RoutedPages() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<Tasks />} />
+          <Route path="/tasks/inbox" element={<Tasks />} />
 
-          {/* Grouped destinations. The individual routes below them are kept
-              so existing links and search results still resolve. */}
           <Route path="/plan" element={<Plan />} />
           <Route path="/progress" element={<Progress />} />
 
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/habits" element={<Habits />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/achievements" element={<Achievements />} />
-          <Route path="/stats" element={<Stats />} />
-          <Route path="/review" element={<WeeklyReview />} />
+          <Route path="/goals" element={<LegacyGroupedRedirect pathname="/plan" view="goals" />} />
+          <Route path="/habits" element={<LegacyGroupedRedirect pathname="/plan" view="habits" />} />
+          <Route path="/projects" element={<LegacyGroupedRedirect pathname="/plan" view="projects" />} />
+          <Route path="/achievements" element={<LegacyGroupedRedirect pathname="/progress" view="achievements" />} />
+          <Route path="/stats" element={<LegacyGroupedRedirect pathname="/progress" view="stats" />} />
+          <Route path="/review" element={<LegacyGroupedRedirect pathname="/progress" view="review" />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/feed" element={<Feed />} />
         </Routes>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Task, TaskCategory, Priority, Effort, RecurrencePattern, BulkPatch } from '../types';
+import type { Task, TaskCategory, Priority, Effort, RecurrencePattern, RecurrenceRule, BulkPatch, ReminderOffsetMinutes } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { saveTasks as saveTasksToStore } from '../store/unifiedStore';
 import { collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
@@ -12,6 +12,7 @@ import {
   normalizeLocalTime,
 } from '../lib/dateUtils';
 import { v4 as uuidv4 } from 'uuid';
+import { endRecurrenceBefore, isRecurrenceDate, withRescheduledOccurrence, withSkippedOccurrence } from '../lib/recurrence';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
 
@@ -19,6 +20,7 @@ export interface TaskScheduleInput {
   date: string;
   time?: string;
   durationMinutes?: number;
+  reminderOffsets?: ReminderOffsetMinutes[];
 }
 
 export interface TaskCaptureOptions {
@@ -26,6 +28,8 @@ export interface TaskCaptureOptions {
   scheduledDate?: string;
   scheduledTime?: string;
   durationMinutes?: number;
+  recurrenceRule?: RecurrenceRule;
+  dueReminderOffsets?: ReminderOffsetMinutes[];
 }
 
 interface TaskContextType {
@@ -74,7 +78,9 @@ interface TaskContextType {
   getSuggestedTasks: () => Task[];
   hasSeenPlanYourDay: () => boolean;
   markPlanYourDaySeen: () => void;
-  skipOccurrence: (taskId: string) => void;
+  skipOccurrence: (taskId: string, date?: string) => void;
+  rescheduleOccurrence: (taskId: string, date: string, rescheduledDate: string) => void;
+  endRecurringFrom: (taskId: string, date: string) => void;
   pauseRecurring: (taskId: string, days: number) => void;
   resumeRecurring: (taskId: string) => void;
 }
@@ -99,21 +105,7 @@ function getDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function wasExpectedOn(dateStr: string, task: Pick<Task, 'recurrencePattern' | 'specificDays' | 'monthDay' | 'pausedUntil' | 'skippedDates'>): boolean {
-  if (task.pausedUntil && dateStr <= task.pausedUntil) return false;
-  if (task.skippedDates?.includes(dateStr)) return false;
-  const d = new Date(dateStr + 'T12:00:00');
-  if (task.recurrencePattern === 'daily') return true;
-  if (task.recurrencePattern === 'weekly' || task.recurrencePattern === 'specific_days') {
-    return task.specificDays?.includes(d.getDay()) || false;
-  }
-  if (task.recurrencePattern === 'monthly') {
-    return d.getDate() === (task.monthDay ?? 1);
-  }
-  return false;
-}
-
-function calculateRecurringStreak(completionLog: string[], task: Pick<Task, 'recurrencePattern' | 'specificDays' | 'monthDay' | 'pausedUntil' | 'skippedDates'>): number {
+function calculateRecurringStreak(completionLog: string[], task: Task): number {
   const logSet = new Set(completionLog);
   let streak = 0;
   const d = new Date();
@@ -121,7 +113,7 @@ function calculateRecurringStreak(completionLog: string[], task: Pick<Task, 'rec
 
   for (let i = 0; i < 365; i++) {
     const dateStr = getDateStr(d);
-    if (wasExpectedOn(dateStr, task)) {
+    if (isRecurrenceDate(dateStr, task)) {
       if (logSet.has(dateStr)) {
         streak++;
       } else {
@@ -142,7 +134,7 @@ export function getRecurringCompletionRate(task: Task, days: number = 30): { com
 
   for (let i = 0; i < days; i++) {
     const dateStr = getDateStr(d);
-    if (wasExpectedOn(dateStr, task)) {
+    if (isRecurrenceDate(dateStr, task)) {
       expected++;
       if (log.has(dateStr)) completed++;
     }
@@ -178,7 +170,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       LocalStorage.saveTasks(processed);
     }
     setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataVersion]);
 
   const createTask = useCallback((
@@ -212,11 +203,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       status: 'Pending',
       isRecurring,
       recurrencePattern,
+      recurrenceRule: options.recurrenceRule,
       specificDays,
       monthDay,
       goalId,
       dueDate,
       dueTime,
+      dueReminderOffsets: options.dueReminderOffsets,
       inbox: options.inbox,
       scheduledDate: normalizeLocalDateString(options.scheduledDate),
       scheduledTime: normalizeLocalTime(options.scheduledTime),
@@ -372,7 +365,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getTodaysTasks = useCallback((): Task[] => {
-    const today = new Date();
     const todayStr = getTodayStr();
     
     return tasks
@@ -397,11 +389,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
         // A recurring task never bypasses occurrence state merely because it also
         // has an explicit calendar block.
-        if (task.isRecurring) {
-          if (task.pausedUntil && todayStr <= task.pausedUntil) return false;
-          if (task.skippedDates?.includes(todayStr)) return false;
-        }
-
         // Inbox work is intentionally inert until it is clarified. A defensive
         // exception keeps explicitly scheduled legacy data visible.
         if (task.inbox === true && !isTaskScheduledOn(task, todayStr)) return false;
@@ -436,18 +423,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
         
         // 4. Recurring tasks (may be Pending or Completed-on-previous-day)
-        if (task.isRecurring) {
-          if (task.recurrencePattern === 'daily') {
-            return true;
-          }
-          if (task.recurrencePattern === 'weekly' || task.recurrencePattern === 'specific_days') {
-            const dayOfWeek = today.getDay();
-            return task.specificDays?.includes(dayOfWeek) || false;
-          }
-          if (task.recurrencePattern === 'monthly') {
-            return today.getDate() === (task.monthDay ?? 1);
-          }
-        }
+        if (task.isRecurring) return isRecurrenceDate(todayStr, task);
         
         // 5. Carried forward tasks
         if (task.status === 'Carried Forward') return true;
@@ -543,6 +519,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         durationMinutes: schedule.durationMinutes == null
           ? undefined
           : normalizeDurationMinutes(schedule.durationMinutes),
+        scheduledReminderOffsets: schedule.time && schedule.reminderOffsets?.length
+          ? schedule.reminderOffsets
+          : undefined,
         // Dual-write the legacy fields while older screens are rolled forward.
         isFocusedToday: date === todayStr,
         focusedDate: date,
@@ -559,6 +538,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         scheduledDate: undefined,
         scheduledTime: undefined,
         durationMinutes: undefined,
+        scheduledReminderOffsets: undefined,
         isFocusedToday: false,
         focusedDate: undefined,
       });
@@ -607,7 +587,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         return 0;
       })
       .slice(0, 10); // Limit suggestions
-  }, [tasks, getTodaysTasks, getTodayStr]);
+  }, [tasks, getTodaysTasks]);
 
   const hasSeenPlanYourDay = useCallback((): boolean => {
     const todayStr = getTodayStr();
@@ -620,19 +600,46 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('planYourDay_lastSeen', todayStr);
   }, [getTodayStr]);
 
-  const skipOccurrence = useCallback((taskId: string) => {
-    const todayStr = getTodayStr();
+  const skipOccurrence = useCallback((taskId: string, occurrenceDate?: string) => {
+    const date = normalizeLocalDateString(occurrenceDate) ?? getTodayStr();
     setTasks(prev => {
       const updated = prev.map(task => {
         if (task.id !== taskId) return task;
         const existing = task.skippedDates ?? [];
-        if (existing.includes(todayStr)) return task;
-        return { ...task, skippedDates: [...existing, todayStr] };
+        return {
+          ...task,
+          skippedDates: existing.includes(date) ? existing : [...existing, date],
+          recurrenceRule: withSkippedOccurrence(task, date),
+        };
       });
       saveTasksToStore(updated, userId);
       return updated;
     });
   }, [getTodayStr, userId]);
+
+  const endRecurringFrom = useCallback((taskId: string, date: string) => {
+    if (!normalizeLocalDateString(date)) return;
+    setTasks(prev => {
+      const updated = prev.map(task => task.id === taskId
+        ? { ...task, recurrenceRule: endRecurrenceBefore(task, date) }
+        : task
+      );
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const rescheduleOccurrence = useCallback((taskId: string, date: string, rescheduledDate: string) => {
+    if (!normalizeLocalDateString(date) || !normalizeLocalDateString(rescheduledDate)) return;
+    setTasks(prev => {
+      const updated = prev.map(task => task.id === taskId
+        ? { ...task, recurrenceRule: withRescheduledOccurrence(task, date, rescheduledDate) }
+        : task
+      );
+      saveTasksToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
 
   const pauseRecurring = useCallback((taskId: string, days: number) => {
     const until = new Date();
@@ -683,6 +690,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       hasSeenPlanYourDay,
       markPlanYourDaySeen,
       skipOccurrence,
+      rescheduleOccurrence,
+      endRecurringFrom,
       pauseRecurring,
       resumeRecurring,
     }}>

@@ -1,11 +1,13 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { Goal, GoalStatus, TaskCategory, GoalMilestone, GoalTheme, BulkPatch } from '../types';
+import type { Goal, GoalStatus, TaskCategory, GoalMilestone, GoalTheme, BulkPatch, GoalHealthStatus } from '../types';
 import { LocalStorage } from '../store/localStorage';
 import { saveGoals as saveGoalsToStore } from '../store/unifiedStore';
 import { applyBulkUpdate, collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { useDataVersion } from './DataVersionContext';
+import { addGoalHealthCheckIn, migrateGoalFields, reorderMilestones, restoreGoalHierarchy } from '../lib/goalUtils';
 
 // XP required for each level (exponential curve)
 const LEVEL_THRESHOLDS = [0, 100, 250, 500, 850, 1300, 1900, 2700, 3800, 5200, 7000];
@@ -33,10 +35,16 @@ export function getLevelFromXP(totalXP: number): { level: number; currentLevelXP
 }
 
 function migrateGoal(goal: Goal): Goal {
-  if (goal.level !== undefined && goal.totalXP !== undefined && goal.milestones !== undefined) return goal;
+  const fieldsCurrent = goal.level !== undefined
+    && goal.totalXP !== undefined
+    && goal.milestones !== undefined
+    && goal.priority !== undefined
+    && goal.healthCheckIns !== undefined
+    && goal.milestones.every((milestone, index) => milestone.order === index);
+  if (fieldsCurrent) return goal;
   const totalXP = goal.totalXP ?? Math.round((goal.progress || 0) * 10);
   const { level, currentLevelXP, xpToNextLevel } = getLevelFromXP(totalXP);
-  return {
+  return migrateGoalFields({
     ...goal,
     level: goal.level ?? level,
     totalXP,
@@ -44,7 +52,7 @@ function migrateGoal(goal: Goal): Goal {
     xpToNextLevel: goal.xpToNextLevel ?? xpToNextLevel,
     milestones: goal.milestones ?? [],
     theme: goal.theme ?? undefined,
-  };
+  });
 }
 
 export interface LevelUpEvent {
@@ -66,7 +74,8 @@ interface GoalContextType {
     description?: string,
     category?: TaskCategory,
     parentGoalId?: string,
-    theme?: GoalTheme
+    theme?: GoalTheme,
+    details?: Pick<Goal, 'targetDate' | 'priority' | 'nextAction'>
   ) => Goal;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
   /** Applies the same updates to many goals, returning patches for undo. */
@@ -97,6 +106,8 @@ interface GoalContextType {
   addMilestone: (goalId: string, milestone: Omit<GoalMilestone, 'id' | 'isCompleted' | 'completedAt'>) => void;
   completeMilestone: (goalId: string, milestoneId: string) => void;
   removeMilestone: (goalId: string, milestoneId: string) => void;
+  reorderMilestone: (goalId: string, milestoneId: string, direction: 'up' | 'down') => void;
+  addHealthCheckIn: (goalId: string, status: GoalHealthStatus, note?: string) => void;
 }
 
 const GoalContext = createContext<GoalContextType | null>(null);
@@ -138,6 +149,8 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       saveGoalsToStore(migratedGoals, userId);
     }
     
+    // Loading persisted context state is the purpose of this synchronization effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGoals(migratedGoals);
     setLoading(false);
   }, [dataVersion, userId]);
@@ -147,7 +160,8 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     description: string = '',
     category: TaskCategory = 'Personal',
     parentGoalId?: string,
-    theme?: GoalTheme
+    theme?: GoalTheme,
+    details?: Pick<Goal, 'targetDate' | 'priority' | 'nextAction'>
   ): Goal => {
     const newGoal: Goal = {
       id: uuidv4(),
@@ -166,6 +180,10 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       xpToNextLevel: LEVEL_THRESHOLDS[1],
       milestones: [],
       theme,
+      targetDate: details?.targetDate,
+      priority: details?.priority ?? 'Medium',
+      nextAction: details?.nextAction,
+      healthCheckIns: [],
     };
 
     setGoals(prev => {
@@ -288,17 +306,8 @@ export function GoalProvider({ children }: { children: ReactNode }) {
 
   const restoreGoals = useCallback((goalsToRestore: Goal[]) => {
     if (goalsToRestore.length === 0) return;
-    const restoredIds = new Set(goalsToRestore.map(g => g.id));
     setGoals(prev => {
-      const existing = new Set(prev.map(g => g.id));
-      const reinserted = goalsToRestore.filter(g => !existing.has(g.id));
-      const updated = [...prev, ...reinserted].map(goal => {
-        // Re-attach restored goals to their parent's subGoalIds.
-        const children = goalsToRestore.filter(g => g.parentGoalId === goal.id && !restoredIds.has(goal.id));
-        if (children.length === 0) return goal;
-        const merged = new Set([...(goal.subGoalIds || []), ...children.map(c => c.id)]);
-        return { ...goal, subGoalIds: Array.from(merged) };
-      });
+      const updated = restoreGoalHierarchy(prev, goalsToRestore);
       saveGoalsToStore(updated, userId);
       return updated;
     });
@@ -474,6 +483,35 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     });
   }, [userId]);
 
+  const reorderMilestone = useCallback((goalId: string, milestoneId: string, direction: 'up' | 'down') => {
+    setGoals(prev => {
+      const updated = prev.map(goal => goal.id === goalId
+        ? { ...goal, milestones: reorderMilestones(goal.milestones ?? [], milestoneId, direction) }
+        : goal);
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
+  const addHealthCheckIn = useCallback((goalId: string, status: GoalHealthStatus, note = '') => {
+    setGoals(prev => {
+      const updated = prev.map(goal => goal.id === goalId
+        ? {
+            ...goal,
+            healthCheckIns: addGoalHealthCheckIn(
+              goal.healthCheckIns ?? [],
+              status,
+              note,
+              new Date(),
+              uuidv4(),
+            ),
+          }
+        : goal);
+      saveGoalsToStore(updated, userId);
+      return updated;
+    });
+  }, [userId]);
+
   const calculateGoalProgress = useCallback((
     goal: Goal,
     completedTaskIds: string[],
@@ -537,6 +575,8 @@ export function GoalProvider({ children }: { children: ReactNode }) {
       addMilestone,
       completeMilestone,
       removeMilestone,
+      reorderMilestone,
+      addHealthCheckIn,
     }}>
       {children}
     </GoalContext.Provider>

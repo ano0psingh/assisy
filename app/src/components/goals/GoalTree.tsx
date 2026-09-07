@@ -17,7 +17,7 @@ const THEME_COLORS: Record<GoalTheme, { trunk: string; leaves: string; accent: s
 
 const SIZE_MAP = { sm: 80, md: 160, lg: 280 };
 
-function getStagePaths(level: number, colors: typeof THEME_COLORS.forest) {
+function getStagePaths(level: number, colors: typeof THEME_COLORS.forest, animate = false) {
   if (level <= 2) {
     // Seed/sprout
     return (
@@ -110,7 +110,7 @@ function getStagePaths(level: number, colors: typeof THEME_COLORS.forest) {
       <ellipse cx="50" cy="96" rx="35" ry="4" fill={colors.ground} opacity="0.3" />
       {/* Glow effect */}
       <circle cx="50" cy="40" r="45" fill={colors.glow} opacity="0.08">
-        <animate attributeName="opacity" values="0.05;0.12;0.05" dur="3s" repeatCount="indefinite" />
+        {animate && <animate attributeName="opacity" values="0.05;0.12;0.05" dur="3s" repeatCount="indefinite" />}
       </circle>
       <path d="M50 96 Q46 48 50 14" stroke={colors.trunk} strokeWidth="7" fill="none" strokeLinecap="round" />
       <path d="M50 78 Q24 62 10 44" stroke={colors.trunk} strokeWidth="4" fill="none" strokeLinecap="round" />
@@ -133,8 +133,12 @@ function getStagePaths(level: number, colors: typeof THEME_COLORS.forest) {
         { cx: 84, cy: 20 }, { cx: 50, cy: 2 }, { cx: 40, cy: 18 },
       ].map((p, i) => (
         <circle key={i} cx={p.cx} cy={p.cy} r="2" fill="#FFF" opacity="0.7">
-          <animate attributeName="opacity" values="0.3;0.9;0.3" dur={`${2 + i * 0.4}s`} repeatCount="indefinite" />
-          <animate attributeName="r" values="1.5;2.5;1.5" dur={`${2 + i * 0.4}s`} repeatCount="indefinite" />
+          {animate && (
+            <>
+              <animate attributeName="opacity" values="0.3;0.9;0.3" dur={`${2 + i * 0.4}s`} repeatCount="indefinite" />
+              <animate attributeName="r" values="1.5;2.5;1.5" dur={`${2 + i * 0.4}s`} repeatCount="indefinite" />
+            </>
+          )}
         </circle>
       ))}
     </g>
@@ -153,7 +157,7 @@ export function GoalTree({ level, theme = 'forest', size = 'md', animate = true 
       viewBox="0 0 100 100"
       className={animate ? 'transition-all duration-700' : ''}
     >
-      {getStagePaths(clampedLevel, colors)}
+      {getStagePaths(clampedLevel, colors, animate)}
     </svg>
   );
 }

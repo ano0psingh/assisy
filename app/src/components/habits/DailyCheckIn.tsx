@@ -36,6 +36,9 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
 
   useEffect(() => {
     if (existingLog) {
+      // This modal stays mounted while its record can change underneath it.
+      // Synchronizing the draft here is intentional.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEnergyLevel(existingLog.energyLevel);
       setWins(existingLog.wins || '');
       setChallenges(existingLog.challenges || '');
@@ -46,6 +49,8 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
 
   useEffect(() => {
     if (!isOpen) {
+      // Clear transient AI output between modal sessions.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAiReflection(null);
       setAiError(null);
     }
@@ -102,8 +107,8 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
 
   const energyField = (
     <div>
-      <label className={`flex items-center gap-2 text-sm font-medium mb-3 text-slate-700 dark:text-gray-300`}>
-        <Zap size={16} className="text-amber-500" />
+      <label className={`flex items-center gap-2 text-sm font-medium mb-3 text-[var(--ink-secondary)]`}>
+        <Zap size={16} className="text-[var(--warning)]" />
         Energy Level
       </label>
       <div className="flex gap-1">
@@ -112,21 +117,21 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
             key={level}
             type="button"
             onClick={() => setEnergyLevel(level)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 py-2 rounded-sm text-sm font-medium transition-all ${
               energyLevel === level
                 ? level <= 3
-                  ? 'bg-red-500 text-white'
+                  ? 'bg-[var(--danger)] text-white'
                   : level <= 6
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-emerald-500 text-white'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
+                  ? 'bg-[var(--warning)] text-white'
+                  : 'bg-[var(--success)] text-white'
+                : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:bg-[var(--surface-inset)]'
             }`}
           >
             {level}
           </button>
         ))}
       </div>
-      <p className={`text-xs mt-1 text-slate-500 dark:text-gray-500`}>1 = exhausted, 10 = energized</p>
+      <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>1 = exhausted, 10 = energized</p>
     </div>
   );
 
@@ -139,7 +144,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
     isFS: boolean
   ) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
-      <label className={`flex items-center gap-2 text-sm font-medium mb-2 text-slate-700 dark:text-gray-300`}>
+      <label className={`flex items-center gap-2 text-sm font-medium mb-2 text-[var(--ink-secondary)]`}>
         {icon}
         {label}
       </label>
@@ -156,37 +161,37 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
       <button
         type="button"
         onClick={onCancel}
-        className={`px-6 py-3 rounded-xl transition-colors ${
-          'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
+        className={`px-6 py-3 rounded-md transition-colors ${
+          'text-[var(--ink-muted)] hover:text-[var(--ink-secondary)] hover:bg-[var(--surface-subtle)] dark:hover:text-white'
         }`}
       >
         Cancel
       </button>
-      <button type="button" onClick={handleSubmit} className="btn-primary px-6 py-3 rounded-xl">
+      <button type="button" onClick={handleSubmit} className="btn-primary px-6 py-3 rounded-md">
         {existingLog ? 'Update Check-In' : 'Save Check-In'}
       </button>
     </div>
   );
 
   const aiReflectionSection = (aiLoading || aiReflection || aiError) ? (
-    <div className={`mx-6 mb-6 p-4 rounded-xl border ${
-      'bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20'
+    <div className={`mx-6 mb-6 p-4 rounded-md border ${
+      'bg-[var(--action-soft)] border-[var(--action)]'
     }`}>
-      <div className={`flex items-center gap-2 text-sm font-medium mb-2 text-violet-700 dark:text-violet-300`}>
+      <div className={`flex items-center gap-2 text-sm font-medium mb-2 text-[var(--action)]`}>
         <Sparkles size={14} />
         AI Reflection
       </div>
       {aiLoading && (
         <div className="flex items-center gap-2">
-          <Loader2 size={14} className="animate-spin text-violet-400" />
-          <span className={`text-sm text-slate-500 dark:text-gray-400`}>Reflecting on your day...</span>
+          <Loader2 size={14} className="animate-spin text-[var(--action)]" />
+          <span className={`text-sm text-[var(--ink-muted)]`}>Reflecting on your day...</span>
         </div>
       )}
       {aiError && (
-        <p className={`text-sm text-red-600 dark:text-red-400`}>{aiError}</p>
+        <p className={`text-sm text-[var(--danger)]`}>{aiError}</p>
       )}
       {aiReflection && (
-        <p className={`text-sm leading-relaxed text-slate-600 dark:text-gray-300`}>{aiReflection}</p>
+        <p className={`text-sm leading-relaxed text-[var(--ink-secondary)]`}>{aiReflection}</p>
       )}
     </div>
   ) : null;
@@ -196,7 +201,7 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
       isOpen={isOpen}
       onClose={onCancel}
       title="Daily Check-In"
-      icon={<BookOpen className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
+      icon={<BookOpen className={`w-5 h-5 text-[var(--action)]`} />}
       maxWidth="max-w-lg"
       footer={actionButtons}
     >
@@ -205,28 +210,28 @@ export function DailyCheckIn({ isOpen, existingLog, onSubmit, onCancel }: DailyC
           <div className="flex flex-col h-full">
             <div className="flex flex-1 min-h-0">
               {/* Left: Wins + Challenges */}
-              <div className={`flex-1 flex flex-col p-8 space-y-6 border-r border-slate-200 dark:border-white/10`}>
-                <p className={`text-sm text-slate-500 dark:text-gray-500`}>{today}</p>
+              <div className={`flex-1 flex flex-col p-8 space-y-6 border-r border-[var(--rule)]`}>
+                <p className={`text-sm text-[var(--ink-muted)]`}>{today}</p>
                 {energyField}
-                {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-emerald-500" />, wins, setWins, 'What went well today? What are you proud of?', true)}
-                {makeNotesField('Challenges', <AlertCircle size={16} className="text-red-500" />, challenges, setChallenges, 'What obstacles did you face?', true)}
+                {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-[var(--success)]" />, wins, setWins, 'What went well today? What are you proud of?', true)}
+                {makeNotesField('Challenges', <AlertCircle size={16} className="text-[var(--danger)]" />, challenges, setChallenges, 'What obstacles did you face?', true)}
               </div>
               {/* Right: Learnings + Tomorrow */}
-              <div className={`flex-1 flex flex-col p-8 space-y-6 bg-white dark:bg-white/[0.02]`}>
-                {makeNotesField('Key Learnings', <Lightbulb size={16} className="text-amber-500" />, learnings, setLearnings, 'What did you learn today? Any insights?', true)}
-                {makeNotesField('Tomorrow\'s Focus', <Target size={16} className="text-violet-500" />, tomorrowFocus, setTomorrowFocus, 'What\'s your main focus for tomorrow?', true)}
+              <div className={`flex-1 flex flex-col p-8 space-y-6 bg-[var(--surface)]`}>
+                {makeNotesField('Key Learnings', <Lightbulb size={16} className="text-[var(--warning)]" />, learnings, setLearnings, 'What did you learn today? Any insights?', true)}
+                {makeNotesField('Tomorrow\'s Focus', <Target size={16} className="text-[var(--action)]" />, tomorrowFocus, setTomorrowFocus, 'What\'s your main focus for tomorrow?', true)}
               </div>
             </div>
             {aiReflectionSection}
           </div>
         ) : (
           <div className="p-6 space-y-6">
-            <p className={`text-sm text-slate-500 dark:text-gray-500`}>{today}</p>
+            <p className={`text-sm text-[var(--ink-muted)]`}>{today}</p>
             {energyField}
-            {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-emerald-500" />, wins, setWins, 'What went well today?', false)}
-            {makeNotesField('Challenges', <AlertCircle size={16} className="text-red-500" />, challenges, setChallenges, 'What obstacles did you face?', false)}
-            {makeNotesField('Key Learnings', <Lightbulb size={16} className="text-amber-500" />, learnings, setLearnings, 'What did you learn today?', false)}
-            {makeNotesField('Tomorrow\'s Focus', <Target size={16} className="text-violet-500" />, tomorrowFocus, setTomorrowFocus, 'What\'s your main focus for tomorrow?', false)}
+            {makeNotesField('Today\'s Wins', <Trophy size={16} className="text-[var(--success)]" />, wins, setWins, 'What went well today?', false)}
+            {makeNotesField('Challenges', <AlertCircle size={16} className="text-[var(--danger)]" />, challenges, setChallenges, 'What obstacles did you face?', false)}
+            {makeNotesField('Key Learnings', <Lightbulb size={16} className="text-[var(--warning)]" />, learnings, setLearnings, 'What did you learn today?', false)}
+            {makeNotesField('Tomorrow\'s Focus', <Target size={16} className="text-[var(--action)]" />, tomorrowFocus, setTomorrowFocus, 'What\'s your main focus for tomorrow?', false)}
             {aiReflectionSection}
           </div>
         )

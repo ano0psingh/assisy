@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import '@fontsource/barlow-condensed/600.css';
+import '@fontsource/barlow-condensed/700.css';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -13,13 +15,17 @@ import { Feed } from './pages/Feed';
  * reads the `?focus=` search param, which needs router context — without it the
  * page threw on mount and rendered nothing.
  */
-function FeedApp() {
+export function FeedApp() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
           <FeedProvider>
-            <Feed />
+            <main className="min-h-screen bg-[var(--canvas)] px-4 py-6 sm:px-6 lg:px-8">
+              <div className="mx-auto w-full max-w-7xl">
+                <Feed />
+              </div>
+            </main>
           </FeedProvider>
         </ThemeProvider>
       </AuthProvider>

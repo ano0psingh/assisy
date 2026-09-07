@@ -9,7 +9,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus, BulkPatch } from '../types';
+import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus, BulkPatch, ReminderOffsetMinutes } from '../types';
 import { saveProjects, saveSubProjects, saveProjectTasks } from '../store/unifiedStore';
 import { collectBulkPatches, revertBulkUpdate } from '../lib/bulkUpdate';
 import {
@@ -29,14 +29,14 @@ const PROJECT_TASKS_KEY = 'assisy_project_tasks';
 
 // Default project colors
 export const PROJECT_COLORS = [
-  '#8B5CF6', // Violet
-  '#3B82F6', // Blue
-  '#10B981', // Emerald
-  '#F59E0B', // Amber
-  '#EF4444', // Red
-  '#EC4899', // Pink
-  '#6366F1', // Indigo
-  '#14B8A6', // Teal
+  '#276D69', // Desk teal
+  '#3E6477', // Archive blue
+  '#3F704F', // Filed green
+  '#A87524', // Milestone amber
+  '#A63C35', // Alert red
+  '#8A5268', // Muted berry
+  '#59647D', // Slate blue
+  '#4D827A', // Light teal
 ];
 
 // Default tags
@@ -86,7 +86,9 @@ interface ProjectContextType {
     priority?: 'High' | 'Medium' | 'Low',
     effort?: 'High' | 'Medium' | 'Low',
     parentTaskId?: string,
-    deadline?: Date
+    deadline?: Date,
+    deadlineTime?: string,
+    deadlineReminderOffsets?: ReminderOffsetMinutes[],
   ) => ProjectTask;
   updateProjectTask: (id: string, updates: Partial<ProjectTask>) => void;
   /** Applies the same updates to many project tasks, returning patches for undo. */
@@ -115,7 +117,7 @@ interface ProjectContextType {
   // Today integration
   addTaskToToday: (taskId: string) => void;
   removeTaskFromToday: (taskId: string) => void;
-  scheduleProjectTask: (taskId: string, schedule: { date: string; time?: string; durationMinutes?: number }) => void;
+  scheduleProjectTask: (taskId: string, schedule: { date: string; time?: string; durationMinutes?: number; reminderOffsets?: ReminderOffsetMinutes[] }) => void;
   unscheduleProjectTask: (taskId: string) => void;
   setProjectTaskInbox: (taskId: string, inbox: boolean) => void;
   getTodaysProjectTasks: () => ProjectTask[];
@@ -219,7 +221,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     title: string,
     description?: string,
     color?: string,
-    deadline?: Date
+    deadline?: Date,
   ): Project => {
     const newProject: Project = {
       id: uuidv4(),
@@ -336,7 +338,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     priority: 'High' | 'Medium' | 'Low' = 'Medium',
     effort: 'High' | 'Medium' | 'Low' = 'Medium',
     parentTaskId?: string,
-    deadline?: Date
+    deadline?: Date,
+    deadlineTime?: string,
+    deadlineReminderOffsets?: ReminderOffsetMinutes[],
   ): ProjectTask => {
     const subProject = subProjects.find(sp => sp.id === subProjectId);
     if (!subProject) throw new Error('Sub-project not found');
@@ -356,6 +360,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       createdAt: new Date(),
       updatedAt: new Date(),
       deadline,
+      deadlineTime,
+      deadlineReminderOffsets,
     };
 
     setProjectTasks(prev => [...prev, newTask]);
@@ -666,7 +672,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const scheduleProjectTask = useCallback((
     taskId: string,
-    schedule: { date: string; time?: string; durationMinutes?: number },
+    schedule: { date: string; time?: string; durationMinutes?: number; reminderOffsets?: ReminderOffsetMinutes[] },
   ) => {
     const date = normalizeLocalDateString(schedule.date);
     if (!date) return;
@@ -680,6 +686,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
             durationMinutes: schedule.durationMinutes == null
               ? undefined
               : normalizeDurationMinutes(schedule.durationMinutes),
+            scheduledReminderOffsets: schedule.time && schedule.reminderOffsets?.length
+              ? schedule.reminderOffsets
+              : undefined,
             isFocusedToday: date === today,
             focusedDate: date,
             inbox: false,
@@ -697,6 +706,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
             scheduledDate: undefined,
             scheduledTime: undefined,
             durationMinutes: undefined,
+            scheduledReminderOffsets: undefined,
             isFocusedToday: false,
             focusedDate: undefined,
             updatedAt: new Date(),

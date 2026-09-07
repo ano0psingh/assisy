@@ -25,11 +25,14 @@ export function projectTasksToTasks(
         scheduledDate: pt.scheduledDate,
         scheduledTime: pt.scheduledTime,
         durationMinutes: pt.durationMinutes,
+        scheduledReminderOffsets: pt.scheduledReminderOffsets,
         focusedDate: pt.focusedDate,
         isFocusedToday: pt.isFocusedToday,
         isRecurring: false,
         xpValue: 0,
         description: pt.description ?? '',
+        dueTime: pt.deadlineTime,
+        dueReminderOffsets: pt.deadlineReminderOffsets,
       } as Task);
     }
   }

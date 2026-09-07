@@ -29,9 +29,9 @@ import { useHabitContext } from '../context/HabitContext';
 import { useDailyLogContext } from '../context/DailyLogContext';
 import { useFeed } from '../context/FeedContext';
 import { useGamification } from '../context/GamificationContext';
-import { useTheme } from '../context/ThemeContext';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
 import { formatAIText } from '../lib/formatAIText';
+import { WeeklyChallenges } from '../components/gamification/WeeklyChallenges';
 
 interface WeeklyInsight {
   achievements: string[];
@@ -77,9 +77,6 @@ export function WeeklyReview() {
   const { goals } = useGoalContext();
   const { habits, getHabitStreak, getHabitLogs } = useHabitContext();
   const { getTotalXP, getTotalLevel, getTitle, userStats } = useGamification();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   const thisWeek = useMemo(() => getWeekRange(0), []);
   const lastWeek = useMemo(() => getWeekRange(1), []);
 
@@ -113,7 +110,7 @@ export function WeeklyReview() {
     setAiLoading(true);
     try {
       if (!isAIConfigured()) {
-        setAiInsight('No AI API key configured. Add VITE_GROQ_API_KEY or VITE_GEMINI_API_KEY to .env.local.');
+        setAiInsight('AI is not configured on the server.');
         return;
       }
 
@@ -271,38 +268,33 @@ Respond ONLY with valid JSON matching this exact schema:
     return bullets;
   }, [pendingCount, delta, completedThisWeek, byCategory, tasks, habits, thisWeek, activeGoals]);
 
-  const cardClass = `rounded-2xl bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10`;
+  const cardClass = 'border-y border-[var(--rule)] bg-[var(--surface)]';
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>Weekly Review</h1>
-        <p className={`mt-1 text-sm text-slate-500 dark:text-gray-500`}>Your week at a glance</p>
-      </div>
-
       {/* ── 1. WEEK AT A GLANCE ──────────────────────── */}
-      <div className={`relative overflow-hidden rounded-2xl ${
-        'bg-violet-50 border border-violet-100 dark:bg-violet-500/[0.07] dark:border-violet-500/15'
-      }`}>
+      <section className="relative overflow-hidden border-y border-[var(--rule-strong)] bg-[var(--surface-raised)]">
         <div className="relative px-4 py-4 sm:px-6 sm:py-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className={`w-5 h-5 text-violet-500 dark:text-violet-400`} />
-            <span className={`text-sm font-medium text-violet-700 dark:text-violet-300`}>{thisWeek.label}</span>
+          <div className="mb-4 flex items-center justify-between gap-3 border-b border-[var(--rule)] pb-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[var(--action)]" />
+              <h2 className="text-lg font-bold tracking-[-0.015em] text-[var(--ink)]">Weekly record</h2>
+            </div>
+            <span className="font-mono text-xs font-medium tabular-nums text-[var(--ink-muted)]">{thisWeek.label}</span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 divide-x divide-y divide-[var(--rule)] md:grid-cols-4 md:divide-y-0">
             {/* Tasks completed */}
-            <div>
-              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Completed</p>
+            <div className="p-3 first:pl-0">
+              <p className={`text-xs mb-1 text-[var(--ink-muted)]`}>Completed</p>
               <div className="flex items-end gap-2">
-                <span className={`text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white`}>{completedThisWeek.length}</span>
+                <span className={`text-2xl sm:text-3xl font-bold text-[var(--ink)]`}>{completedThisWeek.length}</span>
                 <span className={`flex items-center gap-1 text-xs font-medium pb-1 ${
                   delta > 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
+                    ? 'text-[var(--success)]'
                     : delta < 0
-                      ? 'text-red-500 dark:text-red-400'
-                      : 'text-slate-400 dark:text-gray-500'
+                      ? 'text-[var(--danger)]'
+                      : 'text-[var(--ink-muted)]'
                 }`}>
                   {delta > 0 ? <ArrowUp size={12} /> : delta < 0 ? <ArrowDown size={12} /> : <Minus size={12} />}
                   {Math.abs(delta)} vs last week
@@ -311,78 +303,80 @@ Respond ONLY with valid JSON matching this exact schema:
             </div>
 
             {/* Last week */}
-            <div>
-              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Last Week</p>
-              <span className={`text-2xl sm:text-3xl font-bold text-slate-500 dark:text-gray-400`}>{completedLastWeek.length}</span>
+            <div className="p-3">
+              <p className={`text-xs mb-1 text-[var(--ink-muted)]`}>Last Week</p>
+              <span className={`text-2xl sm:text-3xl font-bold text-[var(--ink-muted)]`}>{completedLastWeek.length}</span>
             </div>
 
             {/* Streak */}
-            <div>
-              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Streak</p>
+            <div className="p-3">
+              <p className={`text-xs mb-1 text-[var(--ink-muted)]`}>Streak</p>
               <div className="flex items-center gap-2">
-                <Flame className={`w-5 h-5 text-orange-500 dark:text-orange-400`} />
-                <span className={`text-2xl sm:text-3xl font-bold text-orange-600 dark:text-orange-300`}>{userStats.currentStreak}</span>
-                <span className={`text-xs text-slate-400 dark:text-gray-500`}>days</span>
+                <Flame className={`w-5 h-5 text-[var(--warning)]`} />
+                <span className={`text-2xl sm:text-3xl font-bold text-[var(--warning)]`}>{userStats.currentStreak}</span>
+                <span className={`text-xs text-[var(--ink-muted)]`}>days</span>
               </div>
             </div>
 
             {/* XP / Level */}
-            <div>
-              <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Level</p>
+            <div className="p-3 pr-0">
+              <p className={`text-xs mb-1 text-[var(--ink-muted)]`}>Level</p>
               <div className="flex items-center gap-2">
-                <Zap className={`w-5 h-5 text-amber-500 dark:text-amber-400`} />
-                <span className={`text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-300`}>{getTotalLevel()}</span>
+                <Zap className={`w-5 h-5 text-[var(--warning)]`} />
+                <span className={`text-2xl sm:text-3xl font-bold text-[var(--warning)]`}>{getTotalLevel()}</span>
               </div>
-              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>{getTotalXP().toLocaleString()} XP · {getTitle()}</p>
+              <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>{getTotalXP().toLocaleString()} XP · {getTitle()}</p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <WeeklyChallenges />
 
       {/* ── 2. TASK BREAKDOWN ────────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
           <ClipboardList size={16} /> Task Breakdown
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 divide-y divide-[var(--rule)] border-y border-[var(--rule-strong)] md:grid-cols-3 md:divide-x md:divide-y-0">
           {/* By category */}
           {([
-            { label: 'Personal', count: byCategory.Personal, color: 'blue' },
-            { label: 'Financial', count: byCategory.Financial, color: 'emerald' },
-            { label: 'Professional', count: byCategory.Professional, color: 'slate' },
-          ] as const).map(({ label, count, color }) => (
+            { label: 'Personal', count: byCategory.Personal },
+            { label: 'Financial', count: byCategory.Financial },
+            { label: 'Professional', count: byCategory.Professional },
+          ] as const).map(({ label, count }) => (
             <div key={label} className={cardClass + ' p-4'}>
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-medium ${isDark ? `text-${color}-400` : `text-${color}-600`}`}>{label}</span>
-                <CheckCircle2 size={14} className={isDark ? `text-${color}-400/60` : `text-${color}-500/60`} />
+                <span className="text-xs font-medium text-[var(--action)]">{label}</span>
+                <CheckCircle2 size={14} className="text-[var(--action)]" />
               </div>
-              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{count}</span>
+              <span className={`text-2xl font-bold text-[var(--ink)]`}>{count}</span>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+        <div className="mt-3 grid grid-cols-1 divide-y divide-[var(--rule)] border-y border-[var(--rule-strong)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {/* By priority */}
           <div className={cardClass + ' p-4'}>
-            <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>High Priority</p>
+            <p className={`text-xs mb-1 text-[var(--ink-muted)]`}>High Priority</p>
             <div className="flex items-center gap-2">
-              <TrendingUp size={16} className={'text-red-500 dark:text-red-400'} />
-              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{byPriority.High}</span>
+              <TrendingUp size={16} className={'text-[var(--danger)]'} />
+              <span className={`text-2xl font-bold text-[var(--ink)]`}>{byPriority.High}</span>
             </div>
           </div>
           <div className={cardClass + ' p-4'}>
-            <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Low Priority</p>
+            <p className={`text-xs mb-1 text-[var(--ink-muted)]`}>Low Priority</p>
             <div className="flex items-center gap-2">
-              <TrendingDown size={16} className={'text-blue-500 dark:text-blue-400'} />
-              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{byPriority.Low}</span>
+              <TrendingDown size={16} className={'text-[var(--action)]'} />
+              <span className={`text-2xl font-bold text-[var(--ink)]`}>{byPriority.Low}</span>
             </div>
           </div>
           <div className={cardClass + ' p-4'}>
-            <p className={`text-xs mb-1 text-slate-500 dark:text-gray-400`}>Still Pending</p>
+            <p className={`text-xs mb-1 text-[var(--ink-muted)]`}>Still Pending</p>
             <div className="flex items-center gap-2">
-              <ClipboardList size={16} className={'text-amber-500 dark:text-amber-400'} />
-              <span className={`text-2xl font-bold text-slate-800 dark:text-white`}>{pendingCount}</span>
+              <ClipboardList size={16} className={'text-[var(--warning)]'} />
+              <span className={`text-2xl font-bold text-[var(--ink)]`}>{pendingCount}</span>
             </div>
           </div>
         </div>
@@ -391,17 +385,17 @@ Respond ONLY with valid JSON matching this exact schema:
       {/* ── 2b. PROJECT BREAKDOWN ───────────────────── */}
       {byProject.length > 0 && (
         <div>
-          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
             <FolderKanban size={16} /> Project progress this week
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 divide-y divide-[var(--rule)] border-y border-[var(--rule-strong)] md:grid-cols-3 md:divide-x md:divide-y-0">
             {byProject.map(({ projectId, title, count }) => (
               <div key={projectId} className={cardClass + ' p-4'}>
-                <p className={`text-xs font-medium truncate mb-1 text-slate-500 dark:text-gray-400`}>{title}</p>
+                <p className={`text-xs font-medium truncate mb-1 text-[var(--ink-muted)]`}>{title}</p>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className={'text-emerald-500 dark:text-emerald-400'} />
-                  <span className={`text-xl font-bold text-slate-800 dark:text-white`}>{count}</span>
-                  <span className={`text-xs text-slate-400 dark:text-gray-500`}>done</span>
+                  <CheckCircle2 size={14} className={'text-[var(--success)]'} />
+                  <span className={`text-xl font-bold text-[var(--ink)]`}>{count}</span>
+                  <span className={`text-xs text-[var(--ink-muted)]`}>done</span>
                 </div>
               </div>
             ))}
@@ -411,13 +405,13 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 3. HABIT SCORECARD ───────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
           <Flame size={16} /> Habit Scorecard
         </h2>
 
         {habits.length === 0 ? (
           <div className={cardClass + ' p-6 text-center'}>
-            <p className={`text-sm text-slate-400 dark:text-gray-500`}>No habits tracked yet.</p>
+            <p className={`text-sm text-[var(--ink-muted)]`}>No habits tracked yet.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -436,10 +430,10 @@ Respond ONLY with valid JSON matching this exact schema:
               return (
                 <div key={habit.id} className={cardClass + ' px-4 py-3 flex items-center gap-4'}>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{habit.name}</p>
+                    <p className={`text-sm font-medium truncate text-[var(--ink)]`}>{habit.name}</p>
                     <div className="flex items-center gap-1 mt-1">
-                      <Flame size={12} className={'text-orange-500 dark:text-orange-400'} />
-                      <span className={`text-xs text-orange-600 dark:text-orange-400`}>{streak}d streak</span>
+                      <Flame size={12} className={'text-[var(--warning)]'} />
+                      <span className={`text-xs text-[var(--warning)]`}>{streak}d streak</span>
                     </div>
                   </div>
 
@@ -448,11 +442,11 @@ Respond ONLY with valid JSON matching this exact schema:
                       const done = dayDone.get(idx);
                       return (
                         <div key={dayLabel} className="flex flex-col items-center gap-1">
-                          <span className={`text-xs leading-none text-slate-400 dark:text-gray-400`}>{dayLabel[0]}</span>
+                          <span className={`text-xs leading-none text-[var(--ink-muted)]`}>{dayLabel[0]}</span>
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                             done
-                              ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/30 dark:text-emerald-400'
-                              : 'bg-slate-100 text-slate-300 dark:bg-white/5 dark:text-gray-500'
+                              ? 'bg-[var(--success-soft)] text-[var(--success)]'
+                              : 'bg-[var(--surface-subtle)] text-[var(--ink-disabled)]'
                           }`}>
                             {done ? <CheckCircle2 size={12} /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />}
                           </div>
@@ -469,34 +463,32 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 4. GOAL PROGRESS ─────────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
           <Target size={16} /> Goal Progress
         </h2>
 
         {activeGoals.length === 0 ? (
           <div className={cardClass + ' p-6 text-center'}>
-            <p className={`text-sm text-slate-400 dark:text-gray-500`}>No active goals.</p>
+            <p className={`text-sm text-[var(--ink-muted)]`}>No active goals.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {activeGoals.map(goal => (
               <div key={goal.id} className={cardClass + ' px-4 py-3'}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className={`text-sm font-medium text-slate-800 dark:text-white`}>{goal.title}</p>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
-                  }`}>
+                  <p className={`text-sm font-medium text-[var(--ink)]`}>{goal.title}</p>
+                  <span className="border border-[var(--rule)] px-2 py-1 font-mono text-xs text-[var(--ink-muted)]">
                     {goal.category}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className={`flex-1 h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/5`}>
+                  <div className={`flex-1 h-2 rounded-full overflow-hidden bg-[var(--surface-subtle)]`}>
                     <div
-                      className="h-full rounded-full bg-violet-500 transition-all duration-500"
+                      className="h-full rounded-full bg-[var(--action)] transition-all duration-500 motion-reduce:transition-none"
                       style={{ width: `${goal.progress}%` }}
                     />
                   </div>
-                  <span className={`text-xs font-medium tabular-nums w-8 text-right text-slate-500 dark:text-gray-400`}>
+                  <span className={`text-xs font-medium tabular-nums w-8 text-right text-[var(--ink-muted)]`}>
                     {goal.progress}%
                   </span>
                 </div>
@@ -508,21 +500,21 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 4b. FEED SUMMARY ────────────────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
           <Newspaper size={16} /> Feed this week
         </h2>
         <div className={cardClass + ' p-4'}>
           <div className="flex flex-wrap items-center gap-3">
-            <span className={`text-sm text-slate-600 dark:text-gray-400`}>
-              Read <strong className={'text-slate-800 dark:text-white'}>{feedSummary.readCount}</strong>
+            <span className={`text-sm text-[var(--ink-secondary)]`}>
+              Read <strong className={'text-[var(--ink)]'}>{feedSummary.readCount}</strong>
             </span>
-            <span className={'text-slate-300 dark:text-gray-400'}>·</span>
-            <span className={`text-sm text-slate-600 dark:text-gray-400`}>
-              Bookmarked <strong className={'text-slate-800 dark:text-white'}>{feedSummary.bookmarkedCount}</strong>
+            <span className={'text-[var(--ink-disabled)]'}>·</span>
+            <span className={`text-sm text-[var(--ink-secondary)]`}>
+              Bookmarked <strong className={'text-[var(--ink)]'}>{feedSummary.bookmarkedCount}</strong>
             </span>
           </div>
           {feedSummary.recentTitles.filter(Boolean).length > 0 && (
-            <p className={`text-xs mt-2 truncate max-w-full text-slate-400 dark:text-gray-500`}>
+            <p className={`text-xs mt-2 truncate max-w-full text-[var(--ink-muted)]`}>
               Recent: {feedSummary.recentTitles.filter(Boolean).join(' · ')}
             </p>
           )}
@@ -531,14 +523,14 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 4c. QUICK INSIGHTS (rule-based) ──────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
           <Lightbulb size={16} /> Quick insights
         </h2>
         <div className={cardClass + ' p-4'}>
           <ul className="space-y-2">
             {ruleBasedInsights.map((text, i) => (
-              <li key={i} className={`text-sm flex items-start gap-2 text-slate-700 dark:text-gray-300`}>
-                <span className={'text-amber-500 dark:text-amber-400'} aria-hidden>•</span>
+              <li key={i} className={`text-sm flex items-start gap-2 text-[var(--ink-secondary)]`}>
+                <span className={'text-[var(--warning)]'} aria-hidden>•</span>
                 <span>{text}</span>
               </li>
             ))}
@@ -548,7 +540,7 @@ Respond ONLY with valid JSON matching this exact schema:
 
       {/* ── 5. AI WEEKLY INSIGHT ────────────── */}
       <div>
-        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+        <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
           <Sparkles size={16} /> AI Coach
         </h2>
 
@@ -556,15 +548,15 @@ Respond ONLY with valid JSON matching this exact schema:
           <div className="space-y-3">
             {/* Achievements */}
             {aiInsight.achievements?.length > 0 && (
-              <div className={`rounded-2xl p-4 bg-emerald-50 border border-emerald-100 dark:bg-emerald-500/[0.06] dark:border-emerald-500/15`}>
+              <div className={`rounded-md p-4 bg-[var(--success-soft)] border border-[var(--success)]`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 size={15} className={'text-emerald-600 dark:text-emerald-400'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400`}>Achievements</h3>
+                  <CheckCircle2 size={15} className={'text-[var(--success)]'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-[var(--success)]`}>Achievements</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.achievements.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 text-emerald-800 dark:text-emerald-200/80`}>
-                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-500 dark:bg-emerald-400`} />
+                    <li key={i} className={`text-sm flex items-start gap-2 text-[var(--success)]`}>
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[var(--success)]`} />
                       {item}
                     </li>
                   ))}
@@ -574,15 +566,15 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Slacked Areas */}
             {aiInsight.slacked_areas?.length > 0 && (
-              <div className={`rounded-2xl p-4 bg-amber-50 border border-amber-100 dark:bg-amber-500/[0.06] dark:border-amber-500/15`}>
+              <div className={`rounded-md p-4 bg-[var(--warning-soft)] border border-[var(--warning)]`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle size={15} className={'text-amber-600 dark:text-amber-400'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400`}>Slacked Areas</h3>
+                  <AlertTriangle size={15} className={'text-[var(--warning)]'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-[var(--warning)]`}>Slacked Areas</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.slacked_areas.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 text-amber-800 dark:text-amber-200/80`}>
-                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-amber-500 dark:bg-amber-400`} />
+                    <li key={i} className={`text-sm flex items-start gap-2 text-[var(--warning)]`}>
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[var(--warning)]`} />
                       {item}
                     </li>
                   ))}
@@ -592,15 +584,15 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Delayed Items */}
             {aiInsight.delayed_items?.length > 0 && (
-              <div className={`rounded-2xl p-4 bg-red-50 border border-red-100 dark:bg-red-500/[0.06] dark:border-red-500/15`}>
+              <div className={`rounded-md p-4 bg-[var(--danger-soft)] border border-[var(--danger)]`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingDown size={15} className={'text-red-600 dark:text-red-400'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-400`}>Delayed Items</h3>
+                  <TrendingDown size={15} className={'text-[var(--danger)]'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-[var(--danger)]`}>Delayed Items</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.delayed_items.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 text-red-800 dark:text-red-200/80`}>
-                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-500 dark:bg-red-400`} />
+                    <li key={i} className={`text-sm flex items-start gap-2 text-[var(--danger)]`}>
+                      <span className={`mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[var(--danger)] dark:bg-red-400`} />
                       {item}
                     </li>
                   ))}
@@ -610,10 +602,10 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Energy Pattern */}
             {aiInsight.energy_pattern && (
-              <div className={`rounded-2xl p-4 bg-blue-50 border border-blue-100 dark:bg-blue-500/[0.06] dark:border-blue-500/15`}>
+              <div className={`rounded-md p-4 bg-[var(--action-soft)] border border-[var(--action)]`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <Activity size={15} className={'text-blue-600 dark:text-blue-400'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-400`}>Energy Pattern</h3>
+                  <Activity size={15} className={'text-[var(--action)]'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-[var(--action)]`}>Energy Pattern</h3>
                 </div>
                 <p className={`text-sm text-blue-800 dark:text-blue-200/80`}>{aiInsight.energy_pattern}</p>
               </div>
@@ -621,26 +613,26 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Habit Analysis */}
             {aiInsight.habit_analysis && (
-              <div className={`rounded-2xl p-4 bg-orange-50 border border-orange-100 dark:bg-orange-500/[0.06] dark:border-orange-500/15`}>
+              <div className={`rounded-md p-4 bg-[var(--warning-soft)] border border-[var(--warning)]`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <BarChart3 size={15} className={'text-orange-600 dark:text-orange-400'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-400`}>Habit Analysis</h3>
+                  <BarChart3 size={15} className={'text-[var(--warning)]'} />
+                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-[var(--warning)]`}>Habit Analysis</h3>
                 </div>
-                <p className={`text-sm text-orange-800 dark:text-orange-200/80`}>{aiInsight.habit_analysis}</p>
+                <p className={`text-sm text-[var(--warning)]`}>{aiInsight.habit_analysis}</p>
               </div>
             )}
 
             {/* Actionable Focus */}
             {aiInsight.actionable_focus?.length > 0 && (
-              <div className={`rounded-2xl p-4 bg-violet-50 border border-violet-100 dark:bg-violet-500/[0.06] dark:border-violet-500/15`}>
+              <div className="border border-[var(--action)] bg-[var(--action-soft)] p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Target size={15} className={'text-violet-600 dark:text-violet-400'} />
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400`}>Focus Next Week</h3>
+                  <Target size={15} className="text-[var(--action)]" />
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--action)]">Focus Next Week</h3>
                 </div>
                 <ul className="space-y-2">
                   {aiInsight.actionable_focus.map((item, i) => (
-                    <li key={i} className={`text-sm flex items-start gap-2 text-violet-800 dark:text-violet-200/80`}>
-                      <span className={`mt-1 text-xs font-bold flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400`}>{i + 1}</span>
+                    <li key={i} className="flex items-start gap-2 text-sm text-[var(--ink)]">
+                      <span className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center bg-[var(--action-soft)] text-xs font-bold text-[var(--action)]">{i + 1}</span>
                       {item}
                     </li>
                   ))}
@@ -650,9 +642,9 @@ Respond ONLY with valid JSON matching this exact schema:
 
             {/* Motivational Note */}
             {aiInsight.motivational_note && (
-              <div className={`rounded-2xl p-4 text-center bg-pink-50 border border-pink-100 dark:bg-pink-500/[0.06] dark:border-pink-500/15`}>
-                <Heart size={16} className={`mx-auto mb-2 text-pink-500 dark:text-pink-400`} />
-                <p className={`text-sm italic text-pink-700 dark:text-pink-200/80`}>{aiInsight.motivational_note}</p>
+              <div className={`rounded-md p-4 text-center bg-[var(--warning-soft)] border border-[var(--warning)]`}>
+                <Heart size={16} className={`mx-auto mb-2 text-[var(--warning)]`} />
+                <p className={`text-sm italic text-[var(--ink-secondary)]`}>{aiInsight.motivational_note}</p>
               </div>
             )}
 
@@ -660,7 +652,7 @@ Respond ONLY with valid JSON matching this exact schema:
               <button
                 onClick={generateInsight}
                 disabled={aiLoading}
-                className={`text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300`}
+                className="text-xs font-medium text-[var(--action)] hover:text-[var(--action-hover)]"
               >
                 {aiLoading ? 'Regenerating...' : 'Regenerate'}
               </button>
@@ -670,13 +662,13 @@ Respond ONLY with valid JSON matching this exact schema:
           <div className={cardClass + ' p-6'}>
             <div className="space-y-3">
               <div
-                className={`text-sm leading-relaxed space-y-1 text-slate-700 dark:text-gray-300`}
+                className={`text-sm leading-relaxed space-y-1 text-[var(--ink-secondary)]`}
                 dangerouslySetInnerHTML={{ __html: formatAIText(aiInsight) }}
               />
               <button
                 onClick={generateInsight}
                 disabled={aiLoading}
-                className={`text-xs font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300`}
+                className="text-xs font-medium text-[var(--action)] hover:text-[var(--action-hover)]"
               >
                 Regenerate
               </button>
@@ -685,13 +677,13 @@ Respond ONLY with valid JSON matching this exact schema:
         ) : (
           <div className={cardClass + ' p-6'}>
             <div className="text-center py-2">
-              <p className={`text-sm mb-3 text-slate-400 dark:text-gray-500`}>
+              <p className={`text-sm mb-3 text-[var(--ink-muted)]`}>
                 Get an AI-powered analysis of your week
               </p>
               <button
                 onClick={generateInsight}
                 disabled={aiLoading}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50`}
+                className="inline-flex items-center gap-2 bg-[var(--action)] px-4 py-2 text-sm font-medium text-[var(--action-ink)] transition-colors hover:bg-[var(--action-hover)] disabled:opacity-50 motion-reduce:transition-none"
               >
                 {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                 {aiLoading ? 'Analyzing your week...' : 'Generate Weekly Insight'}

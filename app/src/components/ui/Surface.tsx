@@ -12,20 +12,16 @@ export type SurfaceLevel = 'card' | 'nested' | 'inset';
 export type SurfaceRadius = 'lg' | 'xl' | '2xl';
 
 const LEVELS: Record<SurfaceLevel, string> = {
-  // Delegates to the `.card` class rather than restating it in Tailwind. Restating
-  // it meant a panel built from this component had no shadow and no backdrop blur
-  // while the forty-odd panels using the class directly had both, so the two routes
-  // to "a card" did not agree. The class derives its colours from the theme
-  // variables, which is what makes it work in both themes without a dark: variant.
-  card: 'card',
-  nested: 'bg-slate-50 border border-slate-200/60 dark:bg-white/5 dark:border-white/5',
-  inset: 'bg-slate-50/70 dark:bg-white/5',
+  // `.card` remains alongside the semantic class while page call sites migrate.
+  card: 'card ui-surface--card',
+  nested: 'ui-surface--nested',
+  inset: 'ui-surface--inset',
 };
 
 const RADII: Record<SurfaceRadius, string> = {
-  lg: 'rounded-lg',
-  xl: 'rounded-xl',
-  '2xl': 'rounded-2xl',
+  lg: 'rounded-[var(--radius-md)]',
+  xl: 'rounded-[var(--radius-lg)]',
+  '2xl': 'rounded-[var(--radius-xl)]',
 };
 
 export interface SurfaceProps extends HTMLAttributes<HTMLDivElement> {
@@ -46,7 +42,7 @@ export function Surface({
 }: SurfaceProps) {
   return (
     <div
-      className={`${LEVELS[level]} ${RADII[radius]} ${padded ? 'p-4' : ''} ${className}`}
+      className={`ui-surface ${LEVELS[level]} ${RADII[radius]} ${padded ? 'p-4' : ''} ${className}`}
       {...rest}
     >
       {children}

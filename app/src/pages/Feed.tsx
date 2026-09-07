@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useFeed, type FeedFilter, type FeedSort } from '../context/FeedContext';
-import { useTheme } from '../context/ThemeContext';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../components/common/PullToRefreshIndicator';
 import { FeedPageSkeleton } from '../components/common/Skeleton';
@@ -12,9 +11,9 @@ import {
   Newspaper, Plus, Link, RefreshCw, Bookmark, BookmarkCheck,
   Eye, EyeOff, Trash2, ChevronDown, ChevronUp, ExternalLink,
   Rss, Clock, Star, Sparkles, X, Settings2, Loader2,
-  CheckCircle2, ArrowLeft, MoreHorizontal, Filter,
+  CheckCircle2, MoreHorizontal, Filter,
 } from 'lucide-react';
-import { IconButton } from '../components/ui';
+import { Button, IconButton } from '../components/ui';
 
 const FILTER_OPTIONS: { value: FeedFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -88,13 +87,13 @@ function relativeTime(dateStr: string): string {
 function RelevanceBadge({ score }: { score: number; }) {
   const color =
     score >= 7
-      ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/20'
+      ? 'badge-green'
       : score >= 4
-        ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/20'
-        : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-gray-500/15 dark:text-gray-400 dark:border-gray-500/20';
+        ? 'badge-yellow'
+        : 'badge-gray';
 
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border ${color}`}>
+    <span className={`badge gap-1 ${color}`}>
       <Star size={10} /> {score}/10
     </span>
   );
@@ -105,14 +104,14 @@ function ContentTypePill({ type }: { type: string; }) {
     ? `Tier ${type.replace('tier_', '')}`
     : type.replace(/_/g, ' ');
   const tierColor = type === 'tier_3'
-    ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
+    ? 'badge-yellow'
     : type === 'tier_2'
-      ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
+      ? 'badge-blue'
       : type === 'tier_1'
-        ? 'bg-slate-50 text-slate-500 dark:bg-white/5 dark:text-gray-500'
-        : 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400';
+        ? 'badge-gray'
+        : 'badge-purple';
   return (
-    <span className={`text-xs px-2 py-1 rounded-full font-medium ${tierColor}`}>
+    <span className={`badge ${tierColor}`}>
       {label}
     </span>
   );
@@ -129,9 +128,6 @@ export function Feed() {
     bulkMarkRead, bulkBookmark, bulkDelete, clearOldRead,
     linkArticleToGoal,
   } = useFeed();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   const { pullDistance, isRefreshing: pullRefreshing, containerRef } = usePullToRefresh({
     onRefresh: refreshFeeds,
   });
@@ -176,9 +172,7 @@ export function Feed() {
   }, [setFilter, setTagFilter, setSubFilter]);
   useFocusHighlight(handleSearchFocus);
 
-  const bulkButtonClass = `px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-    'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
-  }`;
+  const bulkButtonClass = 'min-h-10 whitespace-nowrap rounded-[var(--radius-md)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]';
 
   const bookmarkedCount = useMemo(() => articles.filter(a => a.bookmarked).length, [articles]);
 
@@ -279,33 +273,22 @@ export function Feed() {
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={pullRefreshing} />
       {/* Gemini banner */}
       {!geminiReady && (
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
-          'bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20'
-        }`}>
-          <Sparkles className={`w-4 h-4 flex-shrink-0 text-amber-500 dark:text-amber-400`} />
-          <p className={`text-sm text-amber-700 dark:text-amber-300`}>
-            Add <code className={`text-xs px-2 py-1 rounded bg-amber-100 dark:bg-amber-500/20`}>VITE_GEMINI_API_KEY</code> to .env.local for AI summaries
+        <div className="flex items-center gap-3 border border-[var(--warning)] bg-[var(--warning-soft)] px-4 py-3">
+          <Sparkles className="h-4 w-4 flex-shrink-0 text-[var(--warning)]" />
+          <p className="text-sm text-[var(--warning)]">
+            AI summaries are not configured on the server.
           </p>
         </div>
       )}
 
       {/* Header */}
-      <div className={`relative overflow-hidden rounded-2xl ${
-        'bg-violet-50 border border-violet-100 dark:bg-violet-500/[0.07] dark:border-violet-500/15'
-      }`}>
+      <div className="relative border-y border-[var(--rule-strong)] bg-[var(--surface)]">
         <div className="relative px-4 py-4 sm:px-6 sm:py-6">
           <div className="mb-4 space-y-3">
             <div className="flex items-center gap-3">
-              <a
-                href="/"
-                className={`p-2 rounded-lg transition-colors flex-shrink-0 hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
-                title="Back to Assisy"
-              >
-                <ArrowLeft size={18} />
-              </a>
               <div className="min-w-0">
-                <h1 className={`text-xl sm:text-2xl font-bold text-slate-800 dark:text-white`}>My Feed</h1>
-                <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>
+                <h1 className="text-2xl font-bold tracking-[-0.025em] text-[var(--ink)]">Reading desk</h1>
+                <p className="mt-1 font-mono text-xs tabular-nums text-[var(--ink-muted)]">
                   {articles.length} article{articles.length !== 1 ? 's' : ''} · {unreadCount} unread · {bookmarkedCount} bookmarked
                 </p>
               </div>
@@ -318,10 +301,10 @@ export function Feed() {
               />
               <button
                 onClick={() => { setShowAddFeed(!showAddFeed); setShowSaveURL(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2 text-sm font-medium transition-colors ${
                   showAddFeed
-                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
-                    : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
+                    ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                    : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                 }`}
               >
                 <Rss size={16} />
@@ -329,10 +312,10 @@ export function Feed() {
               </button>
               <button
                 onClick={() => { setShowSaveURL(!showSaveURL); setShowAddFeed(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2 text-sm font-medium transition-colors ${
                   showSaveURL
-                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
-                    : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
+                    ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                    : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                 }`}
               >
                 <Link size={16} />
@@ -344,16 +327,14 @@ export function Feed() {
                 <button
                   onClick={refreshFeeds}
                   disabled={refreshing}
-                  className={`flex flex-col items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
-                  } disabled:opacity-50`}
+                  className="flex min-h-11 flex-col items-center rounded-[var(--radius-md)] border border-[var(--rule)] bg-[var(--surface-raised)] px-3 py-2 text-sm font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)] disabled:opacity-50"
                 >
                   <span className="flex items-center gap-2">
                     <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
                     Check for new
                   </span>
                   {lastRefreshedAt && (
-                    <span className={`text-xs leading-tight text-slate-400 dark:text-gray-400`}>
+                    <span className="text-xs leading-tight text-[var(--ink-muted)]">
                       Last checked {relativeTime(lastRefreshedAt)}
                     </span>
                   )}
@@ -361,9 +342,7 @@ export function Feed() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
-                    }`}
+                    className="flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--rule)] bg-[var(--surface-raised)] px-3 py-2 text-sm font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                   >
                     <Eye size={16} />
                     <span>Mark all read</span>
@@ -372,10 +351,10 @@ export function Feed() {
                 <button
                   aria-label="Subscriptions"
                   onClick={() => setShowSidebar(!showSidebar)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2 text-sm font-medium transition-colors ${
                     showSidebar
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
-                      : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
+                      ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                      : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                   }`}
                 >
                   <Settings2 size={16} />
@@ -386,10 +365,10 @@ export function Feed() {
               <div className="relative md:hidden">
                 <button
                   onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2 text-sm font-medium transition-colors ${
                     moreMenuOpen
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
-                      : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
+                      ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+                      : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                   }`}
                 >
                   <MoreHorizontal size={16} />
@@ -398,15 +377,11 @@ export function Feed() {
                 {moreMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setMoreMenuOpen(false)} />
-                    <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 min-w-[180px] ${
-                      'bg-white border border-slate-200 dark:bg-gray-900 dark:border-white/10'
-                    }`}>
+                    <div className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] py-1 shadow-[var(--shadow-elevated)]">
                       <button
                         onClick={() => { refreshFeeds(); setMoreMenuOpen(false); }}
                         disabled={refreshing}
-                        className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
-                          'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                        } disabled:opacity-50`}
+                        className="flex min-h-11 w-full items-center gap-2 px-3 py-3 text-left text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)] disabled:opacity-50"
                       >
                         <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
                         Check for new
@@ -414,9 +389,7 @@ export function Feed() {
                       {unreadCount > 0 && (
                         <button
                           onClick={() => { markAllRead(); setMoreMenuOpen(false); }}
-                          className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
-                            'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                          }`}
+                          className="flex min-h-11 w-full items-center gap-2 px-3 py-3 text-left text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                         >
                           <Eye size={15} />
                           Mark all read
@@ -424,9 +397,7 @@ export function Feed() {
                       )}
                       <button
                         onClick={() => { setMobileSidebarOpen(true); setMoreMenuOpen(false); }}
-                        className={`w-full text-left flex items-center gap-2 px-3 py-3 text-sm transition-colors ${
-                          'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                        }`}
+                        className="flex min-h-11 w-full items-center gap-2 px-3 py-3 text-left text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                       >
                         <Settings2 size={15} />
                         Subscriptions
@@ -440,10 +411,8 @@ export function Feed() {
 
           {/* Inline Add Feed */}
           {showAddFeed && (
-            <div className={`mb-4 flex items-center gap-2 p-3 rounded-xl ${
-              'bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10'
-            }`}>
-              <Rss size={16} className={'text-slate-400 dark:text-gray-500'} />
+            <div className="mb-4 flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] p-3">
+              <Rss size={16} className="text-[var(--action)]" />
               <input
                 type="url"
                 value={feedUrl}
@@ -451,18 +420,17 @@ export function Feed() {
                 onKeyDown={e => e.key === 'Enter' && handleAddFeed()}
                 placeholder="Paste RSS feed URL..."
                 autoFocus
-                className={`flex-1 bg-transparent outline-none text-sm ${
-                  'text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-600'
-                }`}
+                className="min-h-11 flex-1 bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted)]"
               />
-              <button
+              <Button
                 onClick={handleAddFeed}
                 disabled={addingFeed || !feedUrl.trim()}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
+                variant="primary"
+                size="sm"
               >
                 {addingFeed ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Add
-              </button>
+              </Button>
               <IconButton
                 icon={X}
                 label="Cancel adding a feed"
@@ -474,10 +442,8 @@ export function Feed() {
 
           {/* Inline Save URL */}
           {showSaveURL && (
-            <div className={`mb-4 flex items-center gap-2 p-3 rounded-xl ${
-              'bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10'
-            }`}>
-              <Link size={16} className={'text-slate-400 dark:text-gray-500'} />
+            <div className="mb-4 flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] p-3">
+              <Link size={16} className="text-[var(--action)]" />
               <input
                 type="url"
                 value={articleUrl}
@@ -485,18 +451,17 @@ export function Feed() {
                 onKeyDown={e => e.key === 'Enter' && handleSaveURL()}
                 placeholder="Paste any article URL..."
                 autoFocus
-                className={`flex-1 bg-transparent outline-none text-sm ${
-                  'text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-600'
-                }`}
+                className="min-h-11 flex-1 bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted)]"
               />
-              <button
+              <Button
                 onClick={handleSaveURL}
                 disabled={savingUrl || !articleUrl.trim()}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
+                variant="primary"
+                size="sm"
               >
                 {savingUrl ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Save
-              </button>
+              </Button>
               <IconButton
                 icon={X}
                 label="Cancel saving a URL"
@@ -507,30 +472,28 @@ export function Feed() {
           )}
 
           {/* Filter pills */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="ui-page-tabs flex flex-wrap items-center gap-1">
             {FILTER_OPTIONS.map(opt => (
               <button
                 key={opt.value}
                 onClick={() => setFilter(opt.value)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                className={`ui-page-tab px-3 py-2 text-xs font-medium transition-colors ${
                   filter === opt.value
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-white/70 text-slate-500 hover:bg-white hover:text-slate-700 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-300'
+                    ? 'bg-[var(--surface-raised)] text-[var(--ink)]'
+                    : 'text-[var(--ink-muted)]'
                 }`}
               >
                 {filterLabel(opt)}
               </button>
             ))}
 
-            <div className="w-px h-5 mx-1 bg-white/10" />
+            <div className="mx-1 h-5 w-px bg-[var(--rule)]" />
 
             {/* Sort dropdown */}
             <div className="relative">
               <button
                 onClick={() => setSortOpen(!sortOpen)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  'bg-white/70 text-slate-500 hover:bg-white dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
-                }`}
+                className="flex min-h-10 items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-xs font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
               >
                 {SORT_OPTIONS.find(o => o.value === sort)?.label}
                 <ChevronDown size={12} />
@@ -538,17 +501,15 @@ export function Feed() {
               {sortOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setSortOpen(false)} />
-                  <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 min-w-[140px] ${
-                    'bg-white border border-slate-200 dark:bg-gray-900 dark:border-white/10'
-                  }`}>
+                  <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] py-1 shadow-[var(--shadow-elevated)]">
                     {SORT_OPTIONS.map(opt => (
                       <button
                         key={opt.value}
                         onClick={() => { setSort(opt.value); setSortOpen(false); }}
                         className={`w-full text-left px-3 py-2 text-xs transition-colors ${
                           sort === opt.value
-                            ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
-                            : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
+                            ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                            : 'text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                         }`}
                       >
                         {opt.label}
@@ -567,8 +528,8 @@ export function Feed() {
                 onClick={() => setSubFilter(null)}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   !subFilter
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
+                    ? 'bg-[var(--action)] text-[var(--action-ink)]'
+                    : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                 }`}
               >
                 All sources
@@ -579,8 +540,8 @@ export function Feed() {
                   onClick={() => setSubFilter(subFilter === sub.id ? null : sub.id)}
                   className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                     subFilter === sub.id
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
+                      ? 'bg-[var(--action)] text-[var(--action-ink)]'
+                      : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                   }`}
                 >
                   {sub.title || 'Untitled'}
@@ -590,8 +551,8 @@ export function Feed() {
                 onClick={() => setSubFilter('saved')}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   subFilter === 'saved'
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
+                    ? 'bg-[var(--action)] text-[var(--action-ink)]'
+                    : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                 }`}
               >
                 Saved URLs
@@ -607,9 +568,7 @@ export function Feed() {
                 {tagFilter && (
                   <button
                     onClick={() => setTagFilter(null)}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                      'bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
-                    }`}
+                    className="flex items-center gap-1 rounded-[var(--radius-sm)] bg-[var(--danger-soft)] px-2 py-1 text-xs font-medium text-[var(--danger)] transition-colors"
                   >
                     <X size={10} /> Clear
                   </button>
@@ -620,8 +579,8 @@ export function Feed() {
                     onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
                     className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                       tagFilter === tag
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400'
+                        ? 'bg-[var(--action)] text-[var(--action-ink)]'
+                        : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--ink-secondary)]'
                     }`}
                   >
                     {tag}
@@ -630,9 +589,7 @@ export function Feed() {
                 {allTags.length > 8 && (
                   <button
                     onClick={() => setShowAllTags(p => !p)}
-                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                      'bg-violet-50 text-violet-500 hover:bg-violet-100 dark:bg-white/5 dark:text-violet-400 dark:hover:bg-white/10'
-                    }`}
+                    className="rounded-[var(--radius-sm)] bg-[var(--action-soft)] px-2 py-1 text-xs font-medium text-[var(--action)] transition-colors hover:bg-[var(--selected)]"
                   >
                     {showAllTags ? 'Show less' : `+${allTags.length - 8} more`}
                   </button>
@@ -645,9 +602,7 @@ export function Feed() {
                   {tagFilter && (
                     <button
                       onClick={() => setTagFilter(null)}
-                      className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                        'bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
-                      }`}
+                      className="flex flex-shrink-0 items-center gap-1 rounded-[var(--radius-sm)] bg-[var(--danger-soft)] px-2 py-1 text-xs font-medium text-[var(--danger)] transition-colors"
                     >
                       <X size={10} /> Clear
                     </button>
@@ -658,8 +613,8 @@ export function Feed() {
                       onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
                       className={`flex-shrink-0 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                         tagFilter === tag
-                          ? 'bg-violet-600 text-white'
-                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400'
+                          ? 'bg-[var(--action)] text-[var(--action-ink)]'
+                          : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                       }`}
                     >
                       {tag}
@@ -669,9 +624,7 @@ export function Feed() {
                     <div className="relative flex-shrink-0">
                       <button
                         onClick={() => setMobileTagsOpen(!mobileTagsOpen)}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                          'bg-violet-50 text-violet-500 hover:bg-violet-100 dark:bg-white/5 dark:text-violet-400 dark:hover:bg-white/10'
-                        }`}
+                        className="flex items-center gap-1 rounded-[var(--radius-sm)] bg-[var(--action-soft)] px-2 py-1 text-xs font-medium text-[var(--action)] transition-colors hover:bg-[var(--selected)]"
                       >
                         <Filter size={10} />
                         +{allTags.length - 5}
@@ -679,17 +632,15 @@ export function Feed() {
                       {mobileTagsOpen && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setMobileTagsOpen(false)} />
-                          <div className={`absolute top-full mt-1 right-0 z-20 rounded-xl shadow-lg py-1 max-h-60 overflow-y-auto min-w-[160px] ${
-                            'bg-white border border-slate-200 dark:bg-gray-900 dark:border-white/10'
-                          }`}>
+                          <div className="absolute right-0 top-full z-20 mt-1 max-h-60 min-w-[160px] overflow-y-auto rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] py-1 shadow-[var(--shadow-elevated)]">
                             {allTags.slice(5).map(tag => (
                               <button
                                 key={tag}
                                 onClick={() => { setTagFilter(tagFilter === tag ? null : tag); setMobileTagsOpen(false); }}
                                 className={`w-full text-left px-3 py-2 text-xs transition-colors ${
                                   tagFilter === tag
-                                    ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
-                                    : 'text-slate-600 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
+                                    ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                                    : 'text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                                 }`}
                               >
                                 {tag} ({tagCounts[tag]})
@@ -709,25 +660,23 @@ export function Feed() {
 
       {/* Sync progress bar */}
       {syncProgress && (
-        <div className={`rounded-xl px-4 py-3 ${
-          'bg-violet-50 border border-violet-100 dark:bg-violet-500/10 dark:border-violet-500/15'
-        }`}>
+        <div className="border border-[var(--action)] bg-[var(--action-soft)] px-4 py-3">
           <div className="flex items-center gap-3">
-            <Loader2 size={16} className={`animate-spin text-violet-500 dark:text-violet-400`} />
+            <Loader2 size={16} className="animate-spin text-[var(--action)]" />
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium text-violet-700 dark:text-violet-300`}>
+              <p className="text-sm font-medium text-[var(--action)]">
                 Summarizing {syncProgress.current}/{syncProgress.total}...
               </p>
               {syncProgress.currentTitle && (
-                <p className={`text-xs truncate mt-1 text-violet-500/80 dark:text-violet-400/70`}>
+                <p className="mt-1 truncate text-xs text-[var(--ink-secondary)]">
                   {syncProgress.currentTitle}
                 </p>
               )}
             </div>
           </div>
-          <div className={`mt-2 h-1.5 rounded-full overflow-hidden bg-violet-100 dark:bg-white/5`}>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-inset)]">
             <div
-              className="h-full bg-violet-500 rounded-full transition-all duration-500"
+              className="h-full rounded-full bg-[var(--action)] transition-[width] duration-500"
               style={{ width: `${(syncProgress.current / syncProgress.total) * 100}%` }}
             />
           </div>
@@ -737,42 +686,38 @@ export function Feed() {
       {/* Main layout: articles + optional sidebar */}
       <div className={`flex gap-6`}>
         {/* Article list */}
-        <div className={`flex-1 min-w-0 space-y-3 ${showSidebar ? 'md:max-w-[calc(100%-320px)]' : ''}`}>
+        <div className={`min-w-0 flex-1 ${showSidebar ? 'md:max-w-[calc(100%-320px)]' : ''}`}>
           {filteredArticles.length === 0 ? (
             filter === 'unread' ? (
-              <div className={`rounded-2xl p-8 text-center ${
-                'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
-              }`}>
-                <CheckCircle2 className={`w-10 h-10 mx-auto mb-3 text-emerald-500 dark:text-emerald-400`} />
-                <h3 className={`font-semibold mb-1 text-slate-800 dark:text-white`}>All caught up!</h3>
-                <p className={`text-sm text-slate-500 dark:text-gray-400`}>
+              <div className="border-y-2 border-[var(--ink)] bg-[var(--surface-raised)] p-8 text-center">
+                <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-[var(--success)]" />
+                <h3 className="mb-1 text-xl font-bold text-[var(--ink)]">All caught up!</h3>
+                <p className="text-sm text-[var(--ink-secondary)]">
                   No unread articles. Take a break or check back later.
                 </p>
               </div>
             ) : (
-              <div className={`rounded-2xl p-8 text-center ${
-                'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
-              }`}>
-                <Newspaper className={`w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-gray-400`} />
-                <h3 className={`font-semibold mb-1 text-slate-800 dark:text-white`}>No articles yet</h3>
-                <p className={`text-sm mb-4 text-slate-500 dark:text-gray-400`}>
+              <div className="border-y-2 border-[var(--ink)] bg-[var(--surface-raised)] p-8 text-center">
+                <Newspaper className="mx-auto mb-3 h-10 w-10 text-[var(--action)]" />
+                <h3 className="mb-1 text-xl font-bold text-[var(--ink)]">No articles yet</h3>
+                <p className="mb-4 text-sm text-[var(--ink-secondary)]">
                   Add your first RSS feed or paste an article URL to get started
                 </p>
                 <div className="flex items-center justify-center gap-2">
-                  <button
+                  <Button
                     onClick={() => { setShowAddFeed(true); setShowSaveURL(false); }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+                    variant="primary"
+                    icon={Rss}
                   >
-                    <Rss size={16} /> Add Feed
-                  </button>
-                  <button
+                    Add Feed
+                  </Button>
+                  <Button
                     onClick={() => { setShowSaveURL(true); setShowAddFeed(false); }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15'
-                    }`}
+                    variant="secondary"
+                    icon={Link}
                   >
-                    <Link size={16} /> Save URL
-                  </button>
+                    Save URL
+                  </Button>
                 </div>
               </div>
             )
@@ -786,12 +731,12 @@ export function Feed() {
                 <div
                   key={article.id}
                   data-focus-id={article.id}
-                  className={`group rounded-2xl transition-all ${
+                  className={`group border-x border-b border-[var(--rule)] transition-colors first:border-t ${
                     isSelected
-                      ? 'bg-violet-50/60 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30'
+                      ? 'bg-[var(--selected)]'
                       : article.read
-                        ? 'bg-slate-50/50 border border-slate-100 dark:bg-white/[0.02] dark:border-white/5'
-                        : isDark ? 'bg-white/[0.04] border border-white/10 hover:bg-white/[0.06]' : 'bg-white border border-slate-200 hover:shadow-md'
+                        ? 'bg-[var(--surface-subtle)]'
+                        : 'bg-[var(--surface-raised)] hover:bg-[var(--state-hover)]'
                   }`}
                 >
                   <div className="px-3 py-3 sm:px-6 sm:py-4">
@@ -815,10 +760,10 @@ export function Feed() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => { if (!article.read) toggleRead(article.id, true); }}
-                          className={`text-sm sm:text-base font-semibold leading-snug hover:underline decoration-violet-500/40 underline-offset-2 ${
+                          className={`text-sm font-semibold leading-snug decoration-[var(--action)] underline-offset-2 hover:underline sm:text-base ${
                             article.read
-                              ? 'text-slate-500 dark:text-gray-400'
-                              : 'text-slate-800 dark:text-white'
+                              ? 'text-[var(--ink-muted)]'
+                              : 'text-[var(--ink)]'
                           }`}
                         >
                           {article.title || article.source_url}
@@ -826,9 +771,7 @@ export function Feed() {
                         </a>
 
                         {/* Meta row */}
-                        <div className={`flex items-center gap-2 mt-1 flex-wrap text-xs ${
-                          'text-slate-400 dark:text-gray-500'
-                        }`}>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-xs text-[var(--ink-muted)]">
                           {sub?.title && <span>{sub.title}</span>}
                           {article.published_at && (
                             <>
@@ -839,9 +782,7 @@ export function Feed() {
                           {article.reading_time_minutes != null && (
                             <>
                               <span>·</span>
-                              <span className={`inline-flex items-center gap-1 ${
-                                'text-blue-500/80 dark:text-blue-400/70'
-                              }`}>
+                              <span className="inline-flex items-center gap-1 text-[var(--info)]">
                                 <Clock size={9} /> {article.reading_time_minutes}m
                               </span>
                             </>
@@ -861,9 +802,7 @@ export function Feed() {
                       <button
                         onClick={() => toggleRead(article.id, !article.read)}
                         title={article.read ? 'Mark unread' : 'Mark read'}
-                        className={`p-2 rounded-lg transition-colors ${
-                          'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-400 dark:hover:text-gray-300'
-                        }`}
+                        className="flex min-h-10 min-w-10 items-center justify-center rounded-[var(--radius-md)] text-[var(--ink-muted)] transition-colors hover:bg-[var(--state-hover)] hover:text-[var(--ink)]"
                       >
                         {article.read ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -872,8 +811,8 @@ export function Feed() {
                         title={article.bookmarked ? 'Remove bookmark' : 'Bookmark'}
                         className={`p-2 rounded-lg transition-colors ${
                           article.bookmarked
-                            ? 'text-amber-500 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/15'
-                            : 'hover:bg-slate-100 text-slate-300 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-400 dark:hover:text-gray-300'
+                            ? 'bg-[var(--warning-soft)] text-[var(--warning)]'
+                            : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--ink)]'
                         }`}
                       >
                         {article.bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
@@ -885,8 +824,8 @@ export function Feed() {
                           title="Link to Goal"
                           className={`w-20 sm:w-24 text-xs py-1 pl-2 pr-6 rounded-lg border-0 cursor-pointer transition-colors appearance-none bg-no-repeat bg-[right_2px_center] truncate ${
                             article.goalId
-                              ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
-                              : 'bg-slate-50 text-slate-400 hover:text-slate-600 dark:bg-white/5 dark:text-gray-400 dark:hover:text-gray-300'
+                              ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                              : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:text-[var(--ink)]'
                           }`}
                           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")" }}
                         >
@@ -900,9 +839,7 @@ export function Feed() {
                         onClick={() => removeArticle(article.id)}
                         title="Delete"
                         aria-label="Delete"
-                        className={`p-2 rounded-lg transition-colors ${
-                          'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-400 dark:hover:text-red-400'
-                        }`}
+                        className="flex min-h-10 min-w-10 items-center justify-center rounded-[var(--radius-md)] text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -918,15 +855,15 @@ export function Feed() {
                             {analysis.tier && (
                               <span className={`flex-shrink-0 mt-1 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${
                                 analysis.tier === 3
-                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                                  ? 'bg-[var(--warning-soft)] text-[var(--warning)]'
                                   : analysis.tier === 2
-                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
-                                    : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-500'
+                                    ? 'bg-[var(--info-soft)] text-[var(--info)]'
+                                    : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)]'
                               }`}>
                                 T{analysis.tier}
                               </span>
                             )}
-                            <p className={`text-sm leading-relaxed text-slate-700 dark:text-gray-300`}>
+                            <p className="text-sm leading-relaxed text-[var(--ink-secondary)]">
                               {analysis.surface_claim}
                             </p>
                           </div>
@@ -935,10 +872,10 @@ export function Feed() {
                           {analysis.source_credibility && (
                             <span className={`inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider ${
                               analysis.source_credibility === 'high'
-                                ? 'text-emerald-600 dark:text-emerald-400'
+                                ? 'text-[var(--success)]'
                                 : analysis.source_credibility === 'medium'
-                                  ? 'text-amber-600 dark:text-amber-400'
-                                  : 'text-slate-400 dark:text-gray-500'
+                                  ? 'text-[var(--warning)]'
+                                  : 'text-[var(--ink-muted)]'
                             }`}>
                               {analysis.source_credibility === 'high' ? <Star size={10} /> : null}
                               {analysis.source_credibility} signal source
@@ -951,7 +888,7 @@ export function Feed() {
                               <button
                                 onClick={() => toggleTakeaways(article.id)}
                                 className={`flex items-center gap-2 text-xs font-medium transition-colors ${
-                                  'text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300'
+                                  'text-[var(--action)] hover:text-[var(--action-hover)]'
                                 }`}
                               >
                                 {takeawaysExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -960,10 +897,10 @@ export function Feed() {
                               </button>
                               {takeawaysExpanded && (
                                 <div className="mt-2 space-y-3">
-                                  <ul className={`space-y-2 ml-1 text-slate-600 dark:text-gray-400`}>
+                                  <ul className="ml-1 space-y-2 text-[var(--ink-secondary)]">
                                     {analysis.key_points.map((t, i) => (
                                       <li key={i} className="flex items-start gap-2 text-sm">
-                                        <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 bg-violet-500 dark:bg-violet-400`} />
+                                        <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--action)]" />
                                         {t}
                                       </li>
                                     ))}
@@ -972,13 +909,13 @@ export function Feed() {
                                   {/* Implications */}
                                   {analysis.implications.length > 0 && (
                                     <div>
-                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 text-orange-500/80 dark:text-orange-400/70`}>
+                                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--warning)]">
                                         Implications
                                       </p>
-                                      <ul className={`space-y-2 ml-1 text-slate-600 dark:text-gray-400`}>
+                                      <ul className="ml-1 space-y-2 text-[var(--ink-secondary)]">
                                         {analysis.implications.map((t, i) => (
                                           <li key={i} className="flex items-start gap-2 text-sm">
-                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 bg-orange-500 dark:bg-orange-400`} />
+                                            <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--warning)]" />
                                             {t}
                                           </li>
                                         ))}
@@ -989,13 +926,13 @@ export function Feed() {
                                   {/* Open Questions */}
                                   {analysis.open_questions.length > 0 && (
                                     <div>
-                                      <p className={`text-xs font-bold uppercase tracking-wider mb-2 text-blue-500/80 dark:text-blue-400/70`}>
+                                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--info)]">
                                         Worth Watching
                                       </p>
-                                      <ul className={`space-y-2 ml-1 text-slate-600 dark:text-gray-400`}>
+                                      <ul className="ml-1 space-y-2 text-[var(--ink-secondary)]">
                                         {analysis.open_questions.map((t, i) => (
                                           <li key={i} className="flex items-start gap-2 text-sm">
-                                            <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 bg-blue-500 dark:bg-blue-400`} />
+                                            <span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--info)]" />
                                             {t}
                                           </li>
                                         ))}
@@ -1019,8 +956,8 @@ export function Feed() {
                             onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
                             className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                               tagFilter === tag
-                                ? 'bg-violet-600 text-white'
-                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10'
+                                ? 'bg-[var(--action)] text-[var(--action-ink)]'
+                                : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                             }`}
                           >
                             {tag}
@@ -1037,17 +974,15 @@ export function Feed() {
 
         {/* Subscriptions sidebar — desktop only */}
         {showSidebar && (
-          <div className={`hidden md:block w-[300px] flex-shrink-0 rounded-2xl h-fit sticky top-4 ${
-            'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
-          }`}>
+          <div className="sticky top-4 hidden h-fit w-[300px] flex-shrink-0 border border-[var(--rule-strong)] bg-[var(--surface)] md:block">
             <div className="px-4 py-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-sm font-semibold text-slate-800 dark:text-white`}>Subscriptions</h2>
-                <span className={`text-xs text-slate-400 dark:text-gray-500`}>{subscriptions.length}</span>
+                <h2 className="text-lg font-bold text-[var(--ink)]">Subscriptions</h2>
+                <span className="font-mono text-xs text-[var(--ink-muted)]">{subscriptions.length}</span>
               </div>
 
               {subscriptions.length === 0 ? (
-                <p className={`text-xs text-center py-4 text-slate-400 dark:text-gray-400`}>
+                <p className="py-4 text-center text-xs text-[var(--ink-muted)]">
                   No feeds yet
                 </p>
               ) : (
@@ -1055,37 +990,31 @@ export function Feed() {
                   {subscriptions.map(sub => (
                     <div
                       key={sub.id}
-                      className={`group/sub rounded-xl px-3 py-3 transition-colors ${
-                        'hover:bg-slate-50 dark:hover:bg-white/5'
-                      }`}
+                      className="group/sub border-b border-[var(--rule)] px-3 py-3 transition-colors last:border-0 hover:bg-[var(--state-hover)]"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>
+                            <p className="truncate text-sm font-medium text-[var(--ink-secondary)]">
                               {sub.title || 'Untitled Feed'}
                             </p>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
-                              'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500'
-                            }`}>
+                            <span className="badge badge-gray flex-shrink-0">
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-400`}>
+                          <p className="mt-1 truncate text-xs text-[var(--ink-muted)]">
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-500`}>
+                            <p className="mt-1 text-xs text-[var(--ink-muted)]">
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
                         </div>
-                        <button
+                          <button
                           aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
-                          className={`p-1 rounded-lg opacity-0 group-hover/sub:opacity-100 transition-all ${
-                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-400 dark:hover:text-red-400'
-                          }`}
+                            className="rounded-[var(--radius-sm)] p-1 text-[var(--danger)] opacity-0 transition-opacity hover:bg-[var(--danger-soft)] group-hover/sub:opacity-100"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -1096,10 +1025,8 @@ export function Feed() {
               )}
 
               {/* Curated suggested feeds */}
-              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${
-                  'text-slate-400 dark:text-gray-500'
-                }`}>
+              <div className="mt-4 border-t border-[var(--rule)] pt-4">
+                <h3 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
                   Suggested Feeds
                 </h3>
                 <div className="space-y-2">
@@ -1108,31 +1035,25 @@ export function Feed() {
                     return (
                       <div
                         key={sf.url}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
-                          'bg-slate-50 dark:bg-white/[0.03]'
-                        }`}
+                        className="flex items-center gap-2 border-b border-[var(--rule)] px-3 py-2 last:border-0"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className={`text-xs font-medium truncate text-slate-600 dark:text-gray-400`}>
+                            <p className="truncate text-xs font-medium text-[var(--ink-secondary)]">
                               {sf.label}
                             </p>
-                            <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
-                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-400'
-                            }`}>
+                            <span className="badge badge-gray flex-shrink-0">
                               {sf.category}
                             </span>
                           </div>
                         </div>
                         {alreadySubscribed ? (
-                          <CheckCircle2 size={14} className={'text-emerald-500 dark:text-emerald-400'} />
+                          <CheckCircle2 size={14} className="text-[var(--success)]" />
                         ) : (
                           <button
                             aria-label="Subscribe to feed"
                             onClick={() => addFeed(sf.url)}
-                            className={`p-1 rounded-md transition-colors ${
-                              'hover:bg-violet-50 text-slate-400 hover:text-violet-600 dark:hover:bg-violet-500/20 dark:text-gray-500 dark:hover:text-violet-400'
-                            }`}
+                            className="rounded-[var(--radius-sm)] p-1 text-[var(--action)] transition-colors hover:bg-[var(--action-soft)]"
                             title={`Add ${sf.label}`}
                           >
                             <Plus size={14} />
@@ -1145,13 +1066,11 @@ export function Feed() {
               </div>
 
               {/* Clear old read articles */}
-              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
+              <div className="mt-4 border-t border-[var(--rule)] pt-4">
                 <button
                   onClick={handleClearOldRead}
                   disabled={clearingOld}
-                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-300'
-                  } disabled:opacity-50`}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)] disabled:opacity-50"
                 >
                   {clearingOld ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   Clear read articles older than 7 days
@@ -1165,13 +1084,11 @@ export function Feed() {
       {/* Mobile sidebar modal overlay */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
-          <div className={`absolute inset-0 overflow-y-auto ${
-            'bg-white dark:bg-gray-950'
-          }`}>
+          <div className="ui-overlay absolute inset-0" onClick={() => setMobileSidebarOpen(false)} />
+          <div className="absolute inset-0 overflow-y-auto bg-[var(--canvas)]">
             <div className="px-4 py-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-lg font-semibold text-slate-800 dark:text-white`}>Subscriptions</h2>
+                <h2 className="text-xl font-bold text-[var(--ink)]">Subscriptions</h2>
                 <IconButton
                   icon={X}
                   label="Close"
@@ -1181,7 +1098,7 @@ export function Feed() {
               </div>
 
               {subscriptions.length === 0 ? (
-                <p className={`text-sm text-center py-8 text-slate-400 dark:text-gray-400`}>
+                <p className="py-8 text-center text-sm text-[var(--ink-muted)]">
                   No feeds yet
                 </p>
               ) : (
@@ -1189,27 +1106,23 @@ export function Feed() {
                   {subscriptions.map(sub => (
                     <div
                       key={sub.id}
-                      className={`rounded-xl px-3 py-3 transition-colors ${
-                        'hover:bg-slate-50 dark:hover:bg-white/5'
-                      }`}
+                      className="border-b border-[var(--rule)] px-3 py-3 transition-colors last:border-0 hover:bg-[var(--state-hover)]"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className={`text-sm font-medium truncate text-slate-700 dark:text-gray-300`}>
+                            <p className="truncate text-sm font-medium text-[var(--ink-secondary)]">
                               {sub.title || 'Untitled Feed'}
                             </p>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
-                              'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500'
-                            }`}>
+                            <span className="badge badge-gray flex-shrink-0">
                               {subArticleCounts[sub.id] || 0}
                             </span>
                           </div>
-                          <p className={`text-xs truncate mt-1 text-slate-400 dark:text-gray-400`}>
+                          <p className="mt-1 truncate text-xs text-[var(--ink-muted)]">
                             {sub.feed_url}
                           </p>
                           {sub.last_fetched_at && (
-                            <p className={`text-xs mt-1 text-slate-300 dark:text-gray-500`}>
+                            <p className="mt-1 text-xs text-[var(--ink-muted)]">
                               Last fetched {relativeTime(sub.last_fetched_at)}
                             </p>
                           )}
@@ -1217,9 +1130,7 @@ export function Feed() {
                         <button
                           aria-label="Unsubscribe from feed"
                           onClick={() => removeFeed(sub.id)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            'hover:bg-red-50 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/15 dark:text-gray-400 dark:hover:text-red-400'
-                          }`}
+                          className="rounded-[var(--radius-md)] p-2 text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -1230,10 +1141,8 @@ export function Feed() {
               )}
 
               {/* Curated suggested feeds */}
-              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${
-                  'text-slate-400 dark:text-gray-500'
-                }`}>
+              <div className="mt-4 border-t border-[var(--rule)] pt-4">
+                <h3 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
                   Suggested Feeds
                 </h3>
                 <div className="space-y-2">
@@ -1242,31 +1151,25 @@ export function Feed() {
                     return (
                       <div
                         key={sf.url}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
-                          'bg-slate-50 dark:bg-white/[0.03]'
-                        }`}
+                        className="flex items-center gap-2 border-b border-[var(--rule)] px-3 py-2 last:border-0"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className={`text-xs font-medium truncate text-slate-600 dark:text-gray-400`}>
+                            <p className="truncate text-xs font-medium text-[var(--ink-secondary)]">
                               {sf.label}
                             </p>
-                            <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
-                              'bg-slate-200/70 text-slate-400 dark:bg-white/5 dark:text-gray-400'
-                            }`}>
+                            <span className="badge badge-gray flex-shrink-0">
                               {sf.category}
                             </span>
                           </div>
                         </div>
                         {alreadySubscribed ? (
-                          <CheckCircle2 size={14} className={'text-emerald-500 dark:text-emerald-400'} />
+                          <CheckCircle2 size={14} className="text-[var(--success)]" />
                         ) : (
                           <button
                             aria-label="Subscribe to feed"
                             onClick={() => addFeed(sf.url)}
-                            className={`p-1 rounded-md transition-colors ${
-                              'hover:bg-violet-50 text-slate-400 hover:text-violet-600 dark:hover:bg-violet-500/20 dark:text-gray-500 dark:hover:text-violet-400'
-                            }`}
+                            className="rounded-[var(--radius-sm)] p-1 text-[var(--action)] transition-colors hover:bg-[var(--action-soft)]"
                             title={`Add ${sf.label}`}
                           >
                             <Plus size={14} />
@@ -1279,13 +1182,11 @@ export function Feed() {
               </div>
 
               {/* Clear old read articles */}
-              <div className={`mt-4 pt-4 border-t border-slate-100 dark:border-white/5`}>
+              <div className="mt-4 border-t border-[var(--rule)] pt-4">
                 <button
                   onClick={handleClearOldRead}
                   disabled={clearingOld}
-                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-300'
-                  } disabled:opacity-50`}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)] disabled:opacity-50"
                 >
                   {clearingOld ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   Clear read articles older than 7 days

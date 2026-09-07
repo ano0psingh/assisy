@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Task } from '../../types';
 import { Search, Plus, Check, Flame, CalendarDays, Minus, FolderKanban } from 'lucide-react';
 import { getLocalDateString, getScheduledDate, getScheduledStartMinute } from '../../lib/dateUtils';
-import { IconButton } from '../ui';
+import { Button, IconButton } from '../ui';
 import { ExpandableModal } from '../common/ExpandableModal';
 
 interface PlanYourDayProps {
@@ -47,42 +47,42 @@ export function PlanYourDay({
       isOpen={isOpen}
       onClose={onClose}
       title="Plan Your Day"
-      icon={<CalendarDays className="h-5 w-5 text-violet-600 dark:text-violet-400" />}
+      icon={<CalendarDays className="h-5 w-5" />}
       maxWidth="max-w-lg"
       footer={
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-slate-400 dark:text-gray-500">
+          <p className="text-xs text-[var(--ink-muted)]">
             Tap tasks to add or remove
           </p>
-          <button onClick={onClose} className="btn-primary rounded-xl px-4 py-2 text-sm">
+          <Button variant="primary" onClick={onClose}>
             Done
-          </button>
+          </Button>
         </div>
       }
     >
       {() => (
         <>
-          <p className="border-b border-slate-100 px-6 py-3 text-xs text-slate-500 dark:border-white/10 dark:text-gray-500">
+          <p className="border-b border-[var(--rule)] bg-[var(--surface)] px-6 py-3 font-mono text-xs text-[var(--ink-muted)]">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             {' · '}{todaysTasks.length} tasks today
           </p>
         <div className="flex-1 overflow-y-auto">
           {/* Today's tasks */}
           {todaysTasks.length > 0 && (
-            <div className={`px-6 py-3 border-b border-slate-50 dark:border-white/5`}>
-              <p className={`text-xs font-medium mb-2 text-slate-400 dark:text-gray-500`}>
+            <div className="border-b border-[var(--rule)] px-6 py-3">
+              <p className="mb-2 font-mono text-xs font-medium uppercase tracking-wider text-[var(--ink-muted)]">
                 Scheduled today ({todaysTasks.length})
               </p>
               <div className="space-y-1">
                 {sortedTodayTasks.map(task => {
                   const isExplicitlyScheduled = getScheduledDate(task) === todayStr;
                   return (
-                  <div key={task.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50/50 dark:bg-white/[0.02]`}>
+                  <div key={task.id} className="flex min-h-11 items-center gap-2 border-b border-[var(--rule)] bg-[var(--surface-subtle)] px-3 py-2 last:border-0">
                     {task.id.startsWith('pt-')
-                      ? <FolderKanban size={12} className="text-violet-500 dark:text-violet-400" />
-                      : <Check size={12} className="text-emerald-500 dark:text-emerald-400" />}
-                    <span className={`text-sm flex-1 truncate text-slate-700 dark:text-gray-300`}>{task.title}</span>
-                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>
+                      ? <FolderKanban size={12} className="text-[var(--action)]" />
+                      : <Check size={12} className="text-[var(--success)]" />}
+                    <span className="flex-1 truncate text-sm text-[var(--ink-secondary)]">{task.title}</span>
+                    <span className="font-mono text-xs text-[var(--ink-muted)]">
                       {task.scheduledTime
                         ? new Date(`2000-01-01T${task.scheduledTime}`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
                         : task.isRecurring ? 'recurring' : task.status === 'Carried Forward' ? 'carried' : isExplicitlyScheduled ? 'flexible' : 'due'}
@@ -107,22 +107,20 @@ export function PlanYourDay({
           {/* Backlog — add to today */}
           <div className="px-6 py-3">
             <div className="flex items-center justify-between mb-2">
-              <p className={`text-xs font-medium text-slate-400 dark:text-gray-500`}>
+              <p className="font-mono text-xs font-medium uppercase tracking-wider text-[var(--ink-muted)]">
                 Backlog ({backlogTasks.length})
               </p>
             </div>
 
             {backlogTasks.length > 5 && (
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg mb-2 ${
-                'bg-slate-50 border border-slate-100 dark:bg-white/5 dark:border-white/10'
-              }`}>
-                <Search size={13} className={'text-slate-400 dark:text-gray-500'} />
+              <div className="mb-2 flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] px-3 py-2">
+                <Search size={13} className="text-[var(--ink-muted)]" />
                 <input
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search tasks..."
-                  className={`flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-600`}
+                  className="min-h-11 flex-1 bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted)]"
                 />
               </div>
             )}
@@ -132,26 +130,24 @@ export function PlanYourDay({
                 <button
                   key={task.id}
                   onClick={() => onScheduleToday(task.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    'hover:bg-violet-50 text-slate-600 hover:text-violet-600 dark:hover:bg-violet-500/10 dark:text-gray-300 dark:hover:text-violet-400'
-                  }`}
+                  className="flex min-h-11 w-full items-center gap-3 border-b border-[var(--rule)] px-3 py-2 text-left text-[var(--ink-secondary)] transition-colors last:border-0 hover:bg-[var(--action-soft)] hover:text-[var(--action)]"
                 >
-                  <Plus size={13} className={'text-slate-400 dark:text-gray-400'} />
+                  <Plus size={13} className="text-[var(--action)]" />
                   <span className="text-sm flex-1 truncate">{task.title}</span>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {task.priority === 'High' && <Flame size={11} className="text-red-500" />}
+                    {task.priority === 'High' && <Flame size={11} className="text-[var(--danger)]" />}
                     {task.dueDate && (
-                      <span className={`text-xs flex items-center gap-1 text-slate-400 dark:text-gray-400`}>
+                      <span className="flex items-center gap-1 text-xs text-[var(--ink-muted)]">
                         <CalendarDays size={9} />
                         {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     )}
-                    <span className={`text-xs text-slate-400 dark:text-gray-400`}>{task.category}</span>
+                    <span className="text-xs text-[var(--ink-muted)]">{task.category}</span>
                   </div>
                 </button>
               ))}
               {filteredSuggested.length === 0 && (
-                <p className={`text-sm py-4 text-center text-slate-400 dark:text-gray-400`}>
+                <p className="py-4 text-center text-sm text-[var(--ink-muted)]">
                   {search ? `No tasks match "${search}"` : 'All tasks are already planned!'}
                 </p>
               )}

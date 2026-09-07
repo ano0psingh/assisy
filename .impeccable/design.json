@@ -1,0 +1,438 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-07T17:25:00Z",
+  "title": "Design System: Assisy",
+  "extensions": {
+    "colorMeta": {
+      "action": {
+        "role": "primary",
+        "displayName": "Muted Desk Teal",
+        "canonical": "#276d69",
+        "tonalRamp": ["#0d2927", "#133d3b", "#184b49", "#205c59", "#276d69", "#6fa9a1", "#b7d5cc", "#eef7f3"]
+      },
+      "action-hover": {
+        "role": "primary",
+        "displayName": "Desk Teal Hover",
+        "canonical": "#205c59",
+        "tonalRamp": ["#0d2927", "#133d3b", "#184b49", "#205c59", "#276d69", "#6fa9a1", "#b7d5cc", "#eef7f3"]
+      },
+      "action-active": {
+        "role": "primary",
+        "displayName": "Desk Teal Pressed",
+        "canonical": "#184b49",
+        "tonalRamp": ["#0d2927", "#133d3b", "#184b49", "#205c59", "#276d69", "#6fa9a1", "#b7d5cc", "#eef7f3"]
+      },
+      "action-soft": {
+        "role": "primary",
+        "displayName": "Pale Teal Wash",
+        "canonical": "#d6e5df",
+        "tonalRamp": ["#0d2927", "#184b49", "#276d69", "#43857f", "#6fa9a1", "#91beb4", "#d6e5df", "#eef7f3"]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Warm Newsprint",
+        "canonical": "#eee9dc",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#968f81", "#cbc3b3", "#dfd8c9", "#eee9dc", "#fffdf6"]
+      },
+      "canvas-subtle": {
+        "role": "neutral",
+        "displayName": "Quiet Newsprint",
+        "canonical": "#e6e0d2",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#968f81", "#cbc3b3", "#dfd8c9", "#e6e0d2", "#fffdf6"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Paper Surface",
+        "canonical": "#f8f4e9",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#968f81", "#cbc3b3", "#e6e0d2", "#f8f4e9", "#fffdf6"]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Assignment Slip",
+        "canonical": "#fffdf6",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#968f81", "#cbc3b3", "#e6e0d2", "#f8f4e9", "#fffdf6"]
+      },
+      "surface-subtle": {
+        "role": "neutral",
+        "displayName": "Nested Paper",
+        "canonical": "#e9e3d5",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#968f81", "#cbc3b3", "#dfd8c9", "#e9e3d5", "#fffdf6"]
+      },
+      "surface-inset": {
+        "role": "neutral",
+        "displayName": "Inset Paper",
+        "canonical": "#dfd8c9",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#77766d", "#968f81", "#cbc3b3", "#dfd8c9", "#fffdf6"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Charcoal Ink",
+        "canonical": "#222724",
+        "tonalRamp": ["#101311", "#222724", "#3b403c", "#5f665f", "#92978f", "#bdc1b8", "#e0e2db", "#f5f5f0"]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "#505751",
+        "tonalRamp": ["#101311", "#222724", "#3b403c", "#505751", "#777e77", "#a7aca4", "#d6d9d2", "#f5f5f0"]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#5f665f",
+        "tonalRamp": ["#101311", "#222724", "#3b403c", "#5f665f", "#777e77", "#a7aca4", "#d6d9d2", "#f5f5f0"]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Editorial Rule",
+        "canonical": "#cbc3b3",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#77766d", "#968f81", "#cbc3b3", "#e6e0d2", "#fffdf6"]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Strong Editorial Rule",
+        "canonical": "#968f81",
+        "tonalRamp": ["#28261f", "#47443a", "#6c675a", "#77766d", "#968f81", "#cbc3b3", "#e6e0d2", "#fffdf6"]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Restrained Alert Red",
+        "canonical": "#a63c35",
+        "tonalRamp": ["#35100e", "#5f201c", "#8d302b", "#a63c35", "#c45a51", "#df7a70", "#f2d9d2", "#fff3f0"]
+      },
+      "danger-soft": {
+        "role": "secondary",
+        "displayName": "Alert Wash",
+        "canonical": "#f2d9d2",
+        "tonalRamp": ["#35100e", "#5f201c", "#8d302b", "#a63c35", "#c45a51", "#df7a70", "#f2d9d2", "#fff3f0"]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Milestone Amber",
+        "canonical": "#85570f",
+        "tonalRamp": ["#2d1d05", "#4f3309", "#6c460c", "#85570f", "#ad791f", "#d7a954", "#f2e2b9", "#fff8e7"]
+      },
+      "warning-soft": {
+        "role": "secondary",
+        "displayName": "Milestone Wash",
+        "canonical": "#f2e2b9",
+        "tonalRamp": ["#2d1d05", "#4f3309", "#6c460c", "#85570f", "#ad791f", "#d7a954", "#f2e2b9", "#fff8e7"]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Filed Green",
+        "canonical": "#3f704f",
+        "tonalRamp": ["#14261a", "#23402c", "#315a3e", "#3f704f", "#60906c", "#86b18d", "#dbe7da", "#f2f8f1"]
+      },
+      "success-soft": {
+        "role": "tertiary",
+        "displayName": "Filed Wash",
+        "canonical": "#dbe7da",
+        "tonalRamp": ["#14261a", "#23402c", "#315a3e", "#3f704f", "#60906c", "#86b18d", "#dbe7da", "#f2f8f1"]
+      },
+      "info": {
+        "role": "tertiary",
+        "displayName": "Archive Blue-Gray",
+        "canonical": "#3e6477",
+        "tonalRamp": ["#12232c", "#213b48", "#305365", "#3e6477", "#62889a", "#87adbd", "#dbe5e9", "#f1f7f9"]
+      },
+      "info-soft": {
+        "role": "tertiary",
+        "displayName": "Archive Wash",
+        "canonical": "#dbe5e9",
+        "tonalRamp": ["#12232c", "#213b48", "#305365", "#3e6477", "#62889a", "#87adbd", "#dbe5e9", "#f1f7f9"]
+      },
+      "dark-canvas": {
+        "role": "neutral",
+        "displayName": "Night Edition Canvas",
+        "canonical": "#101714",
+        "tonalRamp": ["#0c1411", "#101714", "#151f1b", "#1b2621", "#293831", "#46574d", "#b4ad9f", "#f4efe2"]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#1b2621",
+        "tonalRamp": ["#0c1411", "#101714", "#151f1b", "#1b2621", "#223029", "#293831", "#708276", "#f4efe2"]
+      },
+      "dark-surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Night Paper",
+        "canonical": "#293831",
+        "tonalRamp": ["#0c1411", "#101714", "#151f1b", "#1b2621", "#223029", "#293831", "#708276", "#f4efe2"]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "Light Night Ink",
+        "canonical": "#f4efe2",
+        "tonalRamp": ["#101714", "#334039", "#46574d", "#708276", "#929d94", "#b4ad9f", "#d6cebe", "#f4efe2"]
+      },
+      "dark-ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Night Ink",
+        "canonical": "#b4ad9f",
+        "tonalRamp": ["#101714", "#334039", "#46574d", "#708276", "#929d94", "#b4ad9f", "#d6cebe", "#f4efe2"]
+      },
+      "dark-rule": {
+        "role": "neutral",
+        "displayName": "Night Editorial Rule",
+        "canonical": "#46574d",
+        "tonalRamp": ["#0c1411", "#151f1b", "#1b2621", "#293831", "#46574d", "#708276", "#b4ad9f", "#f4efe2"]
+      },
+      "dark-action": {
+        "role": "primary",
+        "displayName": "Night Desk Teal",
+        "canonical": "#93d4c7",
+        "tonalRamp": ["#0b1713", "#17332d", "#24483f", "#2c544a", "#5e9f93", "#93d4c7", "#c0eee5", "#effbf8"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Desk Display",
+        "purpose": "Primary page titles and featured assignment headlines."
+      },
+      "headline": {
+        "displayName": "Section Headline",
+        "purpose": "Major rundown and desk sections."
+      },
+      "title": {
+        "displayName": "Panel Title",
+        "purpose": "Local section and panel hierarchy."
+      },
+      "body": {
+        "displayName": "Interface Body",
+        "purpose": "Content, explanation, forms, and controls."
+      },
+      "label": {
+        "displayName": "Operational Label",
+        "purpose": "Counts, percentages, queue position, time, and compact status."
+      }
+    },
+    "shadows": [
+      {
+        "name": "paper-lift",
+        "value": "0 1px 2px rgb(42 40 35 / 0.08), 0 5px 14px rgb(42 40 35 / 0.04)",
+        "purpose": "Ordinary assignment slips, cards, and primary controls."
+      },
+      {
+        "name": "active-lift",
+        "value": "0 2px 5px rgb(42 40 35 / 0.1), 0 12px 28px rgb(42 40 35 / 0.08)",
+        "purpose": "Hovered cards, swiped rows, and the mobile capture action."
+      },
+      {
+        "name": "overlay-lift",
+        "value": "0 4px 10px rgb(20 22 20 / 0.15), 0 24px 56px rgb(20 22 20 / 0.16)",
+        "purpose": "Menus, drawers, and modal panels."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-fast",
+        "value": "140ms",
+        "purpose": "Control color, border, and press feedback."
+      },
+      {
+        "name": "duration-base",
+        "value": "190ms",
+        "purpose": "Standard surface and theme transitions."
+      },
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Spatial lift, slide, and press movement."
+      },
+      {
+        "name": "entry-slide",
+        "value": "350ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Short sheet, panel, and list entry motion."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms, one iteration",
+        "purpose": "Effectively immediate feedback when reduced motion is requested."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ],
+    "assets": [
+      {
+        "name": "newsprint-texture",
+        "path": "app/public/newsprint-texture.png",
+        "kind": "shipping-raster",
+        "source": "app/public/newsprint-texture.svg",
+        "provenance": "Embedded Impeccable metadata in the PNG; authored SVG uses a 192px tile, fractalNoise baseFrequency 0.72, three octaves, and seed 23.",
+        "usage": "Repeated on the body canvas only."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action for completing or committing work.",
+      "html": "<button class=\"ds-btn-primary\">Complete assignment</button>",
+      "css": ".ds-btn-primary { min-height: 2.5rem; padding: 0.5rem 1rem; border: 1px solid var(--action-active); border-radius: var(--radius-md); background: var(--action); color: var(--action-ink); font: 600 0.875rem/1.5 var(--font-sans); box-shadow: var(--shadow-soft); transition: background-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) ease; } .ds-btn-primary:hover { background: var(--action-hover); transform: translateY(-1px); } .ds-btn-primary:active { background: var(--action-active); transform: translateY(1px); box-shadow: none; } .ds-btn-primary:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A bordered paper control for supporting actions.",
+      "html": "<button class=\"ds-btn-secondary\">Move to tomorrow</button>",
+      "css": ".ds-btn-secondary { min-height: 2.5rem; padding: 0.5rem 1rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font: 600 0.875rem/1.5 var(--font-sans); transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease; } .ds-btn-secondary:hover { background: var(--surface-subtle); border-color: var(--rule-hover); } .ds-btn-secondary:active { transform: translateY(1px); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "A restrained destructive action that fills red only on hover.",
+      "html": "<button class=\"ds-btn-danger\">Delete</button>",
+      "css": ".ds-btn-danger { min-height: 2.5rem; padding: 0.5rem 1rem; border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--rule)); border-radius: var(--radius-md); background: var(--danger-soft); color: var(--danger); font: 600 0.875rem/1.5 var(--font-sans); transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease; } .ds-btn-danger:hover { background: var(--danger-hover); border-color: var(--danger-hover); color: var(--ink-inverse); } .ds-btn-danger:active { transform: translateY(1px); } .ds-btn-danger:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "An opaque newsroom field with wired label and focus state.",
+      "html": "<label class=\"ds-field-label\" for=\"ds-headline\">Headline</label><input class=\"ds-field\" id=\"ds-headline\" placeholder=\"Assignment title\">",
+      "css": ".ds-field-label { display: block; margin-bottom: 0.5rem; color: var(--ink-secondary); font: 650 0.875rem/1.5 var(--font-sans); } .ds-field { width: 100%; min-height: 2.75rem; padding: 0.75rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font: 400 0.875rem/1.5 var(--font-sans); transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease; } .ds-field::placeholder { color: var(--ink-muted); } .ds-field:hover { border-color: var(--rule-hover); } .ds-field:focus { border-color: var(--focus); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }"
+    },
+    {
+      "name": "Status Label",
+      "kind": "chip",
+      "refersTo": "status-label",
+      "description": "Compact tabular notation for selected or operational state.",
+      "html": "<span class=\"ds-status-label\">1 WAITING</span>",
+      "css": ".ds-status-label { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border: 1px solid var(--action); border-radius: var(--radius-sm); background: var(--action-soft); color: var(--action); font: 600 0.75rem/1.5 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Assignment Row",
+      "kind": "card",
+      "refersTo": "assignment-card",
+      "description": "The recurring work unit used through Inbox, Today, and planning lists.",
+      "html": "<article class=\"ds-assignment\"><button class=\"ds-check\" aria-label=\"Mark assignment done\"></button><div class=\"ds-assignment-copy\"><strong>Review weekly priorities</strong><span>Planned · 9:30 AM</span></div><button class=\"ds-more\" aria-label=\"More assignment actions\">•••</button></article>",
+      "css": ".ds-assignment { display: flex; align-items: center; gap: 0.75rem; min-height: 3.5rem; padding: 0.75rem; border: 1px solid var(--rule); border-width: 0 0 1px; background: var(--surface-raised); color: var(--ink); font-family: var(--font-sans); transition: background-color var(--duration-fast) ease; } .ds-assignment:hover { background: var(--state-hover); } .ds-assignment:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-check { width: 1.25rem; height: 1.25rem; flex: 0 0 auto; border: 2px solid var(--rule-strong); border-radius: var(--radius-md); background: transparent; } .ds-check:hover { border-color: var(--action); background: var(--action-soft); } .ds-assignment-copy { display: grid; min-width: 0; flex: 1; gap: 0.2rem; } .ds-assignment-copy strong { overflow: hidden; font-size: 0.875rem; text-overflow: ellipsis; white-space: nowrap; } .ds-assignment-copy span { color: var(--ink-muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; } .ds-more { min-width: 2.5rem; min-height: 2.5rem; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--ink-muted); } .ds-more:hover { background: var(--surface-subtle); color: var(--ink); }"
+    },
+    {
+      "name": "Primary Navigation",
+      "kind": "nav",
+      "description": "The stable five-hub newsroom masthead.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Primary\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\">Today</a><a class=\"ds-nav-item\" href=\"#\">Tasks</a><a class=\"ds-nav-item\" href=\"#\">Calendar</a><a class=\"ds-nav-item\" href=\"#\">Plan</a><a class=\"ds-nav-item\" href=\"#\">Progress</a></nav>",
+      "css": ".ds-nav { display: flex; align-items: stretch; justify-content: center; min-height: 3.5rem; border-bottom: 1px solid var(--rule-strong); background: var(--surface); font-family: var(--font-sans); } .ds-nav-item { display: inline-flex; align-items: center; min-height: 3.5rem; padding: 0 0.75rem; border-bottom: 2px solid transparent; color: var(--ink-muted); font-size: 0.875rem; font-weight: 600; text-decoration: none; } .ds-nav-item:hover { background: var(--surface-subtle); color: var(--ink); } .ds-nav-item:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; } .ds-nav-active { border-bottom-color: var(--action); color: var(--ink); }"
+    },
+    {
+      "name": "Featured Assignment Slip",
+      "kind": "custom",
+      "description": "The dominant current commitment on Today.",
+      "html": "<article class=\"ds-featured\"><div class=\"ds-featured-meta\">PROFESSIONAL <em>URGENT</em></div><h2>Shape the launch brief</h2><p>9:30 AM · 60 min</p><button>Complete</button></article>",
+      "css": ".ds-featured { position: relative; padding: 1.5rem 1.75rem; border: 2px solid var(--ink); border-width: 2px 0; background: var(--surface-raised); color: var(--ink); font-family: var(--font-sans); } .ds-featured-meta { color: var(--ink-muted); font-size: 0.75rem; font-weight: 600; } .ds-featured-meta em { margin-left: 0.75rem; color: var(--danger); font-style: normal; } .ds-featured h2 { max-width: 70%; margin: 0.75rem 0 0; font: 700 1.875rem/1.1 var(--font-display); letter-spacing: -0.025em; } .ds-featured p { color: var(--ink-secondary); font-size: 0.875rem; font-variant-numeric: tabular-nums; } .ds-featured button { position: absolute; top: 1.5rem; right: 1.75rem; min-height: 3rem; padding: 0 1.25rem; border: 1px solid var(--action-active); background: var(--action); color: var(--action-ink); font-size: 0.875rem; font-weight: 700; } .ds-featured button:hover { background: var(--action-hover); } .ds-featured button:active { transform: translateY(1px); } .ds-featured button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }"
+    },
+    {
+      "name": "Dialog Form",
+      "kind": "dialog",
+      "refersTo": "expandable-modal",
+      "description": "The shared opaque shell for task, project, planning, and guided forms.",
+      "html": "<section class=\"ds-dialog\" role=\"dialog\" aria-modal=\"true\"><header><span class=\"ds-dialog-icon\"></span><h2>Create assignment</h2></header><div class=\"ds-dialog-body\"></div><footer></footer></section>",
+      "css": ".ds-dialog { display: flex; width: min(100%, 32rem); max-height: 90vh; flex-direction: column; overflow: hidden; border: 1px solid var(--rule-strong); border-radius: var(--radius-lg); background: var(--surface-raised); box-shadow: var(--shadow-elevated); color: var(--ink); } .ds-dialog header, .ds-dialog footer { padding: 1rem 1.5rem; border-color: var(--rule); background: var(--surface); } .ds-dialog header { display: flex; align-items: center; gap: 0.75rem; border-bottom-width: 1px; } .ds-dialog footer { border-top-width: 1px; } .ds-dialog-icon { width: 2.5rem; height: 2.5rem; border: 1px solid var(--action); border-radius: var(--radius-md); background: var(--action-soft); color: var(--action); } .ds-dialog-body { overflow-y: auto; padding: 1.5rem; }"
+    },
+    {
+      "name": "Reading Desk Rundown",
+      "kind": "custom",
+      "refersTo": "feed-rundown",
+      "description": "A ruled utility desk for saved and subscribed reading.",
+      "html": "<section class=\"ds-reading\"><header><h1>Reading desk</h1><p>12 ARTICLES · 4 UNREAD</p></header><nav aria-label=\"Reading filters\"></nav><article class=\"ds-reading-row\"></article></section>",
+      "css": ".ds-reading > header { padding-bottom: 1rem; border-bottom: 1px solid var(--rule-strong); } .ds-reading > header p { color: var(--ink-muted); font: 0.75rem/1.5 var(--font-mono); font-variant-numeric: tabular-nums; } .ds-reading-row { padding: 1rem 1.5rem; border: 1px solid var(--rule); border-width: 0 1px 1px; background: var(--surface-raised); } .ds-reading-row:hover { background: var(--state-hover); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Newsroom Assignment Desk",
+    "overview": "Assisy is a working personal desk, not a generic dashboard. A warm raster newsprint canvas supports charcoal editorial type, opaque assignment slips, measured rules, and compact status notation. The result is practical and tactile: information is ranked like a live rundown, while controls remain familiar enough for repeated daily use.\n\nThe five hubs—Today, Tasks, Calendar, Plan, and Progress—share one shell and one semantic state vocabulary. Muted teal carries action and selection; restrained red is reserved for urgency and failure; amber marks scheduling or milestones. Dark mode preserves those roles with a charcoal desk and lighter, lower-chroma inks.",
+    "keyCharacteristics": [
+      "Warm, lightly textured newsprint behind opaque working surfaces.",
+      "Condensed editorial headings paired with a neutral system-sans interface.",
+      "Strong horizontal rules and occasional vertical dividers instead of card-grid decoration.",
+      "Dense, tabular labels for counts, time, progress, and state.",
+      "Teal action, red alert, amber milestone, green success, and blue-gray information roles.",
+      "Desktop utility rails collapse into the main flow on narrow screens."
+    ],
+    "rules": [
+      {
+        "name": "The Ink Before Accent Rule",
+        "body": "Most content is neutral; color appears when it changes the reader's decision or reports a state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Restrained Alert Rule",
+        "body": "Red belongs to overdue, urgent, error, and destructive states—not general emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Opaque Paper Rule",
+        "body": "Working surfaces are opaque paper or charcoal panels; transparency is limited to modal backdrops, not ordinary cards.",
+        "section": "colors"
+      },
+      {
+        "name": "The Headline and Copy Rule",
+        "body": "Barlow Condensed speaks for hierarchy; system sans explains and operates.",
+        "section": "typography"
+      },
+      {
+        "name": "The Operational Numeral Rule",
+        "body": "Counts, percentages, dates, time, and queue positions use tabular numerals; compact status strings may use monospace.",
+        "section": "typography"
+      },
+      {
+        "name": "The Rundown Before Rail Rule",
+        "body": "Primary work owns the wider column; utilities may support it from a narrow rail but never compete for equal visual weight.",
+        "section": "layout"
+      },
+      {
+        "name": "The Five-Hub Rule",
+        "body": "Today, Tasks, Calendar, Plan, and Progress remain the stable primary destinations across desktop and mobile.",
+        "section": "layout"
+      },
+      {
+        "name": "The Rules Carry Structure Rule",
+        "body": "Prefer borders, dividers, and tonal steps before adding shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Texture Stays Behind Rule",
+        "body": "`app/public/newsprint-texture.png` repeats only on the canvas. It is the shipping raster derived from the authored `app/public/newsprint-texture.svg`, whose turbulence filter uses seed 23; embedded Impeccable metadata in the PNG preserves provenance.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Slip Over Bubble Rule",
+        "body": "Core work appears as ruled rows and assignment slips; large pill-shaped containers do not organize page content.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do rank information with headlines, rules, and one dominant working column.",
+      "Do use semantic CSS roles so light and dark themes preserve the same meaning.",
+      "Do keep working surfaces opaque and let newsprint texture remain behind them.",
+      "Do reserve monospace and tabular numerals for operational facts.",
+      "Do preserve 44px targets on coarse pointers, visible focus, semantic tabs, labeled icons, and reduced-motion behavior.",
+      "Do use authored Lucide line icons with accessible names; inline SVG equivalents are appropriate in framework-free previews."
+    ],
+    "donts": [
+      "Don't spend red or amber as decoration; each must communicate urgency, failure, scheduling, or milestone state.",
+      "Don't turn the five primary hubs into an undifferentiated grid of dashboard cards.",
+      "Don't place texture, transparency, or glow between the reader and operational text.",
+      "Don't introduce large pill containers or excessive rounding into rundown rows, calendar grids, and assignment slips.",
+      "Don't mix legacy violet glass, generic stone surfaces, or achievement gradients into new core workflow components."
+    ]
+  }
+}

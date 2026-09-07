@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import type { TaskCategory, Goal } from '../../types';
+import type { TaskCategory, Goal, GoalPriority } from '../../types';
 import { Target, Pencil } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { TiptapEditor } from '../common/TiptapEditor';
@@ -11,6 +11,9 @@ interface GoalFormProps {
     description: string;
     category: TaskCategory;
     parentGoalId?: string;
+    targetDate?: string;
+    priority: GoalPriority;
+    nextAction?: string;
   }) => void;
   onCancel: () => void;
   isOpen: boolean;
@@ -28,6 +31,9 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
   const [description, setDescription] = useState(editingGoal?.description ?? '');
   const [category, setCategory] = useState<TaskCategory>(editingGoal?.category ?? 'Personal');
   const [parentGoalId, setParentGoalId] = useState<string>(editingGoal?.parentGoalId ?? '');
+  const [targetDate, setTargetDate] = useState(editingGoal?.targetDate ?? '');
+  const [priority, setPriority] = useState<GoalPriority>(editingGoal?.priority ?? 'Medium');
+  const [nextAction, setNextAction] = useState(editingGoal?.nextAction ?? '');
   const [titleError, setTitleError] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +42,9 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
     setDescription('');
     setCategory('Personal');
     setParentGoalId('');
+    setTargetDate('');
+    setPriority('Medium');
+    setNextAction('');
     setTitleError(null);
   };
 
@@ -59,6 +68,9 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
       description: description.trim(),
       category,
       parentGoalId: parentGoalId || undefined,
+      targetDate: targetDate || undefined,
+      priority,
+      nextAction: nextAction.trim() || undefined,
     });
     resetForm();
   };
@@ -85,7 +97,7 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
 
   const notesField = (isFS: boolean) => (
     <div className={isFS ? 'flex-1 flex flex-col' : ''}>
-      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Notes</label>
+      <label className="block text-sm font-medium mb-2 text-[var(--ink-secondary)]">Notes</label>
       <TiptapEditor
         content={description}
         onChange={setDescription}
@@ -97,21 +109,21 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
 
   const categoryField = (
     <div>
-      <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-gray-300">Category</label>
+      <label className="block text-sm font-medium mb-2 text-[var(--ink-secondary)]">Category</label>
       <div className="grid grid-cols-3 gap-2">
         {(['Personal', 'Financial', 'Professional'] as const).map((cat) => (
           <button
             key={cat}
             type="button"
             onClick={() => setCategory(cat)}
-            className={`px-3 py-3 rounded-xl text-sm font-medium transition-all border ${
+            className={`px-3 py-3 rounded-md text-sm font-medium transition-all border ${
               category === cat
                 ? cat === 'Personal'
-                  ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
+                  ? 'bg-[var(--action-soft)] text-[var(--action)] border-[var(--action)]'
                   : cat === 'Financial'
-                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
-                  : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-gray-500/20 dark:text-gray-300 dark:border-gray-500/30'
-                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
+                  ? 'bg-[var(--success-soft)] text-[var(--success)] border-[var(--success)]'
+                  : 'bg-[var(--surface-subtle)] text-[var(--ink-secondary)] border-[var(--rule-strong)]'
+                : 'bg-[var(--surface)] text-[var(--ink-muted)] border-[var(--rule)] hover:bg-[var(--surface)]'
             }`}
           >
             {cat}
@@ -135,9 +147,33 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
     </SelectField>
   ) : null;
 
+  const planningFields = (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <TextField
+          label="Target date"
+          type="date"
+          value={targetDate}
+          onChange={(event) => setTargetDate(event.target.value)}
+        />
+        <SelectField label="Priority" value={priority} onChange={(event) => setPriority(event.target.value as GoalPriority)}>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </SelectField>
+      </div>
+      <TextField
+        label="Next action"
+        value={nextAction}
+        onChange={(event) => setNextAction(event.target.value)}
+        placeholder="What is the very next step?"
+      />
+    </div>
+  );
+
   const infoBox = !isEditing ? (
     <Surface level="inset" radius="xl">
-      <p className={`text-sm text-slate-600 dark:text-gray-400`}>
+      <p className={`text-sm text-[var(--ink-secondary)]`}>
         After creating a goal, you can link tasks to it to track your progress automatically.
       </p>
     </Surface>
@@ -160,21 +196,22 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
       onClose={handleCancel}
       title={isEditing ? 'Edit Goal' : 'Create New Goal'}
       icon={isEditing
-        ? <Pencil className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
-        : <Target className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />
+        ? <Pencil className={`w-5 h-5 text-[var(--action)]`} />
+        : <Target className={`w-5 h-5 text-[var(--action)]`} />
       }
       footer={actionButtons}
     >
       {(isFS) =>
         isFS ? (
           <div className="flex h-full">
-            <div className={`flex-1 flex flex-col p-8 space-y-6 border-r border-slate-200 dark:border-white/10`}>
+            <div className={`flex-1 flex flex-col p-8 space-y-6 border-r border-[var(--rule)]`}>
               {titleField}
               {notesField(true)}
             </div>
-            <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
-              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Goal details</h3>
+            <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-[var(--surface)]`}>
+              <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-[var(--ink-muted)]`}>Goal details</h3>
               {categoryField}
+              {planningFields}
               {parentGoalField}
               {infoBox}
             </div>
@@ -184,6 +221,7 @@ function OpenGoalForm({ onSubmit, onCancel, isOpen, editingGoal, availableParent
             {titleField}
             {notesField(false)}
             {categoryField}
+            {planningFields}
             {parentGoalField}
             {infoBox}
           </div>

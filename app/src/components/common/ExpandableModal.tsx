@@ -8,6 +8,8 @@ interface ExpandableModalProps {
   title: string;
   icon?: ReactNode;
   maxWidth?: string;
+  expandable?: boolean;
+  showClose?: boolean;
   children: (isFullScreen: boolean) => ReactNode;
   footer?: ReactNode;
 }
@@ -69,6 +71,8 @@ function OpenExpandableModal({
   title,
   icon,
   maxWidth = 'max-w-md',
+  expandable = true,
+  showClose = true,
   children,
   footer,
 }: ExpandableModalProps) {
@@ -140,61 +144,55 @@ function OpenExpandableModal({
 
   const dragHandle = (
     <div
-      className="flex justify-center pt-3 pb-1 cursor-grab sm:hidden"
+      className="flex cursor-grab justify-center pb-1 pt-3 sm:hidden"
       onTouchStart={handleDragStart}
       onTouchMove={handleDragMove}
       onTouchEnd={handleDragEnd}
     >
-      <div className={`w-9 h-1 rounded-full bg-slate-300 dark:bg-white/20`} />
+      <div className="h-1 w-9 rounded-full bg-[var(--rule-strong)]" />
     </div>
   );
 
   const header = (
-    <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${
-      'border-slate-100 dark:border-white/10'
-    }`}>
-      <div className="flex items-center space-x-3">
+    <div className="flex flex-shrink-0 items-center justify-between border-b border-[var(--rule)] px-5 py-4 sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
         {icon && (
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            'bg-violet-100 dark:bg-violet-500/20'
-          }`}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]">
             {icon}
           </div>
         )}
-        <h2 id={titleId} className={`text-lg font-semibold text-slate-800 dark:text-white`}>
+        <h2 id={titleId} className="truncate text-xl font-bold tracking-[-0.015em] text-[var(--ink)]">
           {title}
         </h2>
       </div>
-      <div className="flex items-center space-x-1">
-        <button
-          type="button"
-          onClick={() => setIsFullScreen(!isFullScreen)}
-          title={isFullScreen ? 'Exit full screen (Esc)' : 'Full screen'}
-          aria-label={isFullScreen ? 'Exit full screen' : 'Expand to full screen'}
-          className={`p-2 rounded-lg transition-colors ${
-            'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
-          }`}
-        >
-          {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={`Close ${title}`}
-          className={`p-2 rounded-lg transition-colors ${
-            'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
-          }`}
-        >
-          <X size={20} />
-        </button>
+      <div className="flex items-center gap-1">
+        {expandable && (
+          <button
+            type="button"
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            title={isFullScreen ? 'Exit full screen (Esc)' : 'Full screen'}
+            aria-label={isFullScreen ? 'Exit full screen' : 'Expand to full screen'}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-md)] text-[var(--ink-muted)] transition-colors hover:bg-[var(--state-hover)] hover:text-[var(--ink)]"
+          >
+            {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        )}
+        {showClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={`Close ${title}`}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-md)] text-[var(--ink-muted)] transition-colors hover:bg-[var(--state-hover)] hover:text-[var(--ink)]"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
     </div>
   );
 
   const footerEl = footer ? (
-    <div className={`flex-shrink-0 px-6 py-4 pb-2 safe-area-pb border-t ${
-      'border-slate-100 dark:border-white/10'
-    }`}>
+    <div className="safe-area-pb flex-shrink-0 border-t border-[var(--rule)] bg-[var(--surface)] px-5 py-4 sm:px-6">
       {footer}
     </div>
   ) : null;
@@ -202,14 +200,14 @@ function OpenExpandableModal({
   if (isFullScreen) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col">
-        <div className="absolute inset-0 bg-[#f8f8fa] dark:bg-[#0c0c10]" />
+        <div className="absolute inset-0 bg-[var(--canvas)]" />
         <div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="relative flex h-full w-full flex-col bg-[#f8f8fa] animate-fade-in outline-none dark:bg-[#0c0c10]"
+          className="relative flex h-full w-full animate-fade-in flex-col bg-[var(--canvas)] outline-none"
         >
           {header}
           <div className="flex-1 overflow-y-auto">
@@ -224,9 +222,9 @@ function OpenExpandableModal({
   const backdropOpacity = Math.max(0, 1 - dragY / 400);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex animate-fade-in items-end justify-center sm:items-center sm:p-4">
       <div
-        className={`absolute inset-0 backdrop-blur-xl bg-slate-900/15 dark:bg-black/50`}
+        className="ui-overlay absolute inset-0"
         style={{ opacity: backdropOpacity }}
         onClick={onClose}
       />
@@ -236,9 +234,9 @@ function OpenExpandableModal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative rounded-t-3xl sm:rounded-2xl w-full ${maxWidth} max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden outline-none ${
+        className={`relative flex max-h-[92vh] w-full ${maxWidth} flex-col overflow-hidden rounded-t-[var(--radius-xl)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] shadow-[var(--shadow-elevated)] outline-none sm:max-h-[90vh] sm:rounded-[var(--radius-lg)] ${
           dismissing ? '' : 'animate-slide-up'
-        } border border-white/60 bg-white/85 shadow-elevated backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#141418]/90`}
+        }`}
         style={{
           transform: `translateY(${dragY}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',

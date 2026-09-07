@@ -7,7 +7,7 @@ import {
   CalendarPlus, CalendarCheck, ChevronLeft,
   LayoutGrid, Table2, Sparkles, Loader2, Check, Search,
 } from 'lucide-react';
-import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus } from '../types';
+import type { Project, SubProject, ProjectTask, WorkItemStatus, ProjectStatus, ReminderOffsetMinutes } from '../types';
 import { TiptapEditor } from '../components/common/TiptapEditor';
 import { ExpandableModal } from '../components/common/ExpandableModal';
 import { TaskSheet } from '../components/projects/TaskSheet';
@@ -21,7 +21,8 @@ import { usePersistentState } from '../hooks/usePersistentState';
 import { parseDateInput, pluralise } from '../lib/bulkUpdate';
 import { askAIJson, isAIConfigured } from '../lib/ai';
 import { getLocalDateString } from '../lib/dateUtils';
-import { IconButton } from '../components/ui';
+import { Button, IconButton } from '../components/ui';
+import { ReminderOffsetPicker } from '../components/tasks/ReminderOffsetPicker';
 
 const PROJECT_TASK_BULK_FIELDS: BulkEditField[] = [
   {
@@ -178,6 +179,8 @@ export function Projects() {
     priority: 'Medium' as 'High' | 'Medium' | 'Low',
     effort: 'Medium' as 'High' | 'Medium' | 'Low',
     deadline: '',
+    deadlineTime: '',
+    deadlineReminderOffsets: [] as ReminderOffsetMinutes[],
     parentTaskId: '',
   });
 
@@ -471,9 +474,11 @@ export function Projects() {
       taskForm.priority,
       taskForm.effort,
       taskForm.parentTaskId || undefined,
-      taskForm.deadline ? new Date(taskForm.deadline) : undefined
+      taskForm.deadline ? new Date(taskForm.deadline) : undefined,
+      taskForm.deadlineTime || undefined,
+      taskForm.deadlineTime && taskForm.deadlineReminderOffsets.length ? taskForm.deadlineReminderOffsets : undefined,
     );
-    setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', parentTaskId: '' });
+    setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', deadlineTime: '', deadlineReminderOffsets: [], parentTaskId: '' });
     setIsTaskFormOpen(false);
   };
 
@@ -485,9 +490,11 @@ export function Projects() {
       priority: taskForm.priority,
       effort: taskForm.effort,
       deadline: taskForm.deadline ? new Date(taskForm.deadline) : undefined,
+      deadlineTime: taskForm.deadlineTime || undefined,
+      deadlineReminderOffsets: taskForm.deadlineTime && taskForm.deadlineReminderOffsets.length ? taskForm.deadlineReminderOffsets : undefined,
     });
     setEditingTask(null);
-    setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', parentTaskId: '' });
+    setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', deadlineTime: '', deadlineReminderOffsets: [], parentTaskId: '' });
     setIsTaskFormOpen(false);
   };
 
@@ -499,6 +506,8 @@ export function Projects() {
       priority: task.priority,
       effort: task.effort,
       deadline: task.deadline ? getLocalDateString(new Date(task.deadline)) : '',
+      deadlineTime: task.deadlineTime || '',
+      deadlineReminderOffsets: task.deadlineReminderOffsets || [],
       parentTaskId: task.parentTaskId || '',
     });
     setIsTaskFormOpen(true);
@@ -512,6 +521,8 @@ export function Projects() {
       priority: 'Medium',
       effort: 'Medium',
       deadline: '',
+      deadlineTime: '',
+      deadlineReminderOffsets: [],
       parentTaskId: parentTask.id,
     });
     setIsTaskFormOpen(true);
@@ -520,9 +531,9 @@ export function Projects() {
   // Status helpers
   const getStatusColor = (status: WorkItemStatus) => {
     switch (status) {
-      case 'Backlog': return 'text-slate-500 bg-slate-100 dark:text-gray-400 dark:bg-gray-500/20';
-      case 'In Progress': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-500/20';
-      case 'Done': return 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/20';
+      case 'Backlog': return 'text-[var(--ink-muted)] bg-[var(--surface-subtle)]';
+      case 'In Progress': return 'text-[var(--action)] bg-[var(--action-soft)]';
+      case 'Done': return 'text-[var(--success)] bg-[var(--success-soft)]';
     }
   };
 
@@ -536,7 +547,7 @@ export function Projects() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--action)] border-t-transparent" />
       </div>
     );
   }
@@ -553,12 +564,12 @@ export function Projects() {
       <div key={task.id} data-focus-id={task.id} style={{ marginLeft: depth * 20 }}>
         <div
           onClick={taskSelection.active ? () => taskSelection.toggle(task.id) : undefined}
-          className={`group flex items-center justify-between gap-2 p-3 rounded-xl transition-all overflow-hidden ${
+          className={`group flex items-center justify-between gap-2 p-3 rounded-md transition-all overflow-hidden ${
             taskSelection.active ? 'cursor-pointer' : ''
           } ${
             isTaskSelected
-              ? 'bg-violet-50/60 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:ring-violet-500/30'
-              : 'hover:bg-slate-50 dark:hover:bg-white/5'
+              ? 'bg-[var(--selected)] ring-1 ring-[var(--action)]'
+              : 'hover:bg-[var(--state-hover)]'
           } ${task.status === 'Done' && !isTaskSelected ? 'opacity-60' : ''}`}
         >
           <div className="flex items-center space-x-3 flex-1 min-w-0 overflow-hidden">
@@ -573,7 +584,7 @@ export function Projects() {
             ) : (
               <button
                 onClick={() => cycleTaskStatus(task)}
-                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${getStatusColor(task.status)}`}
+                className={`w-6 h-6 rounded-sm flex items-center justify-center transition-all ${getStatusColor(task.status)}`}
                 title={`Status: ${task.status}`}
               >
                 {task.status === 'Done' ? (
@@ -591,16 +602,16 @@ export function Projects() {
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`text-sm font-medium truncate min-w-0 ${
                   task.status === 'Done' 
-                    ? 'text-slate-400 line-through dark:text-gray-500'
-                    : 'text-slate-800 dark:text-white'
+                    ? 'text-[var(--ink-muted)] line-through'
+                    : 'text-[var(--ink)]'
                 }`}>
                   {task.title}
                 </span>
                 {task.priority === 'High' && (
-                  <span className="px-2 py-1 text-xs font-semibold rounded bg-red-500/20 text-red-400 flex-shrink-0">HIGH</span>
+                  <span className="px-2 py-1 text-xs font-semibold rounded bg-[var(--danger-soft)] text-[var(--danger)] flex-shrink-0">HIGH</span>
                 )}
                 {subTasks.length > 0 && (
-                  <span className={`text-xs flex-shrink-0 text-slate-400 dark:text-gray-500`}>
+                  <span className={`text-xs flex-shrink-0 text-[var(--ink-muted)]`}>
                     ({subTasks.filter(st => st.status === 'Done').length}/{subTasks.length})
                   </span>
                 )}
@@ -608,7 +619,7 @@ export function Projects() {
               {task.tags.length > 0 && (
                 <div className="flex items-center gap-1 mt-1 flex-wrap">
                   {task.tags.map(tag => (
-                    <span key={tag} className={`text-xs px-2 py-1 rounded bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400`}>
+                    <span key={tag} className="rounded-sm border border-[var(--action)] bg-[var(--action-soft)] px-2 py-1 text-xs text-[var(--action)]">
                       {tag}
                     </span>
                   ))}
@@ -623,8 +634,8 @@ export function Projects() {
             {task.status !== 'Done' && isAddedToToday && (
               <button
                 onClick={() => removeTaskFromToday(task.id)}
-                className={`p-2 rounded-lg transition-all ${
-                  'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:ring-emerald-500/30'
+                className={`p-2 rounded-sm transition-all ${
+                  'bg-[var(--success-soft)] text-[var(--success)] ring-1 ring-emerald-200 dark:ring-emerald-500/30'
                 }`}
                 title="Added to Today (click to remove)"
                 aria-label="Added to Today (click to remove)"
@@ -673,7 +684,7 @@ export function Projects() {
 
         {/* Sub-tasks */}
         {subTasks.length > 0 && (
-          <div className={`ml-4 pl-4 border-l-2 border-slate-200 dark:border-white/10`}>
+          <div className={`ml-4 pl-4 border-l-2 border-[var(--rule)]`}>
             {subTasks.map(st => renderTask(st, depth + 1))}
           </div>
         )}
@@ -682,25 +693,24 @@ export function Projects() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[var(--ink)] pb-3">
         <div>
-          <h1 className={`text-xl md:text-2xl font-bold text-slate-800 dark:text-white`}>Projects</h1>
-          <p className={`mt-1 text-sm text-slate-500 dark:text-gray-500`}>
-            {projects.filter(p => p.status === 'Active').length} active project{projects.filter(p => p.status === 'Active').length !== 1 ? 's' : ''}
+          <h2 className="text-lg font-bold tracking-[-0.015em] text-[var(--ink)]">Projects</h2>
+          <p className="mt-1 font-mono text-xs tabular-nums text-[var(--ink-muted)]">
+            {projects.filter(p => p.status === 'Active').length} ACTIVE PROJECT{projects.filter(p => p.status === 'Active').length !== 1 ? 'S' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Cards / Sheet toggle */}
-          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+          <div className="flex overflow-hidden rounded-md border border-[var(--rule-strong)] bg-[var(--surface)]">
             <button
               type="button"
               onClick={() => { setPageView('cards'); }}
+              aria-pressed={pageView === 'cards'}
               className={`p-2 transition-colors ${
                 pageView === 'cards'
-                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
+                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                  : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--ink)]'
               }`}
               title="Card view"
             >
@@ -709,10 +719,11 @@ export function Projects() {
             <button
               type="button"
               onClick={() => { setPageView('sheet'); }}
+              aria-pressed={pageView === 'sheet'}
               className={`p-2 transition-colors ${
                 pageView === 'sheet'
-                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
+                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                  : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--ink)]'
               }`}
               title="Sheet view"
             >
@@ -725,7 +736,7 @@ export function Projects() {
               setProjectForm({ title: '', description: '', color: PROJECT_COLORS[0], deadline: '', status: 'Active' });
               setIsProjectFormOpen(true);
             }}
-            className="btn-primary px-4 py-2 md:px-6 md:py-3 rounded-xl flex items-center space-x-2 text-sm md:text-base"
+            className="btn-primary flex items-center space-x-2 rounded-md px-4 py-2 text-sm md:px-5"
           >
             <Plus size={18} />
             <span>New Project</span>
@@ -750,7 +761,7 @@ export function Projects() {
           <div className="relative mb-3">
             <Search
               size={16}
-              className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-gray-500`}
+              className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ink-muted)]`}
             />
             <input
               type="search"
@@ -758,16 +769,14 @@ export function Projects() {
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects by name or tag"
               aria-label="Search projects"
-              className={`w-full pl-8 pr-8 py-3 rounded-xl text-sm outline-none transition-colors ${
-                'bg-white text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-violet-400 dark:bg-white/5 dark:text-white dark:placeholder-gray-500 dark:border-white/10 dark:focus:border-violet-500/50'
-              }`}
+              className="input w-full rounded-md py-3 pl-8 pr-8 text-sm outline-none"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search"
-                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
-                  'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10'
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-sm transition-colors ${
+                  'text-[var(--ink-muted)] hover:text-[var(--ink-secondary)] hover:bg-[var(--surface-subtle)]'
                 }`}
               >
                 <X size={14} />
@@ -778,8 +787,8 @@ export function Projects() {
           {/* Project Status Filter */}
           <div className="mb-4">
             <div className={`flex items-center space-x-2`}>
-              <span className={`text-sm text-slate-500 dark:text-gray-500`}>Filter:</span>
-              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+              <span className="text-sm text-[var(--ink-muted)]">Filter:</span>
+              <div className="flex overflow-hidden rounded-md border border-[var(--rule)] bg-[var(--surface)]">
                 {(['All', 'Active', 'Completed', 'On Hold'] as const).map(status => (
                   <button
                     key={status}
@@ -787,13 +796,13 @@ export function Projects() {
                     className={`px-3 py-2 text-xs font-medium transition-all ${
                       projectStatusFilter === status
                         ? status === 'All' 
-                          ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                          ? 'bg-[var(--action-soft)] text-[var(--action)]'
                           : status === 'Active' 
-                            ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
+                            ? 'bg-[var(--action-soft)] text-[var(--action)]'
                             : status === 'Completed'
-                              ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
-                              : 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
-                        : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                              ? 'bg-[var(--success-soft)] text-[var(--success)]'
+                              : 'bg-[var(--warning-soft)] text-[var(--warning)]'
+                        : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                     }`}
                   >
                     {status}
@@ -805,14 +814,14 @@ export function Projects() {
           
           {/* Projects List */}
           {filteredProjects.length === 0 ? (
-            <div className="card rounded-2xl p-12 text-center">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-violet-50 dark:bg-violet-500/20`}>
-                <FolderKanban className={`w-8 h-8 text-violet-500 dark:text-violet-400`} />
+            <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-8 text-center sm:p-10">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-[var(--action-soft)]">
+                <FolderKanban className="h-7 w-7 text-[var(--action)]" />
               </div>
-              <h3 className={`font-semibold text-lg mb-2 text-slate-800 dark:text-white`}>
+              <h3 className={`font-semibold text-lg mb-2 text-[var(--ink)]`}>
                 {projects.length === 0 ? 'No projects yet' : `No ${projectStatusFilter.toLowerCase()} projects`}
               </h3>
-              <p className={`text-sm mb-4 text-slate-500 dark:text-gray-500`}>
+              <p className={`text-sm mb-4 text-[var(--ink-muted)]`}>
                 {projects.length === 0 
                   ? 'Create your first project to start organizing your work'
                   : `Try selecting a different filter to see more projects`}
@@ -820,14 +829,14 @@ export function Projects() {
               {projectStatusFilter !== 'All' && (
                 <button
                   onClick={() => setProjectStatusFilter('All')}
-                  className="text-violet-500 text-sm hover:underline"
+                  className="text-sm font-medium text-[var(--action)] hover:underline"
                 >
                   Show all projects
                 </button>
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-[var(--rule)] border-y border-[var(--rule-strong)]">
               {filteredProjects.map(project => {
                 const projectSubProjects = getSubProjectsByProject(project.id);
                 const progress = getProjectProgress(project.id);
@@ -838,16 +847,14 @@ export function Projects() {
                   <div
                     key={project.id}
                     data-focus-id={project.id}
-                    className={`card rounded-2xl overflow-hidden ${
-                      isSelected ? ('ring-1 ring-violet-300 dark:ring-violet-500/40') : ''
-                    }`}
+                    className={`bg-[var(--surface)] ${isSelected ? 'bg-[var(--selected)] ring-1 ring-inset ring-[var(--action)]' : ''}`}
                   >
                     {/* Project Header */}
                     <div
                       className={`p-4 cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-violet-50/60 dark:bg-violet-500/10'
-                          : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                          ? 'bg-[var(--selected)]'
+                          : 'hover:bg-[var(--state-hover)]'
                       }`}
                       onClick={() => selection.active ? selection.toggle(project.id) : openProjectDetail(project)}
                     >
@@ -862,17 +869,17 @@ export function Projects() {
                             />
                           ) : (
                             <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                              className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                               style={{ backgroundColor: `${project.color}20` }}
                             >
                               <FolderKanban size={20} style={{ color: project.color }} />
                             </div>
                           )}
                           <div className="min-w-0">
-                            <h3 className={`font-semibold truncate text-slate-800 dark:text-white`}>
+                            <h3 className={`font-semibold truncate text-[var(--ink)]`}>
                               {project.title}
                             </h3>
-                            <p className={`text-sm text-slate-500 dark:text-gray-500`}>
+                            <p className={`text-sm text-[var(--ink-muted)]`}>
                               {projectSubProjects.length} sub-project{projectSubProjects.length !== 1 ? 's' : ''}
                             </p>
                           </div>
@@ -881,28 +888,28 @@ export function Projects() {
                         <div className="flex items-center space-x-2 flex-shrink-0">
                           <span className={`text-xs px-2 py-1 rounded-full hidden sm:inline ${
                             project.status === 'Active' 
-                              ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
+                              ? 'bg-[var(--action-soft)] text-[var(--action)]'
                               : project.status === 'Completed'
-                                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                : 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                                ? 'bg-[var(--success-soft)] text-[var(--success)]'
+                                : 'bg-[var(--warning-soft)] text-[var(--warning)]'
                           }`}>
                             {project.status}
                           </span>
                           
                           <div className="hidden sm:flex items-center space-x-2">
-                            <div className={`w-20 h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10`}>
+                            <div className="h-2 w-20 overflow-hidden bg-[var(--surface-inset)]">
                               <div
                                 className="h-full rounded-full transition-all"
                                 style={{ width: `${progress}%`, backgroundColor: project.color }}
                               />
                             </div>
-                            <span className={`text-xs font-medium text-slate-500 dark:text-gray-400`}>
+                            <span className={`text-xs font-medium text-[var(--ink-muted)]`}>
                               {progress}%
                             </span>
                           </div>
 
                           {!selection.active && (
-                            <ChevronRight className={`w-5 h-5 flex-shrink-0 text-slate-400 dark:text-gray-400`} />
+                            <ChevronRight className={`w-5 h-5 flex-shrink-0 text-[var(--ink-muted)]`} />
                           )}
                         </div>
                       </div>
@@ -918,32 +925,32 @@ export function Projects() {
         {/* Detail Panel */}
         {detailView !== 'none' && (
           <div className="flex-1 md:w-2/3 min-w-0">
-            <div className="card rounded-2xl overflow-hidden h-full">
+            <div className="h-full overflow-hidden rounded-md border border-[var(--rule)] bg-[var(--surface)]">
               {/* Detail Header */}
-              <div className={`p-4 border-b border-slate-100 dark:border-white/10`}>
+              <div className="border-b border-[var(--rule-strong)] p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center space-x-3 min-w-0 flex-1">
                     {/* Back button - always show on mobile, only for subproject on desktop */}
                     <button
                       aria-label="Back"
                       onClick={detailView === 'subproject' ? goBackToProject : () => setDetailView('none')}
-                      className={`p-2 rounded-lg transition-colors ${detailView === 'project' ? 'md:hidden' : ''} hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
+                      className={`p-2 rounded-sm transition-colors ${detailView === 'project' ? 'md:hidden' : ''} hover:bg-[var(--surface-subtle)] text-[var(--ink-muted)]`}
                     >
                       <ChevronLeft size={20} />
                     </button>
                     {detailView === 'project' && selectedProject && (
                       <>
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                           style={{ backgroundColor: `${selectedProject.color}20` }}
                         >
                           <FolderKanban size={20} style={{ color: selectedProject.color }} />
                         </div>
                         <div className="min-w-0">
-                          <h2 className={`font-semibold truncate text-slate-800 dark:text-white`}>
+                          <h2 className={`font-semibold truncate text-[var(--ink)]`}>
                             {selectedProject.title}
                           </h2>
-                          <p className={`text-sm text-slate-500 dark:text-gray-500`}>
+                          <p className={`text-sm text-[var(--ink-muted)]`}>
                             {getSubProjectsByProject(selectedProject.id).length} sub-projects
                           </p>
                         </div>
@@ -951,14 +958,14 @@ export function Projects() {
                     )}
                     {detailView === 'subproject' && selectedSubProject && (
                       <>
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-violet-50 dark:bg-violet-500/20`}>
-                          <Layers size={20} className={'text-violet-500 dark:text-violet-400'} />
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-[var(--action-soft)]">
+                          <Layers size={20} className="text-[var(--action)]" />
                         </div>
                         <div className="min-w-0">
-                          <h2 className={`font-semibold truncate text-slate-800 dark:text-white`}>
+                          <h2 className={`font-semibold truncate text-[var(--ink)]`}>
                             {selectedSubProject.title}
                           </h2>
-                          <p className={`text-sm text-slate-500 dark:text-gray-500`}>
+                          <p className={`text-sm text-[var(--ink-muted)]`}>
                             {getTasksBySubProject(selectedSubProject.id).length} tasks
                           </p>
                         </div>
@@ -982,7 +989,7 @@ export function Projects() {
                               closeDetailView();
                             }
                           }}
-                          className={`p-2 rounded-lg transition-colors hover:bg-red-50 text-slate-500 hover:text-red-500 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400`}
+                          className="rounded-md p-2 text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -1003,7 +1010,7 @@ export function Projects() {
                               goBackToProject();
                             }
                           }}
-                          className={`p-2 rounded-lg transition-colors hover:bg-red-50 text-slate-500 hover:text-red-500 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400`}
+                          className="rounded-md p-2 text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -1021,12 +1028,12 @@ export function Projects() {
 
                 {/* Description */}
                 {detailView === 'project' && selectedProject?.description && (
-                  <p className={`mt-3 text-sm text-slate-600 dark:text-gray-400`}>
+                  <p className={`mt-3 text-sm text-[var(--ink-secondary)]`}>
                     {selectedProject.description}
                   </p>
                 )}
                 {detailView === 'subproject' && selectedSubProject?.description && (
-                  <p className={`mt-3 text-sm text-slate-600 dark:text-gray-400`}>
+                  <p className={`mt-3 text-sm text-[var(--ink-secondary)]`}>
                     {selectedSubProject.description}
                   </p>
                 )}
@@ -1039,8 +1046,8 @@ export function Projects() {
                   <div className="space-y-3">
                     {/* Sub-Project Filter */}
                     <div className="flex items-center space-x-2 mb-4">
-                      <span className={`text-sm text-slate-500 dark:text-gray-500`}>Filter:</span>
-                      <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+                      <span className={`text-sm text-[var(--ink-muted)]`}>Filter:</span>
+                      <div className="flex overflow-hidden rounded-md border border-[var(--rule)]">
                         {(['All', 'Backlog', 'In Progress', 'Done'] as const).map(status => (
                           <button
                             key={status}
@@ -1048,9 +1055,9 @@ export function Projects() {
                             className={`px-3 py-2 text-xs font-medium transition-all ${
                               subProjectStatusFilter === status
                                 ? status === 'All' 
-                                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
                                   : getStatusColor(status as WorkItemStatus)
-                                : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                                : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                             }`}
                           >
                             {status}
@@ -1060,7 +1067,7 @@ export function Projects() {
                     </div>
                     
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className={`font-semibold text-slate-800 dark:text-white`}>Sub-Projects</h3>
+                      <h3 className={`font-semibold text-[var(--ink)]`}>Sub-Projects</h3>
                       <div className="flex items-center gap-2">
                         {visibleSubProjectIds.length > 0 && (
                           <SelectButton
@@ -1074,9 +1081,7 @@ export function Projects() {
                             setSubProjectForm({ title: '', description: '', deadline: '', status: 'Backlog' });
                             setIsSubProjectFormOpen(true);
                           }}
-                          className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
-                          }`}
+                          className="flex items-center space-x-1 rounded-md border border-[var(--action)] bg-[var(--action-soft)] px-3 py-2 text-sm text-[var(--action)] transition-colors hover:bg-[var(--selected)]"
                         >
                           <Plus size={14} />
                           <span>Add</span>
@@ -1092,7 +1097,7 @@ export function Projects() {
                       
                       if (allSubProjects.length === 0) {
                         return (
-                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
+                          <div className={`text-center py-8 text-[var(--ink-muted)]`}>
                             <Layers className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No sub-projects yet</p>
                           </div>
@@ -1101,12 +1106,12 @@ export function Projects() {
                       
                       if (filteredSubProjects.length === 0) {
                         return (
-                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
+                          <div className={`text-center py-8 text-[var(--ink-muted)]`}>
                             <Layers className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No {subProjectStatusFilter.toLowerCase()} sub-projects</p>
                             <button 
                               onClick={() => setSubProjectStatusFilter('All')}
-                              className="text-violet-500 text-sm mt-2 hover:underline"
+                              className="mt-2 text-sm font-medium text-[var(--action)] hover:underline"
                             >
                               Show all sub-projects
                             </button>
@@ -1123,10 +1128,10 @@ export function Projects() {
                         return (
                           <div
                             key={subProject.id}
-                            className={`p-4 rounded-xl cursor-pointer transition-all ${
+                            className={`cursor-pointer rounded-md border p-4 transition-colors ${
                               isSubSelected
-                                ? 'bg-violet-50/60 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:ring-violet-500/30'
-                                : 'bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10'
+                                ? 'border-[var(--action)] bg-[var(--selected)]'
+                                : 'border-[var(--rule)] bg-[var(--surface-raised)] hover:bg-[var(--state-hover)]'
                             }`}
                             onClick={() => subProjectSelection.active
                               ? subProjectSelection.toggle(subProject.id)
@@ -1142,15 +1147,15 @@ export function Projects() {
                                     className="w-8 h-8 flex items-center justify-center"
                                   />
                                 ) : (
-                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-violet-100 dark:bg-violet-500/20`}>
-                                    <Layers size={16} className={'text-violet-500 dark:text-violet-400'} />
+                                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-[var(--action-soft)]">
+                                    <Layers size={16} className="text-[var(--action)]" />
                                   </div>
                                 )}
                                 <div className="min-w-0">
-                                  <h4 className={`font-medium truncate text-slate-800 dark:text-white`}>
+                                  <h4 className={`font-medium truncate text-[var(--ink)]`}>
                                     {subProject.title}
                                   </h4>
-                                  <p className={`text-xs text-slate-500 dark:text-gray-500`}>
+                                  <p className={`text-xs text-[var(--ink-muted)]`}>
                                     {tasks.length} task{tasks.length !== 1 ? 's' : ''} • {tasks.filter(t => t.status === 'Done').length} done
                                   </p>
                                 </div>
@@ -1161,16 +1166,16 @@ export function Projects() {
                                   {subProject.status}
                                 </span>
                                 <div className="hidden sm:flex items-center space-x-2">
-                                  <div className={`w-16 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
+                                  <div className="h-1.5 w-16 overflow-hidden bg-[var(--surface-inset)]">
                                     <div
-                                      className="h-full rounded-full bg-violet-500 transition-all"
+                                      className="h-full bg-[var(--warning)] transition-[width]"
                                       style={{ width: `${progress}%` }}
                                     />
                                   </div>
-                                  <span className={`text-xs text-slate-400 dark:text-gray-500`}>{progress}%</span>
+                                  <span className={`text-xs text-[var(--ink-muted)]`}>{progress}%</span>
                                 </div>
                                 {!subProjectSelection.active && (
-                                  <ChevronRight size={16} className={`flex-shrink-0 text-slate-400 dark:text-gray-400`} />
+                                  <ChevronRight size={16} className={`flex-shrink-0 text-[var(--ink-muted)]`} />
                                 )}
                               </div>
                             </div>
@@ -1186,8 +1191,8 @@ export function Projects() {
                   <div className="space-y-3">
                     {/* Task Status Filter */}
                     <div className="flex items-center space-x-2 mb-4">
-                      <span className={`text-sm text-slate-500 dark:text-gray-500`}>Filter:</span>
-                      <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+                      <span className={`text-sm text-[var(--ink-muted)]`}>Filter:</span>
+                      <div className="flex overflow-hidden rounded-md border border-[var(--rule)]">
                         {(['All', 'Backlog', 'In Progress', 'Done'] as const).map(status => (
                           <button
                             key={status}
@@ -1195,9 +1200,9 @@ export function Projects() {
                             className={`px-3 py-2 text-xs font-medium transition-all ${
                               taskStatusFilter === status
                                 ? status === 'All' 
-                                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
                                   : getStatusColor(status as WorkItemStatus)
-                                : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                                : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)]'
                             }`}
                           >
                             {status}
@@ -1207,7 +1212,7 @@ export function Projects() {
                     </div>
 
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className={`font-semibold text-slate-800 dark:text-white`}>Tasks</h3>
+                      <h3 className={`font-semibold text-[var(--ink)]`}>Tasks</h3>
                       <div className="flex items-center gap-2">
                         {visibleProjectTaskIds.length > 0 && (
                           <SelectButton
@@ -1218,12 +1223,10 @@ export function Projects() {
                         <button
                           onClick={() => {
                             setEditingTask(null);
-                            setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', parentTaskId: '' });
+                            setTaskForm({ title: '', description: '', priority: 'Medium', effort: 'Medium', deadline: '', deadlineTime: '', deadlineReminderOffsets: [], parentTaskId: '' });
                             setIsTaskFormOpen(true);
                           }}
-                          className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
-                          }`}
+                          className="flex items-center space-x-1 rounded-md border border-[var(--action)] bg-[var(--action-soft)] px-3 py-2 text-sm text-[var(--action)] transition-colors hover:bg-[var(--selected)]"
                         >
                           <Plus size={14} />
                           <span>Add Task</span>
@@ -1239,7 +1242,7 @@ export function Projects() {
                       
                       if (allTasks.length === 0) {
                         return (
-                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
+                          <div className={`text-center py-8 text-[var(--ink-muted)]`}>
                             <ListTodo className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No tasks yet</p>
                           </div>
@@ -1248,12 +1251,12 @@ export function Projects() {
                       
                       if (filteredTasks.length === 0) {
                         return (
-                          <div className={`text-center py-8 text-slate-400 dark:text-gray-500`}>
+                          <div className={`text-center py-8 text-[var(--ink-muted)]`}>
                             <ListTodo className="w-10 h-10 mx-auto mb-3 opacity-50" />
                             <p>No {taskStatusFilter.toLowerCase()} tasks</p>
                             <button 
                               onClick={() => setTaskStatusFilter('All')}
-                              className="text-violet-500 text-sm mt-2 hover:underline"
+                              className="mt-2 text-sm font-medium text-[var(--action)] hover:underline"
                             >
                               Show all tasks
                             </button>
@@ -1281,34 +1284,34 @@ export function Projects() {
         isOpen={isProjectFormOpen}
         onClose={() => { setIsProjectFormOpen(false); setEditingProject(null); setAiPlan(null); setAiPlanError(null); }}
         title={editingProject ? 'Edit Project' : 'New Project'}
-        icon={<FolderKanban className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
+        icon={<FolderKanban className={`w-5 h-5 text-[var(--action)]`} />}
         footer={
           <div className="flex justify-end space-x-3">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => { setIsProjectFormOpen(false); setEditingProject(null); setAiPlan(null); }}
-              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={editingProject ? handleUpdateProject : (aiPlan ? handleCreateProjectWithPlan : handleCreateProject)}
-              className="btn-primary px-4 py-2 rounded-xl"
             >
               {editingProject ? 'Save' : aiPlan ? 'Create with Plan' : 'Create'}
-            </button>
+            </Button>
           </div>
         }
       >
         {(isFS) => {
           const titleInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Title</label>
               <input
                 type="text"
                 value={projectForm.title}
                 onChange={e => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
-                className={`w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-                  'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
+                className={`w-full px-4 py-3 rounded-md border transition-colors outline-none ${
+                  'bg-[var(--surface)] border-[var(--rule)] text-[var(--ink)] focus:border-[var(--action)]'
                 }`}
                 placeholder="Project name"
                 autoFocus
@@ -1317,7 +1320,7 @@ export function Projects() {
           );
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes & Ideas</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Notes & Ideas</label>
               <TiptapEditor
                 content={projectForm.description}
                 onChange={val => setProjectForm(prev => ({ ...prev, description: val }))}
@@ -1327,13 +1330,16 @@ export function Projects() {
           );
           const colorInput = (
             <div>
-              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Color</label>
+              <label className={`block text-sm font-medium mb-2 text-[var(--ink-secondary)]`}>Color</label>
               <div className="flex flex-wrap gap-2">
                 {PROJECT_COLORS.map(color => (
                   <button
                     key={color}
+                    type="button"
+                    aria-label={`Use project color ${color}`}
+                    aria-pressed={projectForm.color === color}
                     onClick={() => setProjectForm(prev => ({ ...prev, color }))}
-                    className={`w-8 h-8 rounded-lg transition-all ${projectForm.color === color ? 'ring-2 ring-offset-2 ring-violet-500' : ''}`}
+                    className={`h-11 w-11 rounded-[var(--radius-sm)] border border-[var(--rule-strong)] transition-[outline-color] ${projectForm.color === color ? 'outline outline-2 outline-offset-2 outline-[var(--focus)]' : ''}`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
@@ -1342,21 +1348,21 @@ export function Projects() {
           );
           const deadlineInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Deadline (optional)</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Deadline (optional)</label>
               <input
                 type="date"
                 value={projectForm.deadline}
                 onChange={e => setProjectForm(prev => ({ ...prev, deadline: e.target.value }))}
-                className={`w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-                  'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
+                className={`w-full px-4 py-3 rounded-md border transition-colors outline-none ${
+                  'bg-[var(--surface)] border-[var(--rule)] text-[var(--ink)] focus:border-[var(--action)]'
                 }`}
               />
             </div>
           );
           const statusInput = editingProject ? (
             <div>
-              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Status</label>
-              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+              <label className={`block text-sm font-medium mb-2 text-[var(--ink-secondary)]`}>Status</label>
+              <div className={`flex rounded-sm overflow-hidden border border-[var(--rule)]`}>
                 {(['Active', 'Completed', 'On Hold'] as ProjectStatus[]).map(status => (
                   <button
                     key={status}
@@ -1365,11 +1371,11 @@ export function Projects() {
                     className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${
                       projectForm.status === status
                         ? status === 'Active'
-                          ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
+                          ? 'bg-[var(--action-soft)] text-[var(--action)]'
                           : status === 'Completed'
-                            ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
-                            : 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
-                        : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                            ? 'bg-[var(--success-soft)] text-[var(--success)]'
+                            : 'bg-[var(--warning-soft)] text-[var(--warning)]'
+                        : 'text-[var(--ink-muted)] hover:bg-[var(--surface)]'
                     }`}
                   >
                     {status}
@@ -1387,49 +1393,49 @@ export function Projects() {
                     type="button"
                     onClick={handleGenerateAIPlan}
                     disabled={aiPlanLoading || !projectForm.title.trim()}
-                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                       aiPlanLoading || !projectForm.title.trim()
-                        ? 'bg-violet-50 text-violet-400 cursor-not-allowed dark:bg-violet-500/10 dark:text-violet-400/50'
-                        : 'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
+                        ? 'bg-[var(--action-soft)] text-[var(--action)] cursor-not-allowed'
+                        : 'bg-[var(--action-soft)] text-[var(--action)] hover:bg-[var(--selected)]'
                     }`}
                   >
                     {aiPlanLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                     {aiPlanLoading ? 'Generating plan...' : 'AI: Generate Plan'}
                   </button>
-                  {aiPlanError && <p className={`text-xs mt-2 text-red-500 dark:text-red-400`}>{aiPlanError}</p>}
-                  {!projectForm.title.trim() && <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>Enter a project title first</p>}
+                  {aiPlanError && <p className={`text-xs mt-2 text-[var(--danger)]`}>{aiPlanError}</p>}
+                  {!projectForm.title.trim() && <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>Enter a project title first</p>}
                 </div>
               ) : (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`text-sm font-medium text-slate-800 dark:text-white`}>AI-Generated Plan</span>
+                    <span className={`text-sm font-medium text-[var(--ink)]`}>AI-Generated Plan</span>
                     <button
                       type="button"
                       onClick={() => setAiPlan(null)}
-                      className={`text-xs text-slate-500 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400`}
+                      className={`text-xs text-[var(--ink-muted)] hover:text-[var(--ink-secondary)]`}
                     >
                       Discard
                     </button>
                   </div>
-                  <div className={`rounded-xl border max-h-64 overflow-y-auto border-slate-200 dark:border-white/10`}>
+                  <div className={`rounded-md border max-h-64 overflow-y-auto border-[var(--rule)]`}>
                     {aiPlan.map((sp, spIdx) => (
-                      <div key={spIdx} className={`${spIdx > 0 ? `border-t border-slate-100 dark:border-white/5` : ''}`}>
+                      <div key={spIdx} className={`${spIdx > 0 ? `border-t border-[var(--rule)]` : ''}`}>
                         <button
                           type="button"
                           onClick={() => toggleSubProjectSelection(spIdx)}
                           className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
-                            'hover:bg-slate-50 dark:hover:bg-white/5'
+                            'hover:bg-[var(--surface)]'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                             sp.selected
-                              ? 'bg-violet-500 text-white'
-                              : 'border border-slate-300 dark:border-white/20'
+                              ? 'bg-[var(--action)] text-white'
+                              : 'border border-[var(--rule-strong)]'
                           }`}>
                             {sp.selected && <Check size={12} />}
                           </div>
-                          <Layers size={14} className={'text-violet-500 dark:text-violet-400'} />
-                          <span className={`text-sm font-medium text-slate-800 dark:text-white`}>{sp.title}</span>
+                          <Layers size={14} className={'text-[var(--action)]'} />
+                          <span className={`text-sm font-medium text-[var(--ink)]`}>{sp.title}</span>
                         </button>
                         {sp.tasks.map((task, tIdx) => (
                           <button
@@ -1437,30 +1443,30 @@ export function Projects() {
                             type="button"
                             onClick={() => toggleTaskSelection(spIdx, tIdx)}
                             className={`w-full flex items-center gap-2 pl-8 pr-3 py-2 text-left transition-colors ${
-                              'hover:bg-slate-50 dark:hover:bg-white/5'
+                              'hover:bg-[var(--surface)]'
                             }`}
                           >
                             <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
                               task.selected
-                                ? 'bg-violet-400 text-white dark:bg-violet-500/80'
-                                : 'border border-slate-300 dark:border-white/15'
+                                ? 'bg-[var(--action)] text-white'
+                                : 'border border-[var(--rule-strong)]'
                             }`}>
                               {task.selected && <Check size={10} />}
                             </div>
-                            <span className={`text-xs flex-1 text-slate-600 dark:text-gray-300`}>{task.title}</span>
+                            <span className={`text-xs flex-1 text-[var(--ink-secondary)]`}>{task.title}</span>
                             <span className={`text-xs px-2 py-1 rounded ${
                               task.priority === 'High'
-                                ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'
+                                ? 'bg-[var(--danger-soft)] text-[var(--danger)]'
                                 : task.priority === 'Medium'
-                                  ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
-                                  : 'bg-slate-100 text-slate-500 dark:bg-gray-500/20 dark:text-gray-400'
+                                  ? 'bg-[var(--warning-soft)] text-[var(--warning)]'
+                                  : 'bg-[var(--surface-subtle)] text-[var(--ink-muted)]'
                             }`}>{task.priority}</span>
                           </button>
                         ))}
                       </div>
                     ))}
                   </div>
-                  <p className={`text-xs mt-2 text-slate-500 dark:text-gray-500`}>
+                  <p className={`text-xs mt-2 text-[var(--ink-muted)]`}>
                     Uncheck items you don't want. Click "Create with Plan" to create everything.
                   </p>
                 </div>
@@ -1470,13 +1476,13 @@ export function Projects() {
 
           return isFS ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-[var(--rule)]`}>
                 {titleInput}
                 {notesInput}
                 {aiPlanSection}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Project details</h3>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-[var(--surface)]`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-[var(--ink-muted)]`}>Project details</h3>
                 {colorInput}
                 {deadlineInput}
                 {statusInput}
@@ -1500,52 +1506,52 @@ export function Projects() {
         isOpen={isSubProjectFormOpen}
         onClose={() => { setIsSubProjectFormOpen(false); setEditingSubProject(null); }}
         title={editingSubProject ? 'Edit Sub-Project' : 'New Sub-Project'}
-        icon={<Layers className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
+        icon={<Layers className={`w-5 h-5 text-[var(--action)]`} />}
         footer={
           <div className="flex justify-end space-x-3">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => { setIsSubProjectFormOpen(false); setEditingSubProject(null); }}
-              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={editingSubProject ? handleUpdateSubProject : handleCreateSubProject}
-              className="btn-primary px-4 py-2 rounded-xl"
             >
               {editingSubProject ? 'Save' : 'Create'}
-            </button>
+            </Button>
           </div>
         }
       >
         {(isFS) => {
-          const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-            'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
+          const inputCls = `w-full px-4 py-3 rounded-md border transition-colors outline-none ${
+            'bg-[var(--surface)] border-[var(--rule)] text-[var(--ink)] focus:border-[var(--action)]'
           }`;
           const titleInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Title</label>
               <input type="text" value={subProjectForm.title} onChange={e => setSubProjectForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} placeholder="Sub-project name" autoFocus />
             </div>
           );
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Notes</label>
               <TiptapEditor content={subProjectForm.description} onChange={val => setSubProjectForm(prev => ({ ...prev, description: val }))} placeholder="Add notes or a description..." />
             </div>
           );
           const deadlineInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Deadline (optional)</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Deadline (optional)</label>
               <input type="date" value={subProjectForm.deadline} onChange={e => setSubProjectForm(prev => ({ ...prev, deadline: e.target.value }))} className={inputCls} />
             </div>
           );
           const statusInput = editingSubProject ? (
             <div>
-              <label className={`block text-sm font-medium mb-2 text-slate-600 dark:text-gray-400`}>Status</label>
-              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+              <label className={`block text-sm font-medium mb-2 text-[var(--ink-secondary)]`}>Status</label>
+              <div className={`flex rounded-sm overflow-hidden border border-[var(--rule)]`}>
                 {(['Backlog', 'In Progress', 'Done'] as WorkItemStatus[]).map(status => (
-                  <button key={status} type="button" onClick={() => setSubProjectForm(prev => ({ ...prev, status }))} className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${subProjectForm.status === status ? getStatusColor(status) : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>{status}</button>
+                  <button key={status} type="button" onClick={() => setSubProjectForm(prev => ({ ...prev, status }))} className={`flex-1 px-3 py-2 text-sm font-medium transition-all ${subProjectForm.status === status ? getStatusColor(status) : 'text-[var(--ink-muted)] hover:bg-[var(--surface)]'}`}>{status}</button>
                 ))}
               </div>
             </div>
@@ -1553,12 +1559,12 @@ export function Projects() {
 
           return isFS ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-[var(--rule)]`}>
                 {titleInput}
                 {notesInput}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Details</h3>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-[var(--surface)]`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-[var(--ink-muted)]`}>Details</h3>
                 {deadlineInput}
                 {statusInput}
               </div>
@@ -1579,53 +1585,53 @@ export function Projects() {
         isOpen={isTaskFormOpen}
         onClose={() => { setIsTaskFormOpen(false); setEditingTask(null); }}
         title={editingTask ? 'Edit Task' : taskForm.parentTaskId ? 'New Sub-Task' : 'New Task'}
-        icon={<ListTodo className={`w-5 h-5 text-violet-600 dark:text-violet-400`} />}
+        icon={<ListTodo className={`w-5 h-5 text-[var(--action)]`} />}
         footer={
           <div className="flex justify-end space-x-3">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => { setIsTaskFormOpen(false); setEditingTask(null); }}
-              className={`px-4 py-2 rounded-xl transition-colors text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10`}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={editingTask ? handleUpdateTask : handleCreateTask}
-              className="btn-primary px-4 py-2 rounded-xl"
             >
               {editingTask ? 'Save' : 'Create'}
-            </button>
+            </Button>
           </div>
         }
       >
         {(isFS) => {
-          const inputCls = `w-full px-4 py-3 rounded-xl border transition-colors outline-none ${
-            'bg-slate-50 border-slate-200 text-slate-800 focus:border-violet-500 dark:bg-white/5 dark:border-white/10 dark:text-white'
+          const inputCls = `w-full px-4 py-3 rounded-md border transition-colors outline-none ${
+            'bg-[var(--surface)] border-[var(--rule)] text-[var(--ink)] focus:border-[var(--action)]'
           }`;
           const titleInput = (
             <div>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Title</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Title</label>
               <input type="text" value={taskForm.title} onChange={e => setTaskForm(prev => ({ ...prev, title: e.target.value }))} className={inputCls} placeholder="Task title" autoFocus />
             </div>
           );
           const notesInput = (
             <div className={isFS ? 'flex-1' : ''}>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Notes</label>
+              <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Notes</label>
               <TiptapEditor content={taskForm.description} onChange={val => setTaskForm(prev => ({ ...prev, description: val }))} placeholder="Add notes or details..." />
             </div>
           );
           const priorityEffort = (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Priority</label>
-                <select value={taskForm.priority} onChange={e => setTaskForm(prev => ({ ...prev, priority: e.target.value as any }))} className={inputCls}>
+                <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Priority</label>
+                <select value={taskForm.priority} onChange={e => setTaskForm(prev => ({ ...prev, priority: e.target.value as ProjectTask['priority'] }))} className={inputCls}>
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
                 </select>
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Effort</label>
-                <select value={taskForm.effort} onChange={e => setTaskForm(prev => ({ ...prev, effort: e.target.value as any }))} className={inputCls}>
+                <label className={`block text-sm font-medium mb-1 text-[var(--ink-secondary)]`}>Effort</label>
+                <select value={taskForm.effort} onChange={e => setTaskForm(prev => ({ ...prev, effort: e.target.value as ProjectTask['effort'] }))} className={inputCls}>
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
@@ -1634,20 +1640,55 @@ export function Projects() {
             </div>
           );
           const deadlineInput = (
-            <div>
-              <label className={`block text-sm font-medium mb-1 text-slate-600 dark:text-gray-400`}>Deadline (optional)</label>
-              <input type="date" value={taskForm.deadline} onChange={e => setTaskForm(prev => ({ ...prev, deadline: e.target.value }))} className={inputCls} />
+            <div className="space-y-3">
+              <div className={taskForm.deadline ? 'grid grid-cols-2 gap-3' : ''}>
+                <label className={`block text-sm font-medium text-[var(--ink-secondary)]`}>
+                  Deadline (optional)
+                  <input
+                    type="date"
+                    value={taskForm.deadline}
+                    onChange={e => setTaskForm(prev => ({
+                      ...prev,
+                      deadline: e.target.value,
+                      ...(!e.target.value ? { deadlineTime: '', deadlineReminderOffsets: [] } : {}),
+                    }))}
+                    className={`mt-1 ${inputCls}`}
+                  />
+                </label>
+                {taskForm.deadline && (
+                  <label className={`block text-sm font-medium text-[var(--ink-secondary)]`}>
+                    Time
+                    <input
+                      type="time"
+                      value={taskForm.deadlineTime}
+                      onChange={e => setTaskForm(prev => ({
+                        ...prev,
+                        deadlineTime: e.target.value,
+                        ...(!e.target.value ? { deadlineReminderOffsets: [] } : {}),
+                      }))}
+                      className={`mt-1 ${inputCls}`}
+                    />
+                  </label>
+                )}
+              </div>
+              {taskForm.deadline && taskForm.deadlineTime && (
+                <ReminderOffsetPicker
+                  label="Deadline reminders"
+                  value={taskForm.deadlineReminderOffsets}
+                  onChange={deadlineReminderOffsets => setTaskForm(prev => ({ ...prev, deadlineReminderOffsets }))}
+                />
+              )}
             </div>
           );
 
           return isFS ? (
             <div className="flex h-full">
-              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-slate-200 dark:border-white/10`}>
+              <div className={`flex-1 flex flex-col p-8 space-y-4 border-r border-[var(--rule)]`}>
                 {titleInput}
                 {notesInput}
               </div>
-              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-white dark:bg-white/[0.02]`}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400 dark:text-gray-500`}>Task details</h3>
+              <div className={`w-80 flex-shrink-0 p-6 space-y-6 bg-[var(--surface)]`}>
+                <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 text-[var(--ink-muted)]`}>Task details</h3>
                 {priorityEffort}
                 {deadlineInput}
               </div>

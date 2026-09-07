@@ -7,6 +7,8 @@ import {
   TreePine,
 } from 'lucide-react';
 import { isOnboardingComplete, markOnboardingComplete } from '../../lib/onboarding';
+import { ExpandableModal } from './ExpandableModal';
+import { Button } from '../ui';
 
 interface Step {
   icon: typeof CheckSquare;
@@ -89,57 +91,47 @@ export function OnboardingTour() {
   const isLast = step === STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
-      <div
-        key={step}
-        className={`
-          relative mx-4 w-full max-w-sm rounded-2xl border p-6
-          shadow-2xl backdrop-blur-xl
-          animate-fade-in
-          border-violet-200 bg-white/80 text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white
-        `}
-      >
-        <div className={`
-          mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl
-          bg-violet-100 dark:bg-violet-500/20
-        `}>
-          <Icon className="h-7 w-7 text-violet-500" />
+    <ExpandableModal
+      isOpen={visible}
+      onClose={finish}
+      title={title}
+      icon={<Icon className="h-5 w-5" aria-hidden="true" />}
+      maxWidth="max-w-sm"
+      expandable={false}
+      showClose={false}
+      footer={(
+        <div className="flex items-center justify-between gap-3">
+          <Button variant="ghost" onClick={finish}>Skip tour</Button>
+          <Button variant="primary" onClick={next}>
+            {isLast ? 'Start planning' : 'Next'}
+          </Button>
         </div>
-
-        <h2 className="mb-1 text-center text-lg font-bold">{title}</h2>
-        <p className={`mb-6 text-center text-sm text-slate-500 dark:text-gray-400`}>
-          {description}
-        </p>
-
-        <div className="mb-6 flex items-center justify-center gap-2">
-          {STEPS.map((_, i) => (
-            <span
-              key={i}
-              className={`
-                h-2 rounded-full transition-all duration-300
-                ${i === step
-                  ? 'w-6 bg-violet-500'
-                  : 'w-2 bg-slate-300 dark:bg-white/20'}
-              `}
-            />
-          ))}
+      )}
+    >
+      {() => (
+        <div key={step} className="px-5 py-6 sm:px-6">
+          <p className="text-sm leading-relaxed text-[var(--ink-secondary)]">
+            {description}
+          </p>
+          <div className="mt-6 flex items-center justify-between border-t border-[var(--rule)] pt-4">
+            <span className="font-mono text-xs tabular-nums text-[var(--ink-muted)]">
+              STEP {step + 1} / {STEPS.length}
+            </span>
+            <div className="flex items-center gap-1.5" aria-hidden="true">
+              {STEPS.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 transition-[width,background-color] duration-200 ${
+                    i === step
+                      ? 'w-6 bg-[var(--action)]'
+                      : 'w-2 bg-[var(--rule-strong)]'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-
-        <div className="flex items-center justify-between">
-          <button
-            onClick={finish}
-            className={`text-sm font-medium text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors`}
-          >
-            Skip
-          </button>
-          <button
-            onClick={next}
-            className="rounded-lg bg-violet-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-transform hover:scale-105 active:scale-95"
-          >
-            {isLast ? 'Get Started' : 'Next'}
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </ExpandableModal>
   );
 }

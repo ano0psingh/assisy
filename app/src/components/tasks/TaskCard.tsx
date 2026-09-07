@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Task } from '../../types';
-import { useTheme } from '../../context/ThemeContext';
 import { TiptapViewer } from '../common/TiptapViewer';
 import { SelectionCheckbox } from '../common/SelectionControls';
-import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar } from 'lucide-react';
+import { Check, Flame, RotateCcw, CalendarDays, CalendarPlus, CalendarCheck, CalendarMinus, FolderInput, Pencil, Trash2, MoreHorizontal, Clock, SkipForward, Pause, Play, Calendar, Download } from 'lucide-react';
 import { hapticLight, hapticMedium } from '../../lib/haptics';
 import { getRecurringCompletionRate } from '../../context/TaskContext';
 import { getLocalDateString, getScheduledDate } from '../../lib/dateUtils';
 import { IconButton } from '../ui';
+import { downloadIcs } from '../../lib/ics';
 
 interface TaskCardProps {
   task: Task;
@@ -145,8 +145,6 @@ export function TaskCard({
   isSelected = false,
   onSelectToggle,
 }: TaskCardProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -158,7 +156,7 @@ export function TaskCard({
   const daysAgoText = isCarriedForward && !task.isRecurring ? getDaysAgoText(task.createdAt) : '';
 
   /** Resting colour for the metadata row; individual items override it to signal urgency. */
-  const metaCls = 'text-slate-400 dark:text-gray-500';
+  const metaCls = 'text-[var(--ink-muted)]';
 
   const todayStr = getLocalDateString();
   const scheduledDate = getScheduledDate(task);
@@ -281,23 +279,20 @@ export function TaskCard({
     setSwipeOffset(0);
   };
 
-  // The inner card sets both `backdrop-blur-xl` and a transform, and each of those
-  // creates a stacking context — so the dropdown's own z-50 could only ever compete
-  // inside this one card, and the next card in the list painted over it. Lifting the
-  // whole card while its menu is open escapes that. z-30 stays below the header
-  // (z-40) and modals (z-50), so an open menu cannot cover either.
+  // The translated row creates a stacking context, so lift the whole assignment
+  // while its menu is open. z-30 stays below the header and modal layers.
   return (
     <div
-      className={`relative rounded-2xl ${menuOpen ? 'z-30' : ''}`}
+      className={`relative ${menuOpen ? 'z-30' : ''}`}
       data-focus-id={task.id}
     >
       {swipeOffset !== 0 && (
-        <div className="absolute inset-0 flex rounded-2xl overflow-hidden">
-          <div className={`flex-1 flex items-center justify-end pr-4 ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity bg-red-50 dark:bg-red-500/20`}>
-            <Trash2 size={24} className={'text-red-500 dark:text-red-400'} />
+        <div className="absolute inset-0 flex overflow-hidden">
+          <div className={`flex-1 flex items-center justify-end pr-4 ${swipeOffset < -20 ? 'opacity-100' : 'opacity-0'} transition-opacity bg-[var(--danger-soft)]`}>
+            <Trash2 size={24} className="text-[var(--danger)]" />
           </div>
-          <div className={`flex-1 flex items-center justify-start pl-4 ${swipeOffset > 20 ? 'opacity-100' : 'opacity-0'} transition-opacity bg-emerald-50 dark:bg-emerald-500/20`}>
-            <Check size={24} className={'text-emerald-500 dark:text-emerald-400'} />
+          <div className={`flex-1 flex items-center justify-start pl-4 ${swipeOffset > 20 ? 'opacity-100' : 'opacity-0'} transition-opacity bg-[var(--success-soft)]`}>
+            <Check size={24} className="text-[var(--success)]" />
           </div>
         </div>
       )}
@@ -306,15 +301,13 @@ export function TaskCard({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={() => setSwipeOffset(0)}
-        style={{ transform: `translateX(${swipeOffset}px)`, boxShadow: isDark ? 'inset 0 0 0 0.5px rgba(255,255,255,0.05)' : 'inset 0 0 0 0.5px rgba(255,255,255,0.7)' }}
-        className={`group rounded-2xl px-4 py-4 transition-shadow duration-200 ease-spring backdrop-blur-xl ${
-          swipeOffset !== 0 ? 'shadow-lg' : ''
+        style={{ transform: `translateX(${swipeOffset}px)` }}
+        className={`group border-b border-[var(--rule)] bg-[var(--surface-raised)] px-3 py-3 transition-shadow duration-200 ease-spring last:border-b-0 ${
+          swipeOffset !== 0 ? 'shadow-[var(--shadow-medium)]' : ''
         } ${
       isSelected
-        ? 'bg-violet-50/60 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30'
-        : isDark
-          ? `bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.16] ${isCompleted ? 'opacity-60' : ''}`
-          : `bg-white/65 border border-white/70 hover:bg-white/80 ${isCompleted ? 'opacity-60' : ''}`
+        ? 'bg-[var(--state-selected)]'
+        : `hover:bg-[var(--state-hover)] ${isCompleted ? 'opacity-60' : ''}`
     }`}
       >
       <div className="flex items-center justify-between gap-3">
@@ -339,8 +332,8 @@ export function TaskCard({
               <span
                 className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
                   isCompleted
-                    ? 'bg-emerald-500 border-emerald-500'
-                    : 'border-slate-300 hover:border-violet-500 hover:bg-violet-50 dark:border-gray-600 dark:hover:bg-violet-500/20'
+                    ? 'border-[var(--success)] bg-[var(--success)]'
+                    : 'border-[var(--rule-strong)] hover:border-[var(--action)] hover:bg-[var(--action-soft)]'
                 }`}
               >
                 {isCompleted && <Check size={12} className="text-white" strokeWidth={3} />}
@@ -354,17 +347,17 @@ export function TaskCard({
               <button
                 type="button"
                 onClick={() => selectionMode ? onSelectToggle?.(task.id) : onEdit(task)}
-                className={`line-clamp-2 text-left font-medium hover:opacity-80 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 ${
+                className={`line-clamp-2 text-left font-semibold hover:text-[var(--action)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] ${
                   isCompleted
-                    ? 'line-through text-slate-400 dark:text-gray-500'
-                    : 'text-slate-800 dark:text-white'
+                    ? 'line-through text-[var(--ink-muted)]'
+                    : 'text-[var(--ink)]'
                 }`}
                 aria-label={selectionMode ? `Select "${task.title}"` : `Edit "${task.title}"`}
               >
                 {task.title}
               </button>
               {task.priority === 'High' && !isCompleted && (
-                <Flame size={14} className="flex-shrink-0 text-red-500" />
+                <Flame size={14} className="flex-shrink-0 text-[var(--danger)]" />
               )}
             </div>
             {/* Meta indicators — wrap below title.
@@ -383,7 +376,7 @@ export function TaskCard({
                 {task.isRecurring && (
                   <span className={`text-xs whitespace-nowrap ${
                     task.pausedUntil && getLocalDateString() <= task.pausedUntil
-                      ? 'text-amber-500 dark:text-amber-400'
+                      ? 'text-[var(--warning)]'
                       : ''
                   }`}>
                     <Clock size={10} className="inline -mt-1 mr-1" />
@@ -410,7 +403,7 @@ export function TaskCard({
                   <span className="text-xs whitespace-nowrap">
                     {/* The flame keeps the streak recognisable without the text
                         having to compete with the overdue colour. */}
-                    <Flame size={10} className="inline -mt-1 text-orange-500" /> {task.streakCount}d streak
+                    <Flame size={10} className="inline -mt-1 text-[var(--warning)]" /> {task.streakCount}d streak
                   </span>
                 )}
                 {task.isRecurring && task.completionLog && (() => {
@@ -424,7 +417,7 @@ export function TaskCard({
                   );
                 })()}
                 {scheduledDate && (
-                  <span className="text-xs whitespace-nowrap text-blue-600 dark:text-blue-400">
+                  <span className="text-xs whitespace-nowrap text-[var(--info)]">
                     <CalendarCheck size={10} className="inline -mt-1 mr-1" />
                     Planned
                     {task.scheduledTime ? ` ${formatTimeOfDay(task.scheduledTime)}` : ''}
@@ -435,14 +428,14 @@ export function TaskCard({
                   const { text, isOverdue: overdue } = formatDueDate(task.dueDate, task.dueTime);
                   return (
                     <span className={`text-xs whitespace-nowrap ${
-                      overdue ? 'text-red-500 font-medium' : ''
+                      overdue ? 'text-[var(--danger)] font-medium' : ''
                     }`}>
                       <CalendarDays size={10} className="inline -mt-1 mr-1" />{text}
                     </span>
                   );
                 })()}
                 {goalName && (
-                  <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400`}>
+                  <span className="whitespace-nowrap rounded bg-[var(--action-soft)] px-2 py-1 text-xs text-[var(--action)]">
                     {goalName}
                   </span>
                 )}
@@ -458,7 +451,7 @@ export function TaskCard({
             <IconButton
               icon={CalendarCheck}
               onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); }}
-              className="ring-1 bg-emerald-100 text-emerald-600 ring-emerald-200 hover:bg-emerald-100 hover:text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 dark:ring-emerald-500/30 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400"
+              className="ring-1 bg-[var(--success-soft)] text-[var(--success)] ring-[var(--success)] hover:bg-[var(--success-soft)] hover:text-[var(--success)]"
               title="Added to Today (click to remove)"
               label={`Remove "${task.title}" from Today`}
             />
@@ -468,7 +461,7 @@ export function TaskCard({
             <IconButton
               icon={CalendarPlus}
               onClick={(e) => { e.stopPropagation(); onAddToToday(task.id); }}
-              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/20"
+              className="opacity-100 hover:bg-[var(--action-soft)] hover:text-[var(--action)] md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
               title="Add to Today"
               label={`Add "${task.title}" to Today`}
             />
@@ -479,7 +472,7 @@ export function TaskCard({
           <IconButton
             icon={Pencil}
             onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-            className="hidden md:inline-flex md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 hover:text-violet-600 hover:bg-violet-50 dark:hover:text-violet-400 dark:hover:bg-violet-500/20"
+            className="hidden hover:bg-[var(--action-soft)] hover:text-[var(--action)] md:inline-flex md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
             title="Edit"
             label={`Edit "${task.title}"`}
           />
@@ -490,9 +483,7 @@ export function TaskCard({
               type="button"
               icon={MoreHorizontal}
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setMenuOpen(!menuOpen); }}
-              className={`opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
-                menuOpen ? 'opacity-100' : ''
-              }`}
+              className="opacity-100"
               title="More actions"
               label={`More actions for "${task.title}"`}
               aria-expanded={menuOpen}
@@ -500,16 +491,26 @@ export function TaskCard({
             />
 
             {menuOpen && (
-              <div className={`absolute right-0 top-full mt-1 w-44 rounded-xl shadow-lg border z-50 py-1 animate-fade-in ${
-                'bg-white border-slate-200 dark:bg-[#1a1a2e] dark:border-white/10'
-              }`}>
+              <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border border-[var(--rule)] bg-[var(--surface-raised)] py-1 shadow-[var(--shadow-elevated)]">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onEdit(task); setMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
+                >
+                  <Pencil size={14} /> Edit
+                </button>
+                {showTodayActions && !isScheduledToday && !isInTodayView && onAddToToday && !isCompleted && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAddToToday(task.id); setMenuOpen(false); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--action)] transition-colors hover:bg-[var(--action-soft)]"
+                  >
+                    <CalendarPlus size={14} /> Add to Today
+                  </button>
+                )}
                 {/* Remove from Today */}
                 {isInTodayView && canRemoveFromToday && onRemoveFromToday && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onRemoveFromToday(task.id); setMenuOpen(false); }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                      'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                    }`}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                   >
                     <CalendarMinus size={14} /> Remove from Today
                   </button>
@@ -518,9 +519,7 @@ export function TaskCard({
                 {onMoveToProject && !isCompleted && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onMoveToProject(task); setMenuOpen(false); }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                      'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                    }`}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                   >
                     <FolderInput size={14} /> Move to Project
                   </button>
@@ -531,9 +530,7 @@ export function TaskCard({
                     {onSkipOccurrence && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onSkipOccurrence(task.id); setMenuOpen(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                          'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                        }`}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                       >
                         <SkipForward size={14} /> Skip Today
                       </button>
@@ -542,17 +539,13 @@ export function TaskCard({
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); onPauseRecurring(task.id, 7); setMenuOpen(false); }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                            'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                          }`}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                         >
                           <Pause size={14} /> Pause 1 Week
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onPauseRecurring(task.id, 30); setMenuOpen(false); }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                            'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-                          }`}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
                         >
                           <Pause size={14} /> Pause 1 Month
                         </button>
@@ -561,25 +554,33 @@ export function TaskCard({
                     {onResumeRecurring && task.pausedUntil && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onResumeRecurring(task.id); setMenuOpen(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                          'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10'
-                        }`}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--success)] transition-colors hover:bg-[var(--success-soft)]"
                       >
                         <Play size={14} /> Resume Recurring
                       </button>
                     )}
                   </>
                 )}
+                {scheduledDate && task.scheduledTime && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadIcs([task], `assisy-${task.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`);
+                      setMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
+                  >
+                    <Download size={14} /> Export calendar event
+                  </button>
+                )}
                 {/* Divider before destructive action */}
-                {(hasSecondaryActions || (task.isRecurring && !isCompleted)) && (
-                  <div className={`my-1 border-t border-slate-100 dark:border-white/10`} />
+                {(hasSecondaryActions || scheduledDate || (task.isRecurring && !isCompleted)) && (
+                  <div className="my-1 border-t border-[var(--rule)]" />
                 )}
                 {/* Delete */}
                 <button
                   onClick={(e) => { e.stopPropagation(); onDelete(task.id); setMenuOpen(false); }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                    'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
-                  }`}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
                 >
                   <Trash2 size={14} /> Delete
                 </button>
@@ -590,7 +591,7 @@ export function TaskCard({
       </div>
       {/* Description preview */}
       {task.description && task.description.trim() && (
-        <div className={`mt-2 pt-2 border-t border-slate-100 dark:border-white/[0.05]`}>
+        <div className="mt-2 border-t border-[var(--rule)] pt-2">
           <TiptapViewer content={task.description} collapsible maxHeight={60} />
         </div>
       )}
@@ -600,9 +601,7 @@ export function TaskCard({
       {quickAction && (
         <div
           ref={quickActionRef}
-          className={`fixed z-[100] rounded-xl shadow-lg border py-1 animate-fade-in min-w-[160px] ${
-            'bg-white border-slate-200 dark:bg-[#1a1a2e] dark:border-white/10'
-          }`}
+          className="fixed z-[100] min-w-[160px] rounded-lg border border-[var(--rule)] bg-[var(--surface-raised)] py-1 shadow-[var(--shadow-elevated)]"
           style={{
             left: Math.min(quickAction.x, window.innerWidth - 180),
             top: Math.max(8, quickAction.y - 120),
@@ -611,9 +610,7 @@ export function TaskCard({
           {!isCompleted && (
             <button
               onClick={() => { onToggleComplete(task.id); setQuickAction(null); }}
-              className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-                'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10'
-              }`}
+              className="flex w-full items-center gap-3 px-3 py-3 text-sm text-[var(--success)] transition-colors hover:bg-[var(--success-soft)]"
             >
               <Check size={15} /> Complete
             </button>
@@ -621,27 +618,21 @@ export function TaskCard({
           {onScheduleTomorrow && !isCompleted && (
             <button
               onClick={() => { onScheduleTomorrow(task.id); setQuickAction(null); }}
-              className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-                'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10'
-              }`}
+              className="flex w-full items-center gap-3 px-3 py-3 text-sm text-[var(--info)] transition-colors hover:bg-[var(--info-soft)]"
             >
               <Calendar size={15} /> Tomorrow
             </button>
           )}
           <button
             onClick={() => { onEdit(task); setQuickAction(null); }}
-            className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-              'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
-            }`}
+            className="flex w-full items-center gap-3 px-3 py-3 text-sm text-[var(--ink-secondary)] transition-colors hover:bg-[var(--state-hover)]"
           >
             <Pencil size={15} /> Edit
           </button>
-          <div className={`my-1 border-t border-slate-100 dark:border-white/10`} />
+          <div className="my-1 border-t border-[var(--rule)]" />
           <button
             onClick={() => { onDelete(task.id); setQuickAction(null); }}
-            className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
-              'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
-            }`}
+            className="flex w-full items-center gap-3 px-3 py-3 text-sm text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
           >
             <Trash2 size={15} /> Delete
           </button>

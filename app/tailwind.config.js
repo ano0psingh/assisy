@@ -12,39 +12,43 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['ui-sans-serif', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Helvetica', 'Arial', 'sans-serif'],
+        mono: ['ui-monospace', '"SFMono-Regular"', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
-        // Aliased to Tailwind's violet scale, which is the accent the app
-        // actually uses in ~1,000 places. The previous values were a purple
-        // scale that nothing referenced, so `primary-*` and `violet-*` are now
-        // interchangeable and adopting the token is a rename, not a restyle.
+        canvas: 'var(--canvas)',
+        ink: 'var(--ink)',
+        rule: 'var(--rule)',
+        action: 'var(--action)',
+        danger: 'var(--danger)',
+        warning: 'var(--warning)',
+        success: 'var(--success)',
+        // Muted teal action ramp. Existing primary-* classes remain compatible.
         primary: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
+          50: '#eef7f3',
+          100: '#d6e5df',
+          200: '#b7d5cc',
+          300: '#91beb4',
+          400: '#6fa9a1',
+          500: '#43857f',
+          600: '#276d69',
+          700: '#205c59',
+          800: '#184b49',
+          900: '#133d3b',
         },
         surface: {
-          50: '#fafafa',
-          100: '#f5f5f5',
-          200: '#e5e5e5',
-          300: '#d4d4d4',
-          400: '#a3a3a3',
+          50: '#fffdf6',
+          100: '#f8f4e9',
+          200: '#eee9dc',
+          300: '#dfd8c9',
+          400: '#968f81',
         },
       },
       boxShadow: {
-        'soft': '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
-        'medium': '0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
-        'elevated': '0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06)',
-        'glow-violet': '0 0 20px rgba(139, 92, 246, 0.15), 0 0 40px rgba(139, 92, 246, 0.05)',
+        'soft': 'var(--shadow-soft)',
+        'medium': 'var(--shadow-medium)',
+        'elevated': 'var(--shadow-elevated)',
+        'glow-violet': 'var(--shadow-medium)',
       },
       animation: {
         'fade-in': 'fadeIn 0.25s ease-out',

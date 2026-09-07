@@ -1,12 +1,70 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
+import {
+  AI_LIMITS,
+  AIRequestError,
+  generateAI,
+  parseAIRequest,
+} from './server/ai-service'
+import type { AIEnvironment } from './server/ai-config'
 
-function localProxyPlugin(): Plugin {
+function localApiPlugin(aiEnv: AIEnvironment): Plugin {
   return {
-    name: 'local-api-proxy',
+    name: 'local-api',
     configureServer(server) {
+      server.middlewares.use('/api/ai', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-store');
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204;
+          res.end();
+          return;
+        }
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.setHeader('Allow', 'POST, OPTIONS');
+          res.end(JSON.stringify({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }));
+          return;
+        }
+        if (!req.headers['content-type']?.toLowerCase().startsWith('application/json')) {
+          res.statusCode = 415;
+          res.end(JSON.stringify({ error: 'Content-Type must be application/json', code: 'INVALID_CONTENT_TYPE' }));
+          return;
+        }
+
+        try {
+          let body = '';
+          for await (const chunk of req) {
+            body += chunk;
+            if (Buffer.byteLength(body, 'utf8') > AI_LIMITS.maxBodyBytes) {
+              res.statusCode = 413;
+              res.end(JSON.stringify({ error: 'Request body is too large', code: 'PAYLOAD_TOO_LARGE' }));
+              return;
+            }
+          }
+          const payload = parseAIRequest(JSON.parse(body));
+          const result = await generateAI(payload, aiEnv);
+          res.statusCode = 200;
+          res.end(JSON.stringify(result));
+        } catch (error) {
+          if (error instanceof SyntaxError) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Invalid JSON body', code: 'INVALID_JSON' }));
+            return;
+          }
+          if (error instanceof AIRequestError) {
+            res.statusCode = error.status;
+            res.end(JSON.stringify({ error: error.message, code: error.code }));
+            return;
+          }
+          console.error('Local AI endpoint failed without provider details');
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: 'AI service failed', code: 'AI_ERROR' }));
+        }
+      });
+
       server.middlewares.use('/api/proxy', async (req, res) => {
         const url = new URL(req.url ?? '', 'http://localhost').searchParams.get('url');
         if (!url) {
@@ -38,10 +96,19 @@ function localProxyPlugin(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const loadedEnv = loadEnv(mode, process.cwd(), '');
+  const aiEnv: AIEnvironment = {
+    GROQ_API_KEY: process.env.GROQ_API_KEY ?? loadedEnv.GROQ_API_KEY,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? loadedEnv.GEMINI_API_KEY,
+    VITE_GROQ_API_KEY: process.env.VITE_GROQ_API_KEY ?? loadedEnv.VITE_GROQ_API_KEY,
+    VITE_GEMINI_API_KEY: process.env.VITE_GEMINI_API_KEY ?? loadedEnv.VITE_GEMINI_API_KEY,
+  };
+
+  return {
   plugins: [
     react(),
-    localProxyPlugin(),
+    localApiPlugin(aiEnv),
     VitePWA({
       registerType: 'prompt',
       injectRegister: null,
@@ -87,4 +154,5 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
   },
+  };
 })

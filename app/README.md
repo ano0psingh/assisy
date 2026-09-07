@@ -34,6 +34,31 @@ A productivity and task management app built with React, TypeScript, and Vite.
    npm run preview
    ```
 
+## Quality gates
+
+Install the CI browser once, then run the complete local gate:
+
+```bash
+npx playwright install chromium
+npm run test:quality
+```
+
+Useful focused commands are `npm run check:sync-multiclient`,
+`npm run test:e2e`, and `npm run test:a11y`. Browser tests build against the
+local production preview, seed localStorage only, and block API/Supabase calls.
+They cover desktop and mobile Chromium, light/dark core routes, keyboard dialog
+focus, non-drag alternatives, 48px mobile capture, reduced motion/transparency,
+and axe-core WCAG 2.2 AA rules.
+
+The automated axe gate blocks serious and critical violations. Moderate and
+minor findings remain visible in axe results but are not CI-blocking because
+several legacy routes still use low-emphasis secondary text; no individual axe
+rule is disabled.
+
+CI runs `npm run lint:quality` over the sync and browser-gate implementation.
+The existing repository-wide `npm run lint` remains available, but currently
+reports legacy React hook-rule findings outside this quality-gate change.
+
 ## Deploy to Vercel
 
 **Live URL:** [https://app-seven-lilac-81.vercel.app](https://app-seven-lilac-81.vercel.app)

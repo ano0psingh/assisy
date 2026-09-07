@@ -23,15 +23,15 @@ export function PullToRefreshIndicator({
       style={{ height: pullDistance }}
     >
       <div
-        className="flex items-center justify-center w-9 h-9 rounded-full bg-violet-500/15 backdrop-blur-sm border border-violet-500/20 shadow-sm"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--action)] bg-[var(--action-soft)] shadow-[var(--shadow-soft)]"
         style={{ opacity }}
       >
         {isRefreshing ? (
-          <Loader2 size={18} className="animate-spin text-violet-400" />
+          <Loader2 size={18} className="animate-spin text-[var(--action)]" />
         ) : (
           <ArrowDown
             size={18}
-            className={`transition-transform duration-200 ${pastThreshold ? 'text-violet-400' : 'text-gray-400'}`}
+            className={`transition-transform duration-200 ${pastThreshold ? 'text-[var(--action)]' : 'text-[var(--ink-muted)]'}`}
             style={{ transform: `rotate(${rotation}deg)` }}
           />
         )}

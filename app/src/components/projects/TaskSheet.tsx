@@ -39,14 +39,19 @@ const STATUS_ORDER: Record<WorkItemStatus, number> = {
 
 const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
 
+function sortIcon(col: SortKey, sortKey: SortKey, sortDir: SortDir) {
+  if (sortKey !== col) return <ChevronsUpDown size={12} className="opacity-30" />;
+  return sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
+}
+
 function statusIcon(status: WorkItemStatus) {
   switch (status) {
     case 'Done':
-      return <CheckCircle2 size={14} className="text-emerald-500" />;
+      return <CheckCircle2 size={14} className="text-[var(--success)]" />;
     case 'In Progress':
-      return <Play size={10} fill="currentColor" className={'text-blue-500 dark:text-blue-400'} />;
+      return <Play size={10} fill="currentColor" className={'text-[var(--action)]'} />;
     default:
-      return <Circle size={14} className={'text-slate-400 dark:text-gray-400'} />;
+      return <Circle size={14} className={'text-[var(--ink-muted)]'} />;
   }
 }
 
@@ -103,10 +108,10 @@ function MultiSelect({
       <button
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+        className={`flex items-center gap-2 px-3 py-2 rounded-sm border text-xs font-medium transition-colors ${
           hasSelection
-            ? 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-500/20 dark:text-violet-400 dark:border-violet-500/40'
-            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-white/5 dark:text-gray-400 dark:border-white/10 dark:hover:bg-white/10'
+            ? 'bg-[var(--action-soft)] text-[var(--action)] border-[var(--action)]'
+            : 'bg-[var(--surface)] text-[var(--ink-secondary)] border-[var(--rule)] hover:bg-[var(--surface)]'
         }`}
       >
         <Filter size={12} />
@@ -115,8 +120,8 @@ function MultiSelect({
         <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className={`absolute top-full left-0 mt-1 z-50 min-w-[160px] rounded-xl shadow-lg border py-1 animate-fade-in ${
-          'bg-white border-slate-200 dark:bg-[#1a1a2e] dark:border-white/10'
+        <div className={`absolute top-full left-0 mt-1 z-50 min-w-[160px] rounded-md shadow-[0_8px_20px_rgba(0,0,0,0.14)] border py-1 ${
+          'bg-[var(--surface)] border-[var(--rule)] dark:bg-[#1a1a2e]'
         }`}>
           {options.map(opt => {
             const active = selected.has(opt);
@@ -127,14 +132,14 @@ function MultiSelect({
                 onClick={() => onToggle(opt)}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
                   active
-                    ? 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400'
-                    : 'text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5'
+                    ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                    : 'text-[var(--ink-secondary)] hover:bg-[var(--surface)]'
                 }`}
               >
                 <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${
                   active
-                    ? 'bg-violet-500 border-violet-500'
-                    : 'border-slate-300 dark:border-gray-600'
+                    ? 'bg-[var(--action)] border-[var(--action)]'
+                    : 'border-[var(--rule-strong)]'
                 }`}>
                   {active && <CheckCircle2 size={10} className="text-white" />}
                 </div>
@@ -144,12 +149,12 @@ function MultiSelect({
           })}
           {hasSelection && (
             <>
-              <div className={`my-1 border-t border-slate-100 dark:border-white/10`} />
+              <div className={`my-1 border-t border-[var(--rule)]`} />
               <button
                 type="button"
                 onClick={() => { onClear(); setOpen(false); }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
-                  'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/5'
+                  'text-[var(--ink-muted)] hover:text-[var(--ink-secondary)] hover:bg-[var(--surface)]'
                 }`}
               >
                 <X size={12} /> Clear selection
@@ -183,7 +188,8 @@ export function TaskSheet() {
   const toggleSetItem = <T extends string>(setter: React.Dispatch<React.SetStateAction<Set<T>>>) => (val: T) => {
     setter(prev => {
       const next = new Set(prev);
-      next.has(val) ? next.delete(val) : next.add(val);
+      if (next.has(val)) next.delete(val);
+      else next.add(val);
       return next;
     });
   };
@@ -295,30 +301,25 @@ export function TaskSheet() {
     setPriorityFilter(new Set());
   };
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <ChevronsUpDown size={12} className="opacity-30" />;
-    return sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
-  };
-
   const thCls = `px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none whitespace-nowrap transition-colors ${
-    'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
+    'text-[var(--ink-muted)] hover:text-[var(--ink)]'
   }`;
 
-  const tdCls = `px-3 py-3 text-sm whitespace-nowrap text-slate-700 dark:text-gray-300`;
+  const tdCls = `px-3 py-3 text-sm whitespace-nowrap text-[var(--ink-secondary)]`;
 
   return (
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 flex-1 min-w-[180px] max-w-sm ${
-          'bg-white border-slate-200 dark:bg-white/5 dark:border-white/10'
+        <div className={`flex items-center gap-2 rounded-sm border px-3 py-2 flex-1 min-w-[180px] max-w-sm ${
+          'bg-[var(--surface)] border-[var(--rule)]'
         }`}>
-          <Search size={14} className={'text-slate-400 dark:text-gray-500'} />
+          <Search size={14} className={'text-[var(--ink-muted)]'} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search tasks..."
-            className={`bg-transparent outline-none text-sm flex-1 text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-500`}
+            className={`bg-transparent outline-none text-sm flex-1 text-[var(--ink)] placeholder:text-[var(--ink-muted)]`}
           />
         </div>
 
@@ -342,8 +343,8 @@ export function TaskSheet() {
         <select
           value={projectFilter}
           onChange={e => setProjectFilter(e.target.value)}
-          className={`px-3 py-2 rounded-lg border text-xs font-medium outline-none ${
-            'bg-white border-slate-200 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-gray-300'
+          className={`px-3 py-2 rounded-sm border text-xs font-medium outline-none ${
+            'bg-[var(--surface)] border-[var(--rule)] text-[var(--ink-secondary)]'
           }`}
         >
           <option value="">All projects</option>
@@ -356,66 +357,66 @@ export function TaskSheet() {
           <button
             type="button"
             onClick={clearFilters}
-            className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
-              'text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10'
+            className={`px-2 py-1 rounded-sm text-xs font-medium flex items-center gap-1 transition-colors ${
+              'text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-subtle)] dark:hover:text-white'
             }`}
           >
             <X size={12} /> Clear all
           </button>
         )}
 
-        <span className={`ml-auto text-xs tabular-nums text-slate-400 dark:text-gray-500`}>
+        <span className={`ml-auto text-xs tabular-nums text-[var(--ink-muted)]`}>
           {sorted.length} task{sorted.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Table */}
-      <div className={`rounded-xl border overflow-hidden border-slate-200 dark:border-white/10`}>
+      <div className={`rounded-md border overflow-hidden border-[var(--rule)]`}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px]">
             <thead>
-              <tr className={'bg-slate-50 dark:bg-white/[0.04]'}>
+              <tr className={'bg-[var(--surface)]'}>
                 {/* Today toggle header */}
                 <th className={`${thCls} w-10 text-center`}>
-                  <span title="Add to Today">📌</span>
+                  <CalendarPlus size={14} className="mx-auto text-[var(--action)]" aria-label="Add to Today" />
                 </th>
-                <th className={`${thCls} sticky left-0 z-10 bg-slate-50 dark:bg-[#13131b]`} onClick={() => handleSort('title')}>
-                  <span className="inline-flex items-center gap-1">Title <SortIcon col="title" /></span>
+                <th className={`${thCls} sticky left-0 z-10 bg-[var(--surface)] dark:bg-[#13131b]`} onClick={() => handleSort('title')}>
+                  <span className="inline-flex items-center gap-1">Title {sortIcon('title', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('status')}>
-                  <span className="inline-flex items-center gap-1">Status <SortIcon col="status" /></span>
+                  <span className="inline-flex items-center gap-1">Status {sortIcon('status', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('project')}>
-                  <span className="inline-flex items-center gap-1">Project <SortIcon col="project" /></span>
+                  <span className="inline-flex items-center gap-1">Project {sortIcon('project', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('subProject')}>
-                  <span className="inline-flex items-center gap-1">Sub-project <SortIcon col="subProject" /></span>
+                  <span className="inline-flex items-center gap-1">Sub-project {sortIcon('subProject', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('priority')}>
-                  <span className="inline-flex items-center gap-1">Priority <SortIcon col="priority" /></span>
+                  <span className="inline-flex items-center gap-1">Priority {sortIcon('priority', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('effort')}>
-                  <span className="inline-flex items-center gap-1">Effort <SortIcon col="effort" /></span>
+                  <span className="inline-flex items-center gap-1">Effort {sortIcon('effort', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('deadline')}>
-                  <span className="inline-flex items-center gap-1">Deadline <SortIcon col="deadline" /></span>
+                  <span className="inline-flex items-center gap-1">Deadline {sortIcon('deadline', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls}>Tags</th>
                 <th className={thCls} onClick={() => handleSort('timeSpent')}>
-                  <span className="inline-flex items-center gap-1">Time <SortIcon col="timeSpent" /></span>
+                  <span className="inline-flex items-center gap-1">Time {sortIcon('timeSpent', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('createdAt')}>
-                  <span className="inline-flex items-center gap-1">Created <SortIcon col="createdAt" /></span>
+                  <span className="inline-flex items-center gap-1">Created {sortIcon('createdAt', sortKey, sortDir)}</span>
                 </th>
                 <th className={thCls} onClick={() => handleSort('completedAt')}>
-                  <span className="inline-flex items-center gap-1">Completed <SortIcon col="completedAt" /></span>
+                  <span className="inline-flex items-center gap-1">Completed {sortIcon('completedAt', sortKey, sortDir)}</span>
                 </th>
               </tr>
             </thead>
-            <tbody className={`divide-y divide-slate-100 dark:divide-white/5`}>
+            <tbody className={`divide-y divide-[var(--rule)]`}>
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className={`px-4 py-12 text-center text-sm text-slate-400 dark:text-gray-500`}>
+                  <td colSpan={12} className={`px-4 py-12 text-center text-sm text-[var(--ink-muted)]`}>
                     {hasActiveFilters ? 'No tasks match the current filters.' : 'No project tasks yet.'}
                   </td>
                 </tr>
@@ -423,16 +424,16 @@ export function TaskSheet() {
                 sorted.map(({ task, projectName, subProjectName }) => {
                   const priorityColor =
                     task.priority === 'High'
-                      ? 'text-red-600 dark:text-red-400'
+                      ? 'text-[var(--danger)]'
                       : task.priority === 'Medium'
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-slate-500 dark:text-gray-400';
+                        ? 'text-[var(--warning)]'
+                        : 'text-[var(--ink-muted)]';
                   const effortColor =
                     task.effort === 'High'
-                      ? 'text-orange-600 dark:text-orange-400'
+                      ? 'text-[var(--warning)]'
                       : task.effort === 'Medium'
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-slate-500 dark:text-gray-400';
+                        ? 'text-[var(--warning)]'
+                        : 'text-[var(--ink-muted)]';
 
                   const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'Done';
                   const isToday = task.isFocusedToday && task.focusedDate === todayStr;
@@ -442,17 +443,17 @@ export function TaskSheet() {
                       key={task.id}
                       className={`transition-colors ${
                         task.status === 'Done' ? 'opacity-60' : ''
-                      } hover:bg-slate-50/80 dark:hover:bg-white/[0.03]`}
+                      } hover:bg-[var(--surface)]`}
                     >
                       {/* Today toggle */}
                       <td className={`${tdCls} text-center`}>
                         <button
                           type="button"
                           onClick={() => toggleToday(task)}
-                          className={`p-1 rounded-lg transition-colors ${
+                          className={`p-1 rounded-sm transition-colors ${
                             isToday
-                              ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
-                              : 'text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10'
+                              ? 'bg-[var(--success-soft)] text-[var(--success)]'
+                              : 'text-[var(--ink-disabled)] hover:text-[var(--success)] hover:bg-[var(--success-soft)]'
                           }`}
                           title={isToday ? 'Remove from Today' : 'Add to Today'}
                         >
@@ -462,7 +463,7 @@ export function TaskSheet() {
 
                       {/* Title — sticky */}
                       <td className={`${tdCls} sticky left-0 z-10 font-medium max-w-[260px] truncate ${
-                        'bg-white dark:bg-[#111117]'
+                        'bg-[var(--surface)] dark:bg-[#111117]'
                       } ${task.status === 'Done' ? 'line-through' : ''}`}>
                         {task.title}
                       </td>
@@ -472,12 +473,12 @@ export function TaskSheet() {
                         <button
                           type="button"
                           onClick={() => cycleStatus(task)}
-                          className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                          className={`inline-flex items-center gap-2 px-2 py-1 rounded-sm text-xs font-medium transition-colors ${
                             task.status === 'Done'
-                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                              ? 'bg-[var(--success-soft)] text-[var(--success)]'
                               : task.status === 'In Progress'
-                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
-                                : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-gray-400'
+                                ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                                : 'bg-[var(--surface-subtle)] text-[var(--ink-secondary)]'
                           }`}
                         >
                           {statusIcon(task.status)}
@@ -498,7 +499,7 @@ export function TaskSheet() {
                       <td className={`${tdCls} ${effortColor}`}>{task.effort}</td>
 
                       {/* Deadline */}
-                      <td className={`${tdCls} ${isOverdue ? 'text-red-500 font-medium' : ''}`}>
+                      <td className={`${tdCls} ${isOverdue ? 'text-[var(--danger)] font-medium' : ''}`}>
                         {fmtDate(task.deadline)}
                       </td>
 
@@ -510,20 +511,20 @@ export function TaskSheet() {
                               <span
                                 key={tag}
                                 className={`px-2 py-1 rounded text-xs font-medium ${
-                                  'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400'
+                                  'bg-[var(--surface-subtle)] text-[var(--ink-muted)]'
                                 }`}
                               >
                                 {tag}
                               </span>
                             ))}
                             {task.tags.length > 3 && (
-                              <span className={`text-xs text-slate-400 dark:text-gray-500`}>
+                              <span className={`text-xs text-[var(--ink-muted)]`}>
                                 +{task.tags.length - 3}
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className={'text-slate-300 dark:text-gray-400'}>—</span>
+                          <span className={'text-[var(--ink-disabled)]'}>—</span>
                         )}
                       </td>
 
@@ -536,9 +537,9 @@ export function TaskSheet() {
                       {/* Completed At */}
                       <td className={tdCls}>
                         {task.completedAt ? (
-                          <span className={'text-emerald-600 dark:text-emerald-400'}>{fmtDate(task.completedAt)}</span>
+                          <span className={'text-[var(--success)]'}>{fmtDate(task.completedAt)}</span>
                         ) : (
-                          <span className={'text-slate-300 dark:text-gray-400'}>—</span>
+                          <span className={'text-[var(--ink-disabled)]'}>—</span>
                         )}
                       </td>
                     </tr>

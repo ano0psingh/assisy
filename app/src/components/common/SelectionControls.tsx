@@ -17,10 +17,10 @@ export function SelectionCheckbox({ selected, onToggle, label, className = '' }:
       aria-checked={selected}
       aria-label={label ?? (selected ? 'Deselect' : 'Select')}
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
-      className={`flex-shrink-0 transition-colors ${
+      className={`flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center transition-colors ${
         selected
-          ? 'text-violet-600 dark:text-violet-400'
-          : 'text-slate-300 hover:text-slate-500 dark:text-gray-400 dark:hover:text-gray-200'
+          ? 'text-[var(--action)]'
+          : 'text-[var(--rule-strong)] hover:text-[var(--ink-secondary)]'
       } ${className}`}
     >
       {selected ? <CheckSquare2 size={16} /> : <Square size={16} />}
@@ -40,8 +40,8 @@ export function SelectionIndicator({ selected, className = '' }: { selected: boo
       aria-hidden="true"
       className={`flex-shrink-0 inline-flex items-center justify-center transition-colors ${
         selected
-          ? 'text-violet-600 dark:text-violet-400'
-          : 'text-slate-300 dark:text-gray-400'
+          ? 'text-[var(--action)]'
+          : 'text-[var(--rule-strong)]'
       } ${className}`}
     >
       {selected ? <CheckSquare2 size={16} /> : <Square size={16} />}
@@ -64,10 +64,10 @@ export function SelectButton({ active, onClick, disabled }: SelectButtonProps) {
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+      className={`flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
         active
-          ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400'
-          : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
+          ? 'border-[var(--action)] bg-[var(--action-soft)] text-[var(--action)]'
+          : 'border-[var(--rule)] bg-[var(--surface-raised)] text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
       }`}
     >
       <ListChecks size={15} />

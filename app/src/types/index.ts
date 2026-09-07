@@ -11,7 +11,33 @@ export type TaskCategory = 'Personal' | 'Financial' | 'Professional';
 export type Priority = 'High' | 'Low';
 export type Effort = 'High' | 'Low';
 export type TaskStatus = 'Pending' | 'Completed' | 'Carried Forward';
-export type RecurrencePattern = 'daily' | 'weekly' | 'specific_days' | 'monthly';
+export type RecurrencePattern = 'daily' | 'weekly' | 'specific_days' | 'monthly' | 'yearly';
+/** Minutes before a scheduled start or timed deadline. Zero means "at time". */
+export type ReminderOffsetMinutes = 0 | 10 | 30 | 60 | 1440;
+
+export interface RecurrenceOverride {
+  /** The original local occurrence date. */
+  date: string;
+  action: 'skip' | 'reschedule';
+  /** Required for reschedules; another local YYYY-MM-DD. */
+  rescheduledDate?: string;
+}
+
+/**
+ * Versioned recurrence data. Legacy recurrencePattern/specificDays/monthDay
+ * remain supported so existing persisted JSON continues to work.
+ */
+export interface RecurrenceRule {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval?: number;
+  weekdays?: number[];
+  startDate?: string;
+  endDate?: string;
+  count?: number;
+  monthDay?: number;
+  monthEnd?: boolean;
+  overrides?: RecurrenceOverride[];
+}
 
 export interface Task {
   id: string;
@@ -24,6 +50,7 @@ export interface Task {
   goalId?: string;
   isRecurring: boolean;
   recurrencePattern?: RecurrencePattern;
+  recurrenceRule?: RecurrenceRule;
   specificDays?: number[];
   monthDay?: number;
   createdAt: Date;
@@ -35,10 +62,12 @@ export interface Task {
    * counting as overdue once the whole day has passed rather than at an hour.
    */
   dueTime?: string;
+  dueReminderOffsets?: ReminderOffsetMinutes[];
   inbox?: boolean;
   scheduledDate?: string; // Local YYYY-MM-DD; distinct from the due-date deadline
   scheduledTime?: string; // Local HH:MM
   durationMinutes?: number;
+  scheduledReminderOffsets?: ReminderOffsetMinutes[];
   xpValue: number;
   isFocusedToday?: boolean;
   focusedDate?: string; // YYYY-MM-DD
@@ -52,6 +81,15 @@ export interface Task {
 export type GoalStatus = 'Active' | 'Completed' | 'Archived';
 
 export type GoalTheme = 'forest' | 'mountain' | 'ocean' | 'space' | 'garden';
+export type GoalPriority = 'High' | 'Medium' | 'Low';
+export type GoalHealthStatus = 'on-track' | 'at-risk' | 'paused';
+
+export interface GoalHealthCheckIn {
+  id: string;
+  status: GoalHealthStatus;
+  note?: string;
+  createdAt: Date;
+}
 
 export interface GoalMilestone {
   id: string;
@@ -81,6 +119,11 @@ export interface Goal {
   xpToNextLevel: number;
   milestones: GoalMilestone[];
   theme?: GoalTheme;
+  /** Local YYYY-MM-DD target date. */
+  targetDate?: string;
+  priority: GoalPriority;
+  nextAction?: string;
+  healthCheckIns: GoalHealthCheckIn[];
 }
 
 export interface DailyLog {
@@ -175,12 +218,15 @@ export interface ProjectTask {
   scheduledDate?: string; // Local YYYY-MM-DD; distinct from the deadline
   scheduledTime?: string; // Local HH:MM
   durationMinutes?: number;
+  scheduledReminderOffsets?: ReminderOffsetMinutes[];
   isFocusedToday?: boolean; // For daily dashboard integration
   focusedDate?: string; // Date when focused (YYYY-MM-DD)
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
   deadline?: Date;
+  deadlineTime?: string;
+  deadlineReminderOffsets?: ReminderOffsetMinutes[];
 }
 
 // ============ Gamification Types ============

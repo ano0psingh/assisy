@@ -1,10 +1,9 @@
 /**
  * The shared UI primitives.
  *
- * Dark styling is expressed with Tailwind's `dark:` variant inside each
- * primitive, so consumers do not read the theme or branch on it. Prefer these
- * over hand-built elements; if something here does not fit, extend the
- * primitive rather than styling around it.
+ * Theme styling resolves through semantic classes and CSS variables, so
+ * consumers do not read or branch on the theme. Prefer these over hand-built
+ * elements; extend a primitive when the shared vocabulary needs to grow.
  */
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { IconButton, type IconButtonProps, type IconButtonSize, type IconButtonTone } from './IconButton';

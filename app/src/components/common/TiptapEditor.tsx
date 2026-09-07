@@ -65,23 +65,19 @@ export function TiptapEditor({
   if (!editor) return null;
 
   const btnCls = (active: boolean) =>
-    `p-2 sm:p-2 rounded-lg transition-colors ${
+    `flex min-h-10 min-w-10 items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
       active
-        ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
-        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/5'
+        ? 'bg-[var(--action-soft)] text-[var(--action)]'
+        : 'text-[var(--ink-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--ink)]'
     }`;
 
   const iconSize = 16;
 
   return (
-    <div className={`tiptap-editor rounded-xl border transition-colors ${
-      'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.03]'
-    } ${className}`}>
+    <div className={`tiptap-editor overflow-hidden rounded-[var(--radius-md)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] transition-colors ${className}`}>
       {/* Toolbar — one scrolling row rather than wrapping. Wrapping cost a second
           36px row in any narrow dialog, and every button stays reachable this way. */}
-      <div className={`flex items-center gap-1 px-2 py-2 border-b flex-nowrap overflow-x-auto ${
-        'border-slate-100 dark:border-white/10'
-      }`}>
+      <div className="flex flex-nowrap items-center gap-1 overflow-x-auto border-b border-[var(--rule)] bg-[var(--surface)] px-2 py-2">
         <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btnCls(editor.isActive('bold'))} title="Bold"
  aria-label="Bold">
           <Bold size={iconSize} />
@@ -95,7 +91,7 @@ export function TiptapEditor({
           <UnderlineIcon size={iconSize} />
         </button>
 
-        <div className={`w-px h-4 mx-1 bg-slate-200 dark:bg-white/10`} />
+        <div className="mx-1 h-4 w-px bg-[var(--rule)]" />
 
         <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={btnCls(editor.isActive('heading', { level: 2 }))} title="Heading">
           <Heading2 size={iconSize} />
@@ -113,7 +109,7 @@ export function TiptapEditor({
           <CheckSquare size={iconSize} />
         </button>
 
-        <div className={`w-px h-4 mx-1 bg-slate-200 dark:bg-white/10`} />
+        <div className="mx-1 h-4 w-px bg-[var(--rule)]" />
 
         <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={btnCls(editor.isActive('codeBlock'))} title="Code Block"
  aria-label="Code Block">
@@ -127,7 +123,7 @@ export function TiptapEditor({
         {/* A `flex-1` spacer used to push these two to the right, which in a narrow
             dialog left no room for them and wrapped them onto a row of their own. A
             divider keeps them read as a separate group without costing that row. */}
-        <div className={`w-px h-4 mx-1 bg-slate-200 dark:bg-white/10`} />
+        <div className="mx-1 h-4 w-px bg-[var(--rule)]" />
 
         <button type="button" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} className={`${btnCls(false)} disabled:opacity-30`} title="Undo"
  aria-label="Undo">

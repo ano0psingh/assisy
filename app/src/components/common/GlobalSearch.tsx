@@ -38,7 +38,13 @@ export function GlobalSearch() {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setOpen(prev => !prev);
+        if (open) {
+          setOpen(false);
+        } else {
+          setQuery('');
+          setSelectedIndex(0);
+          setOpen(true);
+        }
       }
       if (e.key === 'Escape' && open) {
         setOpen(false);
@@ -50,8 +56,6 @@ export function GlobalSearch() {
 
   useEffect(() => {
     if (open) {
-      setQuery('');
-      setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -84,7 +88,7 @@ export function GlobalSearch() {
           title: g.title,
           subtitle: `${g.category} · ${g.status}`,
           status: g.status,
-          route: '/goals',
+          route: '/plan?view=goals',
           focusId: g.id,
         });
       }
@@ -97,7 +101,7 @@ export function GlobalSearch() {
           type: 'habit',
           title: h.name,
           subtitle: `${h.category} · ${h.streakCount}d streak`,
-          route: '/habits',
+          route: '/plan?view=habits',
           focusId: h.id,
         });
       }
@@ -111,7 +115,7 @@ export function GlobalSearch() {
           title: p.title,
           subtitle: p.status,
           status: p.status,
-          route: '/projects',
+          route: '/plan?view=projects',
           focusId: p.id,
         });
       }
@@ -128,7 +132,7 @@ export function GlobalSearch() {
           title: pt.title,
           subtitle: subtitle || 'Project task',
           status: pt.status,
-          route: '/projects',
+          route: '/plan?view=projects',
           focusId: pt.id,
         });
       }
@@ -152,14 +156,12 @@ export function GlobalSearch() {
     return items.slice(0, 14);
   }, [query, tasks, goals, habits, projects, projectTasks, getProject, getSubProject, articles]);
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
     // The destination page reads `focus` and scrolls the item into view.
-    navigate(`${result.route}?focus=${encodeURIComponent(result.focusId)}`);
+    const destination = new URL(result.route, window.location.origin);
+    destination.searchParams.set('focus', result.focusId);
+    navigate(`${destination.pathname}${destination.search}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -188,7 +190,7 @@ export function GlobalSearch() {
   const typeColor = (type: SearchResult['type']) => {
     switch (type) {
       case 'task': return 'text-blue-500 dark:text-blue-400';
-      case 'goal': return 'text-violet-500 dark:text-violet-400';
+      case 'goal': return 'text-[var(--action)]';
       case 'habit': return 'text-orange-500 dark:text-orange-400';
       case 'project': return 'text-emerald-500 dark:text-emerald-400';
       case 'project_task': return 'text-teal-500 dark:text-teal-400';
@@ -200,7 +202,7 @@ export function GlobalSearch() {
 
   return (
     <div className="fixed inset-0 z-[60]">
-      <div className={`absolute inset-0 bg-slate-900/20 dark:bg-black/60 backdrop-blur-sm`} onClick={() => setOpen(false)} />
+      <div className="absolute inset-0 bg-[var(--surface-overlay)]" onClick={() => setOpen(false)} />
       <div className="relative flex justify-center pt-[15vh]">
         <div
           ref={dialogRef}
@@ -208,17 +210,18 @@ export function GlobalSearch() {
           aria-modal="true"
           aria-label="Search everything"
           tabIndex={-1}
-          className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-slide-down outline-none ${
-            'bg-white border border-slate-200 dark:bg-[#12121a] dark:border-white/10'
-          }`}
+          className="w-full max-w-lg overflow-hidden rounded-[var(--radius-lg)] border border-[var(--rule-strong)] bg-[var(--surface-raised)] text-[var(--ink)] shadow-[var(--shadow-elevated)] outline-none"
         >
           {/* Search input */}
-          <div className={`flex items-center gap-3 px-4 py-4 border-b border-slate-100 dark:border-white/10`}>
-            <Search size={18} className={'text-slate-400 dark:text-gray-500'} />
+          <div className="flex items-center gap-3 border-b border-[var(--rule)] px-4 py-4">
+            <Search size={18} className="text-[var(--ink-muted)]" />
             <input
               ref={inputRef}
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={e => {
+                setQuery(e.target.value);
+                setSelectedIndex(0);
+              }}
               onKeyDown={handleKeyDown}
               placeholder="Search tasks, goals, habits, projects, feed..."
               aria-label="Search everything"
@@ -227,9 +230,9 @@ export function GlobalSearch() {
               aria-controls="global-search-results"
               aria-activedescendant={results[selectedIndex] ? `global-search-option-${selectedIndex}` : undefined}
               autoComplete="off"
-              className={`flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder-slate-400 dark:text-white dark:placeholder-gray-500`}
+              className="flex-1 bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted)]"
             />
-            <kbd className={`text-xs px-2 py-1 rounded bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500`}>ESC</kbd>
+            <kbd className="rounded bg-[var(--surface-subtle)] px-2 py-1 font-mono text-xs text-[var(--ink-muted)]">ESC</kbd>
           </div>
 
           {/* Screen readers get no signal from a list that silently repopulates. */}
@@ -244,7 +247,7 @@ export function GlobalSearch() {
           {/* Results */}
           <div className="max-h-80 overflow-y-auto" id="global-search-results" role="listbox" aria-label="Search results">
             {query && results.length === 0 && (
-              <div className={`px-4 py-8 text-center text-sm text-slate-500 dark:text-gray-500`}>
+              <div className="px-4 py-8 text-center text-sm text-[var(--ink-muted)]">
                 No results for "{query}"
               </div>
             )}
@@ -258,31 +261,31 @@ export function GlobalSearch() {
                 onMouseEnter={() => setSelectedIndex(idx)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                   idx === selectedIndex
-                    ? 'bg-violet-50 dark:bg-violet-500/10'
-                    : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                    ? 'bg-[var(--state-selected)]'
+                    : 'hover:bg-[var(--state-hover)]'
                 }`}
               >
                 <span className={typeColor(result.type)}>{typeIcon(result.type)}</span>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{result.title}</p>
+                  <p className="truncate text-sm font-medium text-[var(--ink)]">{result.title}</p>
                   {result.subtitle && (
-                    <p className={`text-xs truncate text-slate-500 dark:text-gray-500`}>{result.subtitle}</p>
+                    <p className="truncate text-xs text-[var(--ink-muted)]">{result.subtitle}</p>
                   )}
                 </div>
-                <span className={`text-xs uppercase tracking-wider text-slate-400 dark:text-gray-400`}>
+                <span className="text-xs uppercase tracking-wider text-[var(--ink-muted)]">
                   {result.type === 'project_task' ? 'Task' : result.type === 'feed' ? 'Article' : result.type}
                 </span>
-                {idx === selectedIndex && <ArrowRight size={12} className={'text-violet-500 dark:text-violet-400'} />}
+                {idx === selectedIndex && <ArrowRight size={12} className="text-[var(--action)]" />}
               </button>
             ))}
           </div>
 
           {/* Footer hint */}
           {!query && (
-            <div className={`px-4 py-3 border-t flex items-center gap-4 text-xs border-slate-100 text-slate-400 dark:border-white/10 dark:text-gray-400`}>
-              <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>↑↓</kbd> navigate</span>
-              <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>↵</kbd> select</span>
-              <span><kbd className={`px-1 py-1 rounded bg-slate-100 dark:bg-white/5`}>esc</kbd> close</span>
+            <div className="flex items-center gap-4 border-t border-[var(--rule)] px-4 py-3 text-xs text-[var(--ink-muted)]">
+              <span><kbd className="rounded bg-[var(--surface-subtle)] px-1 py-1">↑↓</kbd> navigate</span>
+              <span><kbd className="rounded bg-[var(--surface-subtle)] px-1 py-1">↵</kbd> select</span>
+              <span><kbd className="rounded bg-[var(--surface-subtle)] px-1 py-1">esc</kbd> close</span>
             </div>
           )}
         </div>

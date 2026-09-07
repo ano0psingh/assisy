@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { CalendarClock, Inbox } from 'lucide-react';
 import { ExpandableModal } from '../common/ExpandableModal';
 import { SelectField, TextField } from '../ui';
-import { getLocalDateString } from '../../lib/dateUtils';
+import { getLocalDateString, getScheduledDate } from '../../lib/dateUtils';
 import type { Effort, Goal, Priority, Task, TaskCategory } from '../../types';
 
 export type ClarifyAction = 'keep' | 'backlog' | 'today' | 'schedule';
@@ -36,7 +36,7 @@ export function ClarifyTaskSheet({ task, goals, onClose, onSubmit }: ClarifyTask
   const [dueDate, setDueDate] = useState(task.dueDate ? getLocalDateString(new Date(task.dueDate)) : '');
   const [dueTime, setDueTime] = useState(task.dueTime ?? '');
   const [durationMinutes, setDurationMinutes] = useState(task.durationMinutes?.toString() ?? '');
-  const [scheduledDate, setScheduledDate] = useState(task.scheduledDate ?? '');
+  const [scheduledDate, setScheduledDate] = useState(getScheduledDate(task) ?? '');
   const [scheduledTime, setScheduledTime] = useState(task.scheduledTime ?? '');
 
   const activeGoals = goals.filter(goal => goal.status === 'Active' && goal.category === category);
@@ -62,12 +62,15 @@ export function ClarifyTaskSheet({ task, goals, onClose, onSubmit }: ClarifyTask
     <ExpandableModal
       isOpen
       onClose={onClose}
-      title="Clarify inbox task"
-      icon={<Inbox className="h-5 w-5 text-violet-600 dark:text-violet-400" />}
+      title="Clarify task"
+      icon={<Inbox className="h-5 w-5 text-[var(--action)]" />}
       maxWidth="max-w-lg"
     >
       {() => (
-        <div className="space-y-4 p-5">
+        <div className="space-y-5 p-5">
+          <p className="border-y border-[var(--rule)] bg-[var(--surface-subtle)] px-3 py-2 text-xs text-[var(--ink-secondary)]">
+            Decide where this task belongs. You can keep it in Inbox, move it to Backlog, assign it to Today, or reserve a Calendar block.
+          </p>
           <TextField label="Title" value={title} onChange={event => setTitle(event.target.value)} autoFocus />
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -104,10 +107,10 @@ export function ClarifyTaskSheet({ task, goals, onClose, onSubmit }: ClarifyTask
             <TextField label="Duration (minutes)" type="number" min="5" step="5" value={durationMinutes} onChange={event => setDurationMinutes(event.target.value)} />
           </div>
 
-          <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-gray-300">
+          <section className="border-y border-[var(--rule-strong)] bg-[var(--surface-subtle)] p-3" aria-labelledby="calendar-block-heading">
+            <div id="calendar-block-heading" className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--ink)]">
               <CalendarClock size={16} />
-              Schedule for a date and time
+              Calendar block
             </div>
             <div className="grid grid-cols-2 gap-3">
               <TextField label="Date" type="date" min={getLocalDateString()} value={scheduledDate} onChange={event => {
@@ -120,21 +123,21 @@ export function ClarifyTaskSheet({ task, goals, onClose, onSubmit }: ClarifyTask
               type="button"
               disabled={!scheduledDate || !title.trim()}
               onClick={() => submit('schedule')}
-              className="mt-3 min-h-11 w-full rounded-xl bg-violet-600 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-control ui-button ui-button--primary mt-3 min-h-11 w-full px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Schedule date/time
+              Assign calendar block
             </button>
-          </div>
+          </section>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <button type="button" onClick={() => submit('keep')} className="min-h-11 rounded-xl bg-slate-100 px-3 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10">
+            <button type="button" onClick={() => submit('keep')} className="ui-control ui-button ui-button--secondary min-h-11 px-3 text-sm font-medium">
               Keep in Inbox
             </button>
-            <button type="button" onClick={() => submit('backlog')} className="min-h-11 rounded-xl bg-slate-100 px-3 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10">
-              Clarify to Backlog
+            <button type="button" onClick={() => submit('backlog')} className="ui-control ui-button ui-button--secondary min-h-11 px-3 text-sm font-medium">
+              Move to Backlog
             </button>
-            <button type="button" onClick={() => submit('today')} className="min-h-11 rounded-xl bg-violet-50 px-3 text-sm font-medium text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-300">
-              Schedule Today
+            <button type="button" onClick={() => submit('today')} className="ui-control ui-button ui-button--primary min-h-11 px-3 text-sm font-medium">
+              Assign to Today
             </button>
           </div>
         </div>

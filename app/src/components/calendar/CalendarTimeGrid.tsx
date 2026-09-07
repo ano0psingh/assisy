@@ -1,5 +1,5 @@
 import { useMemo, useState, type DragEvent, type PointerEvent } from 'react';
-import { Check, Clock3, GripHorizontal, Plus } from 'lucide-react';
+import { AlertTriangle, Check, Clock3, GripHorizontal, MoveHorizontal, Plus } from 'lucide-react';
 import type { Task } from '../../types';
 import {
   getLocalDateString,
@@ -8,6 +8,7 @@ import {
   isRecurrenceDate,
   normalizeDurationMinutes,
 } from '../../lib/dateUtils';
+import { layoutOverlapLanes } from '../../lib/calendarScheduling';
 
 interface CalendarTimeGridProps {
   days: Date[];
@@ -19,16 +20,11 @@ interface CalendarTimeGridProps {
   onInlineCreate: (date: string, time?: string) => void;
 }
 
-const START_MINUTE = 6 * 60;
-const END_MINUTE = 22 * 60;
+const DEFAULT_START_MINUTE = 6 * 60;
+const DEFAULT_END_MINUTE = 22 * 60;
 const SLOT_MINUTES = 30;
-const SLOT_HEIGHT = 32;
+const SLOT_HEIGHT = 44;
 const PIXELS_PER_MINUTE = SLOT_HEIGHT / SLOT_MINUTES;
-const SLOTS = Array.from(
-  { length: (END_MINUTE - START_MINUTE) / SLOT_MINUTES },
-  (_, index) => START_MINUTE + index * SLOT_MINUTES,
-);
-
 function minutesToTime(minutes: number): string {
   const safeMinutes = Math.max(0, Math.min(23 * 60 + 45, minutes));
   return `${String(Math.floor(safeMinutes / 60)).padStart(2, '0')}:${String(safeMinutes % 60).padStart(2, '0')}`;
@@ -71,6 +67,27 @@ export function CalendarTimeGrid({
     }
     return result;
   }, [tasks]);
+  const { startMinute: displayStart, endMinute: displayEnd } = useMemo(() => {
+    const visibleDates = new Set(days.map(getLocalDateString));
+    const timed = tasks.filter(task => visibleDates.has(getScheduledDate(task) ?? '') && getScheduledStartMinute(task) !== null);
+    const starts = timed.map(task => getScheduledStartMinute(task)!).filter(Number.isFinite);
+    const ends = timed.map(task => getScheduledStartMinute(task)! + normalizeDurationMinutes(task.durationMinutes, 30));
+    return {
+      startMinute: Math.max(0, Math.min(DEFAULT_START_MINUTE, ...starts.map(value => Math.floor(value / 60) * 60))),
+      endMinute: Math.min(1440, Math.max(DEFAULT_END_MINUTE, ...ends.map(value => Math.ceil(value / 60) * 60))),
+    };
+  }, [days, tasks]);
+  const slots = useMemo(() => Array.from(
+    { length: (displayEnd - displayStart) / SLOT_MINUTES },
+    (_, index) => displayStart + index * SLOT_MINUTES,
+  ), [displayEnd, displayStart]);
+  const laneLayouts = useMemo(() => {
+    const layouts = new Map<string, ReturnType<typeof layoutOverlapLanes>[number]>();
+    for (const [date, blocks] of timedByDate) {
+      for (const layout of layoutOverlapLanes(blocks)) layouts.set(`${date}:${layout.id}`, layout);
+    }
+    return layouts;
+  }, [timedByDate]);
 
   const flexibleByDate = useMemo(() => {
     const result = new Map<string, Array<{ task: Task; recurring: boolean; completed: boolean }>>();
@@ -142,19 +159,25 @@ export function CalendarTimeGrid({
   };
 
   return (
-    <section aria-label="Weekly time schedule">
+    <section aria-label={days.length === 1 ? 'Daily time schedule' : 'Weekly time schedule'}>
+      {days.length === 1 && (
+        <p className="mb-3 text-xs text-[var(--ink-muted)] sm:hidden">
+          Tap a time row to add a Calendar block. Tap a task to change its schedule.
+        </p>
+      )}
       {days.length > 1 && (
-        <p className="mb-3 text-xs text-slate-400 dark:text-gray-500 lg:hidden">
-          Scroll horizontally to see the full week. Tap any task to edit its time or duration.
+        <p className="mb-3 flex items-center gap-2 text-xs text-[var(--ink-muted)] lg:hidden">
+          <MoveHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Scroll to see the full week; tap a task to edit.
         </p>
       )}
       <div
-        className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10"
+        className="overflow-x-auto border border-[var(--rule)] bg-[var(--surface-raised)]"
         style={{ overscrollBehaviorX: 'contain' }}
       >
         <div style={{ minWidth: minimumWidth }}>
-          <div className="grid border-b border-slate-200 dark:border-white/10" style={{ gridTemplateColumns }}>
-            <div className="border-r border-slate-200 dark:border-white/10" />
+          <div className="grid border-b border-[var(--rule)]" style={{ gridTemplateColumns }}>
+            <div className="border-r border-[var(--rule)]" />
             {days.map((day) => {
               const date = getLocalDateString(day);
               const isToday = sameDay(day, new Date());
@@ -164,15 +187,15 @@ export function CalendarTimeGrid({
                   key={date}
                   type="button"
                   onClick={() => onSelectDate(day)}
-                  className={`min-h-14 border-r border-slate-200 px-2 py-2 text-center last:border-r-0 dark:border-white/10 ${
-                    isSelected ? 'bg-violet-50 dark:bg-violet-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                  className={`min-h-14 border-r border-[var(--rule)] px-2 py-2 text-center last:border-r-0 ${
+                    isSelected ? 'bg-[var(--action-soft)]' : 'hover:bg-[var(--state-hover)]'
                   }`}
                 >
-                  <span className="block text-[11px] font-semibold uppercase text-slate-400 dark:text-gray-500">
+                  <span className="block text-xs font-semibold uppercase text-[var(--ink-muted)]">
                     {day.toLocaleDateString(undefined, { weekday: 'short' })}
                   </span>
                   <span className={`mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold ${
-                    isToday ? 'bg-violet-600 text-white' : 'text-slate-700 dark:text-gray-200'
+                    isToday ? 'bg-[var(--action)] text-[var(--ink-inverse)]' : 'text-[var(--ink)]'
                   }`}>
                     {day.getDate()}
                   </span>
@@ -181,8 +204,8 @@ export function CalendarTimeGrid({
             })}
           </div>
 
-          <div className="grid border-b border-slate-200 dark:border-white/10" style={{ gridTemplateColumns }}>
-            <div className="border-r border-slate-200 px-2 py-3 text-[10px] font-semibold uppercase text-slate-400 dark:border-white/10 dark:text-gray-500">
+          <div className="grid border-b border-[var(--rule)]" style={{ gridTemplateColumns }}>
+            <div className="border-r border-[var(--rule)] px-2 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)]">
               Flexible
             </div>
             {days.map((day) => {
@@ -197,23 +220,25 @@ export function CalendarTimeGrid({
                   }}
                   onDragLeave={() => setDragTarget(null)}
                   onDrop={(event) => dropTask(event, date)}
-                  className={`min-h-16 border-r border-slate-200 p-1.5 last:border-r-0 dark:border-white/10 ${
-                    dragTarget === `${date}:all-day` ? 'bg-violet-100 dark:bg-violet-500/15' : ''
+                  className={`min-h-16 border-r border-[var(--rule)] p-1.5 last:border-r-0 ${
+                    dragTarget === `${date}:all-day` ? 'bg-[var(--action-soft)]' : ''
                   }`}
                 >
                   <div className="space-y-1">
                     {flexible.slice(0, 3).map(({ task, recurring, completed }) => (
                       recurring ? (
-                        <div
+                        <button
+                          type="button"
                           key={`${task.id}:${date}:recurring`}
                           title="Recurring flexible task"
-                          className={`flex min-h-7 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 ${
+                          onClick={() => onOpenTask(task, date)}
+                          className={`flex min-h-11 items-center gap-1 border border-[var(--success)] bg-[var(--success-soft)] px-1.5 text-xs font-medium text-[var(--success)] ${
                             completed ? 'line-through opacity-60' : ''
                           }`}
                         >
                           {completed && <Check className="h-3 w-3 shrink-0" />}
                           <span className="truncate">{task.title}</span>
-                        </div>
+                        </button>
                       ) : (
                         <button
                           key={task.id}
@@ -224,7 +249,7 @@ export function CalendarTimeGrid({
                             event.dataTransfer.effectAllowed = 'move';
                           }}
                           onClick={() => onOpenTask(task, date)}
-                          className="flex min-h-7 w-full items-center rounded-md border border-violet-200 bg-violet-50 px-1.5 text-left text-[10px] font-medium text-violet-700 hover:bg-violet-100 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300"
+                          className="flex min-h-11 w-full items-center rounded-[var(--radius-sm)] border border-[var(--rule)] bg-[var(--surface)] px-1.5 text-left text-xs font-medium text-[var(--action)] hover:bg-[var(--state-hover)]"
                           aria-label={`Edit schedule for ${task.title}`}
                         >
                           <span className="truncate">{task.title}</span>
@@ -232,7 +257,7 @@ export function CalendarTimeGrid({
                       )
                     ))}
                     {flexible.length > 3 && (
-                      <p className="px-1 text-[10px] text-slate-400">+{flexible.length - 3} more</p>
+                      <p className="px-1 text-xs text-[var(--ink-muted)]">+{flexible.length - 3} more</p>
                     )}
                   </div>
                 </div>
@@ -241,11 +266,11 @@ export function CalendarTimeGrid({
           </div>
 
           <div className="grid" style={{ gridTemplateColumns }}>
-            <div className="relative border-r border-slate-200 dark:border-white/10" style={{ height: SLOTS.length * SLOT_HEIGHT }}>
-              {SLOTS.map((minute, index) => (
+            <div className="relative border-r border-[var(--rule)]" style={{ height: slots.length * SLOT_HEIGHT }}>
+              {slots.map((minute, index) => (
                 <div
                   key={minute}
-                  className="absolute right-2 text-[10px] text-slate-400 dark:text-gray-500"
+                  className="absolute right-2 text-xs text-[var(--ink-muted)]"
                   style={{ top: index * SLOT_HEIGHT - 7 }}
                 >
                   {minute % 60 === 0 ? formatTime(minute).replace(':00', '') : ''}
@@ -259,10 +284,10 @@ export function CalendarTimeGrid({
               return (
                 <div
                   key={date}
-                  className="relative border-r border-slate-200 last:border-r-0 dark:border-white/10"
-                  style={{ height: SLOTS.length * SLOT_HEIGHT }}
+                  className="relative border-r border-[var(--rule)] last:border-r-0"
+                  style={{ height: slots.length * SLOT_HEIGHT }}
                 >
-                  {SLOTS.map((minute, index) => (
+                  {slots.map((minute, index) => (
                     <div
                       key={minute}
                       onDragOver={(event) => {
@@ -274,9 +299,9 @@ export function CalendarTimeGrid({
                       onDoubleClick={() => onInlineCreate(date, minutesToTime(minute))}
                       className={`absolute inset-x-0 border-b ${
                         minute % 60 === 30
-                          ? 'border-slate-100 dark:border-white/[0.035]'
-                          : 'border-slate-200 dark:border-white/[0.07]'
-                      } ${dragTarget === `${date}:${minute}` ? 'bg-violet-100 dark:bg-violet-500/20' : ''}`}
+                          ? 'border-[var(--rule)] opacity-70'
+                          : 'border-[var(--rule-strong)]'
+                      } ${dragTarget === `${date}:${minute}` ? 'bg-[var(--action-soft)]' : ''}`}
                       style={{ top: index * SLOT_HEIGHT, height: SLOT_HEIGHT }}
                       title={`Drop at ${formatTime(minute)}; double-click to create`}
                     >
@@ -284,19 +309,21 @@ export function CalendarTimeGrid({
                         type="button"
                         onClick={() => onInlineCreate(date, minutesToTime(minute))}
                         aria-label={`Create task on ${day.toLocaleDateString()} at ${formatTime(minute)}`}
-                        className="absolute inset-0 z-[1] opacity-0 focus:opacity-100"
+                        className="absolute inset-0 z-[1] opacity-0 focus:opacity-100 max-sm:opacity-100"
                       >
-                        <Plus className="mx-auto h-4 w-4 text-violet-500" />
+                        <Plus className="mx-auto h-4 w-4 text-[var(--action)] opacity-40" />
                       </button>
                     </div>
                   ))}
 
                   {timed.map((task) => {
                     const startMinute = getScheduledStartMinute(task);
-                    if (startMinute === null || startMinute >= END_MINUTE || startMinute < START_MINUTE) return null;
+                    if (startMinute === null || startMinute >= displayEnd || startMinute < displayStart) return null;
                     const duration = normalizeDurationMinutes(task.durationMinutes, 30);
-                    const top = (startMinute - START_MINUTE) * PIXELS_PER_MINUTE;
+                    const top = (startMinute - displayStart) * PIXELS_PER_MINUTE;
                     const height = Math.max(22, duration * PIXELS_PER_MINUTE);
+                    const layout = laneLayouts.get(`${date}:${task.id}`) ?? { lane: 0, laneCount: 1, conflicted: false };
+                    const width = 100 / layout.laneCount;
                     return (
                       <div
                         key={task.id}
@@ -305,8 +332,13 @@ export function CalendarTimeGrid({
                           event.dataTransfer.setData('text/plain', task.id);
                           event.dataTransfer.effectAllowed = 'move';
                         }}
-                        className="absolute inset-x-1 z-10 overflow-hidden rounded-lg border border-violet-300 bg-violet-100 px-2 py-1 text-left text-violet-800 shadow-sm hover:bg-violet-200 dark:border-violet-500/30 dark:bg-violet-500/25 dark:text-violet-100"
-                        style={{ top, height }}
+                        className={`absolute z-10 overflow-hidden border px-2 py-1 text-left ${
+                          layout.conflicted
+                            ? 'border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)] ring-1 ring-[var(--danger)]'
+                            : 'border-[var(--rule-strong)] bg-[var(--action-soft)] text-[var(--ink)] hover:border-[var(--action)]'
+                        }`}
+                        style={{ top, height, left: `calc(${layout.lane * width}% + 2px)`, width: `calc(${width}% - 4px)` }}
+                        aria-describedby={layout.conflicted ? `${task.id}-conflict` : undefined}
                       >
                         <button
                           type="button"
@@ -314,9 +346,14 @@ export function CalendarTimeGrid({
                           className="block w-full text-left"
                           aria-label={`Edit schedule for ${task.title}, ${formatTime(startMinute)}, ${duration} minutes`}
                         >
-                          <span className="block truncate text-[11px] font-semibold">{task.title}</span>
+                          <span className="block truncate text-xs font-semibold">{task.title}</span>
+                          {layout.conflicted && (
+                            <span id={`${task.id}-conflict`} className="flex items-center gap-1 text-[11px] font-semibold">
+                              <AlertTriangle className="h-2.5 w-2.5" /> Conflict
+                            </span>
+                          )}
                           {height >= 38 && (
-                            <span className="mt-0.5 flex items-center gap-1 text-[10px] opacity-75">
+                            <span className="mt-0.5 flex items-center gap-1 text-xs opacity-75">
                               <Clock3 className="h-3 w-3" />
                               {formatTime(startMinute)}
                             </span>
@@ -325,7 +362,7 @@ export function CalendarTimeGrid({
                         <button
                           type="button"
                           onPointerDown={(event) => startResize(event, task, startMinute)}
-                          className="absolute inset-x-0 bottom-0 flex h-3 cursor-ns-resize touch-none items-center justify-center opacity-50 hover:opacity-100"
+                          className="absolute inset-x-0 bottom-0 hidden h-4 cursor-ns-resize touch-none items-center justify-center opacity-50 hover:opacity-100 sm:flex"
                           aria-label={`Resize ${task.title}`}
                           title="Drag to resize"
                         >

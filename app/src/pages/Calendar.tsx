@@ -1,11 +1,11 @@
-import { useState, useMemo, useCallback, useRef, type DragEvent, type KeyboardEvent } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus, BookOpen, Sparkles, X, Check, Loader2 } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect, useRef, type DragEvent, type KeyboardEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { CalendarDays, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock, Flame, Plus, BookOpen, Sparkles, X, Check, Loader2, Download, Trophy, TriangleAlert, Lightbulb, Crosshair } from 'lucide-react';
 import { useTaskContext } from '../context/TaskContext';
 import { useProjectContext } from '../context/ProjectContext';
 import { useGoalContext } from '../context/GoalContext';
 import { useHabitContext } from '../context/HabitContext';
 import { useDailyLogContext } from '../context/DailyLogContext';
-import { useTheme } from '../context/ThemeContext';
 import { askAIJson, isAIConfigured } from '../lib/ai';
 import type { Task } from '../types';
 import { projectTasksToTasks } from '../lib/mergeProjectTasks';
@@ -14,6 +14,7 @@ import { useUnifiedTaskActions } from '../hooks/useUnifiedTaskActions';
 import { CalendarTimeGrid } from '../components/calendar/CalendarTimeGrid';
 import { UnscheduledTaskSidebar } from '../components/calendar/UnscheduledTaskSidebar';
 import { ScheduleTaskSheet } from '../components/calendar/ScheduleTaskSheet';
+import { downloadIcs } from '../lib/ics';
 
 type ViewMode = 'month' | 'week' | 'day';
 
@@ -57,10 +58,10 @@ function getWeekDays(anchorDate: Date): Date[] {
   return days;
 }
 
-const CATEGORY_DOT_COLOR: Record<string, { dark: string; light: string }> = {
-  Personal: { dark: 'bg-violet-400', light: 'bg-violet-500' },
-  Professional: { dark: 'bg-blue-400', light: 'bg-blue-500' },
-  Financial: { dark: 'bg-amber-400', light: 'bg-amber-500' },
+const CATEGORY_DOT_COLOR: Record<string, string> = {
+  Personal: 'bg-[var(--action)]',
+  Professional: 'bg-[var(--info)]',
+  Financial: 'bg-[var(--warning)]',
 };
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -68,12 +69,13 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 
 function getInitialViewMode(): ViewMode {
   if (typeof window === 'undefined') return 'month';
-  if (!window.matchMedia('(pointer: coarse)').matches) return 'month';
-  return window.matchMedia('(max-width: 767px)').matches ? 'day' : 'week';
+  if (window.matchMedia('(max-width: 767px)').matches) return 'day';
+  return window.matchMedia('(pointer: coarse)').matches ? 'week' : 'month';
 }
 
 export function Calendar() {
-  const { tasks, createTask } = useTaskContext();
+  const [searchParams] = useSearchParams();
+  const { tasks, createTask, skipOccurrence, rescheduleOccurrence, endRecurringFrom, deleteTask } = useTaskContext();
   const { getTasksBySubProject, subProjects, projects } = useProjectContext();
   const { goals } = useGoalContext();
   const { schedule, unschedule } = useUnifiedTaskActions();
@@ -84,9 +86,14 @@ export function Calendar() {
     () => [...tasks, ...projectTasksToTasks(subProjects, projects, getTasksBySubProject)],
     [tasks, subProjects, projects, getTasksBySubProject],
   );
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
+  const upcomingBlocks = useMemo(() => {
+    const todayString = getLocalDateString();
+    return allTasks.filter(task =>
+      task.status !== 'Completed'
+      && Boolean(task.scheduledTime)
+      && (getScheduledDate(task) ?? '') >= todayString
+    );
+  }, [allTasks]);
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -98,6 +105,17 @@ export function Calendar() {
   const [scheduleTask, setScheduleTask] = useState<Task | null>(null);
   const [scheduleDefaultDate, setScheduleDefaultDate] = useState(getLocalDateString(today));
   const inlineInputRef = useRef<HTMLInputElement>(null);
+  const openedDeepLinkRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const taskId = searchParams.get('task');
+    if (!taskId || openedDeepLinkRef.current === taskId) return;
+    const linkedTask = allTasks.find(task => task.id === taskId);
+    if (!linkedTask) return;
+    openedDeepLinkRef.current = taskId;
+    setScheduleDefaultDate(getScheduledDate(linkedTask) ?? getLocalDateString());
+    setScheduleTask(linkedTask);
+  }, [allTasks, searchParams]);
 
   // ── AI Smart Scheduling state ──
   const [aiSuggestions, setAiSuggestions] = useState<AIScheduleSuggestion[]>([]);
@@ -520,9 +538,7 @@ export function Calendar() {
           ref={inlineInputRef}
           type="text"
           placeholder={inlineCreateTime ? `Task at ${inlineCreateTime}…` : 'Task title…'}
-          className={`w-full text-xs px-2 py-1 rounded-lg border outline-none ${
-            'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-violet-400 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 dark:placeholder-gray-600 dark:focus:border-violet-500/50'
-          }`}
+          className="ui-field-control w-full px-2 py-2 text-xs"
           onKeyDown={(e) => handleInlineKeyDown(e, dateStr)}
           onBlur={(e) => {
             if (e.target.value.trim()) {
@@ -550,69 +566,75 @@ export function Calendar() {
       {/* Main content */}
       <div className="flex-1 min-w-0 space-y-6">
         {/* Page header */}
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-violet-50 dark:bg-violet-500/20`}>
-            <CalendarDays className={`w-5 h-5 text-violet-500 dark:text-violet-400`} />
+        <header className="flex items-start justify-between gap-4 border-b border-[var(--rule)] pb-4">
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-bold tracking-[-0.025em] text-[var(--ink)]">Calendar desk</h1>
+              <p className="text-sm tabular-nums text-[var(--ink-muted)]">
+                {monthStats.planned} blocks · {monthStats.due} due · {monthStats.completed} completed
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className={`text-2xl font-bold text-slate-800 dark:text-white`}>Calendar</h1>
-            <p className={`text-sm text-slate-500 dark:text-gray-500`}>
-              {monthStats.completed} completed · {monthStats.planned} planned · {monthStats.habitsLogged} habits · {monthStats.due} due
-            </p>
-          </div>
-        </div>
+          <button
+            type="button"
+            disabled={upcomingBlocks.length === 0}
+            onClick={() => downloadIcs(upcomingBlocks, 'assisy-upcoming-blocks', 'Assisy upcoming blocks')}
+            className="ui-control ui-button ui-button--secondary min-h-10 px-3 text-xs font-medium disabled:opacity-40"
+            title="Export all upcoming timed blocks"
+          >
+            <Download className="mr-1 inline h-4 w-4" /> Export
+          </button>
+        </header>
 
         {/* Navigation + view toggle */}
-        <div className="card rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-4">
+        <section className="border-y border-[var(--rule)] bg-[var(--surface)] py-4" aria-label="Calendar controls and schedule">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 px-2 sm:flex-nowrap">
             <button
               aria-label="Previous period"
               onClick={() => navigatePeriod(-1)}
-              className={`p-2 rounded-xl transition-colors hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
+              className="ui-control p-2 text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3">
-              <span className={`text-lg font-semibold text-slate-800 dark:text-white`}>
+            <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">
+              <span className="text-base font-semibold text-[var(--ink)] sm:text-lg">
                 {periodLabel}
               </span>
               <button
                 onClick={goToToday}
-                className={`text-xs font-medium px-3 py-1 rounded-lg transition-colors ${
-                  'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-400 dark:hover:bg-violet-500/30'
-                }`}
+                className="ui-control min-h-11 border border-[var(--rule)] bg-[var(--surface-raised)] px-3 py-1 text-xs font-medium text-[var(--action)] hover:bg-[var(--state-hover)]"
               >
                 Today
               </button>
               {/* View mode toggle */}
-              <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+              <div className="flex overflow-hidden rounded-[var(--radius-md)] border border-[var(--rule)]" role="group" aria-label="Calendar view">
                 <button
                   onClick={() => setViewMode('day')}
-                  className={`text-xs font-medium px-3 py-1 transition-colors ${
+                  className={`min-h-11 px-3 py-1 text-xs font-medium transition-colors ${
                     viewMode === 'day'
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
-                      : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                      ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                      : 'text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                   }`}
                 >
                   Day
                 </button>
                 <button
                   onClick={() => setViewMode('month')}
-                  className={`text-xs font-medium px-3 py-1 transition-colors ${
+                  className={`min-h-11 px-3 py-1 text-xs font-medium transition-colors ${
                     viewMode === 'month'
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
-                      : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                      ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                      : 'text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                   }`}
                 >
                   Month
                 </button>
                 <button
                   onClick={() => setViewMode('week')}
-                  className={`text-xs font-medium px-3 py-1 transition-colors ${
+                  className={`min-h-11 px-3 py-1 text-xs font-medium transition-colors ${
                     viewMode === 'week'
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/30 dark:text-violet-300'
-                      : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                      ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                      : 'text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]'
                   }`}
                 >
                   Week
@@ -622,9 +644,7 @@ export function Calendar() {
                 <button
                   onClick={handleAISchedule}
                   disabled={aiLoading}
-                  className={`flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg transition-colors ${
-                    'bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'
-                  }`}
+                  className="ui-control flex items-center gap-2 border border-[var(--warning)] bg-[var(--warning-soft)] px-3 py-2 text-xs font-medium text-[var(--warning)] transition-colors hover:bg-[var(--state-hover)] disabled:opacity-50"
                 >
                   {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                   AI Schedule
@@ -635,7 +655,7 @@ export function Calendar() {
             <button
               aria-label="Next period"
               onClick={() => navigatePeriod(1)}
-              className={`p-2 rounded-xl transition-colors hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400`}
+              className="ui-control p-2 text-[var(--ink-secondary)] hover:bg-[var(--state-hover)]"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -649,7 +669,7 @@ export function Calendar() {
                 {WEEKDAYS.map((day) => (
                   <div
                     key={day}
-                    className={`text-center text-xs font-medium py-2 text-slate-400 dark:text-gray-500`}
+                    className="py-2 text-center text-xs font-medium text-[var(--ink-muted)]"
                   >
                     {day}
                   </div>
@@ -686,18 +706,18 @@ export function Calendar() {
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, dateStr)}
                       className={`
-                        relative flex flex-col items-center h-12 md:h-16 py-2 md:py-2 rounded-xl transition-colors
-                        ${!isCurrentMonth ? ('text-slate-300 dark:text-gray-500') : ''}
-                        ${isCurrentMonth && !isToday && !isSelected ? ('text-slate-700 hover:bg-slate-50 dark:text-gray-300 dark:hover:bg-white/5') : ''}
-                        ${isSelected && !isToday ? ('bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300') : ''}
-                        ${isDragTarget ? ('ring-2 ring-violet-400/60 bg-violet-50 dark:bg-violet-500/10') : ''}
+                        relative flex h-12 flex-col items-center border-r border-t border-[var(--rule)] py-2 transition-colors md:h-16 md:py-2
+                        ${!isCurrentMonth ? 'bg-[var(--surface-subtle)] text-[var(--ink-disabled)]' : ''}
+                        ${isCurrentMonth && !isToday && !isSelected ? 'text-[var(--ink)] hover:bg-[var(--state-hover)]' : ''}
+                        ${isSelected && !isToday ? 'bg-[var(--action-soft)] text-[var(--action)]' : ''}
+                        ${isDragTarget ? 'bg-[var(--action-soft)] ring-2 ring-inset ring-[var(--action)]' : ''}
                       `}
                     >
                       <span
                         className={`
-                          w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-xs md:text-sm font-medium shrink-0
-                          ${isToday ? 'bg-violet-500 text-white' : ''}
-                          ${isSelected && !isToday ? 'ring-2 ring-violet-400/50' : ''}
+                          flex h-7 w-7 shrink-0 items-center justify-center text-xs font-medium md:h-8 md:w-8 md:text-sm
+                          ${isToday ? 'bg-[var(--action)] text-[var(--action-ink)]' : ''}
+                          ${isSelected && !isToday ? 'border-b-2 border-[var(--action)]' : ''}
                         `}
                       >
                         {day.getDate()}
@@ -709,13 +729,13 @@ export function Calendar() {
                           {categoryDots.map((cat) => (
                             <span
                               key={cat}
-                              className={`w-1.5 h-1.5 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`}
+                              className={`h-1.5 w-1.5 rounded-full ${CATEGORY_DOT_COLOR[cat]}`}
                             />
                           ))}
-                          {hasFocused && !categoryDots.length && <span className={`w-1.5 h-1.5 rounded-full bg-violet-300 dark:bg-violet-400/60`} />}
-                          {hasHabit && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-                          {hasCheckIn && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
-                          {hasDue && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
+                          {hasFocused && !categoryDots.length && <span className="h-1.5 w-1.5 rounded-full bg-[var(--action)]" />}
+                          {hasHabit && <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />}
+                          {hasCheckIn && <span className="h-1.5 w-1.5 rounded-full bg-[var(--info)]" />}
+                          {hasDue && <span className="h-1.5 w-1.5 rounded-full bg-[var(--danger)]" />}
                         </div>
                       )}
 
@@ -723,12 +743,12 @@ export function Calendar() {
                       {isCurrentMonth && allTasksForDay.length > 0 && (
                         <div className="hidden md:flex items-center gap-1 mt-1">
                           {[...new Set(allTasksForDay.map(t => t.category))].slice(0, 3).map(cat => (
-                            <span key={cat} className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[cat]?.dark : CATEGORY_DOT_COLOR[cat]?.light}`} />
+                            <span key={cat} className={`h-2 w-2 rounded-full ${CATEGORY_DOT_COLOR[cat]}`} />
                           ))}
                           <span className={`text-xs font-medium ${
                             allTasksForDay.some(t => t.status === 'Completed')
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-slate-400 dark:text-gray-500'
+                              ? 'text-[var(--success)]'
+                              : 'text-[var(--ink-muted)]'
                           }`}>
                             {allTasksForDay.filter(t => t.status === 'Completed').length}/{allTasksForDay.length}
                           </span>
@@ -762,8 +782,8 @@ export function Calendar() {
                 onInlineCreate={openInlineCreate}
               />
               {inlineCreateDate && visibleScheduleDays.some((day) => getLocalDateString(day) === inlineCreateDate) && (
-                <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/20 dark:bg-violet-500/10">
-                  <p className="mb-2 text-xs font-medium text-violet-700 dark:text-violet-300">
+                <div className="border-y border-[var(--action)] bg-[var(--action-soft)] p-3">
+                  <p className="mb-2 text-xs font-medium text-[var(--action)]">
                     New task · {inlineCreateDate}{inlineCreateTime ? ` at ${inlineCreateTime}` : ''}
                   </p>
                   <InlineCreateInput dateStr={inlineCreateDate} />
@@ -771,24 +791,22 @@ export function Calendar() {
               )}
             </div>
           )}
-        </div>
+        </section>
 
         {/* ── AI SUGGESTIONS PANEL ── */}
         {aiPanelOpen && (
-          <div className={`card rounded-2xl p-6 border border-amber-200 dark:border-amber-500/20`}>
+          <section className="border-y border-[var(--warning)] bg-[var(--surface)] p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Sparkles className={`w-4 h-4 text-amber-500 dark:text-amber-400`} />
-                <h2 className={`text-base font-semibold text-slate-800 dark:text-white`}>
+                <Sparkles className="h-4 w-4 text-[var(--warning)]" />
+                <h2 className="text-xl font-bold tracking-[-0.015em] text-[var(--ink)]">
                   AI Schedule Suggestions
                 </h2>
               </div>
               <button
                 aria-label="Close"
                 onClick={() => setAiPanelOpen(false)}
-                className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                  'hover:bg-slate-100 text-slate-400 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-500 dark:hover:text-gray-300'
-                }`}
+                className="ui-control flex h-9 w-9 items-center justify-center text-[var(--ink-muted)] transition-colors hover:bg-[var(--state-hover)] hover:text-[var(--ink)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -796,22 +814,22 @@ export function Calendar() {
 
             {aiLoading ? (
               <div className="flex items-center justify-center py-8 gap-2">
-                <Loader2 className={`w-5 h-5 animate-spin text-amber-500 dark:text-amber-400`} />
-                <span className={`text-sm text-slate-500 dark:text-gray-400`}>Analyzing your energy patterns and tasks…</span>
+                <Loader2 className="h-5 w-5 animate-spin text-[var(--warning)]" />
+                <span className="text-sm text-[var(--ink-secondary)]">Analyzing your energy patterns and tasks…</span>
               </div>
             ) : aiError ? (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center dark:border-red-500/20 dark:bg-red-500/10">
-                <p className="text-sm text-red-700 dark:text-red-300">{aiError}</p>
+              <div className="border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-center">
+                <p className="text-sm text-[var(--danger)]">{aiError}</p>
                 <button
                   type="button"
                   onClick={handleAISchedule}
-                  className="mt-3 rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-200"
+                  className="ui-control mt-3 border border-[var(--danger)] px-3 py-2 text-xs font-semibold text-[var(--danger)] hover:bg-[var(--state-hover)]"
                 >
                   Try again
                 </button>
               </div>
             ) : aiSuggestions.filter(s => !s.dismissed).length === 0 ? (
-              <p className={`text-sm py-4 text-center text-slate-400 dark:text-gray-500`}>
+              <p className="py-4 text-center text-sm text-[var(--ink-muted)]">
                 {aiSuggestions.length > 0 ? 'All suggestions handled!' : 'No suggestions available. Make sure you have pending tasks and recent check-in data.'}
               </p>
             ) : (
@@ -819,16 +837,17 @@ export function Calendar() {
                 {aiSuggestions.filter(s => !s.dismissed).map((suggestion) => (
                   <div
                     key={suggestion.taskTitle}
-                    className={`flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03]`}
+                    className="flex items-start gap-3 border-t border-[var(--rule)] bg-[var(--surface-subtle)] p-3"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium text-slate-700 dark:text-gray-200`}>
+                      <p className="text-sm font-medium text-[var(--ink)]">
                         {suggestion.taskTitle}
                       </p>
-                      <p className={`text-xs mt-1 text-amber-600 dark:text-amber-400/80`}>
-                        → {suggestion.suggestedDay} · {suggestion.suggestedStartTime} · {suggestion.durationMinutes}m
+                      <p className="mt-1 flex items-center gap-1 text-xs text-[var(--warning)]">
+                        <CalendarDays className="h-3 w-3" aria-hidden="true" />
+                        {suggestion.suggestedDay} · {suggestion.suggestedStartTime} · {suggestion.durationMinutes}m
                       </p>
-                      <p className={`text-xs mt-1 text-slate-400 dark:text-gray-500`}>
+                      <p className="mt-1 text-xs text-[var(--ink-muted)]">
                         {suggestion.reason}
                       </p>
                     </div>
@@ -836,9 +855,7 @@ export function Calendar() {
                       {suggestion.taskId && (
                         <button
                           onClick={() => acceptSuggestion(suggestion)}
-                          className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                            'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'
-                          }`}
+                          className="ui-control flex h-9 w-9 items-center justify-center border border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)] transition-colors hover:bg-[var(--state-hover)]"
                           title="Accept suggestion"
                           aria-label="Accept suggestion"
                         >
@@ -847,9 +864,7 @@ export function Calendar() {
                       )}
                       <button
                         onClick={() => dismissSuggestion(suggestion.taskTitle)}
-                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                          'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300'
-                        }`}
+                        className="ui-control flex h-9 w-9 items-center justify-center border border-[var(--rule)] text-[var(--ink-muted)] transition-colors hover:bg-[var(--state-hover)] hover:text-[var(--ink)]"
                         title="Dismiss suggestion"
                         aria-label="Dismiss suggestion"
                       >
@@ -860,22 +875,20 @@ export function Calendar() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
         )}
 
         {/* Selected day detail panel */}
-        <div className="card rounded-2xl p-6">
+        <section className="border-t border-[var(--rule)] py-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-base font-semibold text-slate-800 dark:text-white`}>
+            <h2 className="text-xl font-bold tracking-[-0.015em] text-[var(--ink)]">
               {selectedDateLabel}
             </h2>
             <button
               onClick={() => openInlineCreate(selectedDateStr)}
-              className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                'hover:bg-slate-100 text-slate-400 hover:text-slate-600 dark:hover:bg-white/10 dark:text-gray-500 dark:hover:text-gray-300'
-              }`}
-              title="Add task"
-              aria-label="Add task"
+              className="ui-control flex h-10 w-10 items-center justify-center text-[var(--action)] transition-colors hover:bg-[var(--action-soft)]"
+              title="Add calendar block"
+              aria-label={`Add calendar block on ${selectedDateLabel}`}
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -884,21 +897,26 @@ export function Calendar() {
           {viewMode === 'month' && <InlineCreateInput dateStr={selectedDateStr} />}
 
           {!hasActivity && inlineCreateDate !== selectedDateStr ? (
-            <p className={`text-sm text-slate-400 dark:text-gray-500`}>No activity</p>
+            <div className="py-4 text-sm text-[var(--ink-muted)]">
+              <p>No calendar blocks or activity.</p>
+              <button type="button" onClick={() => openInlineCreate(selectedDateStr)} className="mt-2 font-medium text-[var(--action)] hover:underline">
+                Add a calendar block
+              </button>
+            </div>
           ) : (
             <div className="space-y-4">
               {/* Completed tasks */}
               {selectedCompleted.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
+                  <div className="mb-2 flex items-center gap-2 border-b border-[var(--rule)] pb-1 text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Completed ({selectedCompleted.length})
                   </div>
                   <ul className="space-y-2">
                     {selectedCompleted.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
+                        <span className={`h-2 w-2 rounded-full ${CATEGORY_DOT_COLOR[t.category]}`} />
+                        <span className="text-sm text-[var(--ink-secondary)]">{t.title}</span>
                       </li>
                     ))}
                   </ul>
@@ -908,16 +926,16 @@ export function Calendar() {
               {/* Focused/planned tasks */}
               {selectedFocused.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
+                  <div className="mb-2 flex items-center gap-2 border-b border-[var(--rule)] pb-1 text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
                     <CalendarDays className="w-3.5 h-3.5" />
-                    Planned ({selectedFocused.length})
+                    Calendar blocks ({selectedFocused.length})
                   </div>
                   <ul className="space-y-2">
                     {selectedFocused.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
-                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-400`}>{t.status}</span>
+                        <span className={`h-2 w-2 rounded-full ${CATEGORY_DOT_COLOR[t.category]}`} />
+                        <span className="text-sm text-[var(--ink-secondary)]">{t.title}</span>
+                        <span className="ml-auto text-xs text-[var(--ink-muted)]">{t.status}</span>
                       </li>
                     ))}
                   </ul>
@@ -927,16 +945,16 @@ export function Calendar() {
               {/* Created tasks (pending, not focused) */}
               {selectedCreated.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
+                  <div className="mb-2 flex items-center gap-2 border-b border-[var(--rule)] pb-1 text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
                     <Circle className="w-3.5 h-3.5" />
                     Created ({selectedCreated.length})
                   </div>
                   <ul className="space-y-2">
                     {selectedCreated.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${isDark ? CATEGORY_DOT_COLOR[t.category]?.dark : CATEGORY_DOT_COLOR[t.category]?.light}`} />
-                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
-                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-400`}>{t.status}</span>
+                        <span className={`h-2 w-2 rounded-full ${CATEGORY_DOT_COLOR[t.category]}`} />
+                        <span className="text-sm text-[var(--ink-secondary)]">{t.title}</span>
+                        <span className="ml-auto text-xs text-[var(--ink-muted)]">{t.status}</span>
                       </li>
                     ))}
                   </ul>
@@ -946,16 +964,16 @@ export function Calendar() {
               {/* Due tasks */}
               {selectedDue.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
+                  <div className="mb-2 flex items-center gap-2 border-b border-[var(--rule)] pb-1 text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
                     <Clock className="w-3.5 h-3.5" />
                     Due ({selectedDue.length})
                   </div>
                   <ul className="space-y-2">
                     {selectedDue.map((t) => (
                       <li key={t.id} className="flex items-center gap-2">
-                        <Circle className={`w-3 h-3 ${t.status === 'Completed' ? ('text-emerald-500 dark:text-emerald-400') : ('text-red-500 dark:text-red-400')}`} />
-                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{t.title}</span>
-                        <span className={`text-xs ml-auto ${t.status === 'Completed' ? ('text-emerald-600 dark:text-emerald-500') : ('text-red-600 dark:text-red-500')}`}>
+                        <Circle className={`h-3 w-3 ${t.status === 'Completed' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`} />
+                        <span className="text-sm text-[var(--ink-secondary)]">{t.title}</span>
+                        <span className={`ml-auto text-xs ${t.status === 'Completed' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                           {t.status}
                         </span>
                       </li>
@@ -967,16 +985,16 @@ export function Calendar() {
               {/* Habits */}
               {selectedHabits.length > 0 && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
+                  <div className="mb-2 flex items-center gap-2 border-b border-[var(--rule)] pb-1 text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
                     <Flame className="w-3.5 h-3.5" />
                     Habits ({selectedHabits.length})
                   </div>
                   <ul className="space-y-2">
                     {selectedHabits.map((h, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <CheckCircle2 className={`w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400`} />
-                        <span className={`text-sm text-slate-600 dark:text-gray-300`}>{h.habitName}</span>
-                        <span className={`text-xs ml-auto text-slate-400 dark:text-gray-500`}>×{h.value}</span>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[var(--success)]" />
+                        <span className="text-sm text-[var(--ink-secondary)]">{h.habitName}</span>
+                        <span className="ml-auto text-xs text-[var(--ink-muted)]">×{h.value}</span>
                       </li>
                     ))}
                   </ul>
@@ -986,14 +1004,14 @@ export function Calendar() {
               {/* Daily Check-In */}
               {selectedCheckIn && (
                 <div>
-                  <div className={`flex items-center gap-2 mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500`}>
+                  <div className="mb-2 flex items-center gap-2 border-b border-[var(--rule)] pb-1 text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
                     <BookOpen className="w-3.5 h-3.5" />
                     Check-In
                     {selectedCheckIn.energyLevel && (
-                      <span className={`ml-auto normal-case tracking-normal px-2 py-1 rounded-full ${
-                        selectedCheckIn.energyLevel <= 3 ? 'bg-red-500/20 text-red-400'
-                        : selectedCheckIn.energyLevel <= 6 ? 'bg-amber-500/20 text-amber-400'
-                        : 'bg-emerald-500/20 text-emerald-400'
+                      <span className={`ml-auto border px-2 py-1 normal-case tracking-normal ${
+                        selectedCheckIn.energyLevel <= 3 ? 'border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)]'
+                        : selectedCheckIn.energyLevel <= 6 ? 'border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning)]'
+                        : 'border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)]'
                       }`}>
                         Energy {selectedCheckIn.energyLevel}/10
                       </span>
@@ -1001,10 +1019,10 @@ export function Calendar() {
                   </div>
                   <div className="space-y-2">
                     {[
-                      { html: selectedCheckIn.wins, icon: '✓', color: 'text-emerald-500', label: 'Wins' },
-                      { html: selectedCheckIn.challenges, icon: '!', color: 'text-red-400', label: 'Challenges' },
-                      { html: selectedCheckIn.learnings, icon: '💡', color: 'text-amber-400', label: 'Learnings' },
-                      { html: selectedCheckIn.tomorrowFocus, icon: '→', color: 'text-violet-400', label: 'Focus' },
+                      { html: selectedCheckIn.wins, Icon: Trophy, color: 'text-[var(--success)]', label: 'Wins' },
+                      { html: selectedCheckIn.challenges, Icon: TriangleAlert, color: 'text-[var(--danger)]', label: 'Challenges' },
+                      { html: selectedCheckIn.learnings, Icon: Lightbulb, color: 'text-[var(--warning)]', label: 'Learnings' },
+                      { html: selectedCheckIn.tomorrowFocus, Icon: Crosshair, color: 'text-[var(--action)]', label: 'Focus' },
                     ].filter(s => s.html).map((section) => {
                       const el = document.createElement('div');
                       el.innerHTML = section.html!;
@@ -1014,11 +1032,14 @@ export function Calendar() {
                         : (el.textContent || '').split('\n').map(s => s.trim()).filter(Boolean);
                       if (lines.length === 0) return null;
                       return (
-                        <div key={section.label}>
-                          <p className={`text-xs font-medium mb-1 ${section.color}`}>{section.label}</p>
+                        <div key={section.label} className="border-b border-[var(--rule)] pb-2 last:border-0">
+                          <p className={`mb-1 flex items-center gap-1 text-xs font-medium ${section.color}`}>
+                            <section.Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                            {section.label}
+                          </p>
                           {lines.map((line, i) => (
-                            <p key={i} className={`text-xs pl-3 text-slate-600 dark:text-gray-300`}>
-                              <span className={section.color}>•</span> {line}
+                            <p key={i} className="pl-5 text-xs text-[var(--ink-secondary)]">
+                              {line}
                             </p>
                           ))}
                         </div>
@@ -1029,7 +1050,7 @@ export function Calendar() {
               )}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* ── UNSCHEDULED TASK SIDEBAR (desktop only) ── */}
@@ -1051,6 +1072,11 @@ export function Calendar() {
         onClose={() => setScheduleTask(null)}
         onSchedule={schedule}
         onUnschedule={unschedule}
+        tasks={allTasks}
+        onSkipOccurrence={skipOccurrence}
+        onRescheduleOccurrence={rescheduleOccurrence}
+        onEndSeries={endRecurringFrom}
+        onDeleteSeries={deleteTask}
       />
     </div>
   );

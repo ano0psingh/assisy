@@ -1,6 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Trophy, Lock, Star, Flame, Zap, Target, Award, Crown, Medal, CheckCircle2, TrendingUp, Sparkles, Calendar, Clock, Sunrise, Moon, Brain, Gift, X, Gem, Shield, Swords, BookOpen, Heart, Rocket, User, Scroll, MapPin, Compass, ChevronDown } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { createElement, useMemo, useState, useEffect } from 'react';
+import { Trophy, Lock, Star, Flame, Zap, Target, Award, Crown, Medal, CheckCircle2, TrendingUp, Sparkles, Calendar, Clock, Sunrise, Moon, Brain, Gift, X, Gem, Shield, Swords, BookOpen, Heart, Rocket, User, Scroll, MapPin, Compass, ChevronDown, Volume2, VolumeX } from 'lucide-react';
 import { useGamification } from '../context/GamificationContext';
 import { useAuth } from '../context/AuthContext';
 import { saveSettings } from '../store/unifiedStore';
@@ -27,20 +26,10 @@ const UNLOCKABLE_TITLES: { id: string; title: string; achievementId: string; rar
 ];
 
 const TITLE_RARITY_STYLES = {
-  common: { bg: 'bg-slate-500/20', text: 'text-slate-300', border: 'border-slate-500/30' },
-  rare: { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/30' },
-  epic: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/30' },
-  legendary: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30' },
-};
-
-// ============ SEASON SYSTEM ============
-const CURRENT_SEASON = {
-  id: 'season-1',
-  name: 'Season 1: The Path of Focus',
-  description: 'Master the art of deep work and unlock exclusive seasonal badges.',
-  endsAt: new Date('2026-03-31'),
-  theme: 'focus',
-  exclusiveBadges: ['focus-initiate', 'deep-worker', 'flow-state-master'],
+  common: { bg: 'bg-[var(--surface-subtle)]', text: 'text-[var(--ink-disabled)]', border: 'border-[var(--rule-strong)]' },
+  rare: { bg: 'bg-[var(--action-soft)]', text: 'text-[var(--action)]', border: 'border-[var(--action)]' },
+  epic: { bg: 'bg-[var(--action-soft)]', text: 'text-[var(--action)]', border: 'border-[var(--action)]' },
+  legendary: { bg: 'bg-[var(--warning-soft)]', text: 'text-[var(--warning)]', border: 'border-[var(--warning)]' },
 };
 
 // ============ HIDDEN/SECRET ACHIEVEMENTS ============
@@ -78,11 +67,11 @@ const getTodaysChallenges = () => {
 
 // ============ STREAK MULTIPLIER SYSTEM ============
 const getStreakMultiplier = (streak: number): { multiplier: number; label: string; color: string } => {
-  if (streak >= 30) return { multiplier: 2.0, label: '2x', color: 'text-amber-400' };
-  if (streak >= 14) return { multiplier: 1.5, label: '1.5x', color: 'text-purple-400' };
-  if (streak >= 7) return { multiplier: 1.25, label: '1.25x', color: 'text-blue-400' };
+  if (streak >= 30) return { multiplier: 2.0, label: '2x', color: 'text-[var(--warning)]' };
+  if (streak >= 14) return { multiplier: 1.5, label: '1.5x', color: 'text-[var(--action)]' };
+  if (streak >= 7) return { multiplier: 1.25, label: '1.25x', color: 'text-[var(--action)]' };
   if (streak >= 3) return { multiplier: 1.1, label: '1.1x', color: 'text-green-400' };
-  return { multiplier: 1.0, label: '1x', color: 'text-gray-400' };
+  return { multiplier: 1.0, label: '1x', color: 'text-[var(--ink-muted)]' };
 };
 
 // ============ SOUND EFFECTS SYSTEM ============
@@ -91,16 +80,19 @@ const playSound = (type: 'unlock' | 'click' | 'rare' | 'legendary') => {
   if (typeof window === 'undefined') return;
   const enabled = localStorage.getItem(SOUND_ENABLED_KEY) !== 'false';
   if (!enabled) return;
-  
+
   // Using Web Audio API for simple sounds
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextCtor = window.AudioContext
+      ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const audioContext = new AudioContextCtor();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     // Different sounds for different events
     switch (type) {
       case 'legendary':
@@ -138,7 +130,7 @@ const playSound = (type: 'unlock' | 'click' | 'rare' | 'legendary') => {
         oscillator.stop(audioContext.currentTime + 0.05);
         break;
     }
-  } catch (e) {
+  } catch {
     // Audio not supported, fail silently
   }
 };
@@ -146,17 +138,17 @@ const playSound = (type: 'unlock' | 'click' | 'rare' | 'legendary') => {
 // ============ CONFETTI COMPONENT ============
 function Confetti({ active }: { active: boolean }) {
   if (!active) return null;
-  
+
   const particles = Array.from({ length: 50 }, (_, i) => ({
     id: i,
-    x: Math.random() * 100,
-    delay: Math.random() * 0.5,
-    duration: 1 + Math.random() * 1,
-    color: ['#fbbf24', '#a855f7', '#3b82f6', '#10b981', '#f43f5e', '#06b6d4'][Math.floor(Math.random() * 6)],
+    x: (i * 37) % 100,
+    delay: (i % 6) * 0.08,
+    duration: 1 + (i % 8) * 0.12,
+    color: ['#fbbf24', '#0f766e', '#44403c', '#10b981', '#dc2626'][i % 5],
   }));
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden motion-reduce:hidden">
       {particles.map((p) => (
         <div
           key={p.id}
@@ -185,12 +177,12 @@ const getTier = (xpReward: number): 'bronze' | 'silver' | 'gold' | 'platinum' | 
 // ============ PROGRESS PREDICTION ============
 const getProgressPrediction = (achievement: Achievement, _userStats: UserStats, currentXP: number, currentLevel: number): string | null => {
   if (achievement.isUnlocked) return null;
-  
+
   const req = achievement.requirement;
   const remaining = (req.value || 0) - ((req as { current?: number }).current ?? 0);
-  
+
   if (remaining <= 0) return null;
-  
+
   switch (req.type) {
     case 'tasks_completed':
       return `${remaining} more task${remaining === 1 ? '' : 's'} to go`;
@@ -198,12 +190,14 @@ const getProgressPrediction = (achievement: Achievement, _userStats: UserStats, 
       return `${remaining} more day${remaining === 1 ? '' : 's'} streak needed`;
     case 'goals_completed':
       return `${remaining} more goal${remaining === 1 ? '' : 's'} to complete`;
-    case 'level_reached':
+    case 'level_reached': {
       const levelsNeeded = (req.value || 0) - currentLevel;
       return levelsNeeded > 0 ? `Reach level ${req.value}` : null;
-    case 'xp_earned':
+    }
+    case 'xp_earned': {
       const xpNeeded = (req.value || 0) - currentXP;
       return xpNeeded > 0 ? `${xpNeeded.toLocaleString()} more XP needed` : null;
+    }
     case 'days_active':
       return `${remaining} more active day${remaining === 1 ? '' : 's'}`;
     case 'tasks_in_day':
@@ -436,46 +430,46 @@ const getTierStyles = (tier: string) => {
   switch (tier) {
     case 'legendary':
       return {
-        bg: 'from-amber-100 via-yellow-50 to-orange-100 dark:from-amber-500/30 dark:via-yellow-500/20 dark:to-orange-500/30',
-        border: 'border-amber-300 dark:border-amber-400/50',
-        icon: 'text-amber-500 dark:text-amber-300',
-        badge: 'bg-gradient-to-r from-amber-500 to-yellow-400 text-white dark:text-black',
-        glow: 'shadow-lg shadow-amber-500/30',
-        ring: 'ring-2 ring-amber-400/50',
+        bg: 'bg-[var(--warning-soft)]',
+        border: 'border-[var(--warning)]',
+        icon: 'text-[var(--warning)]',
+        badge: 'bg-[var(--warning)] text-[var(--ink-inverse)]',
+        glow: '',
+        ring: 'ring-1 ring-[var(--warning)]',
       };
     case 'platinum':
       return {
-        bg: 'from-cyan-50 via-slate-50 to-blue-50 dark:from-cyan-500/20 dark:via-slate-500/20 dark:to-blue-500/20',
-        border: 'border-cyan-300 dark:border-cyan-400/40',
-        icon: 'text-cyan-500 dark:text-cyan-300',
-        badge: 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white dark:from-cyan-400 dark:to-blue-400 dark:text-black',
-        glow: 'shadow-lg shadow-cyan-500/20',
-        ring: 'ring-2 ring-cyan-400/30',
+        bg: 'bg-[var(--action-soft)]',
+        border: 'border-[var(--action)]',
+        icon: 'text-[var(--action)]',
+        badge: 'bg-[var(--action)] text-[var(--action-ink)]',
+        glow: '',
+        ring: 'ring-1 ring-[var(--action)]',
       };
     case 'gold':
       return {
-        bg: 'from-yellow-50 to-amber-50 dark:from-yellow-500/20 dark:to-amber-500/20',
-        border: 'border-yellow-300 dark:border-yellow-500/30',
-        icon: 'text-yellow-500 dark:text-yellow-400',
-        badge: 'bg-yellow-500 text-white dark:text-black',
+        bg: 'bg-[var(--warning-soft)]',
+        border: 'border-[var(--warning)]',
+        icon: 'text-[var(--warning)]',
+        badge: 'bg-[var(--warning)] text-[var(--ink-inverse)]',
         glow: '',
         ring: '',
       };
     case 'silver':
       return {
-        bg: 'from-slate-100 to-gray-100 dark:from-slate-400/20 dark:to-gray-500/20',
-        border: 'border-slate-300 dark:border-slate-400/30',
-        icon: 'text-slate-500 dark:text-slate-300',
-        badge: 'bg-slate-400 text-white dark:text-black',
+        bg: 'bg-[var(--surface-subtle)]',
+        border: 'border-[var(--rule-strong)]',
+        icon: 'text-[var(--ink-secondary)]',
+        badge: 'bg-[var(--ink-secondary)] text-[var(--ink-inverse)]',
         glow: '',
         ring: '',
       };
     default: // bronze
       return {
-        bg: 'from-orange-100 to-amber-100 dark:from-orange-800/20 dark:to-amber-900/20',
-        border: 'border-orange-300 dark:border-orange-700/30',
-        icon: 'text-orange-600 dark:text-orange-400',
-        badge: 'bg-orange-600 text-white dark:bg-orange-700',
+        bg: 'bg-[var(--surface-subtle)]',
+        border: 'border-[var(--rule-strong)]',
+        icon: 'text-[var(--warning)]',
+        badge: 'bg-[var(--ink-secondary)] text-[var(--ink-inverse)]',
         glow: '',
         ring: '',
       };
@@ -569,42 +563,42 @@ function HeroBanner({
   userStats: UserStats;
 }) {
   const [showTitleSelector, setShowTitleSelector] = useState(false);
-  
+
   // Get rank based on level
   const getRank = (lvl: number) => {
-    if (lvl >= 50) return { name: 'Grandmaster', icon: Crown, color: 'text-amber-400' };
-    if (lvl >= 30) return { name: 'Master', icon: Gem, color: 'text-purple-400' };
-    if (lvl >= 20) return { name: 'Expert', icon: Medal, color: 'text-cyan-400' };
-    if (lvl >= 10) return { name: 'Journeyman', icon: Shield, color: 'text-blue-400' };
+    if (lvl >= 50) return { name: 'Grandmaster', icon: Crown, color: 'text-[var(--warning)]' };
+    if (lvl >= 30) return { name: 'Master', icon: Gem, color: 'text-[var(--action)]' };
+    if (lvl >= 20) return { name: 'Expert', icon: Medal, color: 'text-[var(--action)]' };
+    if (lvl >= 10) return { name: 'Journeyman', icon: Shield, color: 'text-[var(--action)]' };
     if (lvl >= 5) return { name: 'Apprentice', icon: Swords, color: 'text-green-400' };
-    return { name: 'Initiate', icon: User, color: 'text-slate-400' };
+    return { name: 'Initiate', icon: User, color: 'text-[var(--ink-muted)]' };
   };
-  
+
   const rank = getRank(level);
   const RankIcon = rank.icon;
-  
+
   const currentTitle = unlockedTitles.find(t => t.id === equippedTitle) || { title: title, rarity: 'common' as const };
   const titleStyle = TITLE_RARITY_STYLES[currentTitle.rarity];
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50 border border-violet-200 dark:from-slate-900 dark:via-violet-900/20 dark:to-slate-900 dark:border-violet-500/20`}>
+    <div className="relative overflow-hidden border-y border-[var(--rule-strong)] bg-[var(--surface-raised)]">
       <div className="relative p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Avatar with prestige ring */}
           <div className="relative">
-            <div className={`w-28 h-28 rounded-full flex items-center justify-center bg-violet-500 dark:bg-violet-600 ring-4 ring-amber-400/50`}>
-              <span className="text-5xl">🥷</span>
+            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[var(--ink)] ring-4 ring-[var(--warning-soft)]">
+              <User className="h-12 w-12 text-[var(--ink-inverse)]" aria-hidden="true" />
             </div>
             {/* Level badge */}
-            <div className={`absolute -bottom-1 -right-1 px-3 py-1 rounded-full text-sm font-bold bg-amber-500 text-white dark:text-black shadow-lg`}>
+            <div className="absolute -bottom-1 -right-1 rounded-full bg-[var(--warning)] px-3 py-1 text-sm font-bold text-[var(--ink-inverse)] shadow-[0_8px_20px_rgba(0,0,0,0.14)]">
               Lv.{level}
             </div>
             {/* Rank indicator */}
-            <div className={`absolute -top-1 -left-1 w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border-2 border-violet-400 shadow`}>
+            <div className="absolute -left-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--action)] bg-[var(--surface)] shadow">
               <RankIcon size={16} className={rank.color} />
             </div>
           </div>
-          
+
           {/* Character info */}
           <div className="flex-1 text-center md:text-left">
             {/* Name plate with decorative elements */}
@@ -612,39 +606,39 @@ function HeroBanner({
               {/* Name and equipped title */}
               <div className="flex flex-col md:flex-row md:items-center gap-3">
                 <div className="relative inline-block">
-                  <h2 className={`text-3xl md:text-4xl font-black tracking-tight text-slate-800 dark:text-white`}>
+                  <h2 className={`text-3xl md:text-4xl font-black tracking-tight text-[var(--ink)]`}>
                     Kage
                   </h2>
                 </div>
-                
+
                 {/* Title badge - more prominent */}
                 <div className="relative">
                   <button
                     onClick={() => setShowTitleSelector(!showTitleSelector)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${
-                      currentTitle.rarity === 'legendary' 
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' 
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold border-2 transition-all ${
+                      currentTitle.rarity === 'legendary'
+                        ? 'bg-[var(--warning-soft)] text-[var(--warning)] border-amber-500/50'
                         : currentTitle.rarity === 'epic'
-                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/50'
+                        ? 'bg-[var(--action-soft)] text-[var(--action)] border-[var(--action)]'
                         : currentTitle.rarity === 'rare'
-                        ? 'bg-blue-500/20 text-blue-300 border-blue-500/50'
+                        ? 'bg-[var(--action-soft)] text-[var(--action)] border-blue-500/50'
                         : `${titleStyle.bg} ${titleStyle.text} ${titleStyle.border}`
-                    } hover:scale-105`}
+                    } hover:scale-[1.02] motion-reduce:hover:scale-100`}
                   >
                     <Scroll size={16} className="opacity-80" />
                     <span className="tracking-wide">{currentTitle.title}</span>
                     <ChevronDown size={14} className={`transition-transform ${showTitleSelector ? 'rotate-180' : ''}`} />
                   </button>
-                
+
                 {/* Title selector dropdown */}
                 {showTitleSelector && (
-                  <div className={`absolute top-full left-0 mt-2 w-64 rounded-xl overflow-hidden shadow-2xl z-50 bg-white border border-slate-200 dark:bg-slate-800 dark:border-white/10`}>
-                    <div className={`p-2 text-xs font-semibold uppercase tracking-wide text-slate-500 bg-slate-50 dark:text-gray-400 dark:bg-white/5`}>
+                  <div className={`absolute top-full left-0 mt-2 w-64 rounded-md overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.24)] z-50 bg-[var(--surface)] border border-[var(--rule)]`}>
+                    <div className={`p-2 text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)] bg-[var(--surface)]`}>
                       Equip Title
                     </div>
                     <div className="max-h-48 overflow-y-auto p-1">
                       {unlockedTitles.length === 0 ? (
-                        <p className={`p-3 text-sm text-slate-500 dark:text-gray-500`}>
+                        <p className={`p-3 text-sm text-[var(--ink-muted)]`}>
                           Unlock achievements to earn titles!
                         </p>
                       ) : (
@@ -654,10 +648,10 @@ function HeroBanner({
                             <button
                               key={t.id}
                               onClick={() => { onTitleChange(t.id); setShowTitleSelector(false); }}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
+                              className={`w-full text-left px-3 py-2 rounded-sm text-sm transition-all ${
                                 equippedTitle === t.id
-                                  ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
-                                  : 'hover:bg-slate-50 text-slate-700 dark:hover:bg-white/5 dark:text-gray-300'
+                                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                                  : 'hover:bg-[var(--surface)] text-[var(--ink-secondary)]'
                               }`}
                             >
                               <span className={`inline-block w-2 h-2 rounded-full mr-2 ${style.bg.replace('/20', '')}`} />
@@ -673,65 +667,65 @@ function HeroBanner({
                 </div>
               </div>
             </div>
-            
+
             {/* Rank & Streak row */}
-            <div className={`flex items-center justify-center md:justify-start gap-4 mb-3 text-slate-600 dark:text-gray-400`}>
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5`}>
+            <div className={`flex items-center justify-center md:justify-start gap-4 mb-3 text-[var(--ink-secondary)]`}>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-sm bg-[var(--surface-subtle)]`}>
                 <RankIcon size={16} className={rank.color} />
                 <span className={`text-sm font-medium ${rank.color}`}>{rank.name}</span>
               </div>
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-lg bg-orange-50 dark:bg-orange-500/10`}>
-                <Flame size={14} className="text-orange-400" />
-                <span className="text-sm font-medium text-orange-400">{userStats.currentStreak} day streak</span>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-sm bg-[var(--warning-soft)]`}>
+                <Flame size={14} className="text-[var(--warning)]" />
+                <span className="text-sm font-medium text-[var(--warning)]">{userStats.currentStreak} day streak</span>
               </div>
             </div>
-            
+
             {/* XP Progress bar */}
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-medium text-slate-600 dark:text-gray-400`}>
+                <span className={`text-xs font-medium text-[var(--ink-secondary)]`}>
                   Experience Points
                 </span>
-                <span className={`text-xs font-bold text-violet-600 dark:text-violet-400`}>
+                <span className="text-xs font-bold text-[var(--action)]">
                   {currentXP} / {xpToNextLevel} XP
                 </span>
               </div>
-              <div className={`h-3 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
-                <div 
-                  className="h-full bg-violet-500 rounded-full transition-all duration-700"
+              <div className={`h-3 rounded-full overflow-hidden bg-[var(--surface-inset)]`}>
+                <div
+                  className="h-full rounded-full bg-[var(--action)] transition-all duration-300 motion-reduce:transition-none"
                   style={{ width: `${xpProgress}%` }}
                 />
               </div>
             </div>
-            
+
             {/* Next reward preview */}
             {nextReward && (
-              <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20`}>
+              <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-sm text-xs bg-[var(--warning-soft)] text-[var(--warning)] border border-[var(--warning)]`}>
                 <Gift size={14} />
                 <span>Next Reward: <strong>{nextReward.name}</strong></span>
                 <span className="opacity-70">({nextReward.xpNeeded} XP away)</span>
               </div>
             )}
           </div>
-          
+
           {/* Stats summary - Enhanced */}
-          <div className={`hidden md:flex flex-col gap-2 p-6 rounded-2xl bg-white/80 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
-            <div className="flex items-center gap-3 pb-2 border-b border-white/10">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-amber-100 dark:bg-amber-500/20`}>
-                <Zap size={20} className="text-amber-400" />
+          <div className={`hidden md:flex flex-col gap-2 p-6 rounded-md bg-[var(--surface)] border border-[var(--rule)]`}>
+            <div className="flex items-center gap-3 pb-2 border-b border-[var(--rule)]">
+              <div className={`w-10 h-10 rounded-md flex items-center justify-center bg-[var(--warning-soft)]`}>
+                <Zap size={20} className="text-[var(--warning)]" />
               </div>
               <div>
-                <p className={`text-2xl font-black text-amber-600 dark:text-amber-400`}>{currentXP.toLocaleString()}</p>
-                <p className={`text-xs text-slate-500 dark:text-gray-500`}>Total XP</p>
+                <p className={`text-2xl font-black text-[var(--warning)]`}>{currentXP.toLocaleString()}</p>
+                <p className={`text-xs text-[var(--ink-muted)]`}>Total XP</p>
               </div>
             </div>
             <div className="flex items-center gap-3 pt-1">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 dark:bg-emerald-500/20`}>
-                <Target size={20} className="text-emerald-400" />
+              <div className={`w-10 h-10 rounded-md flex items-center justify-center bg-[var(--success-soft)]`}>
+                <Target size={20} className="text-[var(--success)]" />
               </div>
               <div>
-                <p className={`text-2xl font-black text-emerald-600 dark:text-emerald-400`}>{userStats.totalTasksCompleted}</p>
-                <p className={`text-xs text-slate-500 dark:text-gray-500`}>Quests Completed</p>
+                <p className={`text-2xl font-black text-[var(--success)]`}>{userStats.totalTasksCompleted}</p>
+                <p className={`text-xs text-[var(--ink-muted)]`}>Quests Completed</p>
               </div>
             </div>
           </div>
@@ -754,7 +748,7 @@ function QuestLogRoadmap({
       id: 'tasks',
       name: 'Task Mastery',
       icon: Target,
-      color: 'violet',
+      color: 'teal',
       current: userStats.totalTasksCompleted,
       milestones: [
         { value: 1, name: 'First Blood', achievementId: 'first-blood' },
@@ -794,7 +788,7 @@ function QuestLogRoadmap({
       id: 'mastery',
       name: 'Level Mastery',
       icon: Crown,
-      color: 'cyan',
+      color: 'blue',
       current: getTotalLevel(),
       milestones: [
         { value: 5, name: 'Level 5', achievementId: 'level-5' },
@@ -806,23 +800,23 @@ function QuestLogRoadmap({
   ];
 
   const colorMap: Record<string, { bg: string; progress: string; text: string; icon: string }> = {
-    violet: { bg: 'bg-violet-500/10', progress: 'from-violet-500 to-purple-400', text: 'text-violet-400', icon: 'text-violet-400' },
-    orange: { bg: 'bg-orange-500/10', progress: 'from-orange-500 to-amber-400', text: 'text-orange-400', icon: 'text-orange-400' },
-    amber: { bg: 'bg-amber-500/10', progress: 'from-amber-500 to-yellow-400', text: 'text-amber-400', icon: 'text-amber-400' },
-    cyan: { bg: 'bg-cyan-500/10', progress: 'from-cyan-500 to-blue-400', text: 'text-cyan-400', icon: 'text-cyan-400' },
+    teal: { bg: 'bg-[var(--action-soft)]', progress: 'bg-[var(--action)]', text: 'text-[var(--action)]', icon: 'text-[var(--action)]' },
+    orange: { bg: 'bg-[var(--warning-soft)]', progress: 'bg-[var(--warning)]', text: 'text-[var(--warning)]', icon: 'text-[var(--warning)]' },
+    amber: { bg: 'bg-[var(--warning-soft)]', progress: 'bg-[var(--warning)]', text: 'text-[var(--warning)]', icon: 'text-[var(--warning)]' },
+    blue: { bg: 'bg-[var(--action-soft)]', progress: 'bg-[var(--action)]', text: 'text-[var(--action)]', icon: 'text-[var(--action)]' },
   };
 
   return (
-    <div className={`p-6 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+    <div className={`p-6 rounded-md bg-[var(--surface)] border border-[var(--rule)]`}>
       <div className="flex items-center gap-3 mb-6">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-violet-100 dark:bg-violet-500/20`}>
-          <Compass size={20} className={'text-violet-600 dark:text-violet-400'} />
+        <div className="flex h-10 w-10 items-center justify-center bg-[var(--action-soft)]">
+          <Compass size={20} className="text-[var(--action)]" />
         </div>
         <div>
-          <h2 className={`text-lg font-bold text-slate-800 dark:text-white`}>
+          <h2 className={`text-lg font-bold text-[var(--ink)]`}>
             Quest Log
           </h2>
-          <p className={`text-xs text-slate-500 dark:text-gray-500`}>
+          <p className={`text-xs text-[var(--ink-muted)]`}>
             Your journey to mastery
           </p>
         </div>
@@ -832,28 +826,28 @@ function QuestLogRoadmap({
         {questPaths.map((path) => {
           const Icon = path.icon;
           const colors = colorMap[path.color];
-          
+
           // Find current milestone and next milestone
           const completedMilestones = path.milestones.filter(m => path.current >= m.value);
           const nextMilestone = path.milestones.find(m => path.current < m.value);
-          const progress = nextMilestone 
+          const progress = nextMilestone
             ? Math.min(100, (path.current / nextMilestone.value) * 100)
             : 100;
 
           return (
-            <div 
+            <div
               key={path.id}
-              className={`p-4 rounded-xl bg-slate-50 border border-slate-100 dark:bg-white/[0.02] dark:border-white/5`}
+              className={`p-4 rounded-md bg-[var(--surface)] border border-[var(--rule)]`}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors.bg}`}>
+                <div className={`w-9 h-9 rounded-sm flex items-center justify-center ${colors.bg}`}>
                   <Icon size={18} className={colors.icon} />
                 </div>
                 <div className="flex-1">
-                  <h3 className={`font-semibold text-sm text-slate-800 dark:text-white`}>
+                  <h3 className={`font-semibold text-sm text-[var(--ink)]`}>
                     {path.name}
                   </h3>
-                  <p className={`text-xs text-slate-500 dark:text-gray-500`}>
+                  <p className={`text-xs text-[var(--ink-muted)]`}>
                     {completedMilestones.length}/{path.milestones.length} milestones
                   </p>
                 </div>
@@ -863,9 +857,9 @@ function QuestLogRoadmap({
               </div>
 
               {/* Progress bar */}
-              <div className={`h-2 rounded-full overflow-hidden mb-3 bg-slate-200 dark:bg-white/10`}>
-                <div 
-                  className={`h-full bg-gradient-to-r ${colors.progress} rounded-full transition-all duration-700`}
+              <div className={`h-2 rounded-full overflow-hidden mb-3 bg-[var(--surface-inset)]`}>
+                <div
+                  className={`h-full ${colors.progress} rounded-full transition-all duration-300 motion-reduce:transition-none`}
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -877,20 +871,20 @@ function QuestLogRoadmap({
                   const isCurrent = nextMilestone?.value === milestone.value;
                   return (
                     <div key={milestone.value} className="flex-1 flex items-center">
-                      <div 
+                      <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                          isComplete 
-                            ? `bg-gradient-to-br ${colors.progress} text-white` 
+                          isComplete
+                            ? `${colors.progress} text-[var(--ink-inverse)]`
                             : isCurrent
                               ? `${colors.bg} ${colors.text} ring-2 ring-current`
-                              : 'bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-gray-400'
+                              : 'bg-[var(--surface-inset)] text-[var(--ink-muted)]'
                         }`}
                         title={milestone.name}
                       >
                         {isComplete ? '✓' : idx + 1}
                       </div>
                       {idx < path.milestones.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-1 ${isComplete ? `bg-gradient-to-r ${colors.progress}` : 'bg-slate-200 dark:bg-white/10'}`} />
+                        <div className={`flex-1 h-0.5 mx-1 ${isComplete ? `${colors.progress}` : 'bg-[var(--surface-inset)]'}`} />
                       )}
                     </div>
                   );
@@ -899,14 +893,14 @@ function QuestLogRoadmap({
 
               {/* Next milestone info */}
               {nextMilestone && (
-                <p className={`mt-3 text-xs text-slate-600 dark:text-gray-400`}>
-                  <span className="font-medium">Next:</span> {nextMilestone.name} 
+                <p className={`mt-3 text-xs text-[var(--ink-secondary)]`}>
+                  <span className="font-medium">Next:</span> {nextMilestone.name}
                   <span className={`ml-1 ${colors.text}`}>({nextMilestone.value - path.current} to go)</span>
                 </p>
               )}
               {!nextMilestone && (
                 <p className={`mt-3 text-xs font-medium ${colors.text}`}>
-                  ✨ All milestones complete!
+                  All milestones complete.
                 </p>
               )}
             </div>
@@ -917,59 +911,10 @@ function QuestLogRoadmap({
   );
 }
 
-// ============ SEASON TEASER COMPONENT ============
-function SeasonTeaser() {
-  const daysRemaining = Math.ceil((CURRENT_SEASON.endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  
-  return (
-    <div className={`relative overflow-hidden rounded-2xl bg-violet-100 border border-violet-200 dark:bg-violet-900/50 dark:border-violet-500/30`}>
-      <div className="relative p-6 flex items-center gap-4">
-        {/* Season icon */}
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-violet-200/50 border border-violet-300 dark:bg-violet-500/20 dark:border-violet-500/30`}>
-          <Sparkles size={28} className={'text-violet-600 dark:text-violet-300'} />
-        </div>
-        
-        {/* Season info */}
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300`}>
-              Active Season
-            </span>
-            <span className={`px-2 py-1 rounded-full text-xs font-bold bg-violet-200 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300`}>
-              {daysRemaining} days left
-            </span>
-          </div>
-          <h3 className={`font-bold text-lg text-slate-800 dark:text-white`}>
-            {CURRENT_SEASON.name}
-          </h3>
-          <p className={`text-xs mt-1 text-slate-600 dark:text-gray-400`}>
-            {CURRENT_SEASON.description}
-          </p>
-        </div>
-        
-        {/* Seasonal badges preview */}
-        <div className="hidden md:flex items-center gap-2">
-          {CURRENT_SEASON.exclusiveBadges.slice(0, 3).map((_, idx) => (
-            <div 
-              key={idx}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/50 border border-violet-200 dark:bg-white/5 dark:border-white/10`}
-            >
-              <Lock size={16} className={'text-slate-400 dark:text-gray-400'} />
-            </div>
-          ))}
-          <span className={`text-xs text-slate-500 dark:text-gray-500`}>
-            +{CURRENT_SEASON.exclusiveBadges.length} badges
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ============ STREAK BONUS VISUALIZATION ============
 function StreakBonusBanner({ streak }: { streak: number }) {
   const bonus = getStreakMultiplier(streak);
-  const nextBonus = streak < 3 ? { days: 3, multiplier: '1.1x' } 
+  const nextBonus = streak < 3 ? { days: 3, multiplier: '1.1x' }
     : streak < 7 ? { days: 7, multiplier: '1.25x' }
     : streak < 14 ? { days: 14, multiplier: '1.5x' }
     : streak < 30 ? { days: 30, multiplier: '2x' }
@@ -978,34 +923,34 @@ function StreakBonusBanner({ streak }: { streak: number }) {
   if (streak === 0) return null;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-100 to-amber-50 border border-orange-200 dark:from-orange-900/30 dark:to-amber-900/20 dark:border-orange-500/30`}>
+    <div className={`relative overflow-hidden border-y border-[var(--warning)] bg-[var(--warning-soft)]`}>
       <div className="relative p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Fire icon with glow */}
-          <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center bg-orange-100 dark:bg-orange-500/20`}>
-            <Flame size={28} className="text-orange-400 animate-pulse" />
+          <div className={`relative w-14 h-14 rounded-md flex items-center justify-center bg-[var(--warning-soft)]`}>
+            <Flame size={28} className="text-[var(--warning)] animate-pulse motion-reduce:animate-none" />
             {bonus.multiplier > 1 && (
-              <div className="absolute inset-0 rounded-2xl animate-unlock-glow" style={{ boxShadow: '0 0 20px rgba(251, 146, 60, 0.4)' }} />
+              <div className="absolute inset-0 rounded-md animate-unlock-glow motion-reduce:animate-none" style={{ boxShadow: '0 0 20px rgba(251, 146, 60, 0.4)' }} />
             )}
           </div>
-          
+
           <div>
             <div className="flex items-center gap-2">
               <span className={`text-2xl font-black ${bonus.color}`}>{streak}</span>
-              <span className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>Day Streak</span>
+              <span className={`text-sm font-medium text-[var(--ink-secondary)]`}>Day Streak</span>
             </div>
-            <p className={`text-xs text-slate-500 dark:text-gray-500`}>
-              {nextBonus 
+            <p className={`text-xs text-[var(--ink-muted)]`}>
+              {nextBonus
                 ? `${nextBonus.days - streak} more days until ${nextBonus.multiplier} bonus!`
                 : 'Maximum streak bonus active!'
               }
             </p>
           </div>
         </div>
-        
+
         {/* Multiplier badge */}
-        <div className={`px-4 py-2 rounded-xl bg-orange-100 border border-orange-200 dark:bg-orange-500/20 dark:border-orange-500/30`}>
-          <p className={`text-xs font-medium text-orange-600 dark:text-orange-300`}>XP Multiplier</p>
+        <div className={`px-4 py-2 rounded-md bg-[var(--warning-soft)] border border-[var(--warning)]`}>
+          <p className={`text-xs font-medium text-[var(--warning)]`}>XP Multiplier</p>
           <p className={`text-2xl font-black ${bonus.color}`}>{bonus.label}</p>
         </div>
       </div>
@@ -1016,7 +961,7 @@ function StreakBonusBanner({ streak }: { streak: number }) {
 // ============ DAILY CHALLENGES COMPONENT ============
 function DailyChallenges({ userStats }: { userStats: UserStats }) {
   const challenges = getTodaysChallenges();
-  
+
   // Simple progress check (in a real app, this would be more sophisticated)
   const getProgress = (challenge: typeof DAILY_CHALLENGES[0]) => {
     switch (challenge.requirement.type) {
@@ -1024,71 +969,75 @@ function DailyChallenges({ userStats }: { userStats: UserStats }) {
         return Math.min(100, (userStats.totalTasksCompleted % 10) / challenge.requirement.value * 100);
       case 'maintain_streak':
         return userStats.currentStreak > 0 ? 100 : 0;
-      default:
-        return Math.random() > 0.5 ? 100 : Math.floor(Math.random() * 80);
+      default: {
+        const stableSeed = `${challenge.id}-${new Date().toDateString()}`
+          .split('')
+          .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+        return stableSeed % 80;
+      }
     }
   };
 
   return (
-    <div className={`p-6 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
+    <div className={`p-6 rounded-md bg-[var(--surface)] border border-[var(--rule)]`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 dark:bg-emerald-500/20`}>
-            <Zap size={20} className="text-emerald-400" />
+          <div className={`w-10 h-10 rounded-md flex items-center justify-center bg-[var(--success-soft)]`}>
+            <Zap size={20} className="text-[var(--success)]" />
           </div>
           <div>
-            <h2 className={`font-bold text-slate-800 dark:text-white`}>Daily Challenges</h2>
-            <p className={`text-xs text-slate-500 dark:text-gray-500`}>Resets at midnight</p>
+            <h2 className={`font-bold text-[var(--ink)]`}>Daily Challenges</h2>
+            <p className={`text-xs text-[var(--ink-muted)]`}>Resets at midnight</p>
           </div>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300`}>
+        <div className={`px-3 py-1 rounded-full text-xs font-bold bg-[var(--success-soft)] text-[var(--success)]`}>
           +{challenges.reduce((sum, c) => sum + c.xpReward, 0)} XP Available
         </div>
       </div>
-      
+
       <div className="space-y-3">
         {challenges.map((challenge) => {
           const Icon = challenge.icon;
           const progress = getProgress(challenge);
           const isComplete = progress >= 100;
-          
+
           return (
-            <div 
+            <div
               key={challenge.id}
-              className={`p-3 rounded-xl transition-all ${
-                isComplete 
-                  ? 'bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30'
-                  : 'bg-slate-50 border border-slate-100 hover:bg-slate-100 dark:bg-white/[0.02] dark:border-white/5 dark:hover:bg-white/5'
+              className={`p-3 rounded-md transition-all ${
+                isComplete
+                  ? 'bg-[var(--success-soft)] border border-[var(--success)]'
+                  : 'bg-[var(--surface)] border border-[var(--rule)] hover:bg-[var(--surface-subtle)]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${
                   isComplete
-                    ? 'bg-emerald-100 dark:bg-emerald-500/20'
-                    : 'bg-slate-100 dark:bg-white/5'
+                    ? 'bg-[var(--success-soft)]'
+                    : 'bg-[var(--surface-subtle)]'
                 }`}>
                   {isComplete ? (
-                    <CheckCircle2 size={20} className="text-emerald-400" />
+                    <CheckCircle2 size={20} className="text-[var(--success)]" />
                   ) : (
-                    <Icon size={20} className={'text-slate-500 dark:text-gray-400'} />
+                    <Icon size={20} className={'text-[var(--ink-muted)]'} />
                   )}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <p className={`font-medium text-sm text-slate-800 dark:text-white`}>
+                    <p className={`font-medium text-sm text-[var(--ink)]`}>
                       {challenge.name}
                     </p>
-                    <span className={`text-xs font-bold ${isComplete ? 'text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    <span className={`text-xs font-bold ${isComplete ? 'text-[var(--success)]' : 'text-[var(--warning)]'}`}>
                       +{challenge.xpReward} XP
                     </span>
                   </div>
-                  <p className={`text-xs text-slate-500 dark:text-gray-500`}>
+                  <p className={`text-xs text-[var(--ink-muted)]`}>
                     {challenge.description}
                   </p>
                   {!isComplete && (
-                    <div className={`mt-2 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
-                      <div 
-                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    <div className={`mt-2 h-1.5 rounded-full overflow-hidden bg-[var(--surface-inset)]`}>
+                      <div
+                        className="h-full bg-[var(--success)] rounded-full transition-all duration-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -1104,15 +1053,15 @@ function DailyChallenges({ userStats }: { userStats: UserStats }) {
 }
 
 // Enhanced Achievement Card
-function AchievementCard({ 
-  achievement, 
-  progress, 
+function AchievementCard({
+  achievement,
+  progress,
   onClick,
   isNew = false,
   prediction,
-}: { 
-  achievement: Achievement; 
-  progress: number; 
+}: {
+  achievement: Achievement;
+  progress: number;
   onClick: () => void;
   isNew?: boolean;
   prediction?: string | null;
@@ -1120,30 +1069,29 @@ function AchievementCard({
   const isSecret = SECRET_ACHIEVEMENTS.has(achievement.id);
   const isUnlocked = achievement.isUnlocked;
   const showAsSecret = isSecret && !isUnlocked;
-  
-  const Icon = showAsSecret ? Sparkles : getAchievementIcon(achievement);
+
   const tier = getTier(achievement.xpReward) as AchievementTier;
   const tierStyles = getTierStyles(tier);
 
   return (
-    <div 
+    <div
       onClick={() => { onClick(); playSound('click'); }}
-      className={`rarity-card rarity-${tier} ${isUnlocked ? 'rarity-unlocked' : 'rarity-locked'} relative w-4/5 mx-auto rounded-xl overflow-hidden cursor-pointer transition-all duration-300 aspect-square ${
-        'bg-white border border-slate-200 dark:bg-white/[0.03] dark:border-white/10'
-      } ${isUnlocked ? '' : 'opacity-80'} hover:-translate-y-1 ${isNew ? 'animate-unlock-glow' : ''}`}
+      className={`rarity-card rarity-${tier} ${isUnlocked ? 'rarity-unlocked' : 'rarity-locked'} relative w-4/5 mx-auto rounded-md overflow-hidden cursor-pointer transition-all duration-300 motion-reduce:transition-none aspect-square ${
+        'bg-[var(--surface)] border border-[var(--rule)]'
+      } ${isUnlocked ? '' : 'opacity-80'} hover:-translate-y-1 ${isNew ? 'animate-unlock-glow motion-reduce:animate-none' : ''}`}
     >
-      {isUnlocked && <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${tierStyles.bg}`} />}
+      {isUnlocked && <div className={`absolute inset-0 opacity-60 ${tierStyles.bg}`} />}
 
       <div className="relative z-10 h-full p-2 flex flex-col">
         {/* Top meta row */}
         <div className="flex items-center justify-between gap-2">
           <span className={`text-xs px-2 py-1 rounded-full uppercase tracking-[0.14em] font-semibold ${
-            isUnlocked ? tierStyles.badge : ('bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-gray-300')
+            isUnlocked ? tierStyles.badge : ('bg-[var(--surface-inset)] text-[var(--ink-secondary)]')
           }`}>
             {tier}
           </span>
           <span className={`text-xs px-2 py-1 rounded-full uppercase tracking-[0.14em] font-semibold ${
-            'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400'
+            'bg-[var(--surface-subtle)] text-[var(--ink-muted)]'
           }`}>
             {achievement.type}
           </span>
@@ -1152,21 +1100,22 @@ function AchievementCard({
         {/* Center badge */}
         <div className="flex-1 flex items-center justify-center">
           <div className={`relative w-[80px] h-[80px] rounded-[1.35rem] flex items-center justify-center border ${
-            'bg-slate-50 border-slate-200 dark:bg-white/[0.04] dark:border-white/10'
-          } ${showAsSecret ? 'animate-pulse' : ''}`}>
+            'bg-[var(--surface)] border-[var(--rule)]'
+          } ${showAsSecret ? 'animate-pulse motion-reduce:animate-none' : ''}`}>
             {showAsSecret ? (
-              <span className={`text-3xl font-bold text-violet-500 dark:text-violet-400`}>?</span>
-            ) : isUnlocked ? (
-              <Icon size={46} className={tierStyles.icon} />
-            ) : (
-              <Lock size={38} className={'text-slate-400 dark:text-gray-400'} />
+              <span className="text-3xl font-bold text-[var(--action)]">?</span>
+            ) : isUnlocked ? createElement(showAsSecret ? Sparkles : getAchievementIcon(achievement), {
+                size: 46,
+                className: tierStyles.icon,
+              }) : (
+              <Lock size={38} className={'text-[var(--ink-muted)]'} />
             )}
           </div>
         </div>
 
         {/* Bottom info */}
         <div>
-          <h3 className={`font-bold text-sm leading-tight line-clamp-2 text-slate-800 dark:text-white`}>
+          <h3 className={`font-bold text-sm leading-tight line-clamp-2 text-[var(--ink)]`}>
             {showAsSecret ? '???' : achievement.name}
           </h3>
 
@@ -1177,29 +1126,29 @@ function AchievementCard({
                 +{achievement.xpReward}
               </div>
             ) : showAsSecret ? (
-              <div className={`text-xs font-bold text-violet-600 dark:text-violet-400`}>
+              <div className="text-xs font-bold text-[var(--action)]">
                 ???
               </div>
             ) : (
-              <div className={`text-xs font-bold text-slate-600 dark:text-gray-300`}>
+              <div className={`text-xs font-bold text-[var(--ink-secondary)]`}>
                 {progress}%
               </div>
             )}
-            <div className={`text-xs text-slate-400 dark:text-gray-500`}>
+            <div className={`text-xs text-[var(--ink-muted)]`}>
               {isUnlocked ? 'Earned' : showAsSecret ? 'Hidden' : 'Locked'}
             </div>
           </div>
 
           {!isUnlocked && !showAsSecret && (
             <div className="mt-2">
-              <div className={`h-1 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
+              <div className={`h-1 rounded-full overflow-hidden bg-[var(--surface-inset)]`}>
                 <div
-                  className="h-full bg-violet-500 transition-all duration-700"
+                  className="h-full bg-[var(--action)] transition-all duration-300 motion-reduce:transition-none"
                   style={{ width: `${progress}%` }}
                 />
               </div>
               {prediction && (
-                <p className={`mt-1 text-xs truncate text-slate-500 dark:text-gray-500`}>
+                <p className={`mt-1 text-xs truncate text-[var(--ink-muted)]`}>
                   {prediction}
                 </p>
               )}
@@ -1213,65 +1162,64 @@ function AchievementCard({
 }
 
 // Achievement Detail Modal
-function AchievementModal({ 
-  achievement, 
-  progress, 
+function AchievementModal({
+  achievement,
+  progress,
   lore,
   objective,
-  onClose 
-}: { 
-  achievement: Achievement; 
-  progress: number; 
+  onClose
+}: {
+  achievement: Achievement;
+  progress: number;
   lore: string;
   objective: QuestObjective;
   onClose: () => void;
 }) {
-  const Icon = getAchievementIcon(achievement);
   const tier = getTier(achievement.xpReward);
   const tierStyles = getTierStyles(tier);
   const isUnlocked = achievement.isUnlocked;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className={`absolute inset-0 backdrop-blur-sm bg-slate-900/30 dark:bg-black/70`}
+      <div
+        className={`absolute inset-0 bg-[var(--surface-overlay)]`}
         onClick={onClose}
       />
-      <div className={`relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl ${
-        'bg-white dark:bg-[#12121a]'
+      <div className={`relative w-full max-w-md rounded-md overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.24)] ${
+        'bg-[var(--surface)] dark:bg-[#12121a]'
       }`}>
-        {/* Header with gradient */}
-        <div className={`relative p-4 sm:p-8 ${isUnlocked ? `bg-gradient-to-br ${tierStyles.bg}` : ''}`}>
+        <div className={`relative border-b border-[var(--rule)] p-4 sm:p-8 ${isUnlocked ? tierStyles.bg : 'bg-[var(--surface)]'}`}>
           {/* Close button */}
-          <button 
+          <button
             aria-label="Close"
             onClick={onClose}
             className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
-              'hover:bg-slate-100 text-slate-500 dark:hover:bg-white/10 dark:text-gray-400'
+              'hover:bg-[var(--surface-subtle)] text-[var(--ink-muted)]'
             }`}
           >
             <X size={20} />
           </button>
 
           {/* Icon */}
-          <div className={`w-24 h-24 mx-auto rounded-3xl flex items-center justify-center mb-4 ${
+          <div className={`w-24 h-24 mx-auto rounded-md flex items-center justify-center mb-4 ${
             isUnlocked
-              ? `bg-white/80 dark:bg-white/10 ${tierStyles.ring}`
-              : 'bg-slate-100 dark:bg-white/5'
+              ? `bg-[var(--surface)] ${tierStyles.ring}`
+              : 'bg-[var(--surface-subtle)]'
           }`}>
-            {isUnlocked ? (
-              <Icon size={48} className={tierStyles.icon} />
+            {isUnlocked ? createElement(
+              getAchievementIcon(achievement),
+              { size: 48, className: tierStyles.icon },
             ) : (
-              <Lock size={40} className={'text-slate-400 dark:text-gray-400'} />
+              <Lock size={40} className={'text-[var(--ink-muted)]'} />
             )}
           </div>
 
           {/* Badge */}
           <div className="text-center">
-            <h2 className={`text-2xl font-bold mb-2 text-slate-800 dark:text-white`}>
+            <h2 className={`text-2xl font-bold mb-2 text-[var(--ink)]`}>
               {achievement.name}
             </h2>
-            <p className={`text-sm italic text-slate-600 dark:text-white/60`}>
+            <p className={`text-sm italic text-[var(--ink-secondary)]`}>
               {lore}
             </p>
             {isUnlocked && (
@@ -1287,13 +1235,13 @@ function AchievementModal({
         <div className="p-6 space-y-6">
           {/* Description */}
           <div>
-            <h3 className={`text-sm font-semibold uppercase tracking-wide mb-2 text-slate-500 dark:text-gray-400`}>
+            <h3 className={`text-sm font-semibold uppercase tracking-wide mb-2 text-[var(--ink-muted)]`}>
               Quest
             </h3>
-            <p className={`text-lg text-slate-800 dark:text-white`}>
+            <p className={`text-lg text-[var(--ink)]`}>
               {achievement.description}
             </p>
-            <p className={`mt-2 text-sm text-slate-600 dark:text-white/70`}>
+            <p className={`mt-2 text-sm text-[var(--ink-secondary)]`}>
               Objective: <span className="font-semibold">{objective.current}</span>/<span className="font-semibold">{objective.target}</span>
             </p>
           </div>
@@ -1302,19 +1250,19 @@ function AchievementModal({
           {!isUnlocked && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className={`text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400`}>
+                <h3 className={`text-sm font-semibold uppercase tracking-wide text-[var(--ink-muted)]`}>
                   Progress
                 </h3>
-                <span className={`text-sm font-bold text-slate-800 dark:text-white`}>
+                <span className={`text-sm font-bold text-[var(--ink)]`}>
                   {progress}%
                 </span>
               </div>
-              <div className={`h-4 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
-                <div 
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    progress >= 80 ? 'bg-emerald-500' :
-                    progress >= 50 ? 'bg-amber-500' :
-                    'bg-violet-500'
+              <div className={`h-4 rounded-full overflow-hidden bg-[var(--surface-inset)]`}>
+                <div
+                  className={`h-full rounded-full transition-all duration-300 motion-reduce:transition-none ${
+                    progress >= 80 ? 'bg-[var(--success)]' :
+                    progress >= 50 ? 'bg-[var(--warning)]' :
+                    'bg-[var(--action)]'
                   }`}
                   style={{ width: `${progress}%` }}
                 />
@@ -1323,29 +1271,29 @@ function AchievementModal({
           )}
 
           {/* Stats */}
-          <div className={`grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5`}>
+          <div className={`grid grid-cols-2 gap-4 p-4 rounded-md bg-[var(--surface)]`}>
             <div className="text-center">
               <p className={`text-2xl font-bold ${tierStyles.icon}`}>
                 +{achievement.xpReward}
               </p>
-              <p className={`text-xs text-slate-500 dark:text-gray-400`}>XP Reward</p>
+              <p className={`text-xs text-[var(--ink-muted)]`}>XP Reward</p>
             </div>
             <div className="text-center">
-              <p className={`text-2xl font-bold capitalize text-slate-800 dark:text-white`}>
+              <p className={`text-2xl font-bold capitalize text-[var(--ink)]`}>
                 {achievement.type}
               </p>
-              <p className={`text-xs text-slate-500 dark:text-gray-400`}>Category</p>
+              <p className={`text-xs text-[var(--ink-muted)]`}>Category</p>
             </div>
           </div>
 
           {/* Unlock info */}
           {isUnlocked && achievement.unlockedAt && (
-            <div className={`flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-gray-400`}>
+            <div className={`flex items-center justify-center gap-2 text-sm text-[var(--ink-muted)]`}>
               <Gift size={16} />
               <span>
-                Unlocked on {new Date(achievement.unlockedAt).toLocaleDateString('en-US', { 
+                Unlocked on {new Date(achievement.unlockedAt).toLocaleDateString('en-US', {
                   weekday: 'long',
-                  month: 'long', 
+                  month: 'long',
                   day: 'numeric',
                   year: 'numeric'
                 })}
@@ -1359,12 +1307,10 @@ function AchievementModal({
 }
 
 export function Achievements() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const { 
-    achievements, 
-    userStats, 
-    getUnlockedAchievements, 
+  const {
+    achievements,
+    userStats,
+    getUnlockedAchievements,
     getLockedAchievements,
     getAchievementProgress,
     getTotalLevel,
@@ -1372,13 +1318,14 @@ export function Achievements() {
     getTotalXP,
     getLevelProgress,
   } = useGamification();
-  
+
   const [statusFilter, setStatusFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [typeFilter, setTypeFilter] = useState<AchievementType | 'all'>('all');
   const [setFilter, setSetFilter] = useState<AchievementSetId | 'all'>('all');
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  
+  const [recentCutoff] = useState(() => Date.now() - 24 * 60 * 60 * 1000);
+
   // Sound enabled state
   const [soundEnabled, setSoundEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -1386,7 +1333,7 @@ export function Achievements() {
     }
     return true;
   });
-  
+
   const { user } = useAuth();
   // Toggle sound
   const toggleSound = () => {
@@ -1409,26 +1356,25 @@ export function Achievements() {
     localStorage.setItem('equippedTitle', equippedTitle);
     saveSettings({ equippedTitle }, user?.id ?? null);
   }, [equippedTitle, user?.id]);
-  
+
   // Track recently unlocked achievements (within last 24 hours)
   const recentlyUnlocked = useMemo(() => {
-    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
     return new Set(
       achievements
-        .filter(a => a.isUnlocked && a.unlockedAt && new Date(a.unlockedAt).getTime() > dayAgo)
+        .filter(a => a.isUnlocked && a.unlockedAt && new Date(a.unlockedAt).getTime() > recentCutoff)
         .map(a => a.id)
     );
-  }, [achievements]);
+  }, [achievements, recentCutoff]);
 
   const unlockedAchievements = getUnlockedAchievements();
   const lockedAchievements = getLockedAchievements();
-  
+
   // Get unlocked titles based on achievements
   const unlockedTitles = useMemo(() => {
     const unlockedIds = new Set(unlockedAchievements.map(a => a.id));
     return UNLOCKABLE_TITLES.filter(t => unlockedIds.has(t.achievementId));
   }, [unlockedAchievements]);
-  
+
   // Calculate next reward
   const nextReward = useMemo(() => {
     const currentXP = getTotalXP();
@@ -1440,14 +1386,14 @@ export function Achievements() {
         return false;
       })
       .sort((a, b) => (a.requirement.value || 0) - (b.requirement.value || 0))[0];
-    
+
     if (nextAchievement) {
       return {
         name: nextAchievement.name,
         xpNeeded: (nextAchievement.requirement.value || 0) - currentXP,
       };
     }
-    
+
     // Fallback to next level
     const currentLevel = getTotalLevel();
     const xpForNextLevel = currentLevel * 100;
@@ -1464,11 +1410,11 @@ export function Achievements() {
     });
     return map;
   }, []);
-  
+
   // Filter achievements
   const filteredAchievements = achievements.filter(a => {
-    const statusMatch = statusFilter === 'all' || 
-      (statusFilter === 'unlocked' && a.isUnlocked) || 
+    const statusMatch = statusFilter === 'all' ||
+      (statusFilter === 'unlocked' && a.isUnlocked) ||
       (statusFilter === 'locked' && !a.isUnlocked);
     const typeMatch = typeFilter === 'all' || a.type === typeFilter;
     const setMatch = setFilter === 'all' || setIdByAchievementId.get(a.id) === setFilter;
@@ -1488,7 +1434,7 @@ export function Achievements() {
   // Calculate XP stats
   const totalXPFromAchievements = unlockedAchievements.reduce((sum, a) => sum + a.xpReward, 0);
   const potentialXP = lockedAchievements.reduce((sum, a) => sum + a.xpReward, 0);
-  
+
   // Count by tier
   const tierCounts = {
     legendary: unlockedAchievements.filter(a => getTier(a.xpReward) === 'legendary').length,
@@ -1539,8 +1485,8 @@ export function Achievements() {
       <Confetti active={showConfetti} />
 
       {/* Tab navigation */}
-      <div className="flex items-center justify-between">
-        <div className={`flex rounded-xl overflow-hidden border border-slate-200 dark:border-white/10`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex max-w-full overflow-x-auto rounded-md border border-[var(--rule)] max-sm:mr-16">
           {([
             { id: 'overview' as const, label: 'Overview' },
             { id: 'all' as const, label: 'All Achievements' },
@@ -1549,10 +1495,10 @@ export function Achievements() {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`px-4 py-2 text-sm font-medium transition-all ${
+              className={`min-h-11 shrink-0 px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
                 activeTab === id
-                  ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
-                  : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                  ? 'bg-[var(--action-soft)] text-[var(--action)]'
+                  : 'text-[var(--ink-muted)] hover:bg-[var(--surface)]'
               }`}
             >
               {label}
@@ -1561,13 +1507,14 @@ export function Achievements() {
         </div>
         <button
           onClick={toggleSound}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all ${
-            isDark
-              ? soundEnabled ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 text-gray-500'
-              : soundEnabled ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-500'
+          className={`flex min-h-11 items-center gap-2 self-start rounded-sm px-3 py-2 text-xs transition-colors ${
+            soundEnabled
+              ? 'bg-[var(--action)] text-[var(--action-ink)]'
+              : 'border border-[var(--danger)] text-[var(--danger)]'
           }`}
         >
-          {soundEnabled ? '🔊' : '🔇'}
+          {soundEnabled ? <Volume2 size={14} aria-hidden="true" /> : <VolumeX size={14} aria-hidden="true" />}
+          <span>{soundEnabled ? 'Sound on' : 'Sound off'}</span>
         </button>
       </div>
 
@@ -1578,26 +1525,26 @@ export function Achievements() {
 
         {/* Active Missions */}
         {closestToUnlock.length > 0 && (
-          <div className={`p-6 rounded-2xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20`}>
-            <h2 className={`text-sm font-bold mb-3 flex items-center gap-2 text-emerald-600 dark:text-emerald-400`}>
+          <div className={`p-6 rounded-md bg-[var(--success-soft)] border border-[var(--success)]`}>
+            <h2 className={`text-sm font-bold mb-3 flex items-center gap-2 text-[var(--success)]`}>
               <MapPin className="w-4 h-4" /> Active Missions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {closestToUnlock.map(({ achievement, progress }) => {
                 const Icon = getAchievementIcon(achievement);
                 return (
-                  <div key={achievement.id} onClick={() => setSelectedAchievement(achievement)} className={`p-3 rounded-xl cursor-pointer transition-all hover:scale-[1.02] bg-white hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/10`}>
+                  <div key={achievement.id} onClick={() => setSelectedAchievement(achievement)} className={`p-3 rounded-md cursor-pointer transition-all hover:scale-[1.02] motion-reduce:hover:scale-100 bg-[var(--surface)] hover:bg-[var(--surface)]`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-white/5`}>
-                        <Icon size={16} className={'text-emerald-600 dark:text-emerald-300'} />
+                      <div className={`w-8 h-8 rounded-sm flex items-center justify-center bg-[var(--surface)]`}>
+                        <Icon size={16} className={'text-[var(--success)]'} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate text-slate-800 dark:text-white`}>{achievement.name}</p>
+                        <p className={`text-sm font-medium truncate text-[var(--ink)]`}>{achievement.name}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <div className={`flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-white/10`}>
-                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${progress}%` }} />
+                          <div className={`flex-1 h-1.5 rounded-full bg-[var(--surface-inset)]`}>
+                            <div className="h-full bg-[var(--success)] rounded-full" style={{ width: `${progress}%` }} />
                           </div>
-                          <span className={`text-xs font-bold text-emerald-600 dark:text-emerald-400`}>{progress}%</span>
+                          <span className={`text-xs font-bold text-[var(--success)]`}>{progress}%</span>
                         </div>
                       </div>
                     </div>
@@ -1610,8 +1557,8 @@ export function Achievements() {
 
         {/* Hall of Glory */}
         {unlockedAchievements.length > 0 && (
-          <div className={`p-6 rounded-2xl bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20`}>
-            <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 text-amber-600 dark:text-amber-400`}>
+          <div className={`p-6 rounded-md bg-[var(--warning-soft)] border border-[var(--warning)]`}>
+            <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 text-[var(--warning)]`}>
               <Crown className="w-4 h-4" /> Hall of Glory
             </h2>
             <div className="flex items-center justify-center gap-8">
@@ -1621,10 +1568,10 @@ export function Achievements() {
                 const tierStyles = getTierStyles(tier);
                 return (
                   <div key={achievement.id} className={`text-center ${index === 0 ? 'scale-110 -mt-2' : ''}`} onClick={() => setSelectedAchievement(achievement)}>
-                    <div className={`w-16 h-16 mx-auto rounded-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-110 bg-white/80 dark:bg-white/10 ${tierStyles.ring} ${tierStyles.glow}`}>
+                    <div className={`w-16 h-16 mx-auto rounded-md flex items-center justify-center cursor-pointer transition-transform hover:scale-[1.03] motion-reduce:hover:scale-100 bg-[var(--surface)] ${tierStyles.ring} ${tierStyles.glow}`}>
                       <Icon size={28} className={tierStyles.icon} />
                     </div>
-                    <p className={`mt-2 text-xs font-medium text-slate-800 dark:text-white`}>{achievement.name}</p>
+                    <p className={`mt-2 text-xs font-medium text-[var(--ink)]`}>{achievement.name}</p>
                   </div>
                 );
               })}
@@ -1632,25 +1579,28 @@ export function Achievements() {
           </div>
         )}
 
-        {/* Compact stats + rarity */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className={`p-4 rounded-xl bg-violet-50 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/20`}>
-            <div className={`text-2xl font-bold text-violet-600 dark:text-violet-400`}>{unlockedAchievements.length}/{achievements.length}</div>
-            <p className={`text-xs text-violet-600/70 dark:text-violet-400/70`}>Discovered</p>
+        {/* Compact archive summary */}
+        <section className="border-y border-[var(--rule-strong)] bg-[var(--surface-raised)]">
+          <h2 className="border-b border-[var(--rule)] px-4 py-3 text-lg font-bold tracking-[-0.015em] text-[var(--ink)]">Achievement archive</h2>
+          <div className="grid grid-cols-2 divide-x divide-y divide-[var(--rule)] md:grid-cols-4 md:divide-y-0">
+          <div className="p-4">
+            <div className="text-2xl font-bold text-[var(--action)]">{unlockedAchievements.length}/{achievements.length}</div>
+            <p className="text-xs text-[var(--action)]">Discovered</p>
           </div>
-          <div className={`p-4 rounded-xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
-            <div className={`text-2xl font-bold text-amber-600 dark:text-amber-400`}>{totalXPFromAchievements.toLocaleString()}</div>
-            <p className={`text-xs text-slate-500 dark:text-gray-500`}>XP Claimed</p>
+          <div className="p-4">
+            <div className={`text-2xl font-bold text-[var(--warning)]`}>{totalXPFromAchievements.toLocaleString()}</div>
+            <p className={`text-xs text-[var(--ink-muted)]`}>XP Claimed</p>
           </div>
-          <div className={`p-4 rounded-xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
-            <div className={`text-2xl font-bold text-emerald-600 dark:text-emerald-400`}>{potentialXP.toLocaleString()}</div>
-            <p className={`text-xs text-slate-500 dark:text-gray-500`}>XP Unclaimed</p>
+          <div className="p-4">
+            <div className={`text-2xl font-bold text-[var(--success)]`}>{potentialXP.toLocaleString()}</div>
+            <p className={`text-xs text-[var(--ink-muted)]`}>XP Unclaimed</p>
           </div>
-          <div className={`p-4 rounded-xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
-            <div className={`text-2xl font-bold text-orange-600 dark:text-orange-400`}>{userStats.currentStreak}</div>
-            <p className={`text-xs text-slate-500 dark:text-gray-500`}>Day Streak</p>
+          <div className="p-4">
+            <div className={`text-2xl font-bold text-[var(--warning)]`}>{userStats.currentStreak}</div>
+            <p className={`text-xs text-[var(--ink-muted)]`}>Day Streak</p>
           </div>
-        </div>
+          </div>
+        </section>
 
         {/* Streak Bonus */}
         <StreakBonusBanner streak={userStats.currentStreak} />
@@ -1658,24 +1608,23 @@ export function Achievements() {
 
       {/* ── QUESTS TAB ──────────────────────────────── */}
       {activeTab === 'quests' && <>
-        <SeasonTeaser />
         <QuestLogRoadmap userStats={userStats} getTotalLevel={getTotalLevel} />
         {/* Guild Collections */}
-        <div className={`p-4 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
-          <h2 className={`text-sm font-bold uppercase tracking-widest mb-3 text-slate-700 dark:text-gray-200`}>Guild Collections</h2>
+        <div className={`p-4 rounded-md bg-[var(--surface)] border border-[var(--rule)]`}>
+          <h2 className={`text-sm font-bold uppercase tracking-widest mb-3 text-[var(--ink-secondary)]`}>Guild Collections</h2>
           <div className="flex gap-3 overflow-x-auto pb-1">
             {setStats.map((set) => {
               const SetIcon = set.icon;
               const isActive = setFilter === set.setId;
               return (
-                <button key={set.setId} onClick={() => setSetFilter(isActive ? 'all' : set.setId)} className={`min-w-[200px] text-left p-3 rounded-xl transition-all ${isActive ? 'bg-violet-50 border border-violet-200 dark:bg-violet-500/20 dark:border-violet-500/30' : 'bg-slate-50 border border-slate-200 hover:bg-white dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10'}`}>
+                <button key={set.setId} onClick={() => setSetFilter(isActive ? 'all' : set.setId)} className={`min-w-[200px] border p-3 text-left transition-colors ${isActive ? 'border-[var(--action)] bg-[var(--action-soft)]' : 'border-[var(--rule)] bg-[var(--surface-raised)] hover:bg-[var(--surface-subtle)]'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <SetIcon size={16} className={'text-slate-700 dark:text-gray-200'} />
-                    <span className={`text-sm font-semibold text-slate-800 dark:text-white`}>{set.label}</span>
-                    <span className={`text-xs ml-auto font-bold text-slate-700 dark:text-gray-300`}>{set.done}/{set.total}</span>
+                    <SetIcon size={16} className={'text-[var(--ink-secondary)]'} />
+                    <span className={`text-sm font-semibold text-[var(--ink)]`}>{set.label}</span>
+                    <span className={`text-xs ml-auto font-bold text-[var(--ink-secondary)]`}>{set.done}/{set.total}</span>
                   </div>
-                  <div className={`h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10`}>
-                    <div className="h-full bg-violet-500 transition-all duration-700" style={{ width: `${set.percent}%` }} />
+                  <div className={`h-1.5 rounded-full overflow-hidden bg-[var(--surface-inset)]`}>
+                    <div className="h-full bg-[var(--action)] transition-all duration-300 motion-reduce:transition-none" style={{ width: `${set.percent}%` }} />
                   </div>
                 </button>
               );
@@ -1687,8 +1636,8 @@ export function Achievements() {
       {/* ── ALL ACHIEVEMENTS TAB ────────────────────── */}
       {activeTab === 'all' && <>
         {/* Artifact Vault by Rarity */}
-        <div className={`p-6 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
-          <h2 className={`text-sm font-bold mb-3 text-slate-800 dark:text-white`}>By Rarity</h2>
+        <div className={`p-6 rounded-md bg-[var(--surface)] border border-[var(--rule)]`}>
+          <h2 className={`text-sm font-bold mb-3 text-[var(--ink)]`}>By Rarity</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {(['legendary', 'platinum', 'gold', 'silver', 'bronze'] as const).map(tier => {
               const tierStyles = getTierStyles(tier);
@@ -1696,15 +1645,15 @@ export function Achievements() {
               const unlocked = tierCounts[tier];
               return (
                 <div key={tier} className="text-center">
-                  <div className={`w-12 h-12 mx-auto rounded-lg flex items-center justify-center mb-1 ${unlocked > 0 ? `bg-gradient-to-br ${tierStyles.bg} ${tierStyles.ring}` : 'bg-slate-100 dark:bg-white/5'}`}>
-                    {tier === 'legendary' && <Gem size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
-                    {tier === 'platinum' && <Star size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
-                    {tier === 'gold' && <Medal size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
-                    {tier === 'silver' && <Award size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
-                    {tier === 'bronze' && <Shield size={20} className={unlocked > 0 ? tierStyles.icon : 'text-slate-400 dark:text-gray-400'} />}
+                  <div className={`w-12 h-12 mx-auto rounded-sm flex items-center justify-center mb-1 ${unlocked > 0 ? `${tierStyles.bg} ${tierStyles.ring}` : 'bg-[var(--surface-subtle)]'}`}>
+                    {tier === 'legendary' && <Gem size={20} className={unlocked > 0 ? tierStyles.icon : 'text-[var(--ink-muted)]'} />}
+                    {tier === 'platinum' && <Star size={20} className={unlocked > 0 ? tierStyles.icon : 'text-[var(--ink-muted)]'} />}
+                    {tier === 'gold' && <Medal size={20} className={unlocked > 0 ? tierStyles.icon : 'text-[var(--ink-muted)]'} />}
+                    {tier === 'silver' && <Award size={20} className={unlocked > 0 ? tierStyles.icon : 'text-[var(--ink-muted)]'} />}
+                    {tier === 'bronze' && <Shield size={20} className={unlocked > 0 ? tierStyles.icon : 'text-[var(--ink-muted)]'} />}
                   </div>
-                  <p className={`text-xs font-bold text-slate-800 dark:text-white`}>{unlocked}/{total}</p>
-                  <p className={`text-xs capitalize text-slate-500 dark:text-gray-500`}>{tier}</p>
+                  <p className={`text-xs font-bold text-[var(--ink)]`}>{unlocked}/{total}</p>
+                  <p className={`text-xs capitalize text-[var(--ink-muted)]`}>{tier}</p>
                 </div>
               );
             })}
@@ -1713,21 +1662,21 @@ export function Achievements() {
 
         {/* Filters — compact */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+          <div className={`flex rounded-sm overflow-hidden border border-[var(--rule)]`}>
             {(['all', 'unlocked', 'locked'] as const).map((status) => (
-              <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${statusFilter === status ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
+              <button key={status} onClick={() => setStatusFilter(status)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${statusFilter === status ? 'bg-[var(--action-soft)] text-[var(--action)]' : 'text-[var(--ink-muted)] hover:bg-[var(--surface)]'}`}>
                 {status}
               </button>
             ))}
           </div>
-          <div className={`flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10`}>
+          <div className={`flex rounded-sm overflow-hidden border border-[var(--rule)]`}>
             {(['all', 'milestone', 'streak', 'mastery', 'special'] as const).map((type) => (
-              <button key={type} onClick={() => setTypeFilter(type)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${typeFilter === type ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400' : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'}`}>
+              <button key={type} onClick={() => setTypeFilter(type)} className={`px-3 py-2 text-xs font-medium capitalize transition-all ${typeFilter === type ? 'bg-[var(--action-soft)] text-[var(--action)]' : 'text-[var(--ink-muted)] hover:bg-[var(--surface)]'}`}>
                 {type}
               </button>
             ))}
           </div>
-          <span className={`text-xs ml-auto text-slate-400 dark:text-gray-400`}>{sortedAchievements.length} achievements</span>
+          <span className={`text-xs ml-auto text-[var(--ink-muted)]`}>{sortedAchievements.length} achievements</span>
         </div>
 
         {/* Achievement Grid */}
@@ -1758,10 +1707,10 @@ export function Achievements() {
         })}
       </div>
       {sortedAchievements.length === 0 && (
-        <div className={`rounded-2xl p-12 text-center bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10`}>
-          <Trophy className={`w-10 h-10 mx-auto mb-3 text-violet-500 dark:text-violet-400`} />
-          <h3 className={`text-lg font-bold mb-1 text-slate-800 dark:text-white`}>No achievements match</h3>
-          <p className={`text-sm text-slate-500 dark:text-gray-400`}>Try adjusting filters.</p>
+        <div className={`rounded-md p-12 text-center bg-[var(--surface)] border border-[var(--rule)]`}>
+          <Trophy className="mx-auto mb-3 h-10 w-10 text-[var(--warning)]" />
+          <h3 className={`text-lg font-bold mb-1 text-[var(--ink)]`}>No achievements match</h3>
+          <p className={`text-sm text-[var(--ink-muted)]`}>Try adjusting filters.</p>
         </div>
       )}
       </>}

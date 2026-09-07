@@ -9,12 +9,7 @@ import { useId, type InputHTMLAttributes, type ReactNode, type Ref, type SelectH
  * cannot be left unlabelled or an error left unannounced.
  */
 const CONTROL_CLASSES =
-  'w-full px-3 py-3 rounded-xl text-sm transition-colors border ' +
-  'bg-white text-slate-900 border-slate-200 placeholder:text-slate-400 ' +
-  'dark:bg-white/5 dark:text-white dark:border-white/10 dark:placeholder:text-gray-600 ' +
-  'focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent';
-
-const INVALID_CLASSES = 'border-red-400 dark:border-red-500/60';
+  'ui-field-control w-full px-3 py-3 text-sm transition-colors';
 
 interface FieldShellProps {
   id: string;
@@ -31,18 +26,18 @@ function FieldShell({ id, label, error, hint, children }: FieldShellProps) {
   return (
     <div className="space-y-2">
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-slate-700 dark:text-gray-300">
+        <label htmlFor={id} className="ui-field-label block">
           {label}
         </label>
       )}
       {children}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="text-xs text-red-500 dark:text-red-400">
+        <p id={`${id}-error`} role="alert" className="ui-field-error">
           {error}
         </p>
       ) : (
         hint && (
-          <p id={`${id}-hint`} className="text-xs text-slate-400 dark:text-gray-400">
+          <p id={`${id}-hint`} className="ui-field-hint">
             {hint}
           </p>
         )
@@ -74,7 +69,7 @@ export function TextField({ label, error, hint, className = '', ref, ...rest }: 
         ref={ref}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`${CONTROL_CLASSES} ${error ? INVALID_CLASSES : ''} ${className}`}
+        className={`${CONTROL_CLASSES} ${className}`}
         {...rest}
       />
     </FieldShell>
@@ -97,7 +92,7 @@ export function SelectField({ label, error, hint, className = '', children, ...r
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`${CONTROL_CLASSES} ${error ? INVALID_CLASSES : ''} ${className}`}
+        className={`${CONTROL_CLASSES} ${className}`}
         {...rest}
       >
         {children}

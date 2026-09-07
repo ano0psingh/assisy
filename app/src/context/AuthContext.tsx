@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { rebindPushSubscription, unsubscribeFromPush } from '../lib/pushSubscription';
 
 interface AuthContextType {
   user: User | null;
@@ -29,10 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        void rebindPushSubscription();
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -66,7 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    if (supabase) await supabase.auth.signOut();
+    if (supabase) {
+      await unsubscribeFromPush();
+      await supabase.auth.signOut();
+    }
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {

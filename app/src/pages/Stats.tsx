@@ -284,7 +284,7 @@ export function Stats() {
     if (!aiAnalysis) return [];
     return [
       { key: 'trends', title: 'Trends', items: aiAnalysis.trends, icon: TrendingUp, color: 'blue' },
-      { key: 'predictions', title: 'Predictions', items: aiAnalysis.predictions, icon: Sparkles, color: 'violet' },
+      { key: 'predictions', title: 'Predictions', items: aiAnalysis.predictions, icon: Sparkles, color: 'teal' },
       { key: 'comparisons', title: 'Comparisons', items: aiAnalysis.comparisons, icon: BarChart3, color: 'amber' },
       { key: 'patterns', title: 'Patterns', items: aiAnalysis.patterns, icon: Activity, color: 'emerald' },
       { key: 'actionable', title: 'Actionable Items', items: aiAnalysis.actionable, icon: Target, color: 'red' },
@@ -293,52 +293,52 @@ export function Stats() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className={`text-2xl font-bold text-slate-800 dark:text-white`}>Statistics & Skills</h1>
-        <p className={`mt-1 text-slate-500 dark:text-gray-500`}>Track your progress and level up your skills</p>
-      </div>
-
       <SkillTreeViz />
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section className="border-y border-[var(--rule-strong)] bg-[var(--surface-raised)]">
+        <h2 className="border-b border-[var(--rule)] px-4 py-3 text-lg font-bold tracking-[-0.015em] text-[var(--ink)]">
+          Record summary
+        </h2>
+        <div className="grid grid-cols-2 divide-x divide-y divide-[var(--rule)] md:grid-cols-4 md:divide-y-0">
         {[
           { icon: Zap, label: 'Total XP', value: userStats.totalXPEarned.toLocaleString(), color: 'amber' },
           { icon: CheckSquare, label: 'Completed', value: userStats.totalTasksCompleted, color: 'emerald' },
           { icon: Flame, label: 'Best Streak', value: `${userStats.longestLoginStreak}d`, color: 'orange' },
-          { icon: Trophy, label: 'Achievements', value: unlockedAchievements.length, color: 'violet' },
-        ].map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="card card-hover rounded-2xl p-6">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${isDark ? `bg-${color}-500/20` : `bg-${color}-50`}`}>
-              <Icon className={`w-5 h-5 ${isDark ? `text-${color}-400` : `text-${color}-500`}`} />
+          { icon: Trophy, label: 'Achievements', value: unlockedAchievements.length, color: 'teal' },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="flex items-center gap-3 p-4 sm:p-5">
+            <Icon className="h-5 w-5 text-[var(--action)]" />
+            <div>
+              <div className="text-2xl font-bold tabular-nums text-[var(--ink)]">{value}</div>
+              <p className="font-mono text-xs uppercase tracking-wide text-[var(--ink-muted)]">{label}</p>
             </div>
-            <div className={`text-2xl font-bold text-slate-800 dark:text-white`}>{value}</div>
-            <p className={`text-sm text-slate-500 dark:text-gray-500`}>{label}</p>
           </div>
         ))}
-      </div>
+        </div>
+      </section>
 
       {/* Insights & Recommendations */}
       {recommendations.length > 0 && (
-        <div className="card rounded-2xl p-6">
-          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
+        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+          <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--ink-secondary)]`}>
             <Lightbulb size={14} /> Insights
           </h2>
           <div className="space-y-2">
             {recommendations.map((rec, i) => (
-              <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${
+              <div key={i} className={`flex items-start gap-3 p-3 rounded-md ${
                 rec.type === 'warning'
-                  ? 'bg-amber-50 border border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/15'
+                  ? 'bg-[var(--warning-soft)] border border-[var(--warning)]'
                   : rec.type === 'success'
-                    ? 'bg-emerald-50 border border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/15'
-                    : 'bg-blue-50 border border-blue-100 dark:bg-blue-500/10 dark:border-blue-500/15'
+                    ? 'bg-[var(--success-soft)] border border-[var(--success)]'
+                    : 'bg-[var(--action-soft)] border border-[var(--action)]'
               }`}>
                 <rec.icon size={16} className={`flex-shrink-0 mt-1 ${
-                  rec.type === 'warning' ? 'text-amber-500 dark:text-amber-400'
-                    : rec.type === 'success' ? 'text-emerald-500 dark:text-emerald-400'
-                    : 'text-blue-500 dark:text-blue-400'
+                  rec.type === 'warning' ? 'text-[var(--warning)]'
+                    : rec.type === 'success' ? 'text-[var(--success)]'
+                    : 'text-[var(--action)]'
                 }`} />
-                <p className={`text-sm text-slate-700 dark:text-gray-300`}>{rec.text}</p>
+                <p className={`text-sm text-[var(--ink-secondary)]`}>{rec.text}</p>
               </div>
             ))}
           </div>
@@ -347,18 +347,18 @@ export function Stats() {
 
       {/* AI Deep Analysis */}
       {isAIConfigured() && (
-        <div className="card rounded-2xl p-6">
+        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-sm font-semibold flex items-center gap-2 text-slate-700 dark:text-gray-300`}>
-              <Sparkles size={14} className={'text-violet-500 dark:text-violet-400'} /> AI Deep Analysis
+            <h2 className={`text-sm font-semibold flex items-center gap-2 text-[var(--ink-secondary)]`}>
+              <Sparkles size={14} className="text-[var(--action)]" /> AI desk analysis
             </h2>
             <button
               onClick={generateAIAnalysis}
               disabled={aiLoading}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-sm text-xs font-medium transition-colors ${
                 aiLoading
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-white/5 dark:text-gray-500'
-                  : 'bg-violet-50 text-violet-600 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/30'
+                  ? 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] cursor-not-allowed'
+                  : 'bg-[var(--action-soft)] text-[var(--action)] hover:bg-[var(--selected)]'
               }`}
             >
               {aiLoading ? <><Loader2 size={12} className="animate-spin" /> Analyzing...</> : <><Sparkles size={12} /> Generate Analysis</>}
@@ -366,7 +366,7 @@ export function Stats() {
           </div>
 
           {aiError && (
-            <div className={`p-3 rounded-xl text-sm mb-4 bg-red-50 border border-red-100 text-red-600 dark:bg-red-500/10 dark:border-red-500/15 dark:text-red-400`}>
+            <div className={`p-3 rounded-md text-sm mb-4 bg-[var(--danger-soft)] border border-[var(--danger)] text-[var(--danger)]`}>
               {aiError}
             </div>
           )}
@@ -374,7 +374,7 @@ export function Stats() {
           {analysisSections.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {analysisSections.map(({ key, title, items, icon: Icon, color }) => (
-                <div key={key} className={`p-4 rounded-xl bg-slate-50/80 border border-slate-100 dark:bg-white/[0.03] dark:border-white/[0.06]`}>
+                <div key={key} className={`p-4 rounded-md bg-[var(--surface)] border border-[var(--rule)]`}>
                   <div className="flex items-center gap-2 mb-3">
                     <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isDark ? `bg-${color}-500/20` : `bg-${color}-50`}`}>
                       <Icon size={13} className={isDark ? `text-${color}-400` : `text-${color}-500`} />
@@ -383,7 +383,7 @@ export function Stats() {
                   </div>
                   <ul className="space-y-2">
                     {items.map((item, i) => (
-                      <li key={i} className={`text-sm leading-relaxed flex gap-2 text-slate-600 dark:text-gray-400`}>
+                      <li key={i} className={`text-sm leading-relaxed flex gap-2 text-[var(--ink-secondary)]`}>
                         <span className={`mt-2 w-1 h-1 rounded-full flex-shrink-0 ${isDark ? `bg-${color}-400` : `bg-${color}-500`}`} />
                         {item}
                       </li>
@@ -393,7 +393,7 @@ export function Stats() {
               ))}
             </div>
           ) : !aiLoading && (
-            <p className={`text-sm text-center py-6 text-slate-400 dark:text-gray-400`}>
+            <p className={`text-sm text-center py-6 text-[var(--ink-muted)]`}>
               Click "Generate Analysis" to get AI-powered insights about your productivity patterns.
             </p>
           )}
@@ -401,76 +401,79 @@ export function Stats() {
       )}
 
       {/* Weekly Performance */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card rounded-2xl p-6">
+      <section className="border-y border-[var(--rule-strong)] bg-[var(--surface-raised)]">
+        <h2 className="border-b border-[var(--rule)] px-4 py-3 text-lg font-bold tracking-[-0.015em] text-[var(--ink)]">Weekly metrics</h2>
+        <div className="grid grid-cols-1 divide-y divide-[var(--rule)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="p-5">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={16} className={'text-emerald-500 dark:text-emerald-400'} />
-            <p className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>This Week</p>
+            <TrendingUp size={16} className={'text-[var(--success)]'} />
+            <p className={`text-sm font-medium text-[var(--ink-secondary)]`}>This Week</p>
           </div>
-          <div className={`text-2xl font-bold text-slate-800 dark:text-white`}>{weeklyStats.rate}%</div>
-          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
+          <div className={`text-2xl font-bold text-[var(--ink)]`}>{weeklyStats.rate}%</div>
+          <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>
             {weeklyStats.completed} of {weeklyStats.total} tasks completed
           </p>
-          <div className={`h-1.5 rounded-full overflow-hidden mt-2 bg-slate-100 dark:bg-white/5`}>
-            <div className={`h-full rounded-full transition-all duration-500 ${weeklyStats.rate >= 70 ? 'bg-emerald-500' : weeklyStats.rate >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${weeklyStats.rate}%` }} />
+          <div className={`h-1.5 rounded-full overflow-hidden mt-2 bg-[var(--surface-subtle)]`}>
+            <div className={`h-full rounded-full transition-all duration-500 ${weeklyStats.rate >= 70 ? 'bg-[var(--success)]' : weeklyStats.rate >= 40 ? 'bg-[var(--warning)]' : 'bg-[var(--danger)]'}`} style={{ width: `${weeklyStats.rate}%` }} />
           </div>
         </div>
-        <div className="card rounded-2xl p-6">
+        <div className="p-5">
           <div className="flex items-center gap-2 mb-2">
-            <Clock size={16} className={'text-blue-500 dark:text-blue-400'} />
-            <p className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>Peak Productivity</p>
+            <Clock size={16} className={'text-[var(--action)]'} />
+            <p className={`text-sm font-medium text-[var(--ink-secondary)]`}>Peak Productivity</p>
           </div>
           {productiveTime ? (
             <>
-              <div className={`text-lg font-bold text-slate-800 dark:text-white`}>{productiveTime.time.split(' ')[0]}</div>
-              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>{productiveTime.count} tasks completed in this window</p>
+              <div className={`text-lg font-bold text-[var(--ink)]`}>{productiveTime.time.split(' ')[0]}</div>
+              <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>{productiveTime.count} tasks completed in this window</p>
             </>
           ) : (
-            <p className={`text-sm text-slate-400 dark:text-gray-400`}>Complete tasks to see patterns</p>
+            <p className={`text-sm text-[var(--ink-muted)]`}>Complete tasks to see patterns</p>
           )}
         </div>
-        <div className="card rounded-2xl p-6">
+        <div className="p-5">
           <div className="flex items-center gap-2 mb-2">
-            <Flame size={16} className={habitAlerts.length > 0 ? 'text-amber-500' : 'text-emerald-500 dark:text-emerald-400'} />
-            <p className={`text-sm font-medium text-slate-600 dark:text-gray-400`}>Habit Health</p>
+            <Flame size={16} className={habitAlerts.length > 0 ? 'text-[var(--warning)]' : 'text-[var(--success)]'} />
+            <p className={`text-sm font-medium text-[var(--ink-secondary)]`}>Habit Health</p>
           </div>
           {habitAlerts.length > 0 ? (
             <>
-              <div className="text-lg font-bold text-amber-500">{habitAlerts.length} at risk</div>
-              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
+              <div className="text-lg font-bold text-[var(--warning)]">{habitAlerts.length} at risk</div>
+              <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>
                 {habitAlerts.map(h => h.name).join(', ')}
               </p>
             </>
           ) : habits.length > 0 ? (
             <>
-              <div className={`text-lg font-bold text-emerald-600 dark:text-emerald-400`}>All good</div>
-              <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>All habit streaks are safe today</p>
+              <div className={`text-lg font-bold text-[var(--success)]`}>All good</div>
+              <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>All habit streaks are safe today</p>
             </>
           ) : (
-            <p className={`text-sm text-slate-400 dark:text-gray-400`}>Create habits to track</p>
+            <p className={`text-sm text-[var(--ink-muted)]`}>Create habits to track</p>
           )}
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* Charts */}
       <div className="space-y-6">
-        <h2 className={`text-sm font-semibold text-slate-700 dark:text-gray-300`}>Charts</h2>
-        <div className="card rounded-2xl p-6">
-          <p className={`text-sm font-medium mb-3 text-slate-600 dark:text-gray-400`}>Completions (last 14 days)</p>
+        <h2 className={`text-sm font-semibold text-[var(--ink-secondary)]`}>Charts</h2>
+        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+          <p className={`text-sm font-medium mb-3 text-[var(--ink-secondary)]`}>Completions (last 14 days)</p>
           <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyTrendData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-                <Tooltip contentStyle={isDark ? { background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)' } : {}} formatter={(value) => [value ?? 0, 'Completed']} labelFormatter={(_, payload) => payload?.[0]?.payload?.label} />
-                <Bar dataKey="completed" fill={isDark ? '#8b5cf6' : '#7c3aed'} radius={[4, 4, 0, 0]} />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--ink-muted)" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="var(--ink-muted)" />
+                <Tooltip contentStyle={{ background: 'var(--surface-raised)', border: '1px solid var(--rule)', color: 'var(--ink)' }} formatter={(value) => [value ?? 0, 'Completed']} labelFormatter={(_, payload) => payload?.[0]?.payload?.label} />
+                <Bar dataKey="completed" fill="var(--action)" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card rounded-2xl p-6">
-            <p className={`text-sm font-medium mb-3 text-slate-600 dark:text-gray-400`}>By category</p>
+          <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+            <p className={`text-sm font-medium mb-3 text-[var(--ink-secondary)]`}>By category</p>
             {categoryPieData.length > 0 ? (
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
@@ -483,38 +486,38 @@ export function Stats() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p className={`text-sm py-8 text-center text-slate-400 dark:text-gray-500`}>Complete tasks to see breakdown</p>
+              <p className={`text-sm py-8 text-center text-[var(--ink-muted)]`}>Complete tasks to see breakdown</p>
             )}
           </div>
-          <div className="card rounded-2xl p-6">
-            <p className={`text-sm font-medium mb-3 text-slate-600 dark:text-gray-400`}>Productive time of day</p>
+          <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+            <p className={`text-sm font-medium mb-3 text-[var(--ink-secondary)]`}>Productive time of day</p>
             {timeOfDayData.length > 0 ? (
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={timeOfDayData} layout="vertical" margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-                    <YAxis type="category" dataKey="time" width={100} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-                    <Tooltip contentStyle={isDark ? { background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)' } : {}} />
-                    <Bar dataKey="count" fill={isDark ? '#06b6d4' : '#0891b2'} radius={[0, 4, 4, 0]} />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} stroke="var(--ink-muted)" />
+                    <YAxis type="category" dataKey="time" width={100} tick={{ fontSize: 12 }} stroke="var(--ink-muted)" />
+                    <Tooltip contentStyle={{ background: 'var(--surface-raised)', border: '1px solid var(--rule)', color: 'var(--ink)' }} />
+                    <Bar dataKey="count" fill="var(--info)" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p className={`text-sm py-8 text-center text-slate-400 dark:text-gray-500`}>Complete tasks to see patterns</p>
+              <p className={`text-sm py-8 text-center text-[var(--ink-muted)]`}>Complete tasks to see patterns</p>
             )}
           </div>
         </div>
         {habits.length > 0 && (
-          <div className="card rounded-2xl p-6">
-            <p className={`text-sm font-medium mb-3 text-slate-600 dark:text-gray-400`}>Habits completed this week</p>
+          <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+            <p className={`text-sm font-medium mb-3 text-[var(--ink-secondary)]`}>Habits completed this week</p>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={habitChartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
-                  <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-                  <YAxis domain={[0, habits.length]} allowDecimals={false} tick={{ fontSize: 10 }} stroke={isDark ? '#52525b' : '#94a3b8'} />
-                  <Tooltip contentStyle={isDark ? { background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)' } : {}} formatter={(value) => [`${value}/${habits.length}`, 'Habits done']} />
-                  <Bar dataKey="done" fill={isDark ? '#10b981' : '#059669'} radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--rule)" />
+                  <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="var(--ink-muted)" />
+                  <YAxis domain={[0, habits.length]} allowDecimals={false} tick={{ fontSize: 12 }} stroke="var(--ink-muted)" />
+                  <Tooltip contentStyle={{ background: 'var(--surface-raised)', border: '1px solid var(--rule)', color: 'var(--ink)' }} formatter={(value) => [`${value}/${habits.length}`, 'Habits done']} />
+                  <Bar dataKey="done" fill="var(--success)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -523,9 +526,9 @@ export function Stats() {
       </div>
 
       {/* Activity Metrics */}
-      <div className="card rounded-2xl p-6">
-        <h2 className={`text-sm font-semibold mb-4 text-slate-700 dark:text-gray-300`}>Activity</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+        <h2 className={`text-sm font-semibold mb-4 text-[var(--ink-secondary)]`}>Activity</h2>
+        <div className="grid grid-cols-2 divide-x divide-y divide-[var(--rule)] border-y border-[var(--rule)] md:grid-cols-4 md:divide-y-0">
           {[
             { label: 'Days Active', value: userStats.totalDaysActive },
             { label: 'Productive Days', value: userStats.productiveDays },
@@ -536,29 +539,29 @@ export function Stats() {
             { label: 'Early Bird', value: userStats.earlyBirdCount },
             { label: 'Night Owl', value: userStats.nightOwlCount },
           ].map(({ label, value }) => (
-            <div key={label} className={`p-3 rounded-xl bg-slate-50 dark:bg-white/5`}>
-              <p className={`text-xs text-slate-500 dark:text-gray-500`}>{label}</p>
-              <p className={`text-lg font-bold mt-1 text-slate-800 dark:text-white`}>{value}</p>
+            <div key={label} className="p-3">
+              <p className={`text-xs text-[var(--ink-muted)]`}>{label}</p>
+              <p className={`text-lg font-bold mt-1 text-[var(--ink)]`}>{value}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Category Breakdown */}
-      <div className="card rounded-2xl p-6">
-        <h2 className={`text-sm font-semibold mb-4 text-slate-700 dark:text-gray-300`}>Completed by Category</h2>
+      <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+        <h2 className={`text-sm font-semibold mb-4 text-[var(--ink-secondary)]`}>Completed by Category</h2>
         <div className="space-y-4">
           {[
-            { label: 'Personal', count: personalTasks.length, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500' },
-            { label: 'Financial', count: financialTasks.length, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500' },
-            { label: 'Professional', count: professionalTasks.length, color: 'text-slate-600 dark:text-gray-400', bg: 'bg-slate-400' },
+            { label: 'Personal', count: personalTasks.length, color: 'text-[var(--action)]', bg: 'bg-[var(--action)]' },
+            { label: 'Financial', count: financialTasks.length, color: 'text-[var(--success)]', bg: 'bg-[var(--success)]' },
+            { label: 'Professional', count: professionalTasks.length, color: 'text-[var(--ink-secondary)]', bg: 'bg-[var(--rule-strong)]' },
           ].map(cat => (
             <div key={cat.label}>
               <div className="flex justify-between text-sm mb-2">
                 <span className={`font-medium ${cat.color}`}>{cat.label}</span>
-                <span className={'text-slate-500 dark:text-gray-500'}>{cat.count}</span>
+                <span className={'text-[var(--ink-muted)]'}>{cat.count}</span>
               </div>
-              <div className={`h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-white/5`}>
+              <div className={`h-1.5 rounded-full overflow-hidden bg-[var(--surface-subtle)]`}>
                 <div className={`h-full ${cat.bg} rounded-full transition-all duration-500`} style={{ width: `${completedTasks.length > 0 ? (cat.count / completedTasks.length) * 100 : 0}%` }} />
               </div>
             </div>
@@ -567,18 +570,18 @@ export function Stats() {
       </div>
 
       {/* Priority & Effort — compact */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="card rounded-2xl p-6">
-          <p className={`text-sm text-slate-500 dark:text-gray-500`}>High Priority Completed</p>
-          <div className="text-2xl font-bold text-red-500 mt-1">{highPriorityCompleted}</div>
-          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
+      <div className="grid grid-cols-1 divide-y divide-[var(--rule)] border-y border-[var(--rule-strong)] bg-[var(--surface)] sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+          <p className={`text-sm text-[var(--ink-muted)]`}>High Priority Completed</p>
+          <div className="text-2xl font-bold text-[var(--danger)] mt-1">{highPriorityCompleted}</div>
+          <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>
             {completedTasks.length > 0 ? `${Math.round((highPriorityCompleted / completedTasks.length) * 100)}% of total` : 'No tasks yet'}
           </p>
         </div>
-        <div className="card rounded-2xl p-6">
-          <p className={`text-sm text-slate-500 dark:text-gray-500`}>High Effort Completed</p>
-          <div className="text-2xl font-bold text-orange-500 mt-1">{highEffortCompleted}</div>
-          <p className={`text-xs mt-1 text-slate-400 dark:text-gray-400`}>
+        <div className="border-y border-[var(--rule-strong)] bg-[var(--surface)] p-4 sm:p-6">
+          <p className={`text-sm text-[var(--ink-muted)]`}>High Effort Completed</p>
+          <div className="text-2xl font-bold text-[var(--warning)] mt-1">{highEffortCompleted}</div>
+          <p className={`text-xs mt-1 text-[var(--ink-muted)]`}>
             {completedTasks.length > 0 ? `${Math.round((highEffortCompleted / completedTasks.length) * 100)}% of total` : 'No tasks yet'}
           </p>
         </div>
